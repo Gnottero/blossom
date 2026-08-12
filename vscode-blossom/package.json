@@ -2,7 +2,7 @@
   "name": "blossom",
   "displayName": "Blossom",
   "description": "Supporto per il linguaggio Blossom: evidenziazione, completamento sull'API reale, errori del preambolo e degli import.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "gnottero",
   "license": "MIT",
   "engines": {

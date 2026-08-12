@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.1
+
+- lo schema di `blossom.json` accetta `autoload`, che il mod legge da sempre: prima un manifesto che
+  lo dichiarava veniva segnato con "Property autoload is not allowed."
+- `version` non e' piu' obbligatorio nel manifesto, come nel mod (assente vale `0.1.0`)
+- i percorsi della documentazione seguono il repo nuovo: `docs/api/` invece di `docs/blossom/api/`
+
 ## 0.1.0
 
 Prima versione.
