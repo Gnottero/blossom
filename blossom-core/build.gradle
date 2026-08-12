@@ -1,0 +1,52 @@
+// blossom-core: l'interprete del linguaggio, java puro.
+// Nessuna dipendenza da Minecraft, da Fabric o dal resto di carpet: deve compilare ed essere
+// testabile con la sola JVM, senza scaricare il gioco.
+plugins {
+	id 'java-library'
+}
+
+group = 'blossom'
+version = project.mod_version
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	api 'org.jspecify:jspecify:1.0.0'
+	api 'com.google.code.gson:gson:2.11.0'
+	api 'org.apache.commons:commons-lang3:3.17.0'
+	implementation 'org.slf4j:slf4j-api:2.0.16'
+	implementation 'it.unimi.dsi:fastutil:8.5.15'
+
+	testImplementation platform('org.junit:junit-bom:5.11.3')
+	testImplementation 'org.junit.jupiter:junit-jupiter'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.encoding = 'UTF-8'
+	it.options.release = 25
+}
+
+java {
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
+}
+
+test {
+	useJUnitPlatform()
+	testLogging {
+		events 'failed'
+		exceptionFormat = 'full'
+		showStackTraces = true
+	}
+}
+
+// benchmark di riferimento della fase 1: ./gradlew :blossom-core:benchmark
+tasks.register('benchmark', JavaExec) {
+	group = 'verification'
+	description = 'Micro-benchmark di baseline dell\'interprete (loop aritmetico e chiamate a funzione)'
+	classpath = sourceSets.test.runtimeClasspath
+	mainClass = 'blossom.CoreBenchmark'
+}

@@ -1,0 +1,80 @@
+'use strict';
+
+/*
+ * Punto di ingresso. L'attivazione deve costare quasi niente: si registrano i provider e basta —
+ * i dati dell'API si leggono alla prima richiesta, e l'indice di un file al primo uso.
+ */
+
+const vscode = require('vscode');
+const path = require('path');
+const api = require('./api');
+const analyzer = require('./analyzer');
+const providers = require('./providers');
+const diagnostics = require('./diagnostics');
+const codeactions = require('./codeactions');
+
+function activate(context) {
+    providers.register(context);
+    diagnostics.register(context);
+    codeactions.register(context);
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('blossom.openDocs', () => openDocs()),
+        vscode.commands.registerCommand('blossom.copyRunCommand', () => copyRunCommand())
+    );
+}
+
+/** Apre la pagina di documentazione del modulo sotto il cursore, se il repo è nel workspace. */
+async function openDocs() {
+    const editor = vscode.window.activeTextEditor;
+    let moduleName = null;
+    if (editor && editor.document.languageId === 'blossom') {
+        const index = analyzer.indexOf(editor.document);
+        const position = editor.selection.active;
+        const range = editor.document.getWordRangeAtPosition(position);
+        const word = range ? editor.document.getText(range) : '';
+        moduleName = analyzer.targetModule(index, word) ||
+            (api.homeModuleOf(word) || null);
+        if (!moduleName) {
+            const before = editor.document.lineAt(position.line).text.slice(0, range ? range.start.character : 0);
+            const memberOf = /([A-Za-z_]\w*)\s*\.\s*$/.exec(before);
+            if (memberOf) moduleName = analyzer.targetModule(index, memberOf[1]);
+        }
+    }
+    if (!moduleName || !api.moduleOf(moduleName)) {
+        moduleName = await vscode.window.showQuickPick(api.moduleNames(), { title: 'Documentazione di quale modulo?' });
+    }
+    if (!moduleName) return;
+
+    const found = await vscode.workspace.findFiles(`**/docs/api/${moduleName}.md`, null, 1);
+    if (found.length) {
+        await vscode.commands.executeCommand('markdown.showPreview', found[0]);
+        return;
+    }
+    vscode.window.showInformationMessage(
+        `La documentazione di ${moduleName} non è in questo workspace: apri la cartella del repo di Blossom per leggerla qui.`
+    );
+}
+
+/** Copia negli appunti il comando che carica l'app aperta, che è quello che si digita ogni volta. */
+async function copyRunCommand() {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor || editor.document.languageId !== 'blossom') return;
+    const index = analyzer.indexOf(editor.document);
+    const fsPath = editor.document.uri.fsPath;
+    const parts = fsPath.split(path.sep);
+    const srcIndex = parts.lastIndexOf('src');
+    // un pack si carica col nome della sua cartella, un file singolo col proprio nome
+    const app = srcIndex > 0
+        ? parts[srcIndex - 1]
+        : path.basename(fsPath, '.bs');
+    const command = `/blossom script load ${app}`;
+    await vscode.env.clipboard.writeText(command);
+    vscode.window.setStatusBarMessage(
+        `${command}${index.module ? `   (modulo ${index.module.name})` : ''}`, 4000
+    );
+}
+
+function deactivate() {}
+
+module.exports = { activate, deactivate };

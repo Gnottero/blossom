@@ -1,0 +1,68 @@
+module geologia;
+
+import "core.list" as list;
+import "core.string" as string;
+
+// La parte che pensa. Non tocca il mondo, non stampa niente, non ascolta eventi: prende una lista
+// di letture [posizione, blocco] e risponde a delle domande. E' il modulo che si prova con
+//
+//     /blossom script in vena-viva geologia.conta([[[0, 0, 0], 'diamond_ore']], 'diamond_ore')
+//
+// senza dover rompere un blocco vero.
+
+pub let MINERALI = [
+    'coal_ore', 'deepslate_coal_ore',
+    'iron_ore', 'deepslate_iron_ore',
+    'copper_ore', 'deepslate_copper_ore',
+    'gold_ore', 'deepslate_gold_ore',
+    'redstone_ore', 'deepslate_redstone_ore',
+    'lapis_ore', 'deepslate_lapis_ore',
+    'diamond_ore', 'deepslate_diamond_ore',
+    'emerald_ore', 'deepslate_emerald_ore',
+    'nether_gold_ore', 'nether_quartz_ore', 'ancient_debris'
+];
+
+// 'minecraft:diamond_ore' e 'diamond_ore' sono lo stesso blocco scritto in due modi: un valore
+// blocco si stampa con lo spazio dei nomi, chi scrive uno script usa la forma corta
+pub fn nome_corto(blocco) -> (
+    pezzi = string.split(':', blocco + '');
+    pezzi:(list.length(pezzi) - 1)
+);
+
+// '~' su una lista restituisce l'indice, o null se non c'e': il confronto con null e' obbligatorio,
+// perche' l'indice 0 e' un valore falso. 'list.has' non c'entra: quella chiede se esiste l'indice.
+pub fn e_minerale(blocco) -> (MINERALI ~ nome_corto(blocco)) != null;
+
+// Quante letture sono del tipo dato. 'for' restituisce quante volte il corpo e' risultato vero,
+// quindi contare non richiede un accumulatore.
+pub fn conta(letture: list, tipo: str) -> for(letture, nome_corto(_:1) == tipo);
+
+// Le posizioni delle letture di quel tipo.
+pub fn posizioni(letture: list, tipo: str) -> list.map(
+    list.filter(letture, nome_corto(_:1) == tipo),
+    _:0
+);
+
+// Gli angoli del parallelepipedo che contiene tutte le posizioni date, o null se la lista e' vuota.
+// Serve a disegnare il riquadro attorno alla vena.
+pub fn riquadro(punti: list) -> (
+    if(list.length(punti) == 0, return(null));
+    [
+        [estremo(punti, 0, false), estremo(punti, 1, false), estremo(punti, 2, false)],
+        [estremo(punti, 0, true),  estremo(punti, 1, true),  estremo(punti, 2, true)]
+    ]
+);
+
+// privata: e' un dettaglio di 'riquadro', e nessun altro modulo deve dipenderne
+fn estremo(punti, asse, massimo) -> (
+    ordinati = list.sort(list.map(punti, _:asse));
+    if(massimo, ordinati:(list.length(ordinati) - 1), ordinati:0)
+);
+
+// Il giudizio sulla vena in una parola: e' quello che il resto dell'app mostra a chi gioca.
+pub fn giudizio(rimasti: num) -> if(
+    rimasti == 0, 'esaurita',
+    rimasti <= 2, 'agli sgoccioli',
+    rimasti <= 8, 'buona',
+    'ricca'
+);

@@ -1,0 +1,19 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.gnottero.blossom.mixins.client",
+  "compatibilityLevel": "JAVA_21",
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "client": [
+    "ClientPacketListener_blossomNetworkMixin",
+    "LevelRenderer_blossomAfterCloudsMixin",
+    "LevelRenderer_blossomShapesMixin",
+    "Minecraft_blossomClientTickMixin",
+    "PreparedFrame_blossomAfterCloudsMixin",
+    "RenderPipelines_blossomPipelinesMixin",
+    "RenderType_blossomCreateInvoker",
+    "SubmitNodeCollection_blossomAfterCloudsMixin"
+  ]
+}

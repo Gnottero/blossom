@@ -1,0 +1,102 @@
+module main;
+
+import "core.mc.event" as event;
+import "core.mc.entity" as entity;
+import "core.mc.text" as text;
+import "core.mc.file" as file;
+import "core.list" as list;
+import "core.map" as map;
+
+// Contapassi - un'app in un file solo.
+//
+// Tiene il conto di quello che fa ogni giocatore, lo mostra sopra la hotbar e lo salva su disco.
+// Mostra: stato di modulo con 'let mut', handler di evento, HUD, persistenza, e una funzione
+// pubblica che l'amministratore chiama dalla console.
+
+// --- stato ---------------------------------------------------------------------------------
+
+// 'let mut' e non un'assegnazione nuda: e' cosi' che le funzioni qui sotto lo vedono
+let mut conteggi = {};          // nome giocatore -> {'salti' -> n, 'rotti' -> n, 'morti' -> n}
+let mut tick_passati = 0;
+
+let SALVA_OGNI = 6000;          // tick, cioe' cinque minuti
+let VOCI = ['salti', 'rotti', 'morti'];
+
+// --- lettura e scrittura dello stato -------------------------------------------------------
+
+fn scheda(giocatore) -> (
+    nome = entity.query(giocatore, 'name');
+    // una chiave che non c'e' vale null, e '||' restituisce il primo operando vero
+    if(!map.has(conteggi, nome), conteggi:nome = {'salti' -> 0, 'rotti' -> 0, 'morti' -> 0});
+    conteggi:nome
+);
+
+fn aggiungi(giocatore, voce) -> (
+    s = scheda(giocatore);
+    s:voce = s:voce + 1;
+    mostra(giocatore, s);
+    false                       // gli eventi qui sotto non vanno annullati
+);
+
+fn mostra(giocatore, s) -> text.hud(
+    giocatore,
+    text.format('g salti ', 'w ' + s:'salti', 'g   rotti ', 'w ' + s:'rotti', 'g   morti ', 'w ' + s:'morti')
+);
+
+// --- persistenza ---------------------------------------------------------------------------
+
+fn carica() -> conteggi = file.read_file('conteggi', 'json') || {};
+
+fn salva() -> (
+    file.write_file('conteggi', 'json', conteggi);
+    false
+);
+
+// --- handler -------------------------------------------------------------------------------
+
+fn su_salto(giocatore) -> aggiungi(giocatore, 'salti');
+fn su_rottura(giocatore, blocco) -> aggiungi(giocatore, 'rotti');
+fn su_morte(giocatore) -> aggiungi(giocatore, 'morti');
+
+fn su_arrivo(giocatore) -> (
+    mostra(giocatore, scheda(giocatore));
+    false
+);
+
+// Salvare solo allo spegnimento non basta: un server che va giu' male non chiama nessun handler.
+fn su_tick() -> (
+    tick_passati += 1;
+    if(tick_passati % SALVA_OGNI == 0, salva());
+    false
+);
+
+// --- interfaccia per chi amministra ---------------------------------------------------------
+
+// /blossom script in contapassi classifica('rotti')
+pub fn classifica(voce: str) -> (
+    // '~' restituisce l'indice, o null se non c'e': si confronta con null e non si usa come
+    // condizione, perche' l'indice del primo elemento e' 0, che e' falso
+    if((VOCI ~ voce) == null, throw('voce sconosciuta: ' + voce + ', prova ' + list.join('/', VOCI)));
+    righe = list.sort_key(map.pairs(conteggi), -((_:1):voce));
+    list.map(righe, _:0 + ': ' + (_:1):voce)
+);
+
+// /blossom script in contapassi azzera()
+pub fn azzera() -> (
+    conteggi = {};
+    salva();
+    'azzerato'
+);
+
+// --- avvio ------------------------------------------------------------------------------------
+
+carica();
+
+event.on('player_jumps', su_salto);
+event.on('player_breaks_block', su_rottura);
+event.on('player_dies', su_morte);
+event.on('player_connects', su_arrivo);
+event.on('tick', su_tick);
+event.on('server_shuts_down', salva);
+
+print('contapassi pronta, ' + map.length(conteggi) + ' schede in archivio');

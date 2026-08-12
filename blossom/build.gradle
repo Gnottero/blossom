@@ -1,0 +1,51 @@
+// blossom: il mod Fabric che incorpora blossom-core.
+// Non dipende da carpet in alcun modo, ne' a compile time ne' a runtime.
+plugins {
+	id 'net.fabricmc.fabric-loom'
+}
+
+loom {
+	accessWidenerPath = file('src/main/resources/blossom.accesswidener')
+}
+
+base {
+	archivesName = 'blossomscript'
+}
+
+version = project.mod_version
+group = 'com.gnottero.blossom'
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+
+	// il linguaggio, immutato e senza Minecraft dentro
+	implementation project(':blossom-core')
+	include project(':blossom-core')
+}
+
+processResources {
+	inputs.property 'version', project.version
+	filesMatching('fabric.mod.json') {
+		expand 'version': project.version
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.encoding = 'UTF-8'
+	it.options.release = 25
+}
+
+java {
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
+}
+
+// il server di sviluppo legge dallo stdin di gradle, cosi' si puo' pilotare la sua console
+tasks.matching { it.name == 'runServer' }.configureEach {
+	standardInput = System.in
+}

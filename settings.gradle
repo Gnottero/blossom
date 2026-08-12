@@ -1,0 +1,16 @@
+pluginManagement {
+    repositories {
+        maven { // il maven di Fabric, per Loom
+            name = 'Fabric'
+            url = 'https://maven.fabricmc.net/'
+        }
+        gradlePluginPortal()
+    }
+}
+
+rootProject.name = 'blossom'
+
+// il core del linguaggio: java puro, nessuna dipendenza da Minecraft
+include 'blossom-core'
+// il mod Fabric che lo esegue
+include 'blossom'

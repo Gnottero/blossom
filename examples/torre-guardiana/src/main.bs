@@ -1,0 +1,47 @@
+module main;
+
+import "torre/costruzione" as costruzione;
+import "torre/registro" as registro;
+import "core.mc.block" as block;
+import "core.mc.world" as world;
+import "core.mc.entity" as entity;
+import "core.mc.text" as text;
+import "core.mc.event" as event;
+import "core.list" as list;
+
+// Costruisce una torre illuminata dove una campana viene suonata, e tiene il conto di quelle
+// costruite. Mostra: piu' moduli, simboli privati, un evento annullabile, e un try/catch.
+
+fn su_campana(pos, direzione, chi) -> (
+    luce = block.light(pos);
+    altezza = costruzione.altezza_consigliata(luce);
+    try(
+        costruzione.costruisci([pos:0, pos:1 + 1, pos:2], altezza);
+        registro.aggiungi(pos, altezza);
+        for(entity.player('all'), text.print(_, 'torre numero ' + registro.quante() + ' a ' + pos)),
+
+        // 'exception' e non la forma corta: senza filtro, try cattura solo cio' che lancia throw(),
+        // e un blocco inesistente o una posizione fuori dal mondo non passerebbero di li'.
+        'exception',
+
+        // Se la costruzione fallisce - per esempio perche' la posizione e' fuori dal mondo caricato -
+        // l'evento non deve annullare il suono della campana ne' interrompere le altre app.
+        // Il valore lanciato sta in '_', e va copiato subito: dentro il 'for' quel nome e' gia'
+        // preso dall'elemento corrente.
+        (
+            motivo = _;
+            for(entity.player('all'), text.print(_, 'non sono riuscito a costruire: ' + motivo))
+        )
+    );
+    false   // false = il suono della campana va avanti normalmente
+);
+
+pub fn quante_torri() -> registro.quante();
+
+pub fn demolisci_tutte() -> (
+    list.map(registro.tutte(), costruzione.smonta(_:0, _:1));
+    registro.svuota()
+);
+
+event.on('bell_rings', su_campana);
+print('torre-guardiana pronta in ' + world.current_dimension());

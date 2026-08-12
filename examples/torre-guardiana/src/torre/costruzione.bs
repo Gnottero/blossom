@@ -1,0 +1,32 @@
+module torre.costruzione;
+
+import "core.mc.block" as block;
+import "core.list" as list;
+import "core.math" as math;
+
+// Il materiale della torre sta qui e non nel main: chi cambia l'aspetto della costruzione
+// non deve andare a leggere la logica degli eventi.
+let materiale = 'stone_bricks';
+let materiale_cima = 'sea_lantern';
+
+// Privata: e' un dettaglio di come si costruisce, non qualcosa che altri moduli devono poter usare.
+fn colonna(x, y, z, altezza, blocco) -> (
+    list.map(list.range(altezza), block.set([x, y + _, z], blocco));
+    altezza
+);
+
+pub fn costruisci(base, altezza) -> (
+    x = base:0;
+    y = base:1;
+    z = base:2;
+    colonna(x, y, z, altezza, materiale);
+    block.set([x, y + altezza, z], materiale_cima);
+    altezza + 1
+);
+
+pub fn smonta(base, altezza) -> (
+    colonna(base:0, base:1, base:2, altezza + 1, 'air');
+    true
+);
+
+pub fn altezza_consigliata(luce) -> math.max(4, 16 - luce);

@@ -1,0 +1,6 @@
+{
+  "name": "torre-guardiana",
+  "version": "0.1.0",
+  "entrypoint": "src/main.bs",
+  "api_level": "1.0"
+}

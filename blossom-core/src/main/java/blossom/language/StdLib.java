@@ -1,0 +1,135 @@
+package blossom.language;
+
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.jspecify.annotations.Nullable;
+
+/**
+ * La standard library organizzata a pacchetti (PIANO_LINGUAGGIO.md §5).
+ *
+ * <p>Le funzioni built-in restano registrate una volta sola, in una mappa piatta: è la loro
+ * *visibilità* a passare per i moduli. Chi scrive vede `math.sqrt(...)` e sa da dove viene, ma la
+ * chiamata non paga nulla in più, perché l'associazione simbolo → implementazione viene risolta
+ * mentre il modulo si carica e non ad ogni invocazione.
+ *
+ * <p>Fuori dai moduli resta solo un prelude minuscolo: quello che è sintassi più che libreria
+ * ({@code if}, {@code loop}, {@code try}, {@code return}) e {@code print}. Tutto il resto è opt-in.
+ */
+public final class StdLib
+{
+    /** i moduli built-in, nell'ordine in cui vale la pena leggerli */
+    private static final Map<String, Set<String>> MODULES = new LinkedHashMap<>();
+    /** simbolo → modulo che lo esporta, per dire a chi sbaglia da dove viene il nome che ha usato */
+    private static final Map<String, String> HOME_MODULE = new LinkedHashMap<>();
+
+    /**
+     * Quello che si può usare senza importare niente: costrutti di controllo, che sono grammatica
+     * travestita da funzione, e le poche cose davvero universali.
+     */
+    public static final Set<String> PRELUDE = Set.of(
+            "print", "if", "try", "throw", "return", "break", "continue",
+            "loop", "while", "for", "c_for", "exit", "call", "outer", "not",
+            // costruiti dal tokenizer per [ ... ] e { ... }: non si scrivono a mano
+            "l", "m");
+
+    static
+    {
+        module("core.math",
+                "abs", "sign", "round", "floor", "ceil", "sqrt", "exp", "ln", "ln1p", "log", "log10", "log1p",
+                "sin", "cos", "tan", "asin", "acos", "atan", "atan2", "sinh", "cosh", "tanh", "asinh", "acosh",
+                "atanh", "sec", "sech", "csc", "csch", "cot", "coth", "deg", "rad",
+                "max", "min", "fact", "relu", "number", "rand", "reset_seed",
+                "perlin", "simplex", "mandelbrot",
+                "acot",
+                "bitwise_and", "bitwise_or", "bitwise_xor", "bitwise_not", "bitwise_popcount",
+                "bitwise_shift_left", "bitwise_shift_right", "bitwise_arithmetic_shift_right",
+                "bitwise_roll_left", "bitwise_roll_right",
+                "long_to_double_bits", "double_to_long_bits");
+
+        module("core.string",
+                "str", "lower", "upper", "title", "replace", "replace_first", "split", "join",
+                "encode_b64", "decode_b64", "hash_code");
+
+        module("core.list",
+                "range", "map", "filter", "reduce", "sort", "sort_key", "first", "all",
+                "slice", "get", "put", "delete", "has", "length", "join", "split", "reverse");
+
+        module("core.map",
+                "keys", "values", "pairs", "get", "put", "delete", "has", "length");
+
+        module("core.json",
+                "encode_json", "decode_json");
+
+        module("core.task",
+                "task", "task_join", "task_await", "task_completed", "task_count", "task_dock",
+                "task_ready", "task_send", "task_value", "synchronize", "sleep", "yield");
+
+        module("core.io", Io.MODULE.toArray(String[]::new));
+
+        module("core.system",
+                "time", "unix_time", "convert_date", "profile_expr", "type", "var", "vars",
+                "system_variable_get", "system_variable_set", "undef", "bool", "copy");
+    }
+
+    private StdLib()
+    {
+    }
+
+    /**
+     * Dichiara un modulo di libreria fornito da chi incorpora il core - il layer Minecraft registra
+     * così i suoi {@code core.mc.*}.
+     *
+     * <p>Le implementazioni restano quelle registrate sull'espressione: qui si dichiara solo cosa
+     * il modulo esporta, che è quello che serve al resolver.
+     */
+    public static void registerModule(String name, Set<String> symbols)
+    {
+        module(name, symbols.toArray(String[]::new));
+    }
+
+    private static void module(String name, String... symbols)
+    {
+        Set<String> exported = new LinkedHashSet<>(List.of(symbols));
+        MODULES.put(name, exported);
+        // il primo modulo che esporta un simbolo e' quello "di casa": e' il nome che compare nel
+        // suggerimento quando qualcuno lo usa senza importarlo
+        exported.forEach(symbol -> HOME_MODULE.putIfAbsent(symbol, name));
+    }
+
+    public static boolean isBuiltinModule(String moduleName)
+    {
+        return MODULES.containsKey(moduleName);
+    }
+
+    /** @return se {@code moduleName} esporta {@code symbol} */
+    public static boolean exports(String moduleName, String symbol)
+    {
+        Set<String> exported = MODULES.get(moduleName);
+        return exported != null && exported.contains(symbol);
+    }
+
+    public static Set<String> symbolsOf(String moduleName)
+    {
+        return MODULES.getOrDefault(moduleName, Set.of());
+    }
+
+    public static Set<String> moduleNames()
+    {
+        return MODULES.keySet();
+    }
+
+    /** Il modulo da importare per usare {@code symbol}, o {@code null} se non è di libreria. */
+    public static @Nullable String homeModuleOf(String symbol)
+    {
+        return HOME_MODULE.get(symbol);
+    }
+
+    public static boolean isInPrelude(String symbol)
+    {
+        return PRELUDE.contains(symbol);
+    }
+}

@@ -1,0 +1,42 @@
+module cantiere;
+
+import "core.list" as list;
+import "core.mc.block" as block;
+import "core.mc.effect" as effect;
+import "core.mc.scan" as scan;
+import "core.mc.text" as text;
+
+// Tutto quello che tocca il mondo sta qui: leggere blocchi, mostrare particelle, parlare a chi
+// gioca. Il resto dell'app chiama queste funzioni e non sa come sono fatte dentro.
+
+pub let RAGGIO = 6;
+
+// Legge un cubo attorno al centro e restituisce una lista di [posizione, blocco].
+// Chiamata da dentro un task, va incapsulata in task_dock da chi la chiama: qui non lo facciamo,
+// perche' una funzione che decide da sola come essere schedulata e' una funzione che non si puo'
+// riusare dal thread principale.
+pub fn leggi_intorno(centro: list, raggio: num) -> list.map(
+    scan.rect(centro, raggio),
+    [_, block.block(_) + '']
+);
+
+// Il riquadro attorno alla vena, per far vedere cosa ha guardato lo script.
+pub fn mostra_riquadro(angoli, colore: str) -> if(
+    angoli == null, 0,
+    effect.particle_box(colore, angoli:0, angoli:1, 1)
+);
+
+pub fn suona_esaurita(pos: list) -> effect.sound('block.amethyst_block.break', pos, 1, 0.6);
+
+pub fn avvisa(giocatore, tipo: str, rimasti: num, parola: str) -> text.hud(
+    giocatore,
+    text.format(
+        'g vena di ', 'w ' + tipo,
+        'g   rimasti ', colore_di(rimasti) + ' ' + rimasti,
+        'g   (' + parola + ')'
+    ),
+    100         // tick: la riga se ne va da sola dopo cinque secondi
+);
+
+// privata: la scala di colori e' una scelta di presentazione, non un'informazione
+fn colore_di(rimasti) -> if(rimasti == 0, 'r', rimasti <= 2, 'y', 'l');

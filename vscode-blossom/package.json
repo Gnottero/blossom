@@ -1,0 +1,93 @@
+{
+  "name": "blossom",
+  "displayName": "Blossom",
+  "description": "Supporto per il linguaggio Blossom: evidenziazione, completamento sull'API reale, errori del preambolo e degli import.",
+  "version": "0.1.0",
+  "publisher": "gnottero",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets",
+    "Linters"
+  ],
+  "keywords": [
+    "blossom",
+    "minecraft",
+    "scarpet",
+    "scripting"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Gnottero/fabric-carpet"
+  },
+  "main": "./src/extension.js",
+  "activationEvents": [
+    "onLanguage:blossom"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "blossom",
+        "aliases": [
+          "Blossom",
+          "blossom"
+        ],
+        "extensions": [
+          ".bs"
+        ],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./icons/file-light.svg",
+          "dark": "./icons/file-dark.svg"
+        }
+      }
+    ],
+    "grammars": [
+      {
+        "language": "blossom",
+        "scopeName": "source.blossom",
+        "path": "./syntaxes/blossom.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "blossom",
+        "path": "./snippets/blossom.json"
+      }
+    ],
+    "jsonValidation": [
+      {
+        "fileMatch": "blossom.json",
+        "url": "./schemas/blossom.schema.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "blossom.openDocs",
+        "title": "Blossom: apri la documentazione del modulo"
+      },
+      {
+        "command": "blossom.copyRunCommand",
+        "title": "Blossom: copia il comando di caricamento dell'app"
+      }
+    ],
+    "configuration": {
+      "title": "Blossom",
+      "properties": {
+        "blossom.diagnostics.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Segnala import senza alias, moduli e simboli inesistenti, eventi sconosciuti e nomi di modulo che non combaciano col percorso."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "generate": "node tools/generate-api.js",
+    "test": "node test/run.js",
+    "package": "npx --yes @vscode/vsce package"
+  }
+}

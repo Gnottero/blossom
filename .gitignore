@@ -1,0 +1,39 @@
+# gradle
+
+.gradle/
+build/
+out/
+classes/
+publish/
+
+# idea
+
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# eclipse
+
+*.launch
+
+# vscode
+
+.settings/
+.vscode/
+bin/
+.classpath
+.project
+*.code-workspace
+
+# fabric
+
+run/
+logs/
+
+# il pacchetto costruito dell'estensione
+vscode-blossom/*.vsix
+vscode-blossom/node_modules/
+
+# note dell'assistente
+CLAUDE.md

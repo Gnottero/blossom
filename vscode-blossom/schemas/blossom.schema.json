@@ -1,0 +1,86 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Manifesto di un progetto Blossom",
+  "type": "object",
+  "required": ["name"],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Il nome del progetto.",
+      "pattern": "^[A-Za-z_][A-Za-z0-9_-]*$"
+    },
+    "version": {
+      "type": "string",
+      "description": "La versione del progetto, semver (1.2.3, con pre-release facoltativo).",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?(\\+[0-9A-Za-z.-]+)?$"
+    },
+    "entrypoint": {
+      "type": "string",
+      "description": "Il file da cui parte il caricamento. Default: src/main.bs",
+      "default": "src/main.bs"
+    },
+    "api_level": {
+      "type": "string",
+      "description": "La versione dell'API di Blossom richiesta, MAJOR.MINOR. Non dichiararla significa 1.0.",
+      "pattern": "^\\d+\\.\\d+$",
+      "default": "1.0"
+    },
+    "autoload": {
+      "type": "boolean",
+      "description": "Se vero, il pack si carica da solo appena il mondo è aperto, senza /blossom script load. Default: false.",
+      "default": false
+    },
+    "dependencies": {
+      "type": "object",
+      "description": "Le dipendenze del progetto: path, pack o registry, una forma sola per dipendenza.",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Una cartella, di solito accanto al progetto. Non viene bloccata nel lock."
+          },
+          "pack": {
+            "type": "string",
+            "description": "Un pack gia' installato sotto <mondo>/blossom/."
+          },
+          "version": {
+            "type": "string",
+            "description": "Il vincolo semver: ^1.2.0, ~1.2.0, >=1.2 <2, *",
+            "pattern": "^(\\*|[~^<>=]{0,2}\\s*\\d+(\\.\\d+){0,2}[0-9A-Za-z.+-]*(\\s*,?\\s*[~^<>=]{1,2}\\s*\\d+(\\.\\d+){0,2}[0-9A-Za-z.+-]*)*)$"
+          }
+        },
+        "not": {
+          "required": ["path", "pack"]
+        },
+        "additionalProperties": false
+      }
+    },
+    "watchdog": {
+      "description": "I limiti di esecuzione dell'app. false li toglie del tutto.",
+      "oneOf": [
+        {
+          "type": "boolean",
+          "enum": [false]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "timeout_ms": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Il tempo massimo di una esecuzione, in millisecondi. Default: 2000 negli eventi, 15000 nei comandi."
+            },
+            "max_depth": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "La profondita' massima di chiamata. Default: 256."
+            }
+          }
+        }
+      ]
+    }
+  }
+}

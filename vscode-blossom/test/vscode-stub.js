@@ -1,0 +1,167 @@
+'use strict';
+
+/*
+ * Il minimo dell'API di vscode che serve a far girare i test fuori dall'editor: l'estensione non ha
+ * dipendenze, e i test nemmeno. Quello che sta qui è solo la forma dei tipi che il codice costruisce.
+ */
+
+class Position {
+    constructor(line, character) {
+        this.line = line;
+        this.character = character;
+    }
+}
+
+class Range {
+    constructor(a, b, c, d) {
+        if (a instanceof Position) {
+            this.start = a;
+            this.end = b;
+        } else {
+            this.start = new Position(a, b);
+            this.end = new Position(c, d);
+        }
+    }
+}
+
+class Diagnostic {
+    constructor(range, message, severity) {
+        this.range = range;
+        this.message = message;
+        this.severity = severity;
+    }
+}
+
+class MarkdownString {
+    constructor(value = '') {
+        this.value = value;
+    }
+    appendMarkdown(text) {
+        this.value += text;
+        return this;
+    }
+    appendCodeblock(code, language) {
+        this.value += '\n```' + (language || '') + '\n' + code + '\n```\n';
+        return this;
+    }
+}
+
+class CompletionItem {
+    constructor(label, kind) {
+        this.label = label;
+        this.kind = kind;
+    }
+}
+
+class SnippetString {
+    constructor(value) {
+        this.value = value;
+    }
+}
+
+class SignatureInformation {
+    constructor(label) {
+        this.label = label;
+        this.parameters = [];
+    }
+}
+
+class ParameterInformation {
+    constructor(label) {
+        this.label = label;
+    }
+}
+
+class SignatureHelp {
+    constructor() {
+        this.signatures = [];
+        this.activeSignature = 0;
+        this.activeParameter = 0;
+    }
+}
+
+class Hover {
+    constructor(contents, range) {
+        this.contents = contents;
+        this.range = range;
+    }
+}
+
+class Location {
+    constructor(uri, position) {
+        this.uri = uri;
+        this.range = position;
+    }
+}
+
+class SymbolInformation {
+    constructor(name, kind, containerName, location) {
+        this.name = name;
+        this.kind = kind;
+        this.containerName = containerName;
+        this.location = location;
+    }
+}
+
+class CodeAction {
+    constructor(title, kind) {
+        this.title = title;
+        this.kind = kind;
+    }
+}
+
+class WorkspaceEdit {
+    constructor() {
+        this.edits = [];
+    }
+    insert(uri, position, text) {
+        this.edits.push({ kind: 'insert', uri, position, text });
+    }
+    replace(uri, range, text) {
+        this.edits.push({ kind: 'replace', uri, range, text });
+    }
+}
+
+const kinds = new Proxy({}, { get: (_, name) => name });
+
+module.exports = {
+    Position,
+    Range,
+    Diagnostic,
+    DiagnosticSeverity: { Error: 0, Warning: 1, Information: 2, Hint: 3 },
+    MarkdownString,
+    CompletionItem,
+    CompletionItemKind: kinds,
+    SnippetString,
+    SignatureInformation,
+    ParameterInformation,
+    SignatureHelp,
+    Hover,
+    Location,
+    SymbolInformation,
+    SymbolKind: kinds,
+    CodeAction,
+    CodeActionKind: kinds,
+    WorkspaceEdit,
+    Uri: { file: (p) => ({ fsPath: p, toString: () => 'file://' + p }) },
+    languages: {
+        createDiagnosticCollection: () => ({ set() {}, delete() {} }),
+        registerCompletionItemProvider: () => ({ dispose() {} }),
+        registerHoverProvider: () => ({ dispose() {} }),
+        registerSignatureHelpProvider: () => ({ dispose() {} }),
+        registerDocumentSymbolProvider: () => ({ dispose() {} }),
+        registerDefinitionProvider: () => ({ dispose() {} }),
+        registerCodeActionsProvider: () => ({ dispose() {} })
+    },
+    workspace: {
+        getConfiguration: () => ({ get: (_, fallback) => fallback }),
+        onDidOpenTextDocument: () => ({ dispose() {} }),
+        onDidChangeTextDocument: () => ({ dispose() {} }),
+        onDidSaveTextDocument: () => ({ dispose() {} }),
+        onDidCloseTextDocument: () => ({ dispose() {} }),
+        textDocuments: []
+    },
+    commands: { registerCommand: () => ({ dispose() {} }) },
+    window: {},
+    env: {}
+};

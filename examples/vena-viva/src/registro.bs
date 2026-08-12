@@ -1,0 +1,52 @@
+module registro;
+
+import "core.list" as list;
+import "core.map" as map;
+import "core.mc.file" as file;
+import "core.task" as task;
+
+// Lo stato dell'app, e il disco. Nessun altro modulo scrive qui dentro: si passa da queste
+// funzioni, che sono l'unico posto dove il salvataggio puo' essere dimenticato.
+
+let mut vene = [];              // [{'tipo' -> str, 'pos' -> [x,y,z], 'rimasti' -> n, 'chi' -> str}]
+let mut totali = {};            // tipo -> quanti blocchi di quel tipo sono stati rotti
+
+// Le scritture arrivano anche da un task, cioe' da un altro thread: una sequenza
+// leggi-modifica-scrivi non e' atomica, e va dentro una sezione critica.
+let LOCK = 'registro';
+
+pub fn carica() -> (
+    salvato = file.read_file('registro', 'json') || {};
+    vene = salvato:'vene' || [];
+    totali = salvato:'totali' || {};
+    list.length(vene)
+);
+
+pub fn salva() -> (
+    file.write_file('registro', 'json', {'vene' -> vene, 'totali' -> totali});
+    false
+);
+
+pub fn annota(tipo: str, pos: list, rimasti: num, chi: str) -> task.synchronize(LOCK, (
+    list.put(vene, null, {'tipo' -> tipo, 'pos' -> pos, 'rimasti' -> rimasti, 'chi' -> chi});
+    totali:tipo = (totali:tipo || 0) + 1;
+    list.length(vene)
+));
+
+pub fn quante() -> list.length(vene);
+
+pub fn tutte() -> vene;
+
+pub fn totale(tipo: str) -> totali:tipo || 0;
+
+pub fn riepilogo() -> list.map(
+    list.sort_key(map.pairs(totali), -(_:1)),
+    _:0 + ': ' + _:1
+);
+
+pub fn svuota() -> task.synchronize(LOCK, (
+    vene = [];
+    totali = {};
+    salva();
+    'registro azzerato'
+));

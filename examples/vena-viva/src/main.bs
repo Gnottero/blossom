@@ -1,0 +1,100 @@
+module main;
+
+import "geologia" as geologia;
+import "cantiere" as cantiere;
+import "registro" as registro;
+
+import "core.list" as list;
+import "core.mc.entity" as entity;
+import "core.mc.event" as event;
+import "core.mc.text" as text;
+import "core.task" as task;
+
+// vena-viva - quando qualcuno rompe un minerale, l'app guarda quanto ne resta li' attorno, glielo
+// dice, lo annota, e avvisa le altre app quando la vena e' finita.
+//
+// Il lavoro vero (una lettura di 13x13x13 blocchi) gira in un task: dentro l'handler terrebbe
+// fermo il tick, e il budget di un evento e' due secondi.
+
+// --- l'handler: sottile per definizione -----------------------------------------------------
+
+fn su_rottura(giocatore, blocco) -> (
+    // il blocco arriva ancora intero: l'evento e' annullabile, quindi scatta prima della rottura
+    if(!geologia.e_minerale(blocco), return(false));
+
+    pos = entity.query(giocatore, 'pos');
+    tipo = geologia.nome_corto(blocco);
+    nome = entity.query(giocatore, 'name');
+
+    // niente task_join qui: l'handler finisce subito, il task continua per conto suo
+    task.task('ispeziona', pos, tipo, giocatore, nome);
+    false                       // false = la rottura va avanti normalmente
+);
+
+// --- il lavoro, fuori dal tick ----------------------------------------------------------------
+
+pub fn ispeziona(centro: list, tipo: str, giocatore, nome: str) -> try(
+    (
+        // 1. leggere il mondo: una sola sosta sul thread del gioco, non una per blocco
+        letture = task.task_dock(cantiere.leggi_intorno(centro, cantiere.RAGGIO));
+
+        // 2. pensare: qui siamo su un thread nostro, e possiamo prendercela comoda
+        rimasti = geologia.conta(letture, tipo) - 1;        // meno quello che sta per sparire
+        punti = geologia.posizioni(letture, tipo);
+        angoli = geologia.riquadro(punti);
+        parola = geologia.giudizio(rimasti);
+
+        registro.annota(tipo, centro, rimasti, nome);
+
+        // 3. scrivere: di nuovo una sosta sola
+        task.task_dock((
+            cantiere.avvisa(giocatore, tipo, rimasti, parola);
+            cantiere.mostra_riquadro(angoli, if(rimasti == 0, 'flame', 'happy_villager'));
+            if(rimasti == 0, (
+                cantiere.suona_esaurita(centro);
+                // le altre app che ascoltano 'vena_esaurita' lo sanno; se non ne ascolta nessuna,
+                // signal_event restituisce null e non e' successo niente
+                event.signal_event('vena_esaurita', giocatore, tipo, centro, nome)
+            ))
+        ))
+    ),
+
+    // un task che esplode non porta giu' l'app, ma senza questo il motivo finisce solo nel log
+    'exception', (
+        motivo = _;             // '_' cambia significato dentro un for: si copia subito
+        print('vena-viva: ispezione fallita a ' + centro + ': ' + motivo);
+        null
+    )
+);
+
+// --- interfaccia per chi amministra ------------------------------------------------------------
+
+// /blossom script in vena-viva riepilogo()
+pub fn riepilogo() -> [
+    registro.quante() + ' vene registrate',
+    registro.riepilogo()
+];
+
+// /blossom script in vena-viva ultime(5)
+pub fn ultime(quante: num) -> (
+    tutte = registro.tutte();
+    da = list.length(tutte) - quante;
+    list.map(
+        list.slice(tutte, if(da < 0, 0, da)),
+        _:'chi' + ' - ' + _:'tipo' + ' a ' + _:'pos' + ' (rimasti ' + _:'rimasti' + ')'
+    )
+);
+
+// /blossom script in vena-viva azzera()
+pub fn azzera() -> registro.svuota();
+
+// --- avvio ---------------------------------------------------------------------------------------
+
+// un handler e' una funzione di questo modulo, anche quando il lavoro sta altrove: cosi' la firma
+// che l'evento controlla al caricamento e' scritta qui, dove si legge
+fn su_spegnimento() -> registro.salva();
+
+event.on('player_breaks_block', su_rottura);
+event.on('server_shuts_down', su_spegnimento);
+
+print('vena-viva pronta, ' + registro.carica() + ' vene in archivio');

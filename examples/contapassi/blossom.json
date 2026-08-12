@@ -1,0 +1,6 @@
+{
+  "name": "contapassi",
+  "version": "1.0.0",
+  "entrypoint": "src/main.bs",
+  "api_level": "1.0"
+}
