@@ -1,93 +1,93 @@
 # `core.io`
 
-Il disco fuori dalla cartella dell'app, dentro confini che dichiara un amministratore.
+The disk outside the folder of the app, inside boundaries an administrator declares.
 
 ```
 import "core.io" as io;
 
-io.write_text('condiviso', 'note/oggi.txt', 'ciao');
-io.read_text('condiviso', 'note/oggi.txt');       // 'ciao'
+io.write_text('shared', 'notes/today.txt', 'hello');
+io.read_text('shared', 'notes/today.txt');       // 'hello'
 ```
 
-Per i dati dell'app c'è già [`core.mc.file`](core.mc.file.md), e per quasi tutto basta: ogni app ha
-la sua cartella e nessun'altra la vede. `core.io` serve al caso che quello non copre — parlare con
-qualcosa che sul server c'è già: una cartella condivisa fra app, i log di un altro strumento, una
-cartella di scambio con un processo esterno.
+For the data of the app there is already [`core.mc.file`](core.mc.file.md), and for almost everything
+that is enough: every app has its own folder and no other app sees it. `core.io` is for the case that
+does not cover — talking to something that is already on the server: a folder shared between apps,
+the logs of another tool, an exchange folder with an external process.
 
-## I confini
+## The boundaries
 
-Negli script non esistono percorsi assoluti. Un amministratore dichiara delle **radici** con un nome,
-in `config/blossomscript.json`:
+There are no absolute paths in scripts. An administrator declares **roots** with a name, in
+`config/blossomscript.json`:
 
 ```json
 {
   "io": {
     "roots": {
-      "condiviso": "/srv/blossom-condiviso",
-      "log": "/var/log/mio-server"
+      "shared": "/srv/blossom-shared",
+      "log": "/var/log/my-server"
     },
-    "writable": ["condiviso"]
+    "writable": ["shared"]
   }
 }
 ```
 
-Ogni funzione comincia con il nome della radice, e il resto del percorso è sempre relativo a quella.
-Tre conseguenze, tutte volute:
+Every function starts with the name of the root, and the rest of the path is always relative to it.
+Three consequences, all of them intended:
 
-- **senza dichiarazione non si arriva da nessuna parte.** `core.io` importato su un server che non ha
-  configurato niente esiste ma non apre nulla, e lo dice.
-- **la radice si vede nel punto della chiamata.** Leggere il codice basta a sapere dove finiscono i
-  dati; non c'è un percorso costruito tre funzioni più in là.
-- **scrivere è un permesso a parte.** Una radice è di sola lettura salvo che compaia in `writable`.
+- **without a declaration you get nowhere.** `core.io` imported on a server that configured nothing
+  exists but opens nothing, and says so.
+- **the root is visible at the call site.** Reading the code is enough to know where the data ends
+  up; there is no path built three functions further away.
+- **writing is a separate permission.** A root is read-only unless it appears in `writable`.
 
-Un percorso che esce dalla radice è un errore, e non solo quando ci prova con `..`: il percorso viene
-risolto davvero prima del confronto, quindi un collegamento simbolico piazzato dentro la radice che
-punta fuori viene rifiutato allo stesso modo.
+A path that leaves the root is an error, and not only when it tries with `..`: the path is really
+resolved before the comparison, so a symbolic link placed inside the root pointing outside is
+refused in the same way.
 
 ```
 RuntimeError[io]
-  Path '../segreto.txt' escapes root 'dati'.
+  Path '../secret.txt' escapes root 'data'.
 ```
 
-## Le funzioni
+## The functions
 
-| Funzione | Cosa fa |
+| Function | What it does |
 | --- | --- |
-| `roots()` | i nomi delle radici configurate |
-| `writable(radice)` | se ci si può scrivere |
-| `exists(radice, percorso)` | se il file o la cartella c'è |
-| `is_directory(radice, percorso)` | se è una cartella |
-| `list(radice, percorso)` | i nomi dentro una cartella, ordinati |
-| `read_text(radice, percorso)` | tutto il contenuto come stringa |
-| `read_lines(radice, percorso)` | una lista di righe |
-| `read_json(radice, percorso)` | il contenuto interpretato come json |
-| `write_text(radice, percorso, testo)` | scrive, creando le cartelle che mancano |
-| `append_text(radice, percorso, testo)` | aggiunge in fondo |
-| `write_json(radice, percorso, valore)` | scrive il valore come json |
-| `make_directory(radice, percorso)` | crea una cartella e le sue intermedie |
-| `delete_file(radice, percorso)` | cancella un file o una cartella **vuota** |
-| `size(radice, percorso)` | dimensione in byte, o `null` se non esiste |
-| `modified(radice, percorso)` | ultima modifica in millisecondi, o `null` |
+| `roots()` | the names of the configured roots |
+| `writable(root)` | whether it can be written to |
+| `exists(root, path)` | whether the file or folder is there |
+| `is_directory(root, path)` | whether it is a folder |
+| `list(root, path)` | the names inside a folder, sorted |
+| `read_text(root, path)` | the whole content as a string |
+| `read_lines(root, path)` | a list of lines |
+| `read_json(root, path)` | the content read as json |
+| `write_text(root, path, text)` | writes, creating the missing folders |
+| `append_text(root, path, text)` | appends at the end |
+| `write_json(root, path, value)` | writes the value as json |
+| `make_directory(root, path)` | creates a folder and its intermediate ones |
+| `delete_file(root, path)` | deletes a file or an **empty** folder |
+| `size(root, path)` | size in bytes, or `null` when it does not exist |
+| `modified(root, path)` | last modification in milliseconds, or `null` |
 
-`list` non è ricorsiva e `delete_file` non cancella alberi. Sono le due scelte in cui una comodità in
-più si paga con un incidente: una ricorsione su una radice grande blocca il tick senza che chi l'ha
-scritta se ne accorga, e una cancellazione ricorsiva dietro un nome corto è il modo più facile di
-perdere dati per un percorso sbagliato di un carattere. Chi vuole scendere o cancellare un albero lo
-scrive un livello alla volta — e mentre lo scrive, lo vede.
+`list` is not recursive and `delete_file` does not delete trees. Those are the two places where one
+more convenience is paid for with an accident: a recursion over a big root blocks the tick without
+the author noticing, and a recursive deletion behind a short name is the easiest way to lose data to
+a path that is wrong by one character. Whoever wants to walk down or delete a tree writes it one
+level at a time — and while writing it, sees it.
 
-Si chiama `delete_file` e non `delete` perché `delete` è già quello che toglie un elemento da una
-lista o da una mappa.
+It is called `delete_file` and not `delete` because `delete` is already the one that removes an
+element from a list or a map.
 
-## Errori
+## Errors
 
-Gli errori del disco sono `io_exception`, quindi si catturano:
+Disk errors are `io_exception`, so they can be caught:
 
 ```
 try(
-    io.read_text('dati', 'manca.txt'),
-    'io_exception', 'il file non c\'e\''
+    io.read_text('data', 'missing.txt'),
+    'io_exception', 'the file is not there'
 );
 ```
 
-Le violazioni dei confini invece **non** si catturano: una radice sconosciuta, un percorso che esce,
-una scrittura su una radice di sola lettura sono errori del programma, non condizioni da gestire.
+Boundary violations, on the other hand, **cannot** be caught: an unknown root, a path that escapes, a
+write on a read-only root are errors of the program, not conditions to handle.

@@ -1,99 +1,99 @@
 # `core.mc.block`
 
-Leggere e scrivere i blocchi del mondo.
+Reading and writing the blocks of the world.
 
 ```
 import "core.mc.block" as block;
 
-block.block([10, 64, 10]);                             // il blocco in quel punto
+block.block([10, 64, 10]);                             // the block at that point
 block.set([10, 65, 10], 'oak_stairs', 'facing', 'north');
 block.block_state([10, 65, 10]);                       // {'facing' -> 'north', ...}
 ```
 
-Una posizione si scrive come lista `[x, y, z]` o come tre argomenti sciolti: le due forme sono
-equivalenti ovunque nel layer di gioco.
+A position is written as a list `[x, y, z]` or as three loose arguments: the two forms are equivalent
+everywhere in the game layer.
 
-Un valore blocco stampato è il suo nome (`'minecraft:stone'`), quindi si può confrontare, mettere in
-una mappa e salvare in json senza convertirlo.
+A block value printed is its name (`'minecraft:stone'`), so it can be compared, put in a map and
+saved to json without converting it.
 
-## Leggere
+## Reading
 
 ### `block(pos)`
-Il blocco in quella posizione. Confrontato con una stringa risponde sul nome.
+The block at that position. Compared with a string it answers on the name.
 
-### `block_state(pos)` · `block_state(pos, proprietà)`
-Le proprietà del blocco come mappa, o il valore di una sola proprietà.
+### `block_state(pos)` · `block_state(pos, property)`
+The properties of the block as a map, or the value of a single property.
 
 ### `block_properties(pos)`
-I nomi delle proprietà che quel blocco ha.
+The names of the properties that block has.
 
-### `property(pos, nome)`
-Il valore di una proprietà, `null` se il blocco non ce l'ha.
+### `property(pos, name)`
+The value of a property, `null` when the block does not have it.
 
 ### `block_data(pos)`
-Il NBT del block entity, `null` se quel blocco non ne ha uno.
+The NBT of the block entity, `null` when that block does not have one.
 
 ### `block_tags(pos)` · `block_tags(pos, tag)`
-I tag a cui il blocco appartiene, o se appartiene a quello dato.
+The tags the block belongs to, or whether it belongs to the given one.
 
 ### `block_list()` · `block_list(tag)`
-Tutti i blocchi registrati, o quelli di un tag.
+Every registered block, or the ones of a tag.
 
-## Proprietà fisiche
+## Physical properties
 
 ### `solid(pos)` · `air(pos)` · `liquid(pos)`
-Se il blocco è solido, aria, o un liquido.
+Whether the block is solid, air, or a liquid.
 
 ### `flammable(pos)` · `transparent(pos)`
-Se brucia e se lascia passare la luce.
+Whether it burns and whether it lets light through.
 
 ### `blocks_movement(pos)` · `suffocates(pos)`
-Se ferma il movimento, e se soffoca chi ci sta dentro.
+Whether it stops movement, and whether it suffocates whoever is inside it.
 
 ### `hardness(pos)` · `blast_resistance(pos)`
-Quanto è duro da rompere e quanto resiste alle esplosioni.
+How hard it is to break and how well it resists explosions.
 
 ### `block_sound(pos)` · `material(pos)` · `map_colour(pos)`
-Gruppo di suoni, materiale e colore sulla mappa.
+Sound group, material and colour on the map.
 
 ### `ticks_randomly(pos)` · `power(pos)`
-Se riceve tick casuali, e il segnale di redstone che emette.
+Whether it gets random ticks, and the redstone signal it emits.
 
-## Luce
+## Light
 
 ### `light(pos)` · `block_light(pos)` · `sky_light(pos)` · `effective_light(pos)` · `emitted_light(pos)`
-I vari livelli di luce in quel punto: totale, da blocchi, dal cielo, quella che conta per lo spawn, e
-quella che il blocco stesso emette.
+The various light levels at that point: total, from blocks, from the sky, the one that counts for
+spawning, and the one the block itself emits.
 
 ### `see_sky(pos)` · `brightness(pos)`
-Se il punto vede il cielo, e la luminosità come numero fra 0 e 1.
+Whether the point sees the sky, and the brightness as a number between 0 and 1.
 
-## Scrivere
+## Writing
 
-### `set(pos, blocco, proprietà...)`
-Piazza un blocco. Le proprietà si passano a coppie nome/valore, o come mappa. Una proprietà che il
-blocco non ha è un errore, con il suggerimento del nome giusto.
+### `set(pos, block, properties...)`
+Places a block. The properties are passed as name/value pairs, or as a map. A property the block does
+not have is an error, with a suggestion of the right name.
 
-### `destroy(pos)` · `destroy(pos, -1)` · `destroy(pos, strumento)`
-Rompe il blocco: con drop, senza drop, o come se fosse stato rotto con quello strumento.
+### `destroy(pos)` · `destroy(pos, -1)` · `destroy(pos, tool)`
+Breaks the block: with drops, without drops, or as if it had been broken with that tool.
 
-### `harvest(giocatore, pos)`
-Rompe il blocco come lo romperebbe quel giocatore, rispettandone strumento e incantesimi.
+### `harvest(player, pos)`
+Breaks the block the way that player would break it, respecting their tool and enchantments.
 
-### `place_item(oggetto, pos, faccia?, considera_flag?)`
-Usa un oggetto su un blocco, come farebbe un giocatore che ci clicca sopra.
+### `place_item(item, pos, face?, consider_flags?)`
+Uses an item on a block, the way a player clicking on it would.
 
 ### `update(pos)` · `block_tick(pos)` · `random_tick(pos)`
-Forza un aggiornamento di blocco, un tick programmato o un tick casuale.
+Forces a block update, a scheduled tick or a random tick.
 
-### `without_updates(espressione)`
-Esegue l'espressione senza propagare aggiornamenti di blocco: utile per costruire in blocco senza far
-partire redstone e cadute a ogni passo.
+### `without_updates(expression)`
+Runs the expression without propagating block updates: useful to build in bulk without setting off
+redstone and falling blocks at every step.
 
-### `create_explosion(pos, potenza?, tipo?, fuoco?, sorgente?, causa?)`
-Fa esplodere qualcosa in quel punto.
+### `create_explosion(pos, power?, type?, fire?, source?, cause?)`
+Blows something up at that point.
 
-## Posizioni
+## Positions
 
-### `pos(entità)` · `pos_offset(pos, direzione, quanto?)`
-La posizione di un'entità, e una posizione spostata in una direzione.
+### `pos(entity)` · `pos_offset(pos, direction, how_much?)`
+The position of an entity, and a position shifted in a direction.

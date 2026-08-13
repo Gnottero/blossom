@@ -1,139 +1,136 @@
 # `core.mc.shape`
 
-Far vedere quello che uno script sta calcolando.
+Showing what a script is computing.
 
 ```
 import "core.mc.shape" as shape;
 
 shape.draw_shape('box', 100, {'from' -> [0, 64, 0], 'to' -> [8, 70, 8], 'color' -> 'red'});
 shape.draw_shape('sphere', 100, {'center' -> [0, 66, 0], 'radius' -> 4, 'color' -> 'cyan'});
-shape.draw_shape('label', 100, {'pos' -> [0, 70, 0], 'text' -> 'qui'});
+shape.draw_shape('label', 100, {'pos' -> [0, 70, 0], 'text' -> 'here'});
 ```
 
-## Il patto con il client
+## The deal with the client
 
-Il mod è **server-side**: si installa sul server e basta, e nessuna funzione smette di funzionare per
-chi gioca vanilla. Le forme però sono l'unica cosa che un server non può disegnare da solo — non
-esiste nessun pacchetto vanilla che dica "traccia una linea qui". Quindi:
+The mod is **server-side**: it is installed on the server and that is it, and no function stops
+working for whoever plays vanilla. Shapes, though, are the one thing a server cannot draw on its own
+— there is no vanilla packet saying "draw a line here". So:
 
-| Chi guarda | Cosa vede |
+| Who is watching | What they see |
 | --- | --- |
-| ha Blossom anche sul client | la forma vera, disegnata con le linee |
-| gioca vanilla | la stessa geometria approssimata a **particelle** |
+| has Blossom on the client too | the real shape, drawn with lines |
+| plays vanilla | the same geometry approximated with **particles** |
 
-Chi scrive lo script non deve sapere chi ha cosa: `draw_shape` decide da sola, giocatore per
-giocatore, e restituisce quanti l'hanno ricevuta come forma vera. Se ti serve saperlo prima c'è
-`has_client(giocatore)`, in [`core.mc.entity`](core.mc.entity.md) — è una domanda su un giocatore,
-non sul disegno.
+Whoever writes the script does not have to know who has what: `draw_shape` decides on its own, player
+by player, and returns how many of them got it as a real shape. If you need to know beforehand there
+is `has_client(player)`, in [`core.mc.entity`](core.mc.entity.md) — it is a question about a player,
+not about the drawing.
 
-Il client si riconosce da solo: appena entri, il server manda un saluto; un client vanilla lo scarta
-in silenzio, uno Blossom risponde. Niente da configurare.
+The client announces itself: as soon as you join, the server sends a greeting; a vanilla client drops
+it silently, a Blossom one answers. Nothing to configure.
 
-**I limiti delle particelle**, dichiarati: il colore diventa la particella che gli somiglia di più
-(le particelle vanilla non si colorano a piacere), le curve diventano poligoni, e un'etichetta non si
-può disegnare affatto — chi non ha il client riceve il testo in chat una volta sola. Un blocco o un
-item diventano una particella che ne mostra la texture nel punto giusto.
+**The limits of particles**, stated: the colour becomes the particle that looks most like it (vanilla
+particles cannot be coloured at will), curves become polygons, and a label cannot be drawn at all —
+whoever has no client gets the text in chat once. A block or an item becomes a particle showing its
+texture at the right point.
 
-### `draw_shape(tipo, durata, attributi)`
+### `draw_shape(type, duration, attributes)`
 
-`durata` è in tick. `attributi` è una mappa; quelli comuni a tutte le forme:
+`duration` is in ticks. `attributes` is a map; the ones common to every shape:
 
-| Attributo | Cosa fa | Default |
+| Attribute | What it does | Default |
 | --- | --- | --- |
-| `player` | chi la vede: un giocatore o una lista | tutti quelli nella dimensione |
-| `color` | un nome o un numero `0xRRGGBBAA`; alfa zero vuol dire "niente reticolo" | bianco |
-| `fill` | il colore del riempimento; alfa zero vuol dire "non riempire", alfa `ff` copre quello che c'è dietro | trasparente |
-| `line` | lo spessore della linea | `2.0` |
-| `follow` | un'entità (o il suo id): le coordinate diventano relative a lei | nessuna |
-| `snap` | quali assi seguono l'entità, con `d` per arrotondare al blocco | `'xyz'` |
-| `debug` | la forma si vede solo con le hitbox di debug accese | `false` |
+| `player` | who sees it: a player or a list | everyone in the dimension |
+| `color` | a name or a number `0xRRGGBBAA`; alpha zero means "no wireframe" | white |
+| `fill` | the fill colour; alpha zero means "do not fill", alpha `ff` covers what is behind | transparent |
+| `line` | the thickness of the line | `2.0` |
+| `follow` | an entity (or its id): the coordinates become relative to it | none |
+| `snap` | which axes follow the entity, with `d` to round to the block | `'xyz'` |
+| `debug` | the shape shows only with debug hitboxes turned on | `false` |
 
-I nomi di colore sono `white`, `black`, `red`, `green`, `blue`, `yellow`, `cyan`, `magenta`,
-`orange`, `grey`. Non sono solo una comodità: un colore scritto a mano in esadecimale è la cosa che
-si sbaglia più spesso, e quasi sempre finisce con il canale alfa a zero — cioè la forma non si vede,
-e sembra che la funzione non abbia funzionato.
+The colour names are `white`, `black`, `red`, `green`, `blue`, `yellow`, `cyan`, `magenta`, `orange`,
+`grey`. They are not just a convenience: a colour hand-written in hexadecimal is the thing people get
+wrong most often, and it almost always ends with the alpha channel at zero — that is, the shape is
+invisible, and it looks like the function did not work.
 
-`snap` prende una combinazione degli assi: `'xz'` segue l'entità sul piano ma lascia la quota
-scritta nello script, `'dxdydz'` la segue arrotondando al blocco. Vale solo con `follow`.
+`snap` takes a combination of the axes: `'xz'` follows the entity on the plane but leaves the height
+written in the script, `'dxdydz'` follows it rounding to the block. It only applies with `follow`.
 
-E la geometria, per tipo:
+And the geometry, by type:
 
-| Tipo | Attributi |
+| Type | Attributes |
 | --- | --- |
 | `line` | `from`, `to` |
 | `box` | `from`, `to` |
 | `sphere` | `center`, `radius`, `level` |
 | `cylinder` | `center`, `radius`, `height`, `axis` (`'x'`/`'y'`/`'z'`, default `'y'`), `level` |
-| `label` | `pos`, `text` (o `value`), `size`, `align`, `indent`, `height`, `raise`, `tilt`, `lean`, `turn`, `facing`, `doublesided` |
+| `label` | `pos`, `text` (or `value`), `size`, `align`, `indent`, `height`, `raise`, `tilt`, `lean`, `turn`, `facing`, `doublesided` |
 | `block` | `pos`, `block`, `facing`, `tilt`, `lean`, `turn`, `scale`, `blocklight`, `skylight` |
 | `item` | `pos`, `item`, `variant`, `facing`, `tilt`, `lean`, `turn`, `scale`, `blocklight`, `skylight` |
 
-`level` è quanti lati hanno i cerchi: `0` (il default) li calcola dal raggio. Vale insieme per il
-reticolo e per il riempimento — una sfera con `level` alto ha più meridiani e paralleli, non solo una
-buccia più liscia. Un cilindro di altezza `0` è un disco — il modo di disegnare un raggio a terra
-senza inventare una sesta forma.
+`level` is how many sides the circles have: `0` (the default) computes it from the radius. It applies
+to the wireframe and to the fill together — a sphere with a high `level` has more meridians and
+parallels, not just a smoother skin. A cylinder of height `0` is a disc — the way to draw a radius on
+the ground without inventing a sixth shape.
 
-Reticolo e riempimento si accendono uno indipendentemente dall'altro, con l'alfa dei rispettivi
-colori. `{'color' -> 0x00000000, 'fill' -> 0x2255ffff}` è una forma piena e liscia, senza spigoli;
-`{'fill' -> 0x2255ff80}` è la stessa cosa in trasparenza, con il reticolo bianco di default sopra.
-Un riempimento con alfa `ff` è opaco davvero: nasconde il terreno, il cielo e le nuvole che stanno
-dietro, e anche l'altra metà della forma stessa. Gli alfa intermedi li nascondono nella loro
-proporzione: dietro un riempimento a metà, una nuvola si vede a metà. Chi non ha il client vede
-comunque la sagoma a particelle, che prende il colore del riempimento quando il reticolo è spento.
+Wireframe and fill turn on independently of each other, through the alpha of their colours.
+`{'color' -> 0x00000000, 'fill' -> 0x2255ffff}` is a full, smooth shape with no edges;
+`{'fill' -> 0x2255ff80}` is the same thing in transparency, with the default white wireframe on top.
+A fill with alpha `ff` is really opaque: it hides the ground, the sky and the clouds behind it, and
+the other half of the shape itself too. Intermediate alphas hide them in proportion: behind a
+half-transparent fill, a cloud shows half. Whoever has no client still sees the outline in particles,
+which takes the colour of the fill when the wireframe is off.
 
-Le attribute dell'etichetta: `size` è la dimensione del carattere (default `10`), `align` vale
-`'center'`, `'left'` o `'right'`, `indent`/`height`/`raise` la spostano nelle tre direzioni in unità
-di font, `tilt`/`lean`/`turn` la ruotano in gradi, `facing` è `'player'` (default), `'camera'` o una
-direzione fissa (`'north'`, `'south'`, `'east'`, `'west'`, `'up'`, `'down'`), `doublesided` la rende
-leggibile anche da dietro. Il `fill` di un'etichetta è lo sfondo del testo.
+The attributes of the label: `size` is the character size (default `10`), `align` is `'center'`,
+`'left'` or `'right'`, `indent`/`height`/`raise` move it in the three directions in font units,
+`tilt`/`lean`/`turn` rotate it in degrees, `facing` is `'player'` (default), `'camera'` or a fixed
+direction (`'north'`, `'south'`, `'east'`, `'west'`, `'up'`, `'down'`), `doublesided` makes it
+readable from behind too. The `fill` of a label is the background of the text.
 
-`text` accetta anche un testo formattato di [`core.mc.text`](core.mc.text.md), e in quel caso i suoi
-colori e la sua formattazione si vedono nel mondo. Chi non ha il client riceve comunque il testo in
-chat, con lo stesso stile.
+`text` also takes formatted text from [`core.mc.text`](core.mc.text.md), and in that case its colours
+and formatting show in the world. Whoever has no client still gets the text in chat, with the same
+style.
 
-### Blocchi e item a mezz'aria
+### Blocks and items in mid-air
 
-`block` e `item` disegnano il modello vero del gioco dove nel mondo non c'è niente: un blocco
-fantasma per far vedere dove andrà un pezzo di costruzione, un item che segna un punto.
+`block` and `item` draw the real model of the game where there is nothing in the world: a ghost block
+to show where a piece of a build will go, an item marking a point.
 
 ```
 shape.draw_shape('block', 100, {'pos' -> [0, 65, 0], 'block' -> 'chest[facing=north]'});
 shape.draw_shape('item', 100, {'pos' -> [0, 67, 0], 'item' -> 'diamond_sword', 'variant' -> 'ground'});
 ```
 
-`block` prende il blocco come lo si scrive (`'chest[facing=north]'`) o un valore blocco preso dal
-mondo — nel secondo caso si porta dietro i suoi dati, quindi un baule disegnato così ha il coperchio
-e un cartello il suo testo. `item` prende il nome dell'item o un item con il suo NBT, e i suoi data
-component si vedono: un'arma incantata luccica.
+`block` takes the block as it is written (`'chest[facing=north]'`) or a block value taken from the
+world — in the second case it carries its data along, so a chest drawn this way has its lid and a
+sign its text. `item` takes the name of the item or an item with its NBT, and its data components
+show: an enchanted weapon glints.
 
-Le attribute della posa: `facing` è come per l'etichetta ma il default è `'north'`,
-`tilt`/`lean`/`turn` ruotano in gradi, `scale` è un numero solo o uno per asse (`[2, 1, 2]`),
-`blocklight` e `skylight` vanno da `0` a `15` e impongono l'illuminazione invece di prendere quella
-del posto. `variant` vale solo per gli item ed è la posa in cui il gioco li mostra: `'none'` (il
-default), `'gui'`, `'ground'`, `'fixed'`, `'head'`, e le quattro varianti in mano.
+The attributes of the pose: `facing` is as for the label but the default is `'north'`,
+`tilt`/`lean`/`turn` rotate in degrees, `scale` is a single number or one per axis (`[2, 1, 2]`),
+`blocklight` and `skylight` go from `0` to `15` and force the lighting instead of taking the one of
+the place. `variant` applies only to items and is the pose the game shows them in: `'none'` (the
+default), `'gui'`, `'ground'`, `'fixed'`, `'head'`, and the four in-hand variants.
 
-Un blocco gira attorno al proprio centro, un item attorno al punto in cui sta. Chi non ha il client
-vede una particella `block_marker` (o `item`, per gli item) nel punto: non è il modello, ma dice
-almeno quale blocco è e dove sta.
+A block turns around its own centre, an item around the point it sits at. Whoever has no client sees
+a `block_marker` particle (or `item`, for items) at the point: it is not the model, but it says at
+least which block it is and where it is.
 
-I nomi e i significati sono quelli di Scarpet — chi arriva da lì non deve reimparare niente — ma
-stanno in una mappa invece che sparsi fra gli argomenti, e **un nome che quella forma non ha è un
-errore**, con il nome giusto suggerito, invece di un default silenzioso.
+The names and the meanings are the ones of Scarpet — whoever comes from there has nothing to relearn
+— but they live in a map instead of being spread across the arguments, and **a name that shape does
+not have is an error**, with the right name suggested, instead of a silent default.
 
-Sono sette tipi perché sono le cose che servono a far vedere qualcosa che uno script sta calcolando:
-un percorso, un volume, un raggio, una colonna, un numero, un blocco, un item. Di Scarpet manca il
-`polygon` — facce poligonali arbitrarie - che serve a fare grafica, non a capire cosa sta facendo il
-proprio codice.
+There are seven types because they are the things needed to show what a script is computing: a path,
+a volume, a radius, a column, a number, a block, an item. What is missing from Scarpet is `polygon` —
+arbitrary polygonal faces — which is for making graphics, not for understanding what your own code is
+doing.
 
 ### `clear_shapes()`
-Dimentica le forme ancora in attesa di essere ridisegnate a particelle. Non cancella quelle già
-mandate a un client, che scadono da sole.
+Forgets the shapes still waiting to be redrawn as particles. It does not remove the ones already sent
+to a client, which expire on their own.
 
-### `shape_types()`
-I tipi che `draw_shape` accetta.
+## Installing the client
 
-## Installare il client
-
-Lo stesso jar. Messo in `mods/` di un client, aggiunge il disegno delle forme e nient'altro: nessuna
-logica di gioco sta da quella parte, e non ci deve stare — un client che decidesse qualcosa sarebbe
-un client di cui il server deve fidarsi.
+The same jar. Put in the `mods/` folder of a client, it adds the drawing of shapes and nothing else:
+no game logic lives on that side, and none should — a client that decided anything would be a client
+the server has to trust.

@@ -1,32 +1,32 @@
 # `core.string`
 
-Stringhe: costruzione, ricerca, sostituzione con espressioni regolari, codifiche.
+Strings: building, searching, replacing with regular expressions, encodings.
 
 ```
 import "core.string" as string;
 
-string.upper('ciao');                    // 'CIAO'
+string.upper('hello');                   // 'HELLO'
 string.replace('a-b-c', '-', '+');       // 'a+b+c'
 string.split('-', 'a-b-c');              // ['a', 'b', 'c']
 ```
 
-### Costruzione e formato
+### Building and formatting
 
-`str(formato, ...)` costruisce una stringa: `%s` inserisce un valore, `%d` un intero, `%.2f` un
-decimale con due cifre. Con un solo argomento restituisce la rappresentazione testuale del valore.
+`str(format, ...)` builds a string: `%s` inserts a value, `%d` an integer, `%.2f` a decimal with two
+digits. With a single argument it returns the textual representation of the value.
 
-### Maiuscole e minuscole
+### Upper and lower case
 
 `lower(s)`, `upper(s)`, `title(s)`.
 
-### Ricerca e sostituzione
+### Searching and replacing
 
-`replace(s, regex, sostituto)` sostituisce tutte le occorrenze, `replace_first(s, regex, sostituto)`
-solo la prima. Il pattern è un'espressione regolare.
+`replace(s, regex, replacement)` replaces every occurrence, `replace_first(s, regex, replacement)`
+only the first one. The pattern is a regular expression.
 
-`split(separatore, s)` divide una stringa; `join(separatore, lista)` è l'operazione inversa e vive in
+`split(separator, s)` splits a string; `join(separator, list)` is the inverse operation and lives in
 [`core.list`](core.list.md).
 
-### Codifiche
+### Encodings
 
-`encode_b64(s)` / `decode_b64(s)` per base64, `hash_code(v)` per un hash stabile di qualunque valore.
+`encode_b64(s)` / `decode_b64(s)` for base64, `hash_code(v)` for a stable hash of any value.

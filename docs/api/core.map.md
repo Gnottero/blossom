@@ -1,6 +1,6 @@
 # `core.map`
 
-Mappe: chiavi, valori e coppie.
+Maps: keys, values and pairs.
 
 ```
 import "core.map" as map;
@@ -10,16 +10,16 @@ map.keys(m);            // ['a', 'b']
 map.has(m, 'a');        // true
 ```
 
-Le mappe si scrivono `{chiave -> valore, ...}` e si leggono con `:` (`m:'a'`), che è sintassi.
+Maps are written `{key -> value, ...}` and read with `:` (`m:'a'`), which is syntax.
 
-### Lettura
+### Reading
 
-`keys(m)`, `values(m)`, `pairs(m)` — quest'ultima restituisce una lista di coppie `[chiave, valore]`.
-`get(m, chiave)`, `has(m, chiave)`, `length(m)`.
+`keys(m)`, `values(m)`, `pairs(m)` — the last one returns a list of `[key, value]` pairs.
+`get(m, key)`, `has(m, key)`, `length(m)`.
 
-### Modifica
+### Modification
 
-`put(m, chiave, valore)`, `delete(m, chiave)`.
+`put(m, key, value)`, `delete(m, key)`.
 
-Le operazioni singole su una mappa condivisa fra più task sono atomiche; una *sequenza* di operazioni
-non lo è — per quella serve `synchronize` di [`core.task`](core.task.md).
+Single operations on a map shared between several tasks are atomic; a *sequence* of operations is
+not — for that there is `synchronize` in [`core.task`](core.task.md).

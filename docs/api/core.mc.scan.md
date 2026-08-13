@@ -1,31 +1,31 @@
 # `core.mc.scan`
 
-Percorrere volumi di blocchi senza scrivere tre cicli annidati.
+Walking over volumes of blocks without writing three nested loops.
 
 ```
 import "core.mc.scan" as scan;
 import "core.mc.block" as block;
 
-// tutti i blocchi in un cubo 5x5x5 attorno all'origine
+// every block in a 5x5x5 cube around the origin
 scan.scan([0, 64, 0], [2, 2, 2], block.set(_x, _y, _z, 'stone'));
 ```
 
-Dentro il corpo, `_x`, `_y`, `_z` sono le coordinate del punto corrente e `_` è il blocco.
+Inside the body, `_x`, `_y`, `_z` are the coordinates of the current point and `_` is the block.
 
-### `scan(centro, raggi, espressione)` · `scan(centro, raggi_giù, raggi_su, espressione)`
-Percorre un parallelepipedo attorno al centro. I raggi sono **tre numeri** o una tripla, come le
-posizioni: `scan(pos, [2, 1, 2], ...)` e `scan(pos, 2, 1, 2, ...)` sono la stessa cosa. Con due
-gruppi di raggi il volume può essere asimmetrico.
+### `scan(centre, radii, expression)` · `scan(centre, radii_down, radii_up, expression)`
+Walks over a box around the centre. The radii are **three numbers** or a triple, like positions:
+`scan(pos, [2, 1, 2], ...)` and `scan(pos, 2, 1, 2, ...)` are the same thing. With two groups of
+radii the volume can be asymmetric.
 
-Restituisce quante volte l'espressione è risultata vera: contare i blocchi che soddisfano una
-condizione è una riga sola.
+It returns how many times the expression came out true: counting the blocks that satisfy a condition
+is a single line.
 
-### `volume(da, a, espressione)`
-Come `scan`, ma il volume si dà con due angoli invece che con centro e raggio.
+### `volume(from, to, expression)`
+Like `scan`, but the volume is given with two corners instead of centre and radius.
 
-### `rect(centro, raggio?, salto?)` · `diamond(centro, raggio?, altezza?)`
-Le posizioni di un parallelepipedo o di un ottaedro, come lista pigra: si consumano man mano, senza
-costruire in memoria tutto il volume.
+### `rect(centre, radius?, skip?)` · `diamond(centre, radius?, height?)`
+The positions of a box or of an octahedron, as a lazy list: they are consumed as they go, without
+building the whole volume in memory.
 
 ### `neighbours(pos)`
-Le sei posizioni adiacenti.
+The six adjacent positions.

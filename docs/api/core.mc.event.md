@@ -1,61 +1,62 @@
 # `core.mc.event`
 
-Reagire a quello che succede nel mondo, e far succedere qualcosa fra app diverse.
+Reacting to what happens in the world, and making something happen between different apps.
 
 ```
 import "core.mc.event" as event;
 
-fn su_blocco_rotto(giocatore, blocco) -> (
-    print(giocatore, 'hai rotto ' + blocco);
-    false           // vero = la rottura viene annullata
+fn on_block_broken(player, block) -> (
+    print(player, 'you broke ' + block);
+    false           // true = the breaking is cancelled
 );
 
-event.on('player_breaks_block', su_blocco_rotto);
+event.on('player_breaks_block', on_block_broken);
 ```
 
-La funzione si passa **come valore**, non per nome in una stringa: così resta legata al modulo che
-l'ha definita e continua a risolversi anche quando la chiama il mod, che di quel modulo non sa nulla.
+The function is passed **as a value**, not by name in a string: that way it stays bound to the module
+that defined it and keeps resolving even when the caller is the mod, which knows nothing about that
+module.
 
-Il numero di argomenti viene controllato al momento della registrazione: un handler con la firma
-sbagliata è un errore di caricamento, non una riga nel log tre ore dopo.
+The number of arguments is checked at registration time: a handler with the wrong signature is a load
+error, not a line in the log three hours later.
 
-Un handler che restituisce un valore **vero** annulla l'azione, se l'evento è annullabile. Non serve
-nessuna stringa magica.
+A handler returning a **true** value cancels the action, when the event is cancellable. No magic
+string needed.
 
-Gli handler di un'app spariscono quando l'app viene ricaricata o scaricata.
+The handlers of an app disappear when the app is reloaded or unloaded.
 
-## Funzioni
+## Functions
 
-### `on(evento, funzione)` · `on(evento, funzione, argomenti_fissi)` · `on(evento, funzione, argomenti_fissi, giocatore)`
-Registra un handler. Gli argomenti fissi arrivano in coda a quelli dell'evento. Con il quarto
-argomento l'handler scatta solo per quel giocatore.
+### `on(event, function)` · `on(event, function, fixed_arguments)` · `on(event, function, fixed_arguments, player)`
+Registers a handler. The fixed arguments arrive after the ones of the event. With the fourth argument
+the handler fires only for that player.
 
-### `off()` · `off(evento)`
-Toglie tutti gli handler dell'app, o solo quelli di un evento.
+### `off()` · `off(event)`
+Removes every handler of the app, or only the ones of an event.
 
-### `available()` · `listeners(evento)` · `describe(evento)`
-I nomi degli eventi, quanti ascoltano un evento, e la sua scheda: arietà, annullabilità, ascoltatori.
+### `available()` · `listeners(event)` · `describe(event)`
+The names of the events, how many listen to an event, and its card: arity, cancellability, listeners.
 
-### `handle_event(evento, funzione, argomenti_fissi...)`
-Come `on`, ma accetta anche un nome che il gioco non conosce: quello diventa un **evento di
-applicazione**, dichiarato dalla prima app che lo ascolta.
+### `handle_event(event, function, fixed_arguments...)`
+Like `on`, but it also takes a name the game does not know: that becomes an **application event**,
+declared by the first app that listens to it.
 
-### `signal_event(evento, giocatore_o_null, argomenti...)`
-Genera un evento di applicazione. Restituisce quante app lo ascoltavano, `null` se quell'evento non
-esiste. È il modo per far parlare due app senza che l'una conosca le funzioni dell'altra.
+### `signal_event(event, player_or_null, arguments...)`
+Raises an application event. It returns how many apps were listening, `null` when that event does not
+exist. It is the way to make two apps talk without either knowing the functions of the other.
 
-### `schedule(ritardo_in_tick, funzione, argomenti...)`
-Chiama una funzione fra N tick. I tempi sono in tick e non in millisecondi: uno script che aspetta
-venti tick aspetta lo stesso tempo *di gioco* anche se il server rallenta.
+### `schedule(delay_in_ticks, function, arguments...)`
+Calls a function N ticks from now. The times are in ticks and not in milliseconds: a script waiting
+twenty ticks waits the same amount of *game* time even when the server slows down.
 
-## Il catalogo
+## The catalogue
 
-Il catalogo è chiuso: registrarsi a un nome che non c'è è un errore di caricamento, con il nome più
-vicino come suggerimento.
+The catalogue is closed: registering on a name that is not there is a load error, with the closest
+name as a suggestion.
 
 ### Server
 
-| Evento | Argomenti | Annullabile |
+| Event | Arguments | Cancellable |
 | --- | --- | --- |
 | `server_starts` | | |
 | `server_shuts_down` | | |
@@ -63,9 +64,9 @@ vicino come suggerimento.
 | `tick_nether` | | |
 | `tick_ender` | | |
 
-### Giocatore: movimento e stato
+### Player: movement and state
 
-| Evento | Argomenti | Annullabile |
+| Event | Arguments | Cancellable |
 | --- | --- | --- |
 | `player_jumps` | `player` | |
 | `player_deploys_elytra` | `player` | |
@@ -76,88 +77,88 @@ vicino come suggerimento.
 | `player_stops_sneaking` | `player` | |
 | `player_starts_sprinting` | `player` | |
 | `player_stops_sprinting` | `player` | |
-| `player_swaps_hands` | `player` | sì |
+| `player_swaps_hands` | `player` | yes |
 | `player_swings_hand` | `player, hand` | |
 | `player_switches_slot` | `player, from, to` | |
 
-### Giocatore: blocchi e oggetti
+### Player: blocks and items
 
-| Evento | Argomenti | Annullabile |
+| Event | Arguments | Cancellable |
 | --- | --- | --- |
-| `player_uses_item` | `player, item, hand` | sì |
-| `player_clicks_block` | `player, block, facing` | sì |
-| `player_right_clicks_block` | `player, item, hand, block, face, hitvec` | sì |
+| `player_uses_item` | `player, item, hand` | yes |
+| `player_clicks_block` | `player, block, facing` | yes |
+| `player_right_clicks_block` | `player, item, hand, block, face, hitvec` | yes |
 | `player_interacts_with_block` | `player, hand, block, face, hitvec` | |
-| `player_placing_block` | `player, item, hand, block` | sì |
+| `player_placing_block` | `player, item, hand, block` | yes |
 | `player_places_block` | `player, item, hand, block` | |
-| `player_breaks_block` | `player, block` | sì |
-| `player_releases_item` | `player, item, hand` | sì |
-| `player_finishes_using_item` | `player, item, hand` | sì |
+| `player_breaks_block` | `player, block` | yes |
+| `player_releases_item` | `player, item, hand` | yes |
+| `player_finishes_using_item` | `player, item, hand` | yes |
 | `player_picks_up_item` | `player, item` | |
-| `player_drops_item` | `player` | sì |
-| `player_drops_stack` | `player` | sì |
-| `player_chooses_recipe` | `player, recipe, full_stack` | sì |
+| `player_drops_item` | `player` | yes |
+| `player_drops_stack` | `player` | yes |
+| `player_chooses_recipe` | `player, recipe, full_stack` | yes |
 
-### Giocatore: entità e danni
+### Player: entities and damage
 
-| Evento | Argomenti | Annullabile |
+| Event | Arguments | Cancellable |
 | --- | --- | --- |
-| `player_interacts_with_entity` | `player, entity, hand` | sì |
-| `player_attacks_entity` | `player, entity` | sì |
+| `player_interacts_with_entity` | `player, entity, hand` | yes |
+| `player_attacks_entity` | `player, entity` | yes |
 | `player_collides_with_entity` | `player, entity` | |
 | `player_trades` | `player, merchant, buy, buy_b, sell` | |
-| `player_takes_damage` | `player, amount, source, source_entity` | sì |
-| `player_deals_damage` | `player, amount, entity` | sì |
+| `player_takes_damage` | `player, amount, source, source_entity` | yes |
+| `player_deals_damage` | `player, amount, entity` | yes |
 | `player_dies` | `player` | |
 | `player_respawns` | `player` | |
 | `player_changes_dimension` | `player, from_pos, to_pos, from_dimension, to_dimension` | |
 
-### Giocatore: sessione e chat
+### Player: session and chat
 
-| Evento | Argomenti | Annullabile |
+| Event | Arguments | Cancellable |
 | --- | --- | --- |
 | `player_connects` | `player` | |
 | `player_disconnects` | `player, reason` | |
-| `player_message` | `player, message` | sì |
-| `player_command` | `player, command` | sì |
+| `player_message` | `player, message` | yes |
+| `player_command` | `player, command` | yes |
 | `statistic` | `player, category, event, value` | |
 
-### Mondo
+### World
 
-| Evento | Argomenti | Annullabile |
+| Event | Arguments | Cancellable |
 | --- | --- | --- |
 | `lightning` | `pos, skeleton_horse` | |
-| `explosion` | `pos, power, source, attacker, block_interaction, create_fire` | sì |
+| `explosion` | `pos, power, source, attacker, block_interaction, create_fire` | yes |
 | `explosion_outcome` | `... , blocks, entities` | |
-| `block_dispenses` | `pos, item` | sì |
-| `bell_rings` | `pos, direction, entity` | sì |
+| `block_dispenses` | `pos, item` | yes |
+| `bell_rings` | `pos, direction, entity` | yes |
 | `chunk_unloaded` | `x, z` | |
 | `chunk_generated` | `x, z` | |
-| `chunk_loaded` | `x, z, generato` | |
+| `chunk_loaded` | `x, z, generated` | |
 | `entity_loads` | `entity` | |
-| `piston_extends` | `piston, facing, blocks` | sì |
-| `piston_retracts` | `piston, facing, blocks` | sì |
-| `block_forms` | `previous_block, new_block` | sì |
+| `piston_extends` | `piston, facing, blocks` | yes |
+| `piston_retracts` | `piston, facing, blocks` | yes |
+| `block_forms` | `previous_block, new_block` | yes |
 
-`entity_loads` scatta ogni volta che un'entità compare nel mondo: riletta dal disco col suo chunk,
-generata dal mondo, o evocata da qualcuno. Se ti interessa solo qualche tipo, usa
-`entity_load_handler` di [`core.mc.entity`](core.mc.entity.md), che filtra prima di chiamarti.
+`entity_loads` fires every time an entity appears in the world: read back from disk with its chunk,
+generated by the world, or summoned by somebody. If only a few types matter to you, use
+`entity_load_handler` from [`core.mc.entity`](core.mc.entity.md), which filters before calling you.
 
-`chunk_generated` scatta quando un chunk nasce per la prima volta; `chunk_loaded` ogni volta che un
-chunk entra in memoria, con `generato` a dire se è stato creato adesso o riletto dal disco. I due
-handler vengono chiamati sul thread del server anche se il chunk è stato preparato altrove, quindi
-dentro si può fare tutto quello che si fa in un evento normale.
+`chunk_generated` fires when a chunk is born for the first time; `chunk_loaded` every time a chunk
+enters memory, with `generated` saying whether it was created now or read back from disk. Both
+handlers are called on the server thread even when the chunk was prepared elsewhere, so inside them
+you can do everything you do in an ordinary event.
 
-`piston_extends` e `piston_retracts` arrivano **prima** che i blocchi si muovano, e `blocks` è
-l'elenco di quelli che si muoverebbero: annullare ferma il movimento. `piston_retracts` scatta solo
-quando la retrazione tirerebbe davvero qualcosa — su un pistone appiccicoso, con un blocco attaccato
-e tirabile — altrimenti l'elenco sarebbe una bugia.
+`piston_extends` and `piston_retracts` arrive **before** the blocks move, and `blocks` is the list of
+the ones that would move: cancelling stops the movement. `piston_retracts` fires only when the
+retraction would really pull something — on a sticky piston, with a block attached and pullable —
+otherwise the list would be a lie.
 
-`block_forms` copre le formazioni per contatto fra fluidi: cemento (che cade nell'acqua o ne viene
-toccato), ostruzione e pietrisco dove l'acqua incontra la lava, basalto sul soul soil. I due
-argomenti sono lo stesso posto: com'era e come starebbe per diventare.
+`block_forms` covers the formations by contact between fluids: concrete (falling into water or
+touched by it), obsidian and cobblestone where water meets lava, basalt on soul soil. The two
+arguments are the same place: how it was and how it is about to become.
 
-## Eventi di una singola entità
+## Events of a single entity
 
-Sono in [`core.mc.entity`](core.mc.entity.md), con `entity_event`: `on_tick`, `on_removed`,
-`on_death`, `on_damage`, `on_move`. Vivono dentro l'entità e spariscono con lei.
+They are in [`core.mc.entity`](core.mc.entity.md), with `entity_event`: `on_tick`, `on_removed`,
+`on_death`, `on_damage`, `on_move`. They live inside the entity and disappear with it.

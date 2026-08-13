@@ -1,75 +1,76 @@
 # `core.mc.text`
 
-Parlare a chi gioca.
+Talking to the people playing.
 
 ```
 import "core.mc.text" as text;
 
-text.print(player, 'ciao');
-text.print(player, text.format('rb attenzione', 'w  qualcosa è andato storto'));
-text.display_title(player, 'title', text.format('gb Livello 2'));
+text.print(player, 'hello');
+text.print(entity.player('all'), 'hello everyone');
+text.print(player, text.format('rb watch out', 'w  something went wrong'));
+text.display_title(player, 'title', text.format('gb Level 2'));
 ```
 
-### `print(messaggio)` · `print(destinatario, messaggio)`
-Scrive un messaggio: a chi ha lanciato lo script, o a un giocatore preciso. Restituisce il messaggio,
-così si può infilare in mezzo a un'espressione senza spezzarla.
+### `print(message)` · `print(target, message)`
+Writes a message: to whoever launched the script, or to a given target. The target is a player or a
+**list of players**, so the list `entity.player('all')` returns goes in as it is, with no loop around
+it. It returns the message, so it can be slipped in the middle of an expression without breaking it.
 
-### `format(pezzi...)`
-Testo formattato. Ogni pezzo è `'stile testo'`, dove lo stile è fatto di lettere:
+### `format(pieces...)`
+Formatted text. Every piece is `'style text'`, where the style is made of letters:
 
 | | | | |
 | --- | --- | --- | --- |
-| `w` bianco | `y` giallo | `m` magenta | `r` rosso |
-| `c` ciano | `l` verde chiaro | `t` blu | `f` grigio scuro |
-| `g` grigio | `d` oro | `p` viola | `n` rosso scuro |
-| `q` ciano scuro | `e` verde scuro | `v` blu scuro | `k` nero |
-| `i` corsivo | `b` grassetto | `u` sottolineato | `s` barrato |
-| `o` offuscato | `#rrggbb` colore esatto | | |
+| `w` white | `y` yellow | `m` magenta | `r` red |
+| `c` cyan | `l` light green | `t` blue | `f` dark grey |
+| `g` grey | `d` gold | `p` purple | `n` dark red |
+| `q` dark cyan | `e` dark green | `v` dark blue | `k` black |
+| `i` italic | `b` bold | `u` underlined | `s` struck through |
+| `o` obfuscated | `#rrggbb` exact colour | | |
 
-Un pezzo che comincia con un simbolo attacca un'azione al pezzo precedente: `^` testo al passaggio
-del mouse, `!` esegue un comando, `?` lo scrive in chat, `@` apre un indirizzo, `&` copia negli
-appunti.
+A piece starting with a symbol attaches an action to the previous piece: `^` text on hover, `!` runs
+a command, `?` writes it in chat, `@` opens an address, `&` copies to the clipboard.
 
-### `display_title(destinatari, tipo, testo?, dissolvenza?, durata?, uscita?)`
-Scrive in grande sullo schermo. I tipi sono `'title'`, `'subtitle'`, `'actionbar'`, `'player_list_header'`,
-`'player_list_footer'`, e `'clear'`/`'reset'` per togliere.
+### `display_title(targets, type, text?, fade_in?, stay?, fade_out?)`
+Writes big on the screen. The types are `'title'`, `'subtitle'`, `'actionbar'`,
+`'player_list_header'`, `'player_list_footer'`, and `'clear'`/`'reset'` to remove.
 
-### `hud(giocatori, testo, durata?)` · `hud(giocatore)`
-Una riga di testo sopra la hotbar.
+### `hud(players, text, duration?)` · `hud(player)`
+A line of text above the hotbar.
 
 ```
-text.hud(giocatore, 'minerali trovati: ' + trovati);           // resta finché non la cambi
-text.hud(giocatore, 'zona instabile', 60);                     // resta 3 secondi, poi va via da sola
-text.hud(entity.player('all'), text.format('y attenzione'));
-text.hud(giocatore, null);                                     // via adesso
-text.hud(giocatore);                                           // cosa sta vedendo, o null
+text.hud(player, 'ores found: ' + found);              // stays until you change it
+text.hud(player, 'unstable area', 60);                 // stays 3 seconds, then goes on its own
+text.hud(entity.player('all'), text.format('y watch out'));
+text.hud(player, null);                                // gone now
+text.hud(player);                                      // what they are seeing, or null
 ```
 
-`durata` è in tick. **Senza, la riga resta**: non c'è nessuna durata di default nascosta. Sono due
-usi diversi e tutti e due normali — un contatore accompagna il giocatore, un avviso deve andarsene da
-solo — e una durata implicita avrebbe rotto il primo. La scadenza viene controllata ad ogni tick,
-quindi "resta 5 tick" resta 5 tick.
+`duration` is in ticks. **Without it, the line stays**: there is no hidden default duration. They are
+two different uses and both are normal — a counter keeps the player company, a warning has to leave
+on its own — and an implicit duration would have broken the first one. The expiry is checked every
+tick, so "stays 5 ticks" stays 5 ticks.
 
-Una durata di zero o negativa è un errore, non "sparisce subito": chi la scrive quasi sempre ha
-calcolato male un intervallo, e farla sparire in silenzio nasconderebbe il conto sbagliato. Per
-togliere la riga c'è `hud(giocatore, null)`, che lo dice.
+A duration of zero or less is an error, not "disappears immediately": whoever writes it has almost
+always miscomputed an interval, and making it disappear silently would hide the wrong arithmetic. To
+remove the line there is `hud(player, null)`, which says so.
 
-Accetta lo stesso testo di `format`, quindi colori e stili funzionano. Restituisce quanti giocatori
-sono stati toccati.
+It takes the same text as `format`, so colours and styles work. It returns how many players were
+touched.
 
-**Come funziona, e cosa comporta.** Il gioco non ha nessun pacchetto che dica "tieni questo testo
-lì": il titolo e la action bar hanno una durata e poi svaniscono. Questa funzione rimanda la action
-bar prima che sfumi, così la riga resta — e siccome è tutto vanilla, **funziona su qualunque client**,
-senza installare niente. Il testo parte subito quando lo cambi, e viene rimandato mezzo secondo alla
-volta finché deve restare: un pacchetto ogni dieci tick per giocatore, non uno per tick.
+**How it works, and what it implies.** The game has no packet saying "keep this text there": the
+title and the action bar have a duration and then fade. This function resends the action bar before
+it fades, so the line stays — and since it is all vanilla, it **works on any client**, with nothing
+installed. The text goes out immediately when you change it, and is resent half a second at a time
+for as long as it has to stay: one packet every ten ticks per player, not one per tick.
 
-Tre conseguenze, dichiarate:
+Three consequences, stated:
 
-- **la riga è una sola.** È lo spazio della action bar, e quello è.
-- **condivide lo spazio con tutto il resto.** Il nome dell'oggetto che compare cambiando slot della
-  hotbar, un `display_title(..., 'actionbar', ...)`, un altro mod: la riga della HUD li sovrascrive
-  entro mezzo secondo. È quello che serve a una HUD, ma è bene saperlo.
-- **la posizione non si sceglie.** Sopra la hotbar, punto.
+- **there is only one line.** It is the space of the action bar, and that is that.
+- **it shares the space with everything else.** The item name appearing when changing hotbar slot, a
+  `display_title(..., 'actionbar', ...)`, another mod: the HUD line overwrites them within half a
+  second. That is what a HUD needs, but it is worth knowing.
+- **the position is not up for choice.** Above the hotbar, full stop.
 
-Per qualcosa che quei limiti non li ha servirebbe del codice sul client, cioè una funzione che
-smette di esistere per chi gioca vanilla. Vedi `DECISIONI.md` D-073.
+Something without those limits would need code on the client, that is, a function that stops existing
+for whoever plays vanilla. See `DECISIONI.md` D-073.

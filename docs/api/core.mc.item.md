@@ -1,89 +1,89 @@
 # `core.mc.item`
 
-Inventari, oggetti e ricette.
+Inventories, items and recipes.
 
 ```
 import "core.mc.item" as item;
 
-item.inventory_size(player);                    // quante caselle
+item.inventory_size(player);                    // how many slots
 item.inventory_get(player, 0);                  // ['minecraft:stone', 64, {}]
 item.inventory_set(player, 0, 1, 'diamond');
 ```
 
-Un oggetto è una tripletta `[nome, quantità, nbt]`. Un inventario si indica con l'entità che lo porta
-o con la posizione del blocco che lo contiene (baule, fornace, tramoggia...).
+An item is a triple `[name, count, nbt]`. An inventory is named with the entity carrying it or with
+the position of the block containing it (chest, furnace, hopper...).
 
-### `inventory_size(inventario)`
-Quante caselle ha, `null` se lì non c'è nessun inventario.
+### `inventory_size(inventory)`
+How many slots it has, `null` when there is no inventory there.
 
-### `inventory_get(inventario, casella?)`
-Il contenuto di una casella, o l'intero inventario se la casella non viene data.
+### `inventory_get(inventory, slot?)`
+The content of a slot, or the whole inventory when the slot is not given.
 
-### `inventory_set(inventario, casella, quantità, oggetto?, nbt?)`
-Scrive una casella. Quantità `0` la svuota.
+### `inventory_set(inventory, slot, count, item?, nbt?)`
+Writes a slot. A count of `0` empties it.
 
-### `inventory_find(inventario, oggetto, da_casella?)`
-La prima casella che contiene quell'oggetto, `null` se non c'è.
+### `inventory_find(inventory, item, from_slot?)`
+The first slot containing that item, `null` when there is none.
 
-### `inventory_remove(inventario, oggetto, quantità?)`
-Toglie oggetti dall'inventario, ovunque siano.
+### `inventory_remove(inventory, item, count?)`
+Takes items out of the inventory, wherever they are.
 
-### `inventory_has_items(inventario, oggetti...)`
-Se l'inventario contiene tutto quello che serve.
+### `inventory_has_items(inventory, items...)`
+Whether the inventory holds everything needed.
 
-### `drop_item(inventario, casella, quantità?)`
-Butta per terra il contenuto di una casella.
+### `drop_item(inventory, slot, count?)`
+Throws the content of a slot on the ground.
 
-### `item_list(tag?)` · `item_tags(oggetto, tag?)` · `item_category(oggetto)`
-Gli oggetti registrati, i tag di un oggetto, e la sua categoria nel menu creativo.
+### `item_list(tag?)` · `item_tags(item, tag?)` · `item_category(item)`
+The registered items, the tags of an item, and its category in the creative menu.
 
-### `stack_limit(oggetto)` · `crafting_remaining_item(oggetto)`
-Quanto se ne impila, e cosa resta dopo averlo usato in una ricetta (il secchio vuoto, per dire).
+### `stack_limit(item)` · `crafting_remaining_item(item)`
+How high it stacks, and what is left after using it in a recipe (the empty bucket, say).
 
-### `item_display_name(oggetto)`
-Il nome mostrato in gioco, tradotto.
+### `item_display_name(item)`
+The name shown in game, translated.
 
-### `recipe_data(oggetto, tipo?)`
-Le ricette che producono quell'oggetto: ingredienti, risultato e tipo.
+### `recipe_data(item, type?)`
+The recipes producing that item: ingredients, result and type.
 
-## Data component
+## Data components
 
-Dalla 1.20.5 un oggetto non è più "id più un blocco di NBT libero": è un id più una mappa di
-**componenti tipizzati**, ognuno con il proprio codec. Leggere quei dati passando dal NBT grezzo
-funziona ancora per quello che nel NBT c'è, ma non dice quali componenti esistono, non distingue un
-valore assente da uno uguale al default, e non valida niente quando si scrive.
+Since 1.20.5 an item is no longer "id plus a block of free-form NBT": it is an id plus a map of
+**typed components**, each with its own codec. Reading that data through the raw NBT still works for
+what is in the NBT, but it does not say which components exist, does not tell an absent value from
+one equal to the default, and validates nothing when writing.
 
 ```
 import "core.mc.item" as item;
 
-item.item_components(oggetto);                      // {'minecraft:max_stack_size' -> 64, ...}
-item.item_component(oggetto, 'minecraft:damage');   // il valore, o null
-item.set_item_component(oggetto, 'minecraft:custom_name', '{"text":"Spada"}');
-item.set_item_component(oggetto, 'minecraft:damage', null);   // lo toglie
+item.item_components(item_value);                       // {'minecraft:max_stack_size' -> 64, ...}
+item.item_component(item_value, 'minecraft:damage');    // the value, or null
+item.set_item_component(item_value, 'minecraft:custom_name', '{"text":"Sword"}');
+item.set_item_component(item_value, 'minecraft:damage', null);   // removes it
 ```
 
-### `item_components(oggetto, default?)`
-Tutti i componenti, come mappa da id a valore. Con `default` a vero legge quelli che l'**oggetto ha
-di suo** invece di quelli che questa pila porta: è il confronto fra i due che dice se un valore è
-stato messo apposta o se è quello che tutti gli oggetti di quel tipo hanno.
+### `item_components(item, default?)`
+Every component, as a map from id to value. With `default` true it reads the ones the **item has of
+its own** instead of the ones this stack carries: it is the comparison between the two that says
+whether a value was set on purpose or is the one every item of that kind has.
 
-### `item_component(oggetto, nome, default?)`
-Un componente solo, o `null` se quella pila non ce l'ha.
+### `item_component(item, name, default?)`
+A single component, or `null` when that stack does not have it.
 
-### `set_item_component(oggetto, nome, valore)`
-L'oggetto con quel componente cambiato; con `valore` a `null` lo toglie. Restituisce una copia e non
-tocca l'originale — un oggetto letto da un inventario è già una copia, e far finta che scriverci
-dentro cambi il mondo sarebbe peggio che non poterlo fare.
+### `set_item_component(item, name, value)`
+The item with that component changed; with `value` at `null` it removes it. It returns a copy and
+does not touch the original — an item read from an inventory is already a copy, and pretending that
+writing into it changes the world would be worse than not being able to.
 
-Un valore che non ha senso per quel componente viene **rifiutato subito**, dal codec:
+A value that makes no sense for that component is **refused right away**, by the codec:
 
 ```
 TypeMismatchError
   The given value is not valid for component 'minecraft:damage': Not a number
 ```
 
-È il motivo per cui questi passano dai componenti tipizzati e non dal NBT: l'alternativa è un
-oggetto rotto che si scopre molto dopo, quando qualcuno prova a usarlo.
+That is why these go through typed components and not through NBT: the alternative is a broken item
+discovered much later, when somebody tries to use it.
 
 ### `component_list()`
-Gli id di tutti i componenti che questo gioco conosce.
+The ids of every component this game knows.

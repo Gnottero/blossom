@@ -1,47 +1,46 @@
 # `core.mc.effect`
 
-Suoni e particelle.
+Sounds and particles.
 
 ```
 import "core.mc.effect" as effect;
 
 effect.sound('entity.experience_orb.pickup', pos, 1, 1);
 effect.particle('flame', pos, 20, 0.2, 0.01);
-effect.particle_box('happy_villager', angolo_a, angolo_b, 1);
+effect.particle_box('happy_villager', corner_a, corner_b, 1);
 ```
 
-### `sound()` · `sound(nome, pos, volume?, tono?, categoria?)`
-Senza argomenti, i suoni disponibili. Con gli argomenti, riproduce un suono in un punto per chi è
-abbastanza vicino da sentirlo.
+### `sound()` · `sound(name, pos, volume?, pitch?, category?)`
+Without arguments, the available sounds. With the arguments, it plays a sound at a point for whoever
+is close enough to hear it.
 
-### `particle()` · `particle(nome, pos, quante?, dispersione?, velocità?, giocatore?)`
-Senza argomenti, le particelle disponibili. Con gli argomenti, ne genera in un punto - a un solo
-giocatore, se lo si indica.
+### `particle()` · `particle(name, pos, how_many?, spread?, speed?, player?)`
+Without arguments, the available particles. With the arguments, it spawns some at a point - for a
+single player, when one is named.
 
-### `particle_line(nome, da, a, densità?, giocatore?)`
-Una linea di particelle fra due punti. Restituisce quante ne ha mandate.
+### `particle_line(name, from, to, density?, player?)`
+A line of particles between two points. It returns how many it sent.
 
-### `particle_box(nome, angolo_a, angolo_b, densità?, giocatore?)`
-Le dodici spigole di un parallelepipedo: è il modo veloce di far vedere l'area su cui uno script sta
-lavorando.
+### `particle_box(name, corner_a, corner_b, density?, player?)`
+The twelve edges of a box: it is the quick way to show the area a script is working on.
 
-### `post_effect(giocatori, azione, effetto?)`
-I post-processing shader di uno o più giocatori, cioè quello che il gioco chiama `/posteffect`.
+### `post_effect(players, action, effect?)`
+The post-processing shaders of one or more players, that is, what the game calls `/posteffect`.
 
-| Azione | Cosa fa | Restituisce |
+| Action | What it does | Returns |
 | --- | --- | --- |
-| `'add'` | aggiunge l'effetto | quanti giocatori sono cambiati |
-| `'remove'` | lo toglie | quanti giocatori sono cambiati |
-| `'clear'` | li toglie tutti | quanti giocatori sono cambiati |
-| `'list'` | l'elenco degli effetti attivi | una lista di id (un giocatore solo) |
+| `'add'` | adds the effect | how many players changed |
+| `'remove'` | removes it | how many players changed |
+| `'clear'` | removes them all | how many players changed |
+| `'list'` | the list of active effects | a list of ids (a single player) |
 
 ```
-effect.post_effect(giocatore, 'add', 'minecraft:invert');
+effect.post_effect(player, 'add', 'minecraft:invert');
 effect.post_effect(entity.player('all'), 'clear');
-effect.post_effect(giocatore, 'list');       // ['minecraft:invert']
+effect.post_effect(player, 'list');       // ['minecraft:invert']
 ```
 
-Passa dallo stesso pacchetto del comando vanilla, quindi **funziona su qualunque client**, anche
-senza Blossom installato, e l'effetto resta anche dopo un rientro nel mondo. Non ha durata: si toglie
-esplicitamente. È l'unica funzione "sul client" che il mod può offrire senza un client Blossom —
-tutto il resto è vanilla che il server già sa comandare.
+It goes through the same packet as the vanilla command, so it **works on any client**, even without
+Blossom installed, and the effect survives a trip out of the world and back. It has no duration: it
+is removed explicitly. It is the only "on the client" function the mod can offer without a Blossom
+client — everything else is vanilla that the server already knows how to command.

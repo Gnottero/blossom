@@ -1,34 +1,33 @@
 # `core.mc.file`
 
-I dati dell'app su disco.
+The data of the app on disk.
 
 ```
 import "core.mc.file" as file;
 
-file.write_file('punteggi', 'json', {'ada' -> 12});
-file.read_file('punteggi', 'json');
+file.write_file('scores', 'json', {'ada' -> 12});
+file.read_file('scores', 'json');
 ```
 
-Ogni app scrive sotto `<mondo>/blossom/<app>.data/`: due app non si vedono i dati per sbaglio. Un
-file marcato come condiviso finisce invece in `<mondo>/blossom/shared/`, ed è il modo previsto per
-passarsi dati fra app.
+Every app writes under `<world>/blossom/<app>.data/`: two apps do not see each other's data by
+accident. A file marked as shared ends up in `<world>/blossom/shared/` instead, and that is the
+intended way to pass data between apps.
 
-Queste funzioni hanno bisogno di un'app caricata: da `/blossom script run` non funzionano, e lo
-dicono.
+These functions need a loaded app: from `/blossom script run` they do not work, and they say so.
 
-### `read_file(nome, tipo)`
-Legge un file. I tipi sono `'text'` (lista di righe), `'json'`, `'nbt'`, `'raw'`, `'shared_text'`,
+### `read_file(name, type)`
+Reads a file. The types are `'text'` (a list of lines), `'json'`, `'nbt'`, `'raw'`, `'shared_text'`,
 `'shared_json'`, `'shared_nbt'`, `'shared_raw'`.
 
-### `write_file(nome, tipo, dati)`
-Scrive, o accoda se il tipo è testuale.
+### `write_file(name, type, data)`
+Writes, or appends when the type is textual.
 
-### `delete_file(nome, tipo)` · `list_files(cartella, tipo)`
-Cancella un file, ed elenca quelli di una cartella.
+### `delete_file(name, type)` · `list_files(folder, type)`
+Deletes a file, and lists the ones in a folder.
 
-### `load_app_data()` · `load_app_data(nome)` · `store_app_data(dati)` · `store_app_data(dati, nome)`
-Lo stato dell'app in NBT, salvato e riletto senza pensare ai percorsi. Senza nome è il file di stato
-predefinito dell'app.
+### `load_app_data()` · `load_app_data(name)` · `store_app_data(data)` · `store_app_data(data, name)`
+The state of the app in NBT, saved and read back without thinking about paths. Without a name it is
+the default state file of the app.
 
-### `create_datapack(nome, contenuto)`
-Crea un datapack dal contenuto dato (una mappa di percorsi → file) e lo attiva.
+### `create_datapack(name, content)`
+Creates a datapack from the given content (a map of paths -> files) and enables it.

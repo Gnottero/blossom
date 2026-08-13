@@ -1,33 +1,33 @@
 # `core.mc.screen`
 
-Aprire una schermata a un giocatore e reagire ai suoi click.
+Opening a screen for a player and reacting to their clicks.
 
 ```
 import "core.mc.screen" as screen;
 
-s = screen.create_screen(player, 'generic_9x3', 'Negozio', gestisci);
+s = screen.create_screen(player, 'generic_9x3', 'Shop', handle);
 
-fn gestisci(schermata, giocatore, azione, dati) -> (
-    if(azione == 'slot_click' && dati:'slot' == 0,
-        true    // vero = il click non viene eseguito
+fn handle(scr, player, action, data) -> (
+    if(action == 'slot_click' && data:'slot' == 0,
+        true    // true = the click is not carried out
     )
 );
 ```
 
-### `create_screen(giocatore, tipo, titolo, callback?)`
-Apre una schermata. I tipi sono quelli vanilla: `generic_9x1`..`generic_9x6`, `generic_3x3`,
+### `create_screen(player, type, title, callback?)`
+Opens a screen. The types are the vanilla ones: `generic_9x1`..`generic_9x6`, `generic_3x3`,
 `anvil`, `beacon`, `blast_furnace`, `brewing_stand`, `crafting`, `enchantment`, `furnace`,
 `grindstone`, `hopper`, `lectern`, `loom`, `merchant`, `shulker_box`, `smithing`, `smoker`,
 `cartography`, `stonecutter`.
 
-Il valore restituito è la schermata: si usa come inventario con le funzioni di `core.mc.item`.
+The returned value is the screen: it is used as an inventory with the functions of `core.mc.item`.
 
-Il callback riceve `(schermata, giocatore, azione, dati)` e le azioni sono `slot_click`,
-`button_click`, `select_recipe`, `close`. Restituire un valore vero annulla l'azione.
+The callback gets `(screen, player, action, data)` and the actions are `slot_click`, `button_click`,
+`select_recipe`, `close`. Returning a true value cancels the action.
 
-### `close_screen(schermata)`
-La chiude. Il giocatore torna al proprio inventario.
+### `close_screen(screen)`
+Closes it. The player goes back to their own inventory.
 
-### `screen_property(schermata, proprietà)` · `screen_property(schermata, proprietà, valore)`
-Legge o scrive una proprietà della schermata (il livello di un incantesimo, il progresso di una
-fornace, il carburante...).
+### `screen_property(screen, property)` · `screen_property(screen, property, value)`
+Reads or writes a property of the screen (the level of an enchantment, the progress of a furnace, the
+fuel...).

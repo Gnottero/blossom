@@ -1,98 +1,99 @@
 # `core.mc.world`
 
-Il mondo intorno ai blocchi: tempo, chunk, biomi, strutture, dimensioni.
+The world around the blocks: time, chunks, biomes, structures, dimensions.
 
 ```
 import "core.mc.world" as world;
 
 world.current_dimension();        // 'minecraft:overworld'
-world.day_time();                 // l'ora del mondo
+world.day_time();                 // the time of the world
 world.biome([0, 64, 0]);          // 'minecraft:plains'
 ```
 
-## Tempo
+## Time
 
-### `world_time()` · `day_time()` · `day_time(nuovo_valore)`
-Il tempo totale del mondo e l'ora del giorno; con un argomento imposta l'ora.
+### `world_time()` · `day_time()` · `day_time(new_value)`
+The total time of the world and the time of day; with an argument it sets the time.
 
 ### `tick_time()` · `last_tick_times()`
-Il tick corrente del server, e i tempi degli ultimi 100 tick in millisecondi.
+The current tick of the server, and the times of the last 100 ticks in milliseconds.
 
-### `game_tick()` · `game_tick(millisecondi_massimi)`
-Forza il server ad avanzare di un tick. Con l'argomento, continua a far girare tick finché non ha
-consumato quel tempo. Serve a far avanzare il gioco da uno script che sta girando dentro un tick.
+### `game_tick()` · `game_tick(max_milliseconds)`
+Forces the server to advance by one tick. With the argument, it keeps running ticks until it has used
+up that time. It is what makes the game move forward from a script running inside a tick.
 
-## Meteo e mondo
+## Weather and world
 
-### `weather()` · `weather(tipo)` · `weather(tipo, durata)`
-Legge o imposta pioggia e temporale.
+### `weather()` · `weather(type)` · `weather(type, duration)`
+Reads or sets rain and thunder.
 
 ### `seed()` · `save()`
-Il seed del mondo, e un salvataggio forzato su disco.
+The seed of the world, and a forced save to disk.
 
-### `top(tipo, pos)`
-La prima altezza libera secondo una delle mappe di altezza (`'surface'`, `'motion_blocking'`, ...).
+### `top(type, pos)`
+The first free height according to one of the height maps (`'surface'`, `'motion_blocking'`, ...).
 
-### `sample_noise(pos, tipo)` · `sample_noise()`
-Campiona una funzione di densità del generatore in quel punto; senza argomenti elenca i nomi
-disponibili.
+### `sample_noise(pos, type)` · `sample_noise()`
+Samples a density function of the generator at that point; without arguments it lists the available
+names.
 
-## Chunk
+## Chunks
 
 ### `loaded(pos)` · `loaded_status(pos)` · `loaded_ep(pos)`
-Se il chunk è caricato, in che stato è, e se è caricato per l'elaborazione delle entità.
+Whether the chunk is loaded, in which state it is, and whether it is loaded for entity processing.
 
 ### `is_chunk_generated(pos)` · `generation_status(pos)`
-Se il chunk esiste su disco, e a che punto è la sua generazione.
+Whether the chunk exists on disk, and how far its generation got.
 
-### `chunk_tickets()` · `add_chunk_ticket(pos, tipo, raggio)`
-I ticket che tengono caricati i chunk, e come aggiungerne uno.
+### `chunk_tickets()` · `add_chunk_ticket(pos, type, radius)`
+The tickets keeping chunks loaded, and how to add one.
 
 ### `reload_chunk(pos)` · `reset_chunk(pos)`
-Rimanda il chunk ai client, o lo rigenera da zero.
+Sends the chunk back to the clients, or regenerates it from scratch.
 
 ### `inhabited_time(pos)` · `in_slime_chunk(pos)` · `spawn_potential(pos)`
-Quanto è stato frequentato, se è uno slime chunk, e il potenziale di spawn calcolato dal gioco.
+How much it has been lived in, whether it is a slime chunk, and the spawn potential computed by the
+game.
 
-## Biomi e strutture
+## Biomes and structures
 
-### `biome(pos)` · `biome(nome, proprietà)` · `set_biome(pos, nome, aggiorna?)`
-Legge il bioma di un punto, interroga le proprietà di un bioma, o lo cambia.
+### `biome(pos)` · `biome(name, property)` · `set_biome(pos, name, update?)`
+Reads the biome of a point, queries the properties of a biome, or changes it.
 
-### `structures(pos)` · `structures(pos, nome)`
-Le strutture che coprono quel punto.
+### `structures(pos)` · `structures(pos, name)`
+The structures covering that point.
 
-### `structure_references(pos)` · `structure_references(pos, nome)`
-I chunk che fanno riferimento alle strutture di quel punto.
+### `structure_references(pos)` · `structure_references(pos, name)`
+The chunks referring to the structures of that point.
 
-### `structure_eligibility(pos, tipo?, dettagli?)`
-Se in quel chunk una struttura *potrebbe* generarsi, senza generarla.
+### `structure_eligibility(pos, type?, details?)`
+Whether a structure *could* generate in that chunk, without generating it.
 
-### `set_structure(pos, nome)` · `set_structure(pos, nome, null)`
-Genera una struttura, o ne toglie il riferimento.
+### `set_structure(pos, name)` · `set_structure(pos, name, null)`
+Generates a structure, or removes its reference.
 
-### `plop(pos, cosa)`
-Piazza una feature o una struttura del generatore in quel punto (alberi, geyser, villaggi...).
+### `plop(pos, what)`
+Places a feature or a structure of the generator at that point (trees, geysers, villages...).
 
-## Punti di interesse
+## Points of interest
 
-### `poi(pos)` · `poi(pos, raggio, ordina?, tipo?, stato?)`
-I punti di interesse (letti, postazioni di lavoro, portali) in un'area.
+### `poi(pos)` · `poi(pos, radius, sort?, type?, state?)`
+The points of interest (beds, work stations, portals) in an area.
 
-### `set_poi(pos, tipo, occupazione?)` · `set_poi(pos, null)`
-Crea o toglie un punto di interesse.
+### `set_poi(pos, type, occupancy?)` · `set_poi(pos, null)`
+Creates or removes a point of interest.
 
-## Dimensioni
+## Dimensions
 
 ### `current_dimension()`
-La dimensione in cui lo script sta girando.
+The dimension the script is running in.
 
-### `in_dimension(dimensione, espressione)`
-Valuta l'espressione come se fosse in un'altra dimensione: tutte le funzioni di mondo dentro di essa
-guardano là.
+### `in_dimension(dimension, expression)`
+Evaluates the expression as if it were in another dimension: every world function inside it looks
+there.
 
 ### `view_distance()` · `enable_hidden_dimensions()`
-La distanza di rendering del server, e l'attivazione delle dimensioni normalmente nascoste.
+The render distance of the server, and turning on the normally hidden dimensions.
 
 ### `relight(pos)`
-Ricalcola la luce attorno a un punto.
+Recomputes the light around a point.

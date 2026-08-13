@@ -1,36 +1,35 @@
 # `core.task`
 
-Concorrenza: task, attese, e sezioni critiche.
+Concurrency: tasks, waiting, and critical sections.
 
 ```
 import "core.task" as task;
 
-t = task(fn() -> lungo_calcolo());
-task.task_join(t);      // aspetta e restituisce il risultato
+t = task(fn() -> long_computation());
+task.task_join(t);      // waits and returns the result
 ```
 
-### Avviare e aspettare
+### Starting and waiting
 
-`task(funzione, ...argomenti)` avvia l'esecuzione su un altro thread e restituisce un handle.
-`task_join(t)` aspetta la fine e restituisce il valore, `task_await(t)` aspetta senza restituirlo,
-`task_completed(t)` dice se ha finito, `task_value(t)` legge il risultato se c'è.
-`task_count()` dice quanti task sono in volo.
+`task(function, ...arguments)` starts the execution on another thread and returns a handle.
+`task_join(t)` waits for the end and returns the value, `task_await(t)` waits without returning it,
+`task_completed(t)` says whether it has finished, `task_value(t)` reads the result when there is one.
+`task_count()` says how many tasks are in flight.
 
-### Comunicare
+### Communicating
 
-`task_send(t, valore)` manda un valore a un task, `yield(valore)` lo restituisce da dentro il task
-sospendendone l'esecuzione fino alla prossima richiesta, `task_ready(t)` dice se c'è un valore
-pronto.
+`task_send(t, value)` sends a value to a task, `yield(value)` returns it from inside the task,
+suspending its execution until the next request, `task_ready(t)` says whether a value is ready.
 
-### Sincronizzazione
+### Synchronisation
 
-Ogni singola operazione su un valore condiviso è già atomica: assegnare, aggiornare con `+=`, fare
-`put`, `delete`, `length` o iterare una lista o una mappa condivisa. Quello che non è atomico è una
-*sequenza* di operazioni: `x = x + 1` legge e scrive in due tempi. Per quelle serve
+Every single operation on a shared value is already atomic: assigning, updating with `+=`, doing
+`put`, `delete`, `length`, or iterating a shared list or map. What is not atomic is a *sequence* of
+operations: `x = x + 1` reads and writes in two steps. For those there is
 
-`synchronize(lock, espressione)` — il lock è reentrant (una funzione sincronizzata può chiamarne
-un'altra sullo stesso lock) ed equo (chi aspetta entra nell'ordine in cui è arrivato, nessuno resta
-fuori indefinitamente).
+`synchronize(lock, expression)` — the lock is reentrant (a synchronised function can call another one
+on the same lock) and fair (whoever waits gets in in the order they arrived, nobody is left out
+indefinitely).
 
-`task_dock(espressione)` esegue l'espressione sul thread principale del gioco: serve per toccare
-oggetti del mondo da dentro un task. `sleep(millisecondi)` sospende.
+`task_dock(expression)` runs the expression on the main thread of the game: it is what you need to
+touch objects of the world from inside a task. `sleep(milliseconds)` suspends.

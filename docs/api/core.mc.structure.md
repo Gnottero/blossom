@@ -1,47 +1,48 @@
 # `core.mc.structure`
 
-Salvare, piazzare e confrontare template di struttura.
+Saving, placing and comparing structure templates.
 
 ```
 import "core.mc.structure" as structure;
 
-structure.structure_save('mio:torre', [0, 64, 0], [8, 80, 8]);
-structure.structure_load('mio:torre', [100, 64, 100], 90);
-structure.structure_matches('mio:torre', [100, 64, 100], [108, 80, 108], 90);
+structure.structure_save('mine:tower', [0, 64, 0], [8, 80, 8]);
+structure.structure_load('mine:tower', [100, 64, 100], 90);
+structure.structure_matches('mine:tower', [100, 64, 100], [108, 80, 108], 90);
 ```
 
-Sono gli **stessi template del blocco struttura** di vanilla, e vivono nello stesso posto
-(`<mondo>/generated/<namespace>/structure/<nome>.nbt`): quello che uno script salva si apre con un
-blocco struttura, e viceversa. È il motivo per cui queste funzioni valgono la pena rispetto a
-copiare blocchi a mano.
+They are the **same templates as the vanilla structure block**, and they live in the same place
+(`<world>/generated/<namespace>/structure/<name>.nbt`): what a script saves opens with a structure
+block, and the other way round. That is why these functions are worth it compared to copying blocks
+by hand.
 
-### `structure_save(nome, da, a, con_entità?)`
-Salva il volume fra i due angoli (inclusi) come template. `con_entità` è `false` di default.
-Restituisce se il salvataggio è riuscito.
+### `structure_save(name, from, to, with_entities?)`
+Saves the volume between the two corners (inclusive) as a template. `with_entities` is `false` by
+default. It returns whether the save succeeded.
 
-### `structure_load(nome, pos, rotazione?, specchio?, con_entità?, integrità?, seme?)`
-Piazza il template. Restituisce se è riuscito, `null` se il template non esiste.
+### `structure_load(name, pos, rotation?, mirror?, with_entities?, integrity?, seed?)`
+Places the template. It returns whether it succeeded, `null` when the template does not exist.
 
-| Argomento | Valori | Default |
+| Argument | Values | Default |
 | --- | --- | --- |
-| `rotazione` | `0`, `90`, `180`, `270` (anche `'clockwise_90'` ecc.) | `0` |
-| `specchio` | `'none'`, `'left_right'`, `'front_back'` | `'none'` |
-| `con_entità` | | `true` |
-| `integrità` | da `0` a `1`: sotto `1` toglie blocchi a caso, come il blocco struttura | `1` |
-| `seme` | il seme del caso, per rendere ripetibile una rovina | casuale |
+| `rotation` | `0`, `90`, `180`, `270` (also `'clockwise_90'` etc.) | `0` |
+| `mirror` | `'none'`, `'left_right'`, `'front_back'` | `'none'` |
+| `with_entities` | | `true` |
+| `integrity` | from `0` to `1`: below `1` it removes random blocks, like the structure block | `1` |
+| `seed` | the seed of the randomness, to make a ruin repeatable | random |
 
-**`pos` è sempre l'angolo minimo del risultato**, anche ruotato o specchiato. Rotazione e
-specchiatura girerebbero la struttura *attorno* all'ancora, e senza questa correzione la stessa
-chiamata con rotazione diversa finirebbe in un punto diverso — cosa che nessuno trova ovvia. È anche
-quello che rende `structure_load` e `structure_matches` reciproci.
+**`pos` is always the minimum corner of the result**, rotated or mirrored as it may be. Rotation and
+mirroring would turn the structure *around* the anchor, and without this correction the same call
+with a different rotation would end up somewhere else — which nobody finds obvious. It is also what
+makes `structure_load` and `structure_matches` reciprocal.
 
-### `structure_matches(nome, da, a, rotazione?, specchio?)`
-Se la regione fra i due angoli corrisponde al template. `null` se il template non esiste — che è
-diverso da "non combacia".
+### `structure_matches(name, from, to, rotation?, mirror?)`
+Whether the region between the two corners matches the template. `null` when the template does not
+exist — which is different from "does not match".
 
-Una regione di dimensioni diverse non può combaciare, e viene scartata subito senza leggere un
-blocco. Un template può avere più **palette**, cioè varianti dello stesso volume: combacia se ne
-combacia almeno una. I blocchi `structure_void` non contano, come in vanilla.
+A region of different size cannot match, and is discarded right away without reading a single block.
+A template can have several **palettes**, that is, variants of the same volume: it matches when at
+least one of them matches. `structure_void` blocks do not count, as in vanilla.
 
-### `structure_size(nome, rotazione?)`
-Le dimensioni del template come `[x, y, z]`, tenendo conto della rotazione, o `null` se non esiste.
+### `structure_size(name, rotation?)`
+The size of the template as `[x, y, z]`, taking the rotation into account, or `null` when it does not
+exist.
