@@ -1,8 +1,9 @@
 'use strict';
 
 /*
- * Il minimo dell'API di vscode che serve a far girare i test fuori dall'editor: l'estensione non ha
- * dipendenze, e i test nemmeno. Quello che sta qui è solo la forma dei tipi che il codice costruisce.
+ * The minimum of the vscode API needed to run the tests outside the editor: the extension has no
+ * dependencies, and neither do the tests. What lives here is only the shape of the types the code
+ * builds.
  */
 
 class Position {
@@ -129,6 +130,7 @@ module.exports = {
     Range,
     Diagnostic,
     DiagnosticSeverity: { Error: 0, Warning: 1, Information: 2, Hint: 3 },
+    DiagnosticTag: { Unnecessary: 1, Deprecated: 2 },
     MarkdownString,
     CompletionItem,
     CompletionItemKind: kinds,

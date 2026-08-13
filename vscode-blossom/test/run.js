@@ -1,8 +1,8 @@
 'use strict';
 
 /*
- * I test dell'estensione: girano con `node test/run.js`, senza vscode e senza npm install.
- * `require('vscode')` viene servito dallo stub in test/vscode-stub.js.
+ * The extension tests: they run with `node test/run.js`, without vscode and without npm install.
+ * `require('vscode')` is served by the stub in test/vscode-stub.js.
  */
 
 const Module = require('module');
@@ -33,9 +33,9 @@ function test(name, body) {
     }
 }
 
-/** Un finto TextDocument: quel poco che i provider usano davvero. */
+/** A fake TextDocument: the little the providers actually use. */
 let documentVersion = 0;
-function document(text, fsPath = '/mondo/blossom/app.bs') {
+function document(text, fsPath = '/world/blossom/app.bs') {
     documentVersion++;
     const lines = text.split('\n');
     const starts = [0];
@@ -69,183 +69,207 @@ function document(text, fsPath = '/mondo/blossom/app.bs') {
 const codes = (text, fsPath) =>
     diagnostics.analyzeDocument(document(text, fsPath)).map((d) => d.code);
 
-// ----------------------------------------------------------------- i dati
+// -------------------------------------------------------------- the data
 
-console.log('dati generati');
+console.log('generated data');
 
-test('i moduli del core e del layer mc ci sono tutti', () => {
+test('the core and mc modules are all there', () => {
     const names = api.moduleNames();
     for (const expected of ['core.math', 'core.list', 'core.system', 'core.mc.block', 'core.mc.event']) {
-        assert.ok(names.includes(expected), 'manca ' + expected);
+        assert.ok(names.includes(expected), 'missing ' + expected);
     }
 });
 
-test('i simboli sono quelli registrati nelle sorgenti', () => {
+test('the symbols are the ones registered in the sources', () => {
     assert.ok(api.symbolsOf('core.math').includes('sqrt'));
     assert.ok(api.symbolsOf('core.mc.block').includes('set'));
-    assert.ok(api.symbolsOf('core.mc.item').includes('item_component'), 'i simboli di Components sono risolti');
-    assert.ok(api.symbolsOf('core.mc.text').includes('hud'), 'i simboli di HudApi sono risolti');
+    assert.ok(api.symbolsOf('core.mc.item').includes('item_component'), 'symbols from Components are resolved');
+    assert.ok(api.symbolsOf('core.mc.text').includes('hud'), 'symbols from HudApi are resolved');
     assert.strictEqual(api.homeModuleOf('sqrt'), 'core.math');
-    assert.strictEqual(api.homeModuleOf('non_esiste_davvero'), null);
+    assert.strictEqual(api.homeModuleOf('really_does_not_exist'), null);
 });
 
-test('gli eventi hanno nome, arita e parametri', () => {
+test('events carry name, arity and parameters', () => {
     const event = api.eventInfo('player_connects');
     assert.deepStrictEqual(event.params, ['player']);
     assert.strictEqual(event.arity, 1);
     assert.ok(api.eventInfo('bell_rings').cancellable);
 });
 
-test('il suggerimento fuzzy trova il nome vicino e tace su quelli lontani', () => {
+test('the fuzzy suggestion finds the near name and stays quiet on far ones', () => {
     assert.strictEqual(api.suggest('sqtr', api.symbolsOf('core.math')), 'sqrt');
     assert.strictEqual(api.suggest('zzzzzzzz', api.symbolsOf('core.math')), null);
 });
 
-// ------------------------------------------------------------- l'analisi
+// ---------------------------------------------------------- the analysis
 
-console.log('analisi del file');
+console.log('file analysis');
 
-const esempio = `module main;
+const sample = `module main;
 
 import "core.list" as list;
 import "core.mc.event" as event;
 
-let mut contatore = 0;
-let soglia = 10;
+let mut counter = 0;
+let threshold = 10;
 
-fn privata(x: num) -> x * 2;
+fn private_one(x: num) -> x * 2;
 
-pub fn conta(giocatore) -> (
-    contatore += 1;
-    list.map([1, 2], privata(_))
+pub fn count(player) -> (
+    counter += 1;
+    list.map([1, 2], private_one(_))
 );
 
-event.on('player_connects', conta);
+event.on('player_connects', count);
 `;
 
-test('preambolo, funzioni e binding vengono letti', () => {
-    const index = analyzer.analyze(esempio);
+test('preamble, functions and bindings are read', () => {
+    const index = analyzer.analyze(sample);
     assert.strictEqual(index.module.name, 'main');
     assert.deepStrictEqual([...index.imports.keys()], ['list', 'event']);
     assert.strictEqual(index.imports.get('list').target, 'core.list');
-    assert.deepStrictEqual(index.functions.map((f) => f.name), ['privata', 'conta']);
+    assert.deepStrictEqual(index.functions.map((f) => f.name), ['private_one', 'count']);
     assert.strictEqual(index.functions[0].params[0].type, 'num');
     assert.strictEqual(index.functions[1].exported, true);
-    assert.deepStrictEqual(index.bindings.map((b) => b.name), ['contatore', 'soglia']);
+    assert.deepStrictEqual(index.bindings.map((b) => b.name), ['counter', 'threshold']);
     assert.strictEqual(index.bindings[0].mutable, true);
 });
 
-test('commenti e stringhe non producono simboli', () => {
+test('comments and strings produce no symbols', () => {
     const index = analyzer.analyze(
-        "module a;\n// fn finta(x) -> 1;\nlet s = 'fn ancheQui(y) -> 2; list.inesistente';\n"
+        "module a;\n// fn fake(x) -> 1;\nlet s = 'fn hereToo(y) -> 2; list.nonexistent';\n"
     );
     assert.deepStrictEqual(index.functions, []);
     assert.deepStrictEqual(index.members, []);
     assert.deepStrictEqual(index.bindings.map((b) => b.name), ['s']);
 });
 
-test('la maschera conserva lunghezze e andate a capo', () => {
-    const text = "let a = 'x\\ny';\n// commento\n";
+test('the mask keeps lengths and newlines', () => {
+    const text = "let a = 'x\\ny';\n// comment\n";
     const masked = analyzer.mask(text);
     assert.strictEqual(masked.length, text.length);
     assert.strictEqual(masked.split('\n').length, text.split('\n').length);
 });
 
-test('le posizioni dei simboli puntano dove devono', () => {
-    const index = analyzer.analyze(esempio);
-    const conta = index.functions.find((f) => f.name === 'conta');
-    const line = esempio.split('\n')[conta.start.line];
-    assert.strictEqual(line.substr(conta.start.character, 5), 'conta');
+test('symbol positions point where they should', () => {
+    const index = analyzer.analyze(sample);
+    const count = index.functions.find((f) => f.name === 'count');
+    const line = sample.split('\n')[count.start.line];
+    assert.strictEqual(line.substr(count.start.character, 5), 'count');
 });
 
-// -------------------------------------------------------- le diagnostiche
+// ------------------------------------------------------- the diagnostics
 
-console.log('diagnostiche');
+console.log('diagnostics');
 
-test('un file corretto non produce niente', () => {
-    assert.deepStrictEqual(codes(esempio), []);
+test('a correct file produces nothing', () => {
+    assert.deepStrictEqual(codes(sample), []);
 });
 
-test('import senza alias', () => {
+test('import without an alias', () => {
     assert.ok(codes('module a;\nimport "core.list";\n').includes('import-without-alias'));
 });
 
-test('alias duplicato', () => {
+test('duplicate alias', () => {
     const found = codes('module a;\nimport "core.list" as x;\nimport "core.map" as x;\n');
     assert.ok(found.includes('duplicate-alias'));
 });
 
-test('modulo built-in inesistente, con suggerimento', () => {
+test('built-in module that does not exist, with a suggestion', () => {
     const found = diagnostics.analyzeDocument(document('module a;\nimport "core.lst" as l;\nl.map([], _);\n'));
     assert.ok(found.some((d) => d.code === 'unknown-module' && /core\.list/.test(d.message)));
 });
 
-test('simbolo che il modulo non esporta, con suggerimento', () => {
+test('symbol the module does not export, with a suggestion', () => {
     const found = diagnostics.analyzeDocument(
         document('module a;\nimport "core.math" as math;\nmath.sqtr(4);\n')
     );
     assert.ok(found.some((d) => d.code === 'unknown-symbol' && /sqrt/.test(d.message)));
 });
 
-test('funzione di libreria usata senza importarla', () => {
+test('library function used without importing it', () => {
     const found = diagnostics.analyzeDocument(document('module a;\nfn f() -> sqrt(4);\n'));
     assert.ok(found.some((d) => d.code === 'missing-import' && /core\.math/.test(d.message)));
 });
 
-test('una funzione dell utente non e un import mancante', () => {
-    assert.deepStrictEqual(codes('module a;\nfn mia() -> 1;\nfn altra() -> mia();\n'), []);
+test('a function of the user is not a missing import', () => {
+    assert.deepStrictEqual(codes('module a;\nfn mine() -> 1;\nfn other() -> mine();\n'), []);
 });
 
-test('un parametro che ombreggia un nome di libreria non viene segnalato', () => {
+test('a parameter shadowing a library name is not reported', () => {
     assert.deepStrictEqual(codes('module a;\nfn f(min) -> min(1);\n'), []);
 });
 
-test('evento inesistente, con suggerimento', () => {
+test('an import nothing uses is reported', () => {
+    const found = diagnostics.analyzeDocument(
+        document('module a;\nimport "core.math" as math;\nimport "core.list" as list;\nfn f() -> list.first([1], _);\n')
+    );
+    const unused = found.filter((d) => d.code === 'unused-import');
+    assert.strictEqual(unused.length, 1);
+    assert.ok(/'math'/.test(unused[0].message));
+    assert.deepStrictEqual(unused[0].tags, [stub.DiagnosticTag.Unnecessary]);
+    // the whole statement is greyed out, semicolon included
+    assert.strictEqual(unused[0].range.start.line, 1);
+    assert.strictEqual(unused[0].range.start.character, 0);
+    assert.strictEqual(unused[0].range.end.character, 'import "core.math" as math;'.length);
+});
+
+test('an alias named only in a comment or a string counts as unused', () => {
+    const found = codes("module a;\nimport \"core.math\" as math;\n// math.sqrt(4);\nlet s = 'math.sqrt';\n");
+    assert.ok(found.includes('unused-import'));
+});
+
+test('an alias passed around as a value is used', () => {
+    const found = codes('module a;\nimport "core.math" as math;\nfn f(g) -> g(1);\nfn h() -> f(math);\n');
+    assert.ok(!found.includes('unused-import'));
+});
+
+test('event that does not exist, with a suggestion', () => {
     const found = diagnostics.analyzeDocument(
         document("module a;\nimport \"core.mc.event\" as event;\nevent.on('player_connect', f);\n")
     );
     assert.ok(found.some((d) => d.code === 'unknown-event' && /player_connects/.test(d.message)));
 });
 
-test('gli eventi personalizzati di signal_event non vengono controllati', () => {
+test('custom events from signal_event are not checked', () => {
     const found = codes(
-        "module a;\nimport \"core.mc.event\" as event;\nevent.signal_event('mio_evento', 1);\n"
+        "module a;\nimport \"core.mc.event\" as event;\nevent.signal_event('my_event', 1);\n"
     );
     assert.ok(!found.includes('unknown-event'));
 });
 
-test('il nome del modulo deve combaciare col percorso dentro src/', () => {
-    assert.ok(codes('module sbagliato;\n', '/app/src/math/vector.bs').includes('module-name-mismatch'));
+test('the module name must match the path under src/', () => {
+    assert.ok(codes('module wrong;\n', '/app/src/math/vector.bs').includes('module-name-mismatch'));
     assert.deepStrictEqual(codes('module math.vector;\n', '/app/src/math/vector.bs'), []);
 });
 
-test('fuori da src/ il nome del modulo non viene giudicato', () => {
-    assert.deepStrictEqual(codes('module qualunque;\n', '/mondo/blossom/app.bs'), []);
+test('outside src/ the module name is not judged', () => {
+    assert.deepStrictEqual(codes('module whatever;\n', '/world/blossom/app.bs'), []);
 });
 
-// ---------------------------------------------------------- i provider
+// ----------------------------------------------------------- the providers
 
-console.log('provider');
+console.log('providers');
 
-test('il completamento dopo un alias elenca i simboli del modulo', () => {
+test('completion after an alias lists the symbols of the module', () => {
     const doc = document('module a;\nimport "core.math" as math;\nmath.\n');
     const list = requireCompletion(doc, new stub.Position(2, 5));
     assert.ok(list.some((item) => item.label === 'sqrt'));
 });
 
-test('il completamento dentro import elenca i moduli', () => {
+test('completion inside an import lists the modules', () => {
     const doc = document('module a;\nimport "\n');
     const list = requireCompletion(doc, new stub.Position(1, 8));
     assert.ok(list.some((item) => item.label === 'core.mc.entity'));
 });
 
-test('la chiamata che contiene il cursore viene riconosciuta', () => {
+test('the call containing the cursor is recognised', () => {
     const text = 'module a;\nimport "core.math" as math;\nmath.max(1, 2';
     const call = providers.enclosingCall(analyzer.mask(text), text.length);
     assert.deepStrictEqual(call, { alias: 'math', name: 'max', argument: 1 });
 });
 
-/** Il provider di completamento è interno al modulo: lo si raggiunge registrandolo su uno stub. */
+/** The completion provider is internal to its module: it is reached by registering it on a stub. */
 function requireCompletion(doc, position) {
     let captured = null;
     const original = stub.languages.registerCompletionItemProvider;
@@ -258,5 +282,5 @@ function requireCompletion(doc, position) {
     return captured.provideCompletionItems(doc, position);
 }
 
-console.log(failures ? `\n${failures} test falliti` : '\ntutti i test passati');
+console.log(failures ? `\n${failures} tests failed` : '\nall tests passed');
 process.exit(failures ? 1 : 0);

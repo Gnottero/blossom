@@ -1,86 +1,98 @@
 {
-  "modulo": {
-    "prefix": "module",
-    "body": ["module ${1:nome};", "", "$0"],
-    "description": "La dichiarazione di modulo in testa al file"
-  },
-  "import": {
-    "prefix": "import",
-    "body": "import \"${1:core.list}\" as ${2:list};",
-    "description": "Un import con alias (l'alias e' obbligatorio)"
-  },
-  "funzione": {
-    "prefix": "fn",
-    "body": ["fn ${1:nome}(${2:args}) -> (", "\t$0", ");"],
-    "description": "Una funzione privata al modulo"
-  },
-  "funzione pubblica": {
-    "prefix": "pubfn",
-    "body": ["pub fn ${1:nome}(${2:args}) -> (", "\t$0", ");"],
-    "description": "Una funzione esportata dal modulo"
-  },
-  "binding": {
-    "prefix": "let",
-    "body": "let ${1:nome} = ${0};",
-    "description": "Un binding immutabile"
-  },
-  "binding mutabile": {
-    "prefix": "letmut",
-    "body": "let mut ${1:nome} = ${0};",
-    "description": "Un binding riassegnabile"
-  },
-  "handler di evento": {
-    "prefix": "on",
-    "body": [
-      "fn ${1:gestisci}(${2:player}) -> (",
-      "\t$0",
-      "\tfalse",
-      ");",
-      "",
-      "event.on('${3:player_connects}', ${1:gestisci});"
-    ],
-    "description": "Una funzione registrata su un evento (false = non annullare)"
-  },
-  "try": {
-    "prefix": "try",
-    "body": "try(${1:codice}, '${2:value_exception}', ${0:gestione});",
-    "description": "Cattura di un'eccezione lanciata, per tipo"
-  },
-  "if": {
-    "prefix": "if",
-    "body": "if(${1:condizione}, ${2:allora}, ${0:altrimenti})",
-    "description": "Condizionale (e' un'espressione, restituisce un valore)"
-  },
-  "for": {
-    "prefix": "for",
-    "body": "for(${1:lista}, ${0:_});",
-    "description": "Itera su una lista: _ e' l'elemento, _i l'indice"
-  },
-  "while": {
-    "prefix": "while",
-    "body": "while(${1:condizione}, ${2:1000}, ${0:corpo});",
-    "description": "Ciclo con limite di iterazioni"
-  },
-  "map": {
-    "prefix": "map",
-    "body": "list.map(${1:lista}, ${0:_ * 2})",
-    "description": "Trasforma una lista"
-  },
-  "task": {
-    "prefix": "task",
-    "body": "task(_() -> (\n\t$0\n));",
-    "description": "Lavoro lungo su un thread suo, fuori dal budget del tick"
-  },
-  "manifesto": {
-    "prefix": "blossom.json",
-    "body": [
-      "{",
-      "  \"name\": \"${1:nome}\",",
-      "  \"version\": \"0.1.0\",",
-      "  \"entrypoint\": \"src/main.bs\",",
-      "  \"api_level\": \"1.0\"",
-      "}"
-    ],
-    "description": "Il manifesto di un progetto"
-  }
+    "module": {
+        "prefix": "module",
+        "body": [
+            "module ${1:name};",
+            "",
+            "$0"
+        ],
+        "description": "The module declaration at the top of the file"
+    },
+    "import": {
+        "prefix": "import",
+        "body": "import \"${1:core.list}\" as ${2:list};",
+        "description": "An import with an alias (the alias is mandatory)"
+    },
+    "function": {
+        "prefix": "fn",
+        "body": [
+            "fn ${1:name}(${2:args}) -> (",
+            "\t$0",
+            ");"
+        ],
+        "description": "A function private to the module"
+    },
+    "public function": {
+        "prefix": "pubfn",
+        "body": [
+            "pub fn ${1:name}(${2:args}) -> (",
+            "\t$0",
+            ");"
+        ],
+        "description": "A function exported by the module"
+    },
+    "binding": {
+        "prefix": "let",
+        "body": "let ${1:name} = ${0};",
+        "description": "An immutable binding"
+    },
+    "mutable binding": {
+        "prefix": "letmut",
+        "body": "let mut ${1:name} = ${0};",
+        "description": "A binding that can be reassigned"
+    },
+    "event handler": {
+        "prefix": "on",
+        "body": [
+            "fn ${1:handle}(${2:player}) -> (",
+            "\t$0",
+            "\tfalse",
+            ");",
+            "",
+            "event.on('${3:player_connects}', ${1:handle});"
+        ],
+        "description": "A function registered on an event (false = do not cancel)"
+    },
+    "try": {
+        "prefix": "try",
+        "body": "try(${1:code}, '${2:value_exception}', ${0:handling});",
+        "description": "Catches a thrown exception, by type"
+    },
+    "if": {
+        "prefix": "if",
+        "body": "if(${1:condition}, ${2:then}, ${0:otherwise})",
+        "description": "Conditional (it is an expression, it returns a value)"
+    },
+    "for": {
+        "prefix": "for",
+        "body": "for(${1:list}, ${0:_});",
+        "description": "Iterates over a list: _ is the element, _i the index"
+    },
+    "while": {
+        "prefix": "while",
+        "body": "while(${1:condition}, ${2:1000}, ${0:body});",
+        "description": "Loop with a limit on the iterations"
+    },
+    "map": {
+        "prefix": "map",
+        "body": "list.map(${1:list}, ${0:_ * 2})",
+        "description": "Transforms a list"
+    },
+    "task": {
+        "prefix": "task",
+        "body": "task(_() -> (\n\t$0\n));",
+        "description": "Long work on its own thread, outside the budget of the tick"
+    },
+    "manifest": {
+        "prefix": "blossom.json",
+        "body": [
+            "{",
+            "  \"name\": \"${1:name}\",",
+            "  \"version\": \"0.1.0\",",
+            "  \"entrypoint\": \"src/main.bs\",",
+            "  \"api_level\": \"1.0\"",
+            "}"
+        ],
+        "description": "The manifest of a project"
+    }
 }

@@ -1,23 +1,23 @@
 'use strict';
 
 /*
- * L'indice di un file: preambolo, funzioni, binding, e le posizioni in cui compaiono i simboli.
+ * The index of a file: preamble, functions, bindings, and the positions where symbols appear.
  *
- * Non è un parser del linguaggio e non vuole diventarlo. È una scansione lineare su una copia del
- * testo in cui commenti e contenuto delle stringhe sono stati sostituiti con spazi: costa una
- * passata sui caratteri più qualche regex, e su un file da mille righe si misura in decimi di
- * millisecondo. Il risultato viene tenuto in cache per versione del documento, quindi digitare non
- * ricalcola niente finché non si smette di digitare.
+ * This is not a parser for the language and does not want to become one. It is a linear scan over a
+ * copy of the text where comments and string contents have been replaced with spaces: it costs one
+ * pass over the characters plus a few regexes, and on a thousand-line file it is measured in tenths
+ * of a millisecond. The result is cached per document version, so typing recomputes nothing until
+ * you stop typing.
  */
 
 const api = require('./api');
 
-/** uri → { version, index } */
+/** uri -> { version, index } */
 const cache = new Map();
 
 /**
- * Sostituisce con spazi i commenti e il contenuto delle stringhe, lasciando le andate a capo e le
- * lunghezze dove sono: gli offset del testo mascherato sono gli stessi dell'originale.
+ * Replaces comments and string contents with spaces, leaving newlines and lengths where they are:
+ * offsets into the masked text are the same as in the original.
  */
 function mask(text) {
     const chars = text.split('');
@@ -45,7 +45,7 @@ function mask(text) {
     return chars.join('');
 }
 
-/** Tabella degli offset di inizio riga, per convertire offset → (riga, colonna) in O(log n). */
+/** Table of line start offsets, to convert offset -> (line, column) in O(log n). */
 function lineStarts(text) {
     const starts = [0];
     for (let i = 0; i < text.length; i++) {
@@ -71,8 +71,9 @@ const FUNCTION_RE = /(^|[^\w.])(pub[ \t\n]+)?fn[ \t\n]+([A-Za-z_]\w*)[ \t\n]*\((
 const LET_RE = /(^|[^\w.])let[ \t\n]+(mut[ \t\n]+)?([A-Za-z_]\w*)/g;
 const MEMBER_RE = /\b([A-Za-z_]\w*)[ \t]*\.[ \t]*([A-Za-z_]\w*)/g;
 const BARE_CALL_RE = /(^|[^\w.:'"])([a-z_]\w*)[ \t]*\(/g;
+const IDENTIFIER_RE = /[A-Za-z_]\w*/g;
 
-/** Analizza `text` e restituisce l'indice. */
+/** Analyzes `text` and returns the index. */
 function analyze(text) {
     const masked = mask(text);
     const starts = lineStarts(text);
@@ -88,11 +89,13 @@ function analyze(text) {
         bindings: [],
         defined: new Set(),
         members: [],
-        bareCalls: []
+        bareCalls: [],
+        preambleEnd: 0,
+        aliasUses: new Map()
     };
 
-    // dove finisce il preambolo: `module math.vector;` e `import "core.list" as list;` contengono
-    // punti che non sono accessi a un modulo, e vanno esclusi dalle scansioni che seguono
+    // where the preamble ends: `module math.vector;` and `import "core.list" as list;` contain dots
+    // that are not module accesses, and must be left out of the scans that follow
     let preambleEnd = 0;
 
     const moduleMatch = MODULE_RE.exec(masked);
@@ -109,18 +112,24 @@ function analyze(text) {
     IMPORT_RE.lastIndex = 0;
     let match;
     while ((match = IMPORT_RE.exec(masked)) !== null) {
-        // la maschera conserva le lunghezze: il target si legge dal testo vero, agli stessi offset
+        // the mask preserves lengths: the target is read from the real text, at the same offsets
         const targetOffset = match.index + match[0].indexOf(match[2]) + 1;
         const target = text.substr(targetOffset, match[3].length);
         const alias = match[4];
+        // the whole statement, semicolon included: it is what a quick fix has to delete
+        const statementStart = match.index + match[1].length;
+        const semicolon = masked.indexOf(';', match.index + match[0].length);
+        const statementEnd = semicolon === -1 ? match.index + match[0].length : semicolon + 1;
         const declaration = {
             alias,
             target,
             targetStart: at(targetOffset),
             targetLength: target.length,
-            aliasStart: at(match.index + match[0].length - alias.length)
+            aliasStart: at(match.index + match[0].length - alias.length),
+            statementStart: at(statementStart),
+            statementEnd: at(statementEnd)
         };
-        preambleEnd = Math.max(preambleEnd, match.index + match[0].length);
+        preambleEnd = Math.max(preambleEnd, statementEnd);
         if (index.imports.has(alias)) index.duplicateAliases.push(declaration);
         else index.imports.set(alias, declaration);
     }
@@ -179,10 +188,24 @@ function analyze(text) {
         index.bareCalls.push({ name: match[2], start: at(nameOffset), length: match[2].length });
     }
 
+    index.preambleEnd = preambleEnd;
+
+    // how many times each imported alias is named in the body. `alias.symbol` is the common case, but
+    // an alias can also travel on its own - passed to a function, or stored in a binding - so any
+    // occurrence of the bare identifier counts. Better to stay quiet than to report a used import.
+    if (index.imports.size) {
+        for (const alias of index.imports.keys()) index.aliasUses.set(alias, 0);
+        IDENTIFIER_RE.lastIndex = preambleEnd;
+        while ((match = IDENTIFIER_RE.exec(masked)) !== null) {
+            const seen = index.aliasUses.get(match[0]);
+            if (seen !== undefined) index.aliasUses.set(match[0], seen + 1);
+        }
+    }
+
     return index;
 }
 
-/** L'indice del documento, ricalcolato solo se la versione è cambiata. */
+/** The index of the document, recomputed only when the version changed. */
 function indexOf(document) {
     const key = document.uri.toString();
     const cached = cache.get(key);
@@ -196,14 +219,14 @@ function forget(document) {
     cache.delete(document.uri.toString());
 }
 
-/** Il modulo (built-in o del progetto) a cui un alias importato punta, nella forma `core.list`. */
+/** The module (built-in or from the project) an imported alias points to, in the form `core.list`. */
 function targetModule(index, alias) {
     const declaration = index.imports.get(alias);
     if (!declaration) return null;
     return declaration.target.replace(/\//g, '.');
 }
 
-/** I simboli di libreria visibili in questo file, come mappa alias → nome modulo built-in. */
+/** The library symbols visible in this file, as a map alias -> built-in module name. */
 function builtinAliases(index) {
     const aliases = new Map();
     for (const alias of index.imports.keys()) {

@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 /*
- * Genera `data/api.json` leggendo direttamente le sorgenti del mod.
+ * Generates `data/api.json` by reading the sources of the mod directly.
  *
- * L'estensione non deve mai contenere un elenco di funzioni scritto a mano: quello si disallinea al
- * primo simbolo aggiunto. Le fonti di verità sono tre, tutte nel repo:
+ * The extension must never contain a hand-written list of functions: that goes stale with the first
+ * symbol added. There are three sources of truth, all in the repo:
  *
- *   StdLib.java      i moduli `core.*` e il prelude
- *   BlossomApi.java  i moduli `core.mc.*` (con i Set<String> sparsi nelle classi api/)
- *   Event.java       il catalogo degli eventi, con arità e parametri dal javadoc
+ *   StdLib.java      the `core.*` modules and the prelude
+ *   BlossomApi.java  the `core.mc.*` modules (with the Set<String> fields spread over api/ classes)
+ *   Event.java       the catalogue of events, with arity and parameters from the javadoc
  *
- * Le firme e le descrizioni brevi vengono dalla documentazione in docs/api/.
+ * Signatures and short descriptions come from the documentation in docs/api/.
  *
- * Uso:  node tools/generate-api.js [percorso-repo]
+ * Usage:  node tools/generate-api.js [repo-path]
  */
 
 'use strict';
@@ -22,7 +22,7 @@ const path = require('path');
 const REPO = path.resolve(process.argv[2] || path.join(__dirname, '..', '..'));
 const OUT = path.join(__dirname, '..', 'data', 'api.json');
 
-// ---------------------------------------------------------------- utility
+// ---------------------------------------------------------------- helpers
 
 function walk(dir, out = []) {
     if (!fs.existsSync(dir)) return out;
@@ -43,9 +43,9 @@ function fail(message) {
     process.exit(1);
 }
 
-// ------------------------------------------------- indice dei Set<String>
+// ------------------------------------------------ index of the Set<String>
 
-/** `Classe.CAMPO` → testo grezzo dell'inizializzatore, per risolvere i riferimenti incrociati */
+/** `Class.FIELD` -> raw text of the initialiser, to resolve cross references */
 const fields = new Map();
 
 const FIELD_RE =
@@ -64,16 +64,16 @@ for (const file of [
 }
 
 /**
- * Risolve un inizializzatore in un elenco di simboli: le stringhe letterali che contiene, più i
- * simboli dei campi che cita (`Components.MODULE.stream()`, `Io.MODULE.toArray(...)`).
+ * Resolves an initialiser into a list of symbols: the string literals it contains, plus the symbols
+ * of the fields it mentions (`Components.MODULE.stream()`, `Io.MODULE.toArray(...)`).
  */
 function resolveSymbols(expression, seen = new Set()) {
     const symbols = new Set();
     for (const literal of expression.match(/"([^"\\]*)"/g) || []) {
         symbols.add(literal.slice(1, -1));
     }
-    // lookahead: i riferimenti si sovrappongono (`com.gnottero.blossom.api.Components.MODULE`), e una
-    // match normale consumerebbe `api.Components` lasciando fuori la coppia che conta
+    // lookahead: the references overlap (`com.gnottero.blossom.api.Components.MODULE`), and a normal
+    // match would consume `api.Components`, leaving out the pair that matters
     for (const reference of expression.matchAll(/(?=\b(\w+)\.(\w+)\b)/g)) {
         const key = reference[1] + '.' + reference[2];
         if (!fields.has(key) || seen.has(key)) continue;
@@ -83,7 +83,7 @@ function resolveSymbols(expression, seen = new Set()) {
     return symbols;
 }
 
-// ------------------------------------------------------------- i moduli
+// ----------------------------------------------------------- the modules
 
 const stdlib = read(path.join(REPO, 'blossom-core/src/main/java/blossom/language/StdLib.java'));
 
@@ -93,10 +93,10 @@ const modules = new Map();
 for (const match of stdlib.matchAll(/\bmodule\("([^"]+)"\s*,([\s\S]*?)\);/g)) {
     modules.set(match[1], resolveSymbols(match[2]));
 }
-if (modules.size === 0) fail('nessun modulo core.* trovato in StdLib.java');
+if (modules.size === 0) fail('no core.* module found in StdLib.java');
 
 const preludeMatch = stdlib.match(/PRELUDE\s*=\s*Set\.of\(([\s\S]*?)\);/);
-if (!preludeMatch) fail('PRELUDE non trovato in StdLib.java');
+if (!preludeMatch) fail('PRELUDE not found in StdLib.java');
 const prelude = [...resolveSymbols(preludeMatch[1])].filter((name) => name !== 'l' && name !== 'm');
 
 const apiFile = path.join(REPO, 'blossom/src/main/java/com/gnottero/blossom/BlossomApi.java');
@@ -104,16 +104,16 @@ if (fs.existsSync(apiFile)) {
     const api = read(apiFile);
     for (const match of api.matchAll(/registerModule\("([^"]+)"\s*,\s*(\w+)\)/g)) {
         const raw = fields.get('BlossomApi.' + match[2]);
-        if (!raw) fail('campo BlossomApi.' + match[2] + ' non trovato');
+        if (!raw) fail('field BlossomApi.' + match[2] + ' not found');
         modules.set(match[1], resolveSymbols(raw));
     }
 }
 
-// ------------------------------------------- descrizioni e firme dai docs
+// ------------------------------------ descriptions and signatures from docs
 
 const DOCS = path.join(REPO, 'docs', 'api');
 
-/** nome modulo → descrizione di una riga, dalla tabella di Overview.md */
+/** module name -> one-line description, from the table in Overview.md */
 const moduleDocs = new Map();
 const overview = path.join(DOCS, 'Overview.md');
 if (fs.existsSync(overview)) {
@@ -123,9 +123,9 @@ if (fs.existsSync(overview)) {
 }
 
 /**
- * Estrae dalla pagina di un modulo, per ogni simbolo, le firme che la documentazione mostra e la
- * frase che le sta intorno. Non è un parser: la documentazione scrive le chiamate in codice inline,
- * e quella convenzione basta per avere firme vere invece di `nome(...)`.
+ * Extracts from the page of a module, for every symbol, the signatures the documentation shows and
+ * the sentence around them. It is not a parser: the documentation writes calls as inline code, and
+ * that convention is enough to get real signatures instead of `name(...)`.
  */
 function docsFor(moduleName, symbols) {
     const page = path.join(DOCS, moduleName + '.md');
@@ -133,7 +133,7 @@ function docsFor(moduleName, symbols) {
     if (!fs.existsSync(page)) return found;
     const text = read(page);
 
-    // le firme: `nome(arg, arg)` dentro codice inline
+    // the signatures: `name(arg, arg)` inside inline code
     for (const match of text.matchAll(/`([a-z_][\w]*)\(([^`()]*)\)`/g)) {
         if (!symbols.has(match[1])) continue;
         const entry = found.get(match[1]) || { signatures: [], doc: '' };
@@ -142,7 +142,7 @@ function docsFor(moduleName, symbols) {
         found.set(match[1], entry);
     }
 
-    // la descrizione: il paragrafo in cui il simbolo compare per la prima volta
+    // the description: the paragraph where the symbol appears for the first time
     const paragraphs = text.split(/\n\s*\n/);
     for (const symbol of symbols) {
         const mention = new RegExp('`' + symbol.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '[`(]');
@@ -155,7 +155,7 @@ function docsFor(moduleName, symbols) {
     return found;
 }
 
-// ------------------------------------------------------------- gli eventi
+// ------------------------------------------------------------ the events
 
 const events = [];
 const eventFile = path.join(REPO, 'blossom/src/main/java/com/gnottero/blossom/event/Event.java');
@@ -174,7 +174,7 @@ if (fs.existsSync(eventFile)) {
     events.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-// i parametri che il javadoc non dichiara stanno nella tabella della documentazione
+// the parameters the javadoc does not declare live in the table in the documentation
 const eventDocs = path.join(DOCS, 'core.mc.event.md');
 if (fs.existsSync(eventDocs)) {
     const byName = new Map(events.map((event) => [event.name, event]));
@@ -185,7 +185,7 @@ if (fs.existsSync(eventDocs)) {
     }
 }
 
-// -------------------------------------------------------------- il json
+// --------------------------------------------------------------- the json
 
 const data = {
     generated: new Date().toISOString().slice(0, 10),
@@ -215,6 +215,6 @@ fs.writeFileSync(OUT, JSON.stringify(data) + '\n');
 
 const symbolCount = Object.values(data.modules).reduce((n, m) => n + Object.keys(m.symbols).length, 0);
 console.log(
-    `data/api.json: ${Object.keys(data.modules).length} moduli, ${symbolCount} simboli, ` +
-    `${events.length} eventi, ${prelude.length} nel prelude`
+    `data/api.json: ${Object.keys(data.modules).length} modules, ${symbolCount} symbols, ` +
+    `${events.length} events, ${prelude.length} in the prelude`
 );

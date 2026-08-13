@@ -1,53 +1,53 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Manifesto di un progetto Blossom",
+  "title": "Manifest of a Blossom project",
   "type": "object",
   "required": ["name"],
   "additionalProperties": false,
   "properties": {
     "name": {
       "type": "string",
-      "description": "Il nome del progetto.",
+      "description": "The name of the project.",
       "pattern": "^[A-Za-z_][A-Za-z0-9_-]*$"
     },
     "version": {
       "type": "string",
-      "description": "La versione del progetto, semver (1.2.3, con pre-release facoltativo).",
+      "description": "The version of the project, semver (1.2.3, with an optional pre-release).",
       "pattern": "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?(\\+[0-9A-Za-z.-]+)?$"
     },
     "entrypoint": {
       "type": "string",
-      "description": "Il file da cui parte il caricamento. Default: src/main.bs",
+      "description": "The file loading starts from. Default: src/main.bs",
       "default": "src/main.bs"
     },
     "api_level": {
       "type": "string",
-      "description": "La versione dell'API di Blossom richiesta, MAJOR.MINOR. Non dichiararla significa 1.0.",
+      "description": "The Blossom API version required, MAJOR.MINOR. Leaving it out means 1.0.",
       "pattern": "^\\d+\\.\\d+$",
       "default": "1.0"
     },
     "autoload": {
       "type": "boolean",
-      "description": "Se vero, il pack si carica da solo appena il mondo è aperto, senza /blossom script load. Default: false.",
+      "description": "When true the pack loads by itself as soon as the world is open, without /blossom script load. Default: false.",
       "default": false
     },
     "dependencies": {
       "type": "object",
-      "description": "Le dipendenze del progetto: path, pack o registry, una forma sola per dipendenza.",
+      "description": "The dependencies of the project: path, pack or registry, one form per dependency.",
       "additionalProperties": {
         "type": "object",
         "properties": {
           "path": {
             "type": "string",
-            "description": "Una cartella, di solito accanto al progetto. Non viene bloccata nel lock."
+            "description": "A folder, usually next to the project. It is not pinned in the lock file."
           },
           "pack": {
             "type": "string",
-            "description": "Un pack gia' installato sotto <mondo>/blossom/."
+            "description": "A pack already installed under <world>/blossom/."
           },
           "version": {
             "type": "string",
-            "description": "Il vincolo semver: ^1.2.0, ~1.2.0, >=1.2 <2, *",
+            "description": "The semver constraint: ^1.2.0, ~1.2.0, >=1.2 <2, *",
             "pattern": "^(\\*|[~^<>=]{0,2}\\s*\\d+(\\.\\d+){0,2}[0-9A-Za-z.+-]*(\\s*,?\\s*[~^<>=]{1,2}\\s*\\d+(\\.\\d+){0,2}[0-9A-Za-z.+-]*)*)$"
           }
         },
@@ -58,7 +58,7 @@
       }
     },
     "watchdog": {
-      "description": "I limiti di esecuzione dell'app. false li toglie del tutto.",
+      "description": "The execution limits of the app. false removes them entirely.",
       "oneOf": [
         {
           "type": "boolean",
@@ -71,12 +71,12 @@
             "timeout_ms": {
               "type": "integer",
               "minimum": 1,
-              "description": "Il tempo massimo di una esecuzione, in millisecondi. Default: 2000 negli eventi, 15000 nei comandi."
+              "description": "The maximum time of one execution, in milliseconds. Default: 2000 in events, 15000 in commands."
             },
             "max_depth": {
               "type": "integer",
               "minimum": 1,
-              "description": "La profondita' massima di chiamata. Default: 256."
+              "description": "The maximum call depth. Default: 256."
             }
           }
         }

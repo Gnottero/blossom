@@ -1,11 +1,11 @@
 'use strict';
 
 /*
- * I provider dell'editor: completamento, hover, firma, simboli, definizione.
+ * The editor providers: completion, hover, signature, symbols, definition.
  *
- * Tutti lavorano sull'indice del documento corrente (analyzer.js) e sui dati generati (api.js).
- * Nessun processo separato, nessun language server: un file `.bs` è piccolo e la scansione costa
- * meno del protocollo che servirebbe a evitarla.
+ * They all work on the index of the current document (analyzer.js) and on the generated data
+ * (api.js). No separate process, no language server: a `.bs` file is small, and scanning it costs
+ * less than the protocol it would take to avoid the scan.
  */
 
 const vscode = require('vscode');
@@ -15,7 +15,7 @@ const analyzer = require('./analyzer');
 
 const SELECTOR = { language: 'blossom', scheme: 'file' };
 
-/** Il markdown mostrato per un simbolo di libreria. */
+/** The markdown shown for a library symbol. */
 function symbolMarkdown(moduleName, symbol) {
     const info = api.symbolInfo(moduleName, symbol);
     if (!info) return null;
@@ -30,19 +30,19 @@ function eventMarkdown(event) {
     const markdown = new vscode.MarkdownString();
     markdown.appendCodeblock(`${event.name}(${event.params.join(', ')})`, 'blossom');
     markdown.appendMarkdown(
-        `\n${event.arity} parametr${event.arity === 1 ? 'o' : 'i'}` +
-        (event.cancellable ? ", annullabile: restituire `true` ferma l'azione" : '')
+        `\n${event.arity} parameter${event.arity === 1 ? '' : 's'}` +
+        (event.cancellable ? ', cancellable: returning `true` stops the action' : '')
     );
     return markdown;
 }
 
-/** La firma di una funzione dichiarata nel file. */
+/** The signature of a function declared in the file. */
 function localSignature(fn) {
     const params = fn.params.map((p) => (p.type ? `${p.name}: ${p.type}` : p.name)).join(', ');
     return `${fn.exported ? 'pub ' : ''}fn ${fn.name}(${params})`;
 }
 
-// ---------------------------------------------------------------- completamento
+// ------------------------------------------------------------------ completion
 
 const completion = {
     provideCompletionItems(document, position) {
@@ -51,7 +51,7 @@ const completion = {
         const before = line.slice(0, position.character);
         const items = [];
 
-        // import "…"  →  i moduli built-in
+        // import "..."  ->  the built-in modules
         const importPrefix = /(^|\s)import\s+(["'])([^"']*)$/.exec(before);
         if (importPrefix) {
             for (const name of api.moduleNames()) {
@@ -59,14 +59,14 @@ const completion = {
                 const module = api.moduleOf(name);
                 item.detail = module.doc;
                 item.documentation = new vscode.MarkdownString(
-                    `${Object.keys(module.symbols).length} simboli`
+                    `${Object.keys(module.symbols).length} symbols`
                 );
                 items.push(item);
             }
             return items;
         }
 
-        // alias.…  →  i simboli del modulo
+        // alias....  ->  the symbols of the module
         const memberPrefix = /([A-Za-z_]\w*)\s*\.\s*(\w*)$/.exec(before);
         if (memberPrefix) {
             const alias = memberPrefix[1];
@@ -84,7 +84,7 @@ const completion = {
             return items;
         }
 
-        // dentro le virgolette di un handler di evento  →  i nomi degli eventi
+        // inside the quotes of an event handler  ->  the event names
         const eventPrefix = /\.\s*(on|off|describe)\s*\(\s*(["'])([^"']*)$/.exec(before);
         if (eventPrefix) {
             for (const event of api.events()) {
@@ -96,7 +96,7 @@ const completion = {
             return items;
         }
 
-        // altrimenti: quello che è visibile qui
+        // otherwise: whatever is visible here
         for (const keyword of api.keywords()) {
             items.push(new vscode.CompletionItem(keyword, vscode.CompletionItemKind.Keyword));
         }
@@ -128,7 +128,7 @@ const completion = {
         }
         for (const implicit of ['_', '_i', '_a']) {
             const item = new vscode.CompletionItem(implicit, vscode.CompletionItemKind.Variable);
-            item.detail = { _: 'elemento corrente', _i: 'indice', _a: 'accumulatore' }[implicit];
+            item.detail = { _: 'current element', _i: 'index', _a: 'accumulator' }[implicit];
             items.push(item);
         }
         return items;
@@ -145,7 +145,7 @@ const hover = {
         const word = document.getText(range);
         const line = document.lineAt(position.line).text;
 
-        // alias.simbolo
+        // alias.symbol
         const before = line.slice(0, range.start.character);
         const memberOf = /([A-Za-z_]\w*)\s*\.\s*$/.exec(before);
         if (memberOf) {
@@ -156,7 +156,7 @@ const hover = {
             }
         }
 
-        // un alias
+        // an alias
         const declaration = index.imports.get(word);
         if (declaration && line.slice(range.end.character).startsWith('.')) {
             const target = declaration.target.replace(/\//g, '.');
@@ -167,11 +167,11 @@ const hover = {
             return new vscode.Hover(markdown, range);
         }
 
-        // un evento, dentro una stringa
+        // an event, inside a string
         const event = api.eventInfo(word);
         if (event && /['"]$/.test(before)) return new vscode.Hover(eventMarkdown(event), range);
 
-        // una funzione o un binding del file
+        // a function or a binding of the file
         const fn = index.functions.find((f) => f.name === word);
         if (fn) {
             const markdown = new vscode.MarkdownString();
@@ -185,20 +185,20 @@ const hover = {
             return new vscode.Hover(markdown, range);
         }
 
-        // un simbolo di libreria usato senza importarlo: dire dove vive è metà del lavoro
+        // a library symbol used without importing it: saying where it lives is half the work
         const home = api.homeModuleOf(word);
         if (home) {
             const markdown = symbolMarkdown(home, word);
-            markdown.appendMarkdown(`\n\nNon importato qui: \`import "${home}" as ${home.split('.').pop()};\``);
+            markdown.appendMarkdown(`\n\nNot imported here: \`import "${home}" as ${home.split('.').pop()};\``);
             return new vscode.Hover(markdown, range);
         }
         return null;
     }
 };
 
-// -------------------------------------------------------------- firma di chiamata
+// ------------------------------------------------------------------- call signature
 
-/** Risale dalla posizione del cursore alla chiamata che lo contiene, contando le parentesi. */
+/** Walks back from the cursor to the call that contains it, counting parentheses. */
 function enclosingCall(text, offset) {
     let depth = 0;
     let commas = 0;
@@ -264,7 +264,7 @@ const signatureHelp = {
     }
 };
 
-// ------------------------------------------------------------ simboli e definizione
+// -------------------------------------------------------- symbols and definition
 
 const documentSymbols = {
     provideDocumentSymbols(document) {
@@ -298,7 +298,7 @@ const documentSymbols = {
     }
 };
 
-/** Il file di un modulo del progetto, cercato accanto a questo dentro `src/`. */
+/** The file of a project module, looked up next to this one inside `src/`. */
 async function moduleFile(document, target) {
     const parts = document.uri.fsPath.split(path.sep);
     const srcIndex = parts.lastIndexOf('src');
@@ -320,14 +320,14 @@ const definition = {
         if (!range) return null;
         const word = document.getText(range);
 
-        // su un alias, o sul target di un import: aprire il file del modulo
+        // on an alias, or on the target of an import: open the file of the module
         const declaration = index.imports.get(word);
         if (declaration) {
             const file = await moduleFile(document, declaration.target);
             if (file) return new vscode.Location(file, new vscode.Position(0, 0));
         }
 
-        // su un simbolo di un modulo del progetto: la sua definizione, nel file giusto
+        // on a symbol of a project module: its definition, in the right file
         const before = document.lineAt(position.line).text.slice(0, range.start.character);
         const memberOf = /([A-Za-z_]\w*)\s*\.\s*$/.exec(before);
         if (memberOf) {

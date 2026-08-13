@@ -1,21 +1,28 @@
 # Changelog
 
+## 0.1.2
+
+- new diagnostic: an import nothing in the file uses is greyed out (`unused-import`), with a quick
+  fix that removes the whole line
+- every text of the extension is in English: commands, settings, snippets, `blossom.json` schema,
+  quick fixes and messages
+
 ## 0.1.1
 
-- lo schema di `blossom.json` accetta `autoload`, che il mod legge da sempre: prima un manifesto che
-  lo dichiarava veniva segnato con "Property autoload is not allowed."
-- `version` non e' piu' obbligatorio nel manifesto, come nel mod (assente vale `0.1.0`)
-- i percorsi della documentazione seguono il repo nuovo: `docs/api/` invece di `docs/blossom/api/`
+- the `blossom.json` schema accepts `autoload`, which the mod has always read: before, a manifest
+  declaring it was marked with "Property autoload is not allowed."
+- `version` is no longer mandatory in the manifest, as in the mod (absent means `0.1.0`)
+- the documentation paths follow the new repo: `docs/api/` instead of `docs/blossom/api/`
 
 ## 0.1.0
 
-Prima versione.
+First version.
 
-- evidenziazione della sintassi (preambolo, `fn`/`let`/`pub`, tipi sui parametri, variabili
-  implicite, stringhe, commenti)
-- completamento di moduli, simboli di libreria, eventi, funzioni e binding del file
-- hover con firma e descrizione, presi dalla documentazione del repo
-- firma di chiamata, struttura del file, vai alla definizione (anche attraverso gli import)
-- diagnostiche del preambolo e dell'uso dei simboli, con correzioni rapide
-- schema JSON per `blossom.json`
-- `tools/generate-api.js`: i dati dell'API si rigenerano dalle sorgenti del mod
+- syntax highlighting (preamble, `fn`/`let`/`pub`, parameter types, implicit variables, strings,
+  comments)
+- completion of modules, library symbols, events, functions and bindings of the file
+- hover with signature and description, taken from the documentation of the repo
+- signature help, file outline, go to definition (across imports too)
+- diagnostics of the preamble and of symbol usage, with quick fixes
+- JSON schema for `blossom.json`
+- `tools/generate-api.js`: the API data is regenerated from the sources of the mod

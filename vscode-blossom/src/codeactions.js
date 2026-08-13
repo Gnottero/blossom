@@ -1,15 +1,15 @@
 'use strict';
 
 /*
- * Le correzioni rapide. Sono poche apposta: solo quelle in cui la correzione è ovvia e meccanica,
- * cioè quelle che l'estensione può applicare senza indovinare cosa voleva dire chi scrive.
+ * The quick fixes. There are few on purpose: only the ones where the fix is obvious and mechanical,
+ * that is, the ones the extension can apply without guessing what the author meant.
  */
 
 const vscode = require('vscode');
 const api = require('./api');
 const analyzer = require('./analyzer');
 
-/** La riga dove va inserito un nuovo import: dopo l'ultimo che c'è, o dopo la dichiarazione module. */
+/** The line where a new import goes: after the last one, or after the module declaration. */
 function importInsertionLine(document, index) {
     if (index.imports.size) {
         return Math.max(...[...index.imports.values()].map((d) => d.aliasStart.line)) + 1;
@@ -18,7 +18,7 @@ function importInsertionLine(document, index) {
     return 0;
 }
 
-/** Un alias libero per `moduleName`: `core.mc.text` → `text`, e se è occupato `mc_text`. */
+/** A free alias for `moduleName`: `core.mc.text` -> `text`, and `mc_text` when that one is taken. */
 function freeAlias(moduleName, taken) {
     const parts = moduleName.split('.');
     const candidates = [parts[parts.length - 1], parts.slice(1).join('_'), parts.join('_')];
@@ -59,12 +59,26 @@ const provider = {
                 actions.push(action);
             }
 
+            if (diagnostic.code === 'unused-import') {
+                // the whole line goes, newline included: what is left is the preamble without a hole
+                const action = new vscode.CodeAction('Remove the unused import', vscode.CodeActionKind.QuickFix);
+                action.edit = new vscode.WorkspaceEdit();
+                action.edit.replace(
+                    document.uri,
+                    new vscode.Range(diagnostic.range.start.line, 0, diagnostic.range.end.line + 1, 0),
+                    ''
+                );
+                action.diagnostics = [diagnostic];
+                action.isPreferred = true;
+                actions.push(action);
+            }
+
             if (diagnostic.code === 'unknown-symbol' || diagnostic.code === 'unknown-event' ||
                 diagnostic.code === 'unknown-module' || diagnostic.code === 'unknown-alias') {
                 const suggestion = /Did you mean '([^']+)'\?/.exec(diagnostic.message);
                 if (!suggestion) continue;
                 const action = new vscode.CodeAction(
-                    `Sostituisci con '${suggestion[1]}'`,
+                    `Replace with '${suggestion[1]}'`,
                     vscode.CodeActionKind.QuickFix
                 );
                 action.edit = new vscode.WorkspaceEdit();
@@ -78,7 +92,7 @@ const provider = {
                 const expected = /makes it '([^']+)'/.exec(diagnostic.message);
                 if (!expected) continue;
                 const action = new vscode.CodeAction(
-                    `Rinomina il modulo in '${expected[1]}'`,
+                    `Rename the module to '${expected[1]}'`,
                     vscode.CodeActionKind.QuickFix
                 );
                 action.edit = new vscode.WorkspaceEdit();

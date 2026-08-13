@@ -1,13 +1,12 @@
 'use strict';
 
 /*
- * Le diagnostiche: quello che si può dire di un file senza eseguirlo.
+ * The diagnostics: what can be said about a file without running it.
  *
- * Il criterio è uno solo — segnalare solo ciò di cui l'estensione è certa. Un falso positivo su un
- * linguaggio dinamico costa più di un errore mancato: chi scrive impara a ignorare le sottolineature
- * e da quel momento anche quelle vere non servono a niente. Per questo non c'è nessun controllo di
- * tipi, nessun controllo di arità sulle funzioni dell'utente, e i simboli non risolti sono un
- * avviso solo quando sono chiamati.
+ * There is a single criterion - report only what the extension is sure about. On a dynamic language
+ * a false positive costs more than a missed error: the author learns to ignore the squiggles, and
+ * from then on even the true ones are worth nothing. That is why there is no type checking, no arity
+ * checking on the functions of the user, and unresolved symbols are a warning only when called.
  */
 
 const vscode = require('vscode');
@@ -28,7 +27,7 @@ function make(range, message, severity, code) {
     return diagnostic;
 }
 
-/** Il nome che un modulo dovrebbe avere, dedotto dalla sua posizione dentro `src/`. */
+/** The name a module should have, deduced from its position inside `src/`. */
 function expectedModuleName(document) {
     const filePath = document.uri.fsPath;
     const parts = filePath.split(path.sep);
@@ -47,7 +46,7 @@ function analyzeDocument(document) {
     const diagnostics = [];
     const aliases = analyzer.builtinAliases(index);
 
-    // --- preambolo -------------------------------------------------------
+    // --- preamble --------------------------------------------------------
 
     for (const duplicate of index.duplicateAliases) {
         diagnostics.push(make(
@@ -83,6 +82,24 @@ function analyzeDocument(document) {
         ));
     }
 
+    for (const declaration of index.imports.values()) {
+        if (index.aliasUses.get(declaration.alias)) continue;
+        const diagnostic = make(
+            new vscode.Range(
+                declaration.statementStart.line,
+                declaration.statementStart.character,
+                declaration.statementEnd.line,
+                declaration.statementEnd.character
+            ),
+            `Nothing in this file uses '${declaration.alias}'.`,
+            vscode.DiagnosticSeverity.Warning,
+            'unused-import'
+        );
+        // greys the line out instead of underlining it: an unused import is untidy, not broken
+        diagnostic.tags = [vscode.DiagnosticTag.Unnecessary];
+        diagnostics.push(diagnostic);
+    }
+
     const expected = expectedModuleName(document);
     if (index.module && expected && index.module.name !== expected) {
         diagnostics.push(make(
@@ -94,7 +111,7 @@ function analyzeDocument(document) {
         ));
     }
 
-    // --- uso dei simboli -------------------------------------------------
+    // --- symbol usage ----------------------------------------------------
 
     const knownAliases = new Set(index.imports.keys());
 
@@ -128,7 +145,7 @@ function analyzeDocument(document) {
     for (const call of index.bareCalls) {
         if (preludeSet.has(call.name) || index.defined.has(call.name)) continue;
         const home = api.homeModuleOf(call.name);
-        if (!home) continue; // funzione dell'utente definita altrove: non è affare nostro
+        if (!home) continue; // a function of the user defined elsewhere: none of our business
         const alias = home.split('.').pop();
         diagnostics.push(make(
             rangeOf(call.start, call.length),
@@ -139,7 +156,7 @@ function analyzeDocument(document) {
         ));
     }
 
-    // --- eventi ----------------------------------------------------------
+    // --- events ----------------------------------------------------------
 
     const eventAlias = [...aliases.entries()].filter(([, name]) => name === 'core.mc.event').map(([a]) => a);
     if (eventAlias.length) {
@@ -148,11 +165,11 @@ function analyzeDocument(document) {
             'g'
         );
         while ((match = pattern.exec(text)) !== null) {
-            // la maschera azzera commenti e stringhe: se lì c'è ancora un apice, è codice vero
-            // match[0] finisce con 'nome': l'apice di apertura sta due caratteri prima del nome
+            // the mask blanks comments and strings: if a quote is still there, it is real code
+            // match[0] ends with 'name': the opening quote sits two characters before the name
             const quoteOffset = match.index + match[0].length - match[3].length - 2;
             if (masked[quoteOffset] !== "'") continue;
-            if (match[2] === 'signal_event') continue; // gli eventi personalizzati non stanno nel catalogo
+            if (match[2] === 'signal_event') continue; // custom events are not in the catalogue
             if (api.eventInfo(match[3])) continue;
             const suggestion = api.suggest(match[3], api.events().map((event) => event.name));
             const start = document.positionAt(quoteOffset + 1);
@@ -168,7 +185,7 @@ function analyzeDocument(document) {
     return diagnostics;
 }
 
-/** Registra il controllo, debounced: si analizza quando si smette di scrivere, non mentre si scrive. */
+/** Registers the check, debounced: analysis happens when you stop typing, not while you type. */
 function register(context) {
     const collection = vscode.languages.createDiagnosticCollection('blossom');
     context.subscriptions.push(collection);

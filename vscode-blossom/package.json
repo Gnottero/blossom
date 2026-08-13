@@ -1,8 +1,8 @@
 {
   "name": "blossom",
   "displayName": "Blossom",
-  "description": "Supporto per il linguaggio Blossom: evidenziazione, completamento sull'API reale, errori del preambolo e degli import.",
-  "version": "0.1.1",
+  "description": "Support for the Blossom language: highlighting, completion on the real API, preamble and import errors.",
+  "version": "0.1.2",
   "publisher": "gnottero",
   "license": "MIT",
   "engines": {
@@ -67,11 +67,11 @@
     "commands": [
       {
         "command": "blossom.openDocs",
-        "title": "Blossom: apri la documentazione del modulo"
+        "title": "Blossom: open the documentation of the module"
       },
       {
         "command": "blossom.copyRunCommand",
-        "title": "Blossom: copia il comando di caricamento dell'app"
+        "title": "Blossom: copy the load command of the app"
       }
     ],
     "configuration": {
@@ -80,7 +80,7 @@
         "blossom.diagnostics.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Segnala import senza alias, moduli e simboli inesistenti, eventi sconosciuti e nomi di modulo che non combaciano col percorso."
+          "description": "Reports imports without an alias, unused imports, modules and symbols that do not exist, unknown events, and module names that do not match the path."
         }
       }
     }

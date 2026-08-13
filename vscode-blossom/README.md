@@ -1,63 +1,64 @@
-# Blossom per VS Code
+# Blossom for VS Code
 
-Supporto editor per [Blossom](../BLOSSOM.md): evidenziazione, completamento sull'API vera, e gli
-errori che si possono dire senza eseguire niente — import senza alias, moduli e simboli che non
-esistono, eventi sbagliati, nomi di modulo che non combaciano col percorso.
+Editor support for [Blossom](../BLOSSOM.md): highlighting, completion on the real API, and the
+errors that can be told without running anything — imports without an alias, imports nothing uses,
+modules and symbols that do not exist, wrong events, module names that do not match the path.
 
-## Cosa fa
+## What it does
 
 | | |
 | --- | --- |
-| **Evidenziazione** | preambolo, `fn`/`let`/`pub`, tipi sui parametri, `_`/`_i`/`_a`, stringhe, commenti |
-| **Completamento** | i moduli dentro `import "…"`, i simboli dopo `alias.`, i nomi degli eventi dentro `event.on('…')`, le funzioni e i binding del file |
-| **Hover** | firma e descrizione di ogni funzione di libreria, con il modulo da cui viene |
-| **Firma di chiamata** | i parametri della funzione che si sta scrivendo, di libreria o propria |
-| **Vai alla definizione** | sulle funzioni del file, e attraverso gli import dentro `src/` |
-| **Struttura del file** | modulo, funzioni (`pub` marcate), binding |
-| **Diagnostiche** | import senza alias, alias duplicato, modulo `core.*` inesistente, simbolo non esportato, funzione di libreria usata senza importarla, evento sconosciuto, nome di modulo diverso dal percorso |
-| **Correzioni rapide** | aggiungi l'import mancante, sostituisci col nome suggerito, rinomina il modulo |
-| **`blossom.json`** | schema completo: campi, semver, forme delle dipendenze, `watchdog` |
+| **Highlighting** | preamble, `fn`/`let`/`pub`, parameter types, `_`/`_i`/`_a`, strings, comments |
+| **Completion** | the modules inside `import "…"`, the symbols after `alias.`, the event names inside `event.on('…')`, the functions and bindings of the file |
+| **Hover** | signature and description of every library function, with the module it comes from |
+| **Signature help** | the parameters of the function being written, library or your own |
+| **Go to definition** | on the functions of the file, and across imports inside `src/` |
+| **File outline** | module, functions (`pub` marked), bindings |
+| **Diagnostics** | import without an alias, duplicate alias, unused import, `core.*` module that does not exist, symbol not exported, library function used without importing it, unknown event, module name different from the path |
+| **Quick fixes** | add the missing import, remove the unused import, replace with the suggested name, rename the module |
+| **`blossom.json`** | full schema: fields, semver, dependency forms, `watchdog` |
 
-Due comandi, dalla palette:
+Two commands, from the palette:
 
-- **Blossom: apri la documentazione del modulo** — apre `docs/api/<modulo>.md`, se il repo è
-  nel workspace
-- **Blossom: copia il comando di caricamento dell'app** — mette `/blossom script load <app>` negli
-  appunti, deducendo il nome dall'albero del file
+- **Blossom: open the documentation of the module** — opens `docs/api/<module>.md`, when the repo is
+  in the workspace
+- **Blossom: copy the load command of the app** — puts `/blossom script load <app>` in the
+  clipboard, deducing the name from the file tree
 
-## I dati dell'API non sono scritti a mano
+## The API data is not hand-written
 
-`data/api.json` è generato dalle sorgenti del mod: i moduli e i simboli da `StdLib.java` e
-`BlossomApi.java`, gli eventi (nome, arità, parametri, annullabilità) da `Event.java`, le firme e le
-descrizioni brevi da `docs/api/`. Quando l'API cambia:
+`data/api.json` is generated from the sources of the mod: modules and symbols from `StdLib.java` and
+`BlossomApi.java`, events (name, arity, parameters, cancellability) from `Event.java`, signatures and
+short descriptions from `docs/api/`. When the API changes:
 
 ```
-node tools/generate-api.js          # dalla cartella dell'estensione, col repo sopra di essa
-node tools/generate-api.js /percorso/del/repo
+node tools/generate-api.js          # from the extension folder, with the repo above it
+node tools/generate-api.js /path/to/the/repo
 ```
 
-Un simbolo aggiunto al mod compare nel completamento senza che nessuno lo ricopi.
+A symbol added to the mod shows up in completion without anyone copying it over.
 
-## Prestazioni
+## Performance
 
-Nessun language server, nessun processo separato, **zero dipendenze** e nessuno step di build: è
-JavaScript che gira nel processo dell'estensione.
+No language server, no separate process, **zero dependencies** and no build step: it is JavaScript
+running in the extension process.
 
-- l'attivazione registra i provider e basta; `data/api.json` (~78 KB) si legge alla prima richiesta
-- l'indice di un file è una passata sui caratteri più qualche regex su una copia in cui commenti e
-  stringhe sono spazi, ed è in cache per versione del documento
-- le diagnostiche sono debounced a 300 ms: si analizza quando si smette di scrivere
-- sui progetti in `examples/` l'analisi completa di un file sta sotto il millisecondo
+- activation registers the providers and nothing else; `data/api.json` (~78 KB) is read on the first
+  request
+- the index of a file is one pass over the characters plus a few regexes on a copy where comments and
+  strings are spaces, and it is cached per document version
+- diagnostics are debounced at 300 ms: analysis happens when you stop typing
+- on the projects in `examples/` the full analysis of a file stays under a millisecond
 
-Le diagnostiche segnalano solo ciò di cui l'estensione è certa: niente controllo di tipi, niente
-arità sulle funzioni dell'utente. Su tutti i file di `examples/` non produce nessun avviso.
+The diagnostics report only what the extension is sure about: no type checking, no arity checking on
+the functions of the user. On every file in `examples/` it produces no warning.
 
-## Installazione
+## Installation
 
-Durante lo sviluppo: apri questa cartella in VS Code e premi <kbd>F5</kbd> (Extension Development
+During development: open this folder in VS Code and press <kbd>F5</kbd> (Extension Development
 Host).
 
-Per installarla davvero:
+To really install it:
 
 ```
 cd vscode-blossom
@@ -65,21 +66,21 @@ npx --yes @vscode/vsce package
 code --install-extension blossom-0.1.0.vsix
 ```
 
-## Test
+## Tests
 
 ```
 node test/run.js
 ```
 
-Girano senza VS Code e senza `npm install`: `require('vscode')` è servito da uno stub in
+They run without VS Code and without `npm install`: `require('vscode')` is served by a stub in
 `test/vscode-stub.js`.
 
-## Impostazioni
+## Settings
 
-| Impostazione | Default | Cosa fa |
+| Setting | Default | What it does |
 | --- | --- | --- |
-| `blossom.diagnostics.enabled` | `true` | spegne le sottolineature lasciando completamento e hover |
+| `blossom.diagnostics.enabled` | `true` | turns the squiggles off, leaving completion and hover |
 
-## Licenza
+## Licence
 
-MIT, come il resto del progetto.
+MIT, like the rest of the project.
