@@ -541,12 +541,19 @@ public class Auxiliary
             return new NBTSerializableValue(tag);
         });
 
-        //"overridden" native call that prints to stderr
+        /*
+         * print(messaggio) oppure print(destinatario, messaggio).
+         *
+         * <p>Il destinatario e' un giocatore o una lista di giocatori - cosi' com'e' fatto
+         * {@code entity.player('all')}, che una lista la restituisce sempre. I nomi valgono quanto le
+         * entita': chi scrive puo' passare l'uno o l'altro senza convertire niente.
+         */
         expression.addContextFunction("print", -1, (c, t, lv) ->
         {
             if (lv.isEmpty() || lv.size() > 2)
             {
-                throw new InternalExpressionException("'print' takes one or two arguments");
+                throw new blossom.exception.ArityError(blossom.exception.SourcePosition.UNKNOWN,
+                        "'print' wants a message, and optionally a player or a list of players to send it to.");
             }
             ScriptContext cc = (ScriptContext) c;
             CommandSourceStack s = cc.source();
@@ -561,7 +568,8 @@ public class Auxiliary
                     ServerPlayer player = EntityValue.getPlayerByValue(server, pv);
                     if (player == null)
                     {
-                        throw new InternalExpressionException("Cannot target player " + pv.getString() + " in print");
+                        throw new blossom.exception.TypeMismatchError(blossom.exception.SourcePosition.UNKNOWN,
+                                "'print' wants a connected player, or a list of them, not '" + pv.getString() + "'.");
                     }
                     playerTargets.add(player.createCommandSourceStack());
                 });

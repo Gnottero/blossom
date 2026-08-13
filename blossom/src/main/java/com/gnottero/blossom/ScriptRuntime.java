@@ -151,9 +151,10 @@ public class ScriptRuntime
                     + "' containing " + blossom.project.ProjectManifest.FILE_NAME + ".");
         }
         Module module = Module.fromPath(file);
-        // un ricaricamento parte pulito: gli handler della versione precedente non devono
+        // un ricaricamento parte pulito: gli handler e i task della versione precedente non devono
         // sopravvivere alla loro app
         com.gnottero.blossom.event.EventBus.unregisterApp(module.name());
+        scheduler.unregisterApp(module.name());
         Interpreter interpreter = newInterpreter(module);
         apps.put(module.name(), interpreter);
         try
@@ -194,15 +195,22 @@ public class ScriptRuntime
     private Value loadPack(CommandSourceStack source, String appName, Path root, boolean refreshLock) throws IOException
     {
         com.gnottero.blossom.event.EventBus.unregisterApp(appName);
+        scheduler.unregisterApp(appName);
         try
         {
             // l'app entra nell'elenco prima di girare: il codice a livello di modulo puo' gia'
-            // registrare eventi, e chi li registra deve trovare la propria app
+            // registrare eventi, e chi li registra deve trovare la propria app.
+            //
+            // Va messa con 'put' e non con 'putIfAbsent': a un ricaricamento la voce c'e' gia', ed e'
+            // quella dell'app vecchia. Con 'putIfAbsent' gli event.on(...) del preambolo avrebbero
+            // legato i loro handler all'interprete di prima, mentre la funzione registrata viene dai
+            // moduli nuovi: al primo evento il vecchio host non riconosce il modulo e la chiamata
+            // muore con "Module structure changed for the app".
             Interpreter interpreter = Interpreter.forProject(root,
                     expression -> BlossomApi.apply(expression, appName),
                     host ->
                     {
-                        apps.putIfAbsent(appName, Interpreter.of(host));
+                        apps.put(appName, Interpreter.of(host));
                         // i default del server; se il manifesto dichiara i suoi, li sovrascrive subito dopo
                         host.setWatchdog(defaultWatchdog);
                         applyIoRoots(host);
