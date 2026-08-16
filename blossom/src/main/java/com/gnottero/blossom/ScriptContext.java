@@ -79,12 +79,8 @@ public class ScriptContext extends Context
         return new ScriptContext(host, source, origin);
     }
 
-    @Override
-    protected void initialize()
-    {
-        super.initialize();
-        variables.put("_x", (c, t) -> Value.ZERO);
-        variables.put("_y", (c, t) -> Value.ZERO);
-        variables.put("_z", (c, t) -> Value.ZERO);
-    }
+    // '_x', '_y' e '_z' non vengono preparate qui. Le scrive 'scan' prima di valutare il corpo, e
+    // fuori da uno scan non vogliono dire niente: seminarle in ogni frame significava tre
+    // inserimenti nella mappa ad ogni chiamata di funzione, per un valore che nessuno legge.
+    // Fuori da uno scan ora sono variabili non definite come tutte le altre, cioe' null.
 }

@@ -5,8 +5,6 @@ import blossom.exception.BlossomRuntimeError;
 import blossom.value.ThreadValue;
 import blossom.value.Value;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 
 public class Context
@@ -28,7 +26,11 @@ public class Context
     public static final Type LVALUE = Type.LVALUE;
     public static final Type MAPDEF = Type.MAPDEF;
 
-    public Map<String, LazyValue> variables = new HashMap<>();
+    /**
+     * Le variabili locali di questo frame. Vedi {@link VariableFrame} per come sono tenute e
+     * perché non è una mappa a hash.
+     */
+    VariableFrame variables = new VariableFrame();
 
     public final ScriptHost host;
 
@@ -139,6 +141,18 @@ public class Context
         return variables.get(name);
     }
 
+    /** Fa condividere a due contesti le stesse variabili locali, invece di copiarle. */
+    public void shareVariablesWith(Context other)
+    {
+        this.variables = other.variables;
+    }
+
+    /** Percorre le variabili locali del frame, le tre implicite escluse. */
+    public void forEachVariable(java.util.function.BiConsumer<String, LazyValue> action)
+    {
+        variables.forEach(action);
+    }
+
     public void setVariable(String name, LazyValue lv)
     {
         if (isImplicitName(name))
@@ -166,7 +180,7 @@ public class Context
 
     public void removeVariablesMatching(String varname)
     {
-        variables.entrySet().removeIf(e -> e.getKey().startsWith(varname));
+        variables.removeMatching(name -> name.startsWith(varname));
     }
 
     public Context with(String variable, LazyValue lv)
@@ -177,7 +191,8 @@ public class Context
 
     public Set<String> getAllVariableNames()
     {
-        Set<String> names = new java.util.LinkedHashSet<>(variables.keySet());
+        Set<String> names = new java.util.LinkedHashSet<>();
+        variables.forEach((name, value) -> names.add(name));
         names.add(IMPLICIT_VALUE);
         names.add(IMPLICIT_INDEX);
         names.add(IMPLICIT_ACCUMULATOR);

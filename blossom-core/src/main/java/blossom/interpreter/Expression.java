@@ -447,8 +447,7 @@ public class Expression
             {
                 try
                 {
-                    Value res = fun.apply(c, type, e, t, unpackArgs(lv, c, Context.NONE));
-                    return (cc, tt) -> res;
+                    return fun.apply(c, type, e, t, unpackArgs(lv, c, Context.NONE));
                 }
                 catch (RuntimeException exc)
                 {
@@ -637,8 +636,7 @@ public class Expression
                     // li' un identificatore sconosciuto e' il nome di un parametro (o di un tipo),
                     // non una variabile da cercare
                     Context.Type operands = t == Context.LOCALIZATION ? Context.LOCALIZATION : Context.NONE;
-                    Value ret = fun.apply(c, t, v1.evalValue(c, operands), v2.evalValue(c, operands));
-                    return (cc, tt) -> ret;
+                    return fun.apply(c, t, v1.evalValue(c, operands), v2.evalValue(c, operands));
                 }
                 catch (RuntimeException exc)
                 {
@@ -667,8 +665,7 @@ public class Expression
                 try
                 {
                     Context.Type operands = t == Context.LOCALIZATION ? Context.LOCALIZATION : Context.NONE;
-                    Value ret = fun.apply(c, t, v.get(0).evalValue(c, operands), v.get(1).evalValue(c, operands));
-                    return (cc, tt) -> ret;
+                    return fun.apply(c, t, v.get(0).evalValue(c, operands), v.get(1).evalValue(c, operands));
                 }
                 catch (RuntimeException exc)
                 {
@@ -965,8 +962,7 @@ public class Expression
                 ILazyFunction.checkInterrupts();
                 try
                 {
-                    Value ret = fun.apply(c, i, unpackArgs(lazyParams, c, Context.NONE));
-                    return (cc, tt) -> ret;
+                    return fun.apply(c, i, unpackArgs(lazyParams, c, Context.NONE));
                 }
                 catch (RuntimeException exc)
                 {
@@ -1003,8 +999,7 @@ public class Expression
             {
                 try
                 {
-                    Value ret = fun.apply(c, i, unpackArgs(lazyParams, c, reqType));
-                    return (cc, tt) -> ret;
+                    return fun.apply(c, i, unpackArgs(lazyParams, c, reqType));
                 }
                 catch (RuntimeException exc)
                 {
@@ -1127,8 +1122,11 @@ public class Expression
      * ricerca del punto di qualificazione e un confronto di prefisso; su {@code _}, {@code _i} e
      * {@code _a} si risparmia l'intera ricerca nella mappa, perché sono campi del contesto.
      */
-    private LazyValue variableNode(String name)
+    private LazyValue variableNode(String rawName)
     {
+        // internato una volta qui: il frame confronta i nomi per identita' prima che per contenuto,
+        // e i nomi che vengono dal parsing sono gli stessi ad ogni valutazione
+        String name = rawName.intern();
         if (Context.isImplicitName(name))
         {
             return switch (name)
@@ -2135,8 +2133,7 @@ public class Expression
         }
         if (node.op instanceof LazyValue.ContextFreeLazyValue)
         {
-            Value ret = ((LazyValue.ContextFreeLazyValue) node.op).evalType(expectedType);
-            return (c, t) -> ret;
+            return ((LazyValue.ContextFreeLazyValue) node.op).evalType(expectedType);
         }
         Token token = node.token;
         switch (token.type)

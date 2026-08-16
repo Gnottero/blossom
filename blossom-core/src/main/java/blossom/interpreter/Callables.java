@@ -169,9 +169,8 @@ public abstract class Callables
 
         public static List<LazyValue> lazify(List<Value> args)
         {
-            List<LazyValue> lzargs = new ArrayList<>(args.size());
-            args.forEach(v -> lzargs.add((c, t) -> v));
-            return lzargs;
+            // un valore e' gia' un LazyValue che restituisce se stesso: niente da avvolgere
+            return new ArrayList<>(args);
         }
     }
 

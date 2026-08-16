@@ -77,7 +77,7 @@ public class Modules
             symbols.declareBinding(name, mutable);
             // l'assegnamento interno ha creato una variabile locale al corpo del modulo: il valore
             // appartiene al modulo, quindi va spostato dove le funzioni possono vederlo
-            c.variables.remove(name);
+            c.delVariable(name);
             LazyValue stored = (cc, tt) -> assigned;
             c.host.setGlobalVariable(expression.module, name, stored);
             return stored;

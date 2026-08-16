@@ -120,10 +120,7 @@ public class ControlFlow
                                 NumericValue.of(f.getToken().linepos + 1)
                         ))),
 
-                        StringValue.of("locals"), MapValue.wrap(ret.context.variables.entrySet().stream().filter(e -> !e.getKey().equals("_trace")).collect(Collectors.toMap(
-                                e -> StringValue.of(e.getKey()),
-                                e -> e.getValue().evalValue(ret.context)
-                        ))),
+                        StringValue.of("locals"), MapValue.wrap(locals(ret.context)),
                         StringValue.of("token"), ListValue.of(
                                 StringValue.of(ret.token.surface),
                                 NumericValue.of(ret.token.lineno + 1),
@@ -168,5 +165,24 @@ public class ControlFlow
                 return (ct, tt) -> retval;
             }
         });
+    }
+
+    /**
+     * Le variabili locali del frame in cui l'errore è nato, per il {@code _trace} di {@code try}.
+     *
+     * <p>{@code _trace} è escluso: è quello che stiamo costruendo, e leggerlo qui lo farebbe
+     * comparire dentro se stesso.
+     */
+    private static Map<Value, Value> locals(Context context)
+    {
+        Map<Value, Value> locals = new java.util.HashMap<>();
+        context.forEachVariable((name, value) ->
+        {
+            if (!name.equals("_trace"))
+            {
+                locals.put(StringValue.of(name), value.evalValue(context));
+            }
+        });
+        return locals;
     }
 }

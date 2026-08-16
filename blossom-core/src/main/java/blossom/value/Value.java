@@ -16,8 +16,23 @@ import java.util.regex.PatternSyntaxException;
 
 import org.jspecify.annotations.Nullable;
 
-public abstract class Value implements Comparable<Value>, Cloneable
+public abstract class Value implements Comparable<Value>, Cloneable, blossom.interpreter.LazyValue
 {
+    /**
+     * Un valore è anche il nodo che lo produce: valutarlo restituisce sé stesso.
+     *
+     * <p>Serve a togliere un'allocazione dai punti più caldi dell'interprete. Ogni funzione - built-in
+     * o definita da chi scrive - restituiva il proprio risultato avvolto in una lambda
+     * {@code (c, t) -> risultato} che il chiamante apriva subito dopo, e ogni argomento veniva messo
+     * nel frame nello stesso modo. Un valore che sa già rispondere a {@code evalValue} rende quelle
+     * lambda inutili.
+     */
+    @Override
+    public Value evalValue(blossom.interpreter.Context c, blossom.interpreter.Context.Type type)
+    {
+        return this;
+    }
+
     public static final NumericValue FALSE = BooleanValue.FALSE;
     public static final NumericValue TRUE = BooleanValue.TRUE;
     public static final NumericValue ZERO = new NumericValue(0);

@@ -305,7 +305,7 @@ public class FunctionValue extends Value implements Callables.ILazyFunction
             {
                 checkParameterType(i, arg, val, e, t);
             }
-            newFrame.setVariable(arg, (cc, tt) -> val);
+            newFrame.setVariable(arg, val);
         }
         if (varArgs != null)
         {
@@ -315,7 +315,7 @@ public class FunctionValue extends Value implements Callables.ILazyFunction
                 extraParams.add(params.get(i).reboundedTo(null)); // copy by value I guess
             }
             Value rest = ListValue.wrap(extraParams).bindTo(varArgs); // didn't we just copied that?
-            newFrame.setVariable(varArgs, (cc, tt) -> rest);
+            newFrame.setVariable(varArgs, rest);
 
         }
         Value retVal;
@@ -341,8 +341,7 @@ public class FunctionValue extends Value implements Callables.ILazyFunction
             profiler.exit(moduleName(), name, profileStart);
             newFrame.budget.exitCall();
         }
-        Value otherRetVal = retVal;
-        return (cc, tt) -> otherRetVal;
+        return retVal;
     }
 
     /**

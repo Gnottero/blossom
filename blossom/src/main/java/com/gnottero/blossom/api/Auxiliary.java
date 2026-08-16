@@ -741,7 +741,7 @@ public class Auxiliary
             CommandSourceStack innerSource = outerSource.withLevel((ServerLevel) world);
             Context newCtx = c.recreate();
             ((ScriptContext) newCtx).swapSource(innerSource);
-            newCtx.variables = c.variables;
+            newCtx.shareVariablesWith(c);
             Value retval = lv.get(1).evalValue(newCtx);
             return (cc, tt) -> retval;
         });
