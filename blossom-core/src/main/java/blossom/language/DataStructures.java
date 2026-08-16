@@ -147,16 +147,16 @@ public class DataStructures
             }
             LazyValue sortKey = lv.get(1);
             //scoping
-            LazyValue defaultVal = c.getVariable("_");
+            LazyValue defaultVal = c.implicitValue;
             toSort.sort((v1, v2) -> {
-                c.setVariable("_", (cc, tt) -> v1);
+                c.implicitValue = (cc, tt) -> v1;
                 Value ev1 = sortKey.evalValue(c);
-                c.setVariable("_", (cc, tt) -> v2);
+                c.implicitValue = (cc, tt) -> v2;
                 Value ev2 = sortKey.evalValue(c);
                 return ev1.compareTo(ev2);
             });
             //revering scope
-            c.setVariable("_", defaultVal);
+            c.implicitValue = defaultVal;
             Value ret = ListValue.wrap(toSort);
             return (cc, tt) -> ret;
         });

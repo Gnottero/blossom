@@ -103,7 +103,7 @@ public class BlockIterators
             LazyValue xVal = c.getVariable("_x");
             LazyValue yVal = c.getVariable("_y");
             LazyValue zVal = c.getVariable("_z");
-            LazyValue defaultVal = c.getVariable("_");
+            LazyValue defaultVal = c.implicitValue;
             int sCount = 0;
             outer:
             for (int y = cy - yrange; y <= cy + yprange; y++)
@@ -120,7 +120,7 @@ public class BlockIterators
 
                         c.setVariable("_z", (ct, tt) -> new NumericValue(zFinal).bindTo("_z"));
                         Value blockValue = BlockValue.fromCoords(((ScriptContext) c), xFinal, yFinal, zFinal).bindTo("_");
-                        c.setVariable("_", (ct, tt) -> blockValue);
+                        c.implicitValue = (ct, tt) -> blockValue;
                         Value result;
                         try
                         {
@@ -145,7 +145,7 @@ public class BlockIterators
             c.setVariable("_x", xVal);
             c.setVariable("_y", yVal);
             c.setVariable("_z", zVal);
-            c.setVariable("_", defaultVal);
+            c.implicitValue = defaultVal;
             int finalSCount = sCount;
             return (ct, tt) -> new NumericValue(finalSCount);
         });
@@ -183,7 +183,7 @@ public class BlockIterators
             LazyValue xVal = c.getVariable("_x");
             LazyValue yVal = c.getVariable("_y");
             LazyValue zVal = c.getVariable("_z");
-            LazyValue defaultVal = c.getVariable("_");
+            LazyValue defaultVal = c.implicitValue;
             int sCount = 0;
             outer:
             for (int y = miny; y <= maxy; y++)
@@ -199,7 +199,7 @@ public class BlockIterators
                         int zFinal = z;
                         c.setVariable("_z", (ct, tt) -> new NumericValue(zFinal).bindTo("_z"));
                         Value blockValue = BlockValue.fromCoords(((ScriptContext) c), xFinal, yFinal, zFinal).bindTo("_");
-                        c.setVariable("_", (ct, tt) -> blockValue);
+                        c.implicitValue = (ct, tt) -> blockValue;
                         Value result;
                         try
                         {
@@ -224,7 +224,7 @@ public class BlockIterators
             c.setVariable("_x", xVal);
             c.setVariable("_y", yVal);
             c.setVariable("_z", zVal);
-            c.setVariable("_", defaultVal);
+            c.implicitValue = defaultVal;
             int finalSCount = sCount;
             return (ct, tt) -> new NumericValue(finalSCount);
         });

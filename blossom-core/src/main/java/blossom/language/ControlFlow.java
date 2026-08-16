@@ -107,8 +107,8 @@ public class ControlFlow
 
                 Value val = null; // This is always assigned at some point, just the compiler doesn't know
 
-                LazyValue defaultVal = c.getVariable("_");
-                c.setVariable("_", (ct, tt) -> ret.data.reboundedTo("_"));
+                LazyValue defaultVal = c.implicitValue;
+                c.implicitValue = (ct, tt) -> ret.data.reboundedTo("_");
                 LazyValue trace = c.getVariable("_trace");
                 c.setVariable("_trace", (ct, tt) -> MapValue.wrap(Map.of(
                         StringValue.of("stack"), ListValue.wrap(ret.stack.stream().map(f -> ListValue.of(
@@ -151,7 +151,7 @@ public class ControlFlow
                         pointer += 2;
                     }
                 }
-                c.setVariable("_", defaultVal);
+                c.implicitValue = defaultVal;
                 if (trace != null)
                 {
                     c.setVariable("_trace", trace);

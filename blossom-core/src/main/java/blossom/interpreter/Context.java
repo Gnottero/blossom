@@ -76,18 +76,91 @@ public class Context
         return this;
     }
 
+    /**
+     * Le tre variabili implicite delle funzioni di secondo ordine: l'elemento corrente, il suo
+     * indice e l'accumulatore.
+     *
+     * <p>Campi e non voci della mappa delle variabili perché sono le più scritte e le più lette di
+     * tutte: un {@code for} le riassegna ad ogni iterazione, e ogni {@code _} nel corpo le rilegge.
+     * Nella mappa, ogni iterazione costava un hash e un inserimento; qui costa un'assegnazione di
+     * campo, e il nodo compilato per {@code _} legge il campo senza passare da nessun nome (vedi
+     * {@code Expression.variableNode}).
+     *
+     * <p>Restano raggiungibili per nome - {@code var('_')}, {@code vars('_')} - perché i tre nomi
+     * sono deviati qui da {@link #getVariable}, {@link #setVariable} e {@link #delVariable}: quella
+     * è la strada fredda, e può permettersi il confronto.
+     */
+    public LazyValue implicitValue = IMPLICIT_DEFAULT;
+    public LazyValue implicitIndex = IMPLICIT_DEFAULT;
+    public LazyValue implicitAccumulator = IMPLICIT_DEFAULT;
+
+    private static final LazyValue IMPLICIT_DEFAULT = (c, t) -> Value.ZERO;
+
+    // le letture passano da un metodo e non dal campo, così il contesto della compilazione può
+    // rifiutarle come rifiuta ogni altro accesso allo stato di esecuzione
+    public LazyValue implicitValue()
+    {
+        return implicitValue;
+    }
+
+    public LazyValue implicitIndex()
+    {
+        return implicitIndex;
+    }
+
+    public LazyValue implicitAccumulator()
+    {
+        return implicitAccumulator;
+    }
+
+    /** I nomi delle tre variabili implicite, per chi le cerca per nome. */
+    public static final String IMPLICIT_VALUE = "_";
+    public static final String IMPLICIT_INDEX = "_i";
+    public static final String IMPLICIT_ACCUMULATOR = "_a";
+
+    /** {@code true} se {@code name} è una delle tre variabili implicite. */
+    public static boolean isImplicitName(String name)
+    {
+        return name.length() <= 2 && !name.isEmpty() && name.charAt(0) == '_'
+                && (name.length() == 1 || name.charAt(1) == 'i' || name.charAt(1) == 'a');
+    }
+
     public LazyValue getVariable(String name)
     {
+        if (isImplicitName(name))
+        {
+            return switch (name)
+            {
+                case IMPLICIT_VALUE -> implicitValue;
+                case IMPLICIT_INDEX -> implicitIndex;
+                default -> implicitAccumulator;
+            };
+        }
         return variables.get(name);
     }
 
     public void setVariable(String name, LazyValue lv)
     {
+        if (isImplicitName(name))
+        {
+            switch (name)
+            {
+                case IMPLICIT_VALUE -> implicitValue = lv;
+                case IMPLICIT_INDEX -> implicitIndex = lv;
+                default -> implicitAccumulator = lv;
+            }
+            return;
+        }
         variables.put(name, lv);
     }
 
     public void delVariable(String variable)
     {
+        if (isImplicitName(variable))
+        {
+            setVariable(variable, IMPLICIT_DEFAULT);
+            return;
+        }
         variables.remove(variable);
     }
 
@@ -98,13 +171,17 @@ public class Context
 
     public Context with(String variable, LazyValue lv)
     {
-        variables.put(variable, lv);
+        setVariable(variable, lv);
         return this;
     }
 
     public Set<String> getAllVariableNames()
     {
-        return variables.keySet();
+        Set<String> names = new java.util.LinkedHashSet<>(variables.keySet());
+        names.add(IMPLICIT_VALUE);
+        names.add(IMPLICIT_INDEX);
+        names.add(IMPLICIT_ACCUMULATOR);
+        return names;
     }
 
     public Context recreate()
@@ -131,10 +208,7 @@ public class Context
 
     protected void initialize()
     {
-        //special variables for second order functions so we don't need to check them all the time
-        variables.put("_", (c, t) -> Value.ZERO);
-        variables.put("_i", (c, t) -> Value.ZERO);
-        variables.put("_a", (c, t) -> Value.ZERO);
+        // le variabili implicite sono campi con un default: un frame nuovo non deve scriverle
     }
 
     public Context duplicate()
@@ -234,6 +308,27 @@ public class Context
 
         @Override
         public Context duplicate()
+        {
+            badProgrammer();
+            return null;
+        }
+
+        @Override
+        public LazyValue implicitValue()
+        {
+            badProgrammer();
+            return null;
+        }
+
+        @Override
+        public LazyValue implicitIndex()
+        {
+            badProgrammer();
+            return null;
+        }
+
+        @Override
+        public LazyValue implicitAccumulator()
         {
             badProgrammer();
             return null;

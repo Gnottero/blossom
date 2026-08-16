@@ -1094,20 +1094,13 @@ public class Expression
 
     public LazyValue getOrSetAnyVariable(Context c, String name)
     {
+        if (Context.isImplicitName(name))
+        {
+            return c.getVariable(name);
+        }
         if (ScriptHost.isQualified(name))
         {
-            // alias.simbolo: appartiene a un altro modulo, quindi non puo' essere creato qui - o
-            // esiste ed e' pubblico, o e' un errore, e lo e' subito
-            LazyValue imported = c.host.getQualifiedGlobal(module, name);
-            if (imported != null)
-            {
-                return imported;
-            }
-            // un simbolo pubblico che non e' un binding e' una funzione, e una funzione e' un valore:
-            // passarla a un altro modulo deve funzionare, ed e' il FunctionValue - non il suo nome -
-            // a viaggiare, cosi' resta legata al modulo che l'ha definita ovunque venga chiamata
-            Value function = c.host.getQualifiedFunction(module, name);
-            return (cc, tt) -> function;
+            return qualifiedVariable(c, name);
         }
         if (isGlobalVariableName(name))
         {
@@ -1115,6 +1108,66 @@ public class Expression
             // undefined global cannot overwrite the value another thread is assigning to it
             return c.host.getOrCreateGlobalVariable(module, name, () -> uninitializedVariable(name));
         }
+        return localVariable(c, name);
+    }
+
+    private static LazyValue uninitializedVariable(String name)
+    {
+        // tolerates a null context: a global that was only mentioned holds this very placeholder,
+        // and it is read without a context when the app's globals are inspected
+        return (_c, _t) -> _c != null && _c.host.strict ? Value.UNDEF.reboundedTo(name) : Value.NULL.reboundedTo(name);
+    }
+
+    /**
+     * Il nodo compilato che legge la variabile {@code name}.
+     *
+     * <p>A quale spazio dei nomi appartiene un nome si sa guardandolo, e il nome non cambia più dopo
+     * il parsing: la scelta si fa una volta qui, invece di rifarla ad ogni lettura come faceva
+     * {@link #getOrSetAnyVariable}. Su una variabile locale si risparmiano ad ogni accesso una
+     * ricerca del punto di qualificazione e un confronto di prefisso; su {@code _}, {@code _i} e
+     * {@code _a} si risparmia l'intera ricerca nella mappa, perché sono campi del contesto.
+     */
+    private LazyValue variableNode(String name)
+    {
+        if (Context.isImplicitName(name))
+        {
+            return switch (name)
+            {
+                case Context.IMPLICIT_VALUE -> (c, t) -> c.implicitValue().evalValue(c, t);
+                case Context.IMPLICIT_INDEX -> (c, t) -> c.implicitIndex().evalValue(c, t);
+                default -> (c, t) -> c.implicitAccumulator().evalValue(c, t);
+            };
+        }
+        if (ScriptHost.isQualified(name))
+        {
+            return (c, t) -> qualifiedVariable(c, name).evalValue(c, t);
+        }
+        if (isGlobalVariableName(name))
+        {
+            return (c, t) -> c.host.getOrCreateGlobalVariable(module, name, () -> uninitializedVariable(name)).evalValue(c, t);
+        }
+        return (c, t) -> localVariable(c, name).evalValue(c, t);
+    }
+
+    /** {@code alias.simbolo}: appartiene a un altro modulo, e non può essere creato da qui. */
+    private LazyValue qualifiedVariable(Context c, String name)
+    {
+        // o esiste ed e' pubblico, o e' un errore, e lo e' subito
+        LazyValue imported = c.host.getQualifiedGlobal(module, name);
+        if (imported != null)
+        {
+            return imported;
+        }
+        // un simbolo pubblico che non e' un binding e' una funzione, e una funzione e' un valore:
+        // passarla a un altro modulo deve funzionare, ed e' il FunctionValue - non il suo nome -
+        // a viaggiare, cosi' resta legata al modulo che l'ha definita ovunque venga chiamata
+        Value function = c.host.getQualifiedFunction(module, name);
+        return (cc, tt) -> function;
+    }
+
+    /** Un nome nudo: il frame corrente, poi i global del modulo, poi le sue funzioni. */
+    private LazyValue localVariable(Context c, String name)
+    {
         LazyValue variable = c.getVariable(name);
         if (variable != null)
         {
@@ -1134,13 +1187,6 @@ public class Expression
         variable = uninitializedVariable(name);
         c.setVariable(name, variable);
         return variable;
-    }
-
-    private static LazyValue uninitializedVariable(String name)
-    {
-        // tolerates a null context: copying globals for a per player host evaluates every stored
-        // value without one, and a global that was only mentioned holds this very placeholder
-        return (_c, _t) -> _c != null && _c.host.strict ? Value.UNDEF.reboundedTo(name) : Value.NULL.reboundedTo(name);
     }
 
     /**
@@ -1602,7 +1648,7 @@ public class Expression
                     }
                     else
                     {
-                        ExpressionNode newNode = new ExpressionNode(((c, t) -> getOrSetAnyVariable(c, token.surface).evalValue(c, t)), Collections.emptyList(), token);
+                        ExpressionNode newNode = new ExpressionNode(variableNode(token.surface), Collections.emptyList(), token);
                         token.node = newNode;
                         nodeStack.push(newNode);
                     }
@@ -2111,7 +2157,7 @@ public class Expression
                 return (c, t) -> op.lazyEval(c, t, this, token, arg, arh).evalValue(c, t);
             }
             case VARIABLE:
-                return (c, t) -> getOrSetAnyVariable(c, token.surface).evalValue(c, t);
+                return variableNode(token.surface);
             case FUNCTION:
             {
                 ILazyFunction f = functions.get(token.surface);

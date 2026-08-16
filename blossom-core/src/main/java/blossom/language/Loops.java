@@ -58,8 +58,8 @@ public class Loops
                 long i = 0;
                 Value lastOne = Value.NULL;
                 //scoping
-                LazyValue defaultVal = c.getVariable("_");
-                c.setVariable("_", (cc, tt) -> new NumericValue(0).bindTo("_"));
+                LazyValue defaultVal = c.implicitValue;
+                c.implicitValue = (cc, tt) -> new NumericValue(0).bindTo("_");
                 final blossom.interpreter.ExecutionBudget budget = c.budget;
                 while (condition.evalValue(c, Context.BOOLEAN).getBoolean())
                 {
@@ -81,10 +81,10 @@ public class Loops
                     }
                     i++;
                     long seriously = i;
-                    c.setVariable("_", (cc, tt) -> new NumericValue(seriously).bindTo("_"));
+                    c.implicitValue = (cc, tt) -> new NumericValue(seriously).bindTo("_");
                 }
                 //revering scope
-                c.setVariable("_", defaultVal);
+                c.implicitValue = defaultVal;
                 Value lastValueNoKidding = lastOne;
                 return (cc, tt) -> lastValueNoKidding;
             }
@@ -94,8 +94,8 @@ public class Loops
             long i = 0;
             Value lastOne = Value.NULL;
             //scoping
-            LazyValue defaultVal = c.getVariable("_");
-            c.setVariable("_", (cc, tt) -> new NumericValue(0).bindTo("_"));
+            LazyValue defaultVal = c.implicitValue;
+            c.implicitValue = (cc, tt) -> new NumericValue(0).bindTo("_");
             // il watchdog letto una volta, fuori dal ciclo: vedi il commento in 'loop'
             final blossom.interpreter.ExecutionBudget budget = c.budget;
             while (i < limit && condition.evalValue(c, Context.BOOLEAN).getBoolean())
@@ -118,10 +118,10 @@ public class Loops
                 }
                 i++;
                 long seriously = i;
-                c.setVariable("_", (cc, tt) -> new NumericValue(seriously).bindTo("_"));
+                c.implicitValue = (cc, tt) -> new NumericValue(seriously).bindTo("_");
             }
             //revering scope
-            c.setVariable("_", defaultVal);
+            c.implicitValue = defaultVal;
             Value lastValueNoKidding = lastOne;
             return (cc, tt) -> lastValueNoKidding;
         });
@@ -134,7 +134,7 @@ public class Loops
             Value lastOne = Value.NULL;
             LazyValue expr = lv.get(1);
             //scoping
-            LazyValue defaultVal = c.getVariable("_");
+            LazyValue defaultVal = c.implicitValue;
             // il watchdog letto una volta e tenuto in un locale: dentro il loop piu' stretto del
             // linguaggio anche la sola rilettura del campo si vede nel benchmark
             final blossom.interpreter.ExecutionBudget budget = c.budget;
@@ -142,7 +142,7 @@ public class Loops
             {
                 budget.tick();
                 long whyYouAsk = i;
-                c.setVariable("_", (cc, tt) -> new NumericValue(whyYouAsk).bindTo("_"));
+                c.implicitValue = (cc, tt) -> new NumericValue(whyYouAsk).bindTo("_");
                 try
                 {
                     lastOne = expr.evalValue(c, t);
@@ -160,7 +160,7 @@ public class Loops
                 }
             }
             //revering scope
-            c.setVariable("_", defaultVal);
+            c.implicitValue = defaultVal;
             Value trulyLastOne = lastOne;
             return (cc, tt) -> trulyLastOne;
         });
@@ -181,8 +181,8 @@ public class Loops
             Iterator<Value> iterator = alv.iterator();
             LazyValue expr = lv.get(1);
             //scoping
-            LazyValue defaultVal = c.getVariable("_");
-            LazyValue iterVal = c.getVariable("_i");
+            LazyValue defaultVal = c.implicitValue;
+            LazyValue iterVal = c.implicitIndex;
             // il watchdog letto una volta, fuori dal ciclo: vedi il commento in 'loop'
             final blossom.interpreter.ExecutionBudget budget = c.budget;
             List<Value> result = new ArrayList<>();
@@ -196,8 +196,8 @@ public class Loops
                 String variable = next.boundVariable;
                 next.bindTo("_");
                 int doYouReally = i;
-                c.setVariable("_", (cc, tt) -> next);
-                c.setVariable("_i", (cc, tt) -> new NumericValue(doYouReally).bindTo("_i"));
+                c.implicitValue = (cc, tt) -> next;
+                c.implicitIndex = (cc, tt) -> new NumericValue(doYouReally).bindTo("_i");
                 try
                 {
                     result.add(expr.evalValue(c, t));
@@ -219,8 +219,8 @@ public class Loops
             ((AbstractListValue) rval).fatality();
             Value ret = ListValue.wrap(result);
             //revering scope
-            c.setVariable("_", defaultVal);
-            c.setVariable("_i", iterVal);
+            c.implicitValue = defaultVal;
+            c.implicitIndex = iterVal;
             return (cc, tt) -> ret;
         });
 
@@ -241,8 +241,8 @@ public class Loops
             Iterator<Value> iterator = alv.iterator();
             LazyValue expr = lv.get(1);
             //scoping
-            LazyValue defaultVal = c.getVariable("_");
-            LazyValue iterVal = c.getVariable("_i");
+            LazyValue defaultVal = c.implicitValue;
+            LazyValue iterVal = c.implicitIndex;
             // il watchdog letto una volta, fuori dal ciclo: vedi il commento in 'loop'
             final blossom.interpreter.ExecutionBudget budget = c.budget;
             List<Value> result = new ArrayList<>();
@@ -256,8 +256,8 @@ public class Loops
                 String veriable = next.boundVariable;
                 next.bindTo("_");
                 int seriously = i;
-                c.setVariable("_", (cc, tt) -> next);
-                c.setVariable("_i", (cc, tt) -> new NumericValue(seriously).bindTo("_i"));
+                c.implicitValue = (cc, tt) -> next;
+                c.implicitIndex = (cc, tt) -> new NumericValue(seriously).bindTo("_i");
                 try
                 {
                     if (expr.evalValue(c, Context.BOOLEAN).getBoolean())
@@ -282,8 +282,8 @@ public class Loops
             ((AbstractListValue) rval).fatality();
             Value ret = ListValue.wrap(result);
             //revering scope
-            c.setVariable("_", defaultVal);
-            c.setVariable("_i", iterVal);
+            c.implicitValue = defaultVal;
+            c.implicitIndex = iterVal;
             return (cc, tt) -> ret;
         });
 
@@ -304,8 +304,8 @@ public class Loops
             Iterator<Value> iterator = alv.iterator();
             LazyValue expr = lv.get(1);
             //scoping
-            LazyValue defaultVal = c.getVariable("_");
-            LazyValue iterVal = c.getVariable("_i");
+            LazyValue defaultVal = c.implicitValue;
+            LazyValue iterVal = c.implicitIndex;
             // il watchdog letto una volta, fuori dal ciclo: vedi il commento in 'loop'
             final blossom.interpreter.ExecutionBudget budget = c.budget;
             Value result = Value.NULL;
@@ -319,8 +319,8 @@ public class Loops
                 String variable = next.boundVariable;
                 next.bindTo("_");
                 int seriously = i;
-                c.setVariable("_", (cc, tt) -> next);
-                c.setVariable("_i", (cc, tt) -> new NumericValue(seriously).bindTo("_i"));
+                c.implicitValue = (cc, tt) -> next;
+                c.implicitIndex = (cc, tt) -> new NumericValue(seriously).bindTo("_i");
                 try
                 {
                     if (expr.evalValue(c, Context.BOOLEAN).getBoolean())
@@ -345,8 +345,8 @@ public class Loops
             //revering scope
             ((AbstractListValue) rval).fatality();
             Value whyWontYouTrustMeJava = result;
-            c.setVariable("_", defaultVal);
-            c.setVariable("_i", iterVal);
+            c.implicitValue = defaultVal;
+            c.implicitIndex = iterVal;
             return (cc, tt) -> whyWontYouTrustMeJava;
         });
 
@@ -367,8 +367,8 @@ public class Loops
             Iterator<Value> iterator = alv.iterator();
             LazyValue expr = lv.get(1);
             //scoping
-            LazyValue defaultVal = c.getVariable("_");
-            LazyValue iterVal = c.getVariable("_i");
+            LazyValue defaultVal = c.implicitValue;
+            LazyValue iterVal = c.implicitIndex;
             // il watchdog letto una volta, fuori dal ciclo: vedi il commento in 'loop'
             final blossom.interpreter.ExecutionBudget budget = c.budget;
             LazyValue result = LazyValue.TRUE;
@@ -382,8 +382,8 @@ public class Loops
                 String variable = next.boundVariable;
                 next.bindTo("_");
                 int seriously = i;
-                c.setVariable("_", (cc, tt) -> next);
-                c.setVariable("_i", (cc, tt) -> new NumericValue(seriously).bindTo("_i"));
+                c.implicitValue = (cc, tt) -> next;
+                c.implicitIndex = (cc, tt) -> new NumericValue(seriously).bindTo("_i");
                 if (!expr.evalValue(c, Context.BOOLEAN).getBoolean())
                 {
                     result = LazyValue.FALSE;
@@ -394,8 +394,8 @@ public class Loops
             }
             //revering scope
             ((AbstractListValue) rval).fatality();
-            c.setVariable("_", defaultVal);
-            c.setVariable("_i", iterVal);
+            c.implicitValue = defaultVal;
+            c.implicitIndex = iterVal;
             return result;
         });
 
@@ -446,8 +446,8 @@ public class Loops
             Iterator<Value> iterator = alv.iterator();
             LazyValue expr = lv.get(1);
             //scoping
-            LazyValue defaultVal = c.getVariable("_");
-            LazyValue iterVal = c.getVariable("_i");
+            LazyValue defaultVal = c.implicitValue;
+            LazyValue iterVal = c.implicitIndex;
             // il watchdog letto una volta, fuori dal ciclo: vedi il commento in 'loop'
             final blossom.interpreter.ExecutionBudget budget = c.budget;
             int successCount = 0;
@@ -461,8 +461,8 @@ public class Loops
                 String variable = next.boundVariable;
                 next.bindTo("_");
                 int seriously = i;
-                c.setVariable("_", (cc, tt) -> next);
-                c.setVariable("_i", (cc, tt) -> new NumericValue(seriously).bindTo("_i"));
+                c.implicitValue = (cc, tt) -> next;
+                c.implicitIndex = (cc, tt) -> new NumericValue(seriously).bindTo("_i");
                 Value result = Value.FALSE;
                 try
                 {
@@ -488,8 +488,8 @@ public class Loops
             }
             //revering scope
             ((AbstractListValue) rval).fatality();
-            c.setVariable("_", defaultVal);
-            c.setVariable("_i", iterVal);
+            c.implicitValue = defaultVal;
+            c.implicitIndex = iterVal;
             long promiseWontChange = successCount;
             return (cc, tt) -> new NumericValue(promiseWontChange);
         });
@@ -522,9 +522,9 @@ public class Loops
             }
 
             //scoping
-            LazyValue defaultVal = c.getVariable("_");
-            LazyValue accumulatorVal = c.getVariable("_a");
-            LazyValue iterVal = c.getVariable("_i");
+            LazyValue defaultVal = c.implicitValue;
+            LazyValue accumulatorVal = c.implicitAccumulator;
+            LazyValue iterVal = c.implicitIndex;
 
             // il watchdog letto una volta, fuori dal ciclo: vedi il commento in 'loop'
             final blossom.interpreter.ExecutionBudget budget = c.budget;
@@ -539,9 +539,9 @@ public class Loops
                 next.bindTo("_");
                 Value promiseWontChangeYou = acc;
                 int seriously = i;
-                c.setVariable("_a", (cc, tt) -> promiseWontChangeYou.bindTo("_a"));
-                c.setVariable("_", (cc, tt) -> next);
-                c.setVariable("_i", (cc, tt) -> new NumericValue(seriously).bindTo("_i"));
+                c.implicitAccumulator = (cc, tt) -> promiseWontChangeYou.bindTo("_a");
+                c.implicitValue = (cc, tt) -> next;
+                c.implicitIndex = (cc, tt) -> new NumericValue(seriously).bindTo("_i");
                 try
                 {
                     acc = expr.evalValue(c, t);
@@ -562,9 +562,9 @@ public class Loops
             }
             //reverting scope
             ((AbstractListValue) rval).fatality();
-            c.setVariable("_a", accumulatorVal);
-            c.setVariable("_", defaultVal);
-            c.setVariable("_i", iterVal);
+            c.implicitAccumulator = accumulatorVal;
+            c.implicitValue = defaultVal;
+            c.implicitIndex = iterVal;
 
             Value hopeItsEnoughPromise = acc;
             return (cc, tt) -> hopeItsEnoughPromise;

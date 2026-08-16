@@ -122,6 +122,36 @@ class InterpreterTest
         assertEquals("10", evalWithStdlib("list.reduce([1, 2, 3, 4], _a + _, 0)"));
     }
 
+    /**
+     * Le tre variabili implicite vivono in campi del contesto e non nella mappa delle variabili:
+     * questi casi fissano quello che deve continuare a valere comunque.
+     */
+    @Test
+    void implicitVariablesNestAndRestore()
+    {
+        // l'indice c'e' e conta da zero
+        assertEquals("[0, 1, 2]", evalWithStdlib("list.map(['a', 'b', 'c'], _i)"));
+        // un ciclo dentro l'altro: quello interno non deve rubare '_' a quello esterno
+        assertEquals("[3, 6, 9]", evalWithStdlib("list.map([1, 2, 3], (outer_ = _; list.reduce([1, 1, 1], _a + outer_, 0)))"));
+        // finito il ciclo, '_' torna il valore di partenza invece di restare l'ultimo elemento
+        assertEquals("0", evalWithStdlib("list.map([1, 2], _ * 2); _"));
+        assertEquals("0", evalWithStdlib("for([1, 2, 3], _i); _i"));
+        // e sono raggiungibili anche per nome, dove il ciclo le ha messe
+        assertEquals("[2, 3]", eval("""
+                import "core.list" as list;
+                import "core.system" as system;
+                list.map([1, 2], system.var('_') + 1)"""));
+        assertEquals("[1, 2, 3]", evalWithStdlib("list.map([1, 2, 3], _i + 1)"));
+    }
+
+    @Test
+    void loopsSeeTheirCounter()
+    {
+        assertEquals("6", evalWithStdlib("total = 0; loop(4, total += _); total"));
+        assertEquals("3", evalWithStdlib("i = 0; while(i < 3, 10, i += 1); i"));
+        assertEquals("[0, 1, 2]", evalWithStdlib("seen = []; for([9, 9, 9], list.put(seen, null, _i)); seen"));
+    }
+
     @Test
     void buildsAndQueriesMaps()
     {
