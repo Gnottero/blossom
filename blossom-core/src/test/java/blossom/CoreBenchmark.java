@@ -48,6 +48,9 @@ public final class CoreBenchmark
         List<Case> cases = List.of(
                 new Case("loop aritmetico", "sum = 0; loop(1000000, sum += _ * 2 - 1); sum", 1_000_000),
                 new Case("chiamate a funzione", "f(x) -> x * 2 - 1; sum = 0; loop(200000, sum += f(_)); sum", 200_000),
+                // una chiamata con piu' argomenti: il costo del frame si vede qui, dove passare un
+                // parametro in piu' e' l'unica cosa che cambia rispetto al caso qui sopra
+                new Case("chiamate a quattro argomenti", "g(a, b, c, d) -> a * b - c + d; sum = 0; loop(200000, sum += g(_, 2, 1, _)); sum", 200_000),
                 new Case("accesso a lista", IMPORTS + "l = list.map(list.range(1000), _); sum = 0; loop(200000, sum += l:(_ % 1000)); sum", 200_000),
                 new Case("costruzione di mappe", "loop(50000, m = {'a' -> _, 'b' -> _ * 2}; m:'b'); 0", 50_000),
                 new Case("parsing", null, 1),

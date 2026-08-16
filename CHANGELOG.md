@@ -27,6 +27,12 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ### Cambiato
 
+- **Il frame di una chiamata non è più una mappa a hash**, e un valore vale come nodo di sé stesso:
+  spariscono le lambda che avvolgevano ogni argomento e ogni risultato. Chiamate a funzione **-24%**,
+  loop aritmetico **-32%**, accesso a lista **-25%**. Vedi `BENCHMARK.md` e DECISIONI.md D-091.
+- `_x`, `_y` e `_z` non sono più preparate in ogni frame: le scrive `scan` prima di valutare il
+  corpo, e fuori da uno scan sono variabili non definite come tutte le altre (cioè `null`, non `0`).
+
 - **Un'app è una sola per tutto il server, come un plugin.** Sparita la distinzione fra app globale e
   app per giocatore: con lei escono gli host per giocatore, i global condivisi per app (quel ruolo
   ce l'hanno i binding di modulo) e le chiavi `system_info('app_scope')` e `system_info('app_players')`.

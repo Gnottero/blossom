@@ -89,6 +89,25 @@ class InterpreterTest
         assertEquals("1", eval("bump(v) -> (v += 1; null); n = 1; bump(n); n"));
     }
 
+    /**
+     * Il nome di una variabile lo sa il nodo che la legge, non il valore: questi casi fissano che
+     * assegnare a un parametro resti una faccenda del solo frame che lo ha.
+     */
+    @Test
+    void assigningToAParameterDoesNotReachTheCaller()
+    {
+        // il parametro ha lo stesso nome della variabile del chiamante: il caso in cui uno scambio
+        // di nomi si vedrebbe
+        assertEquals("1", eval("bump(n) -> (n = 99; n); n = 1; bump(n); n"));
+        assertEquals("99", eval("bump(n) -> (n = 99; n); n = 1; bump(n)"));
+        // e con nomi diversi
+        assertEquals("1", eval("bump(v) -> (v = 99; v); n = 1; bump(n); n"));
+        // un contenitore invece si passa per riferimento, e resta cosi'
+        assertEquals("[1, 2, 3]", evalWithStdlib("push(l) -> list.put(l, null, 3); l = [1, 2]; push(l); l"));
+        // scambiare due parametri fra loro non deve confondere i nomi
+        assertEquals("[2, 1]", eval("exchange(a, b) -> (a <> b; [a, b]); exchange(1, 2)"));
+    }
+
     @Test
     void capturesOuterVariablesExplicitly()
     {
