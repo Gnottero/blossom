@@ -60,10 +60,6 @@ public class Inventories
         expression.addContextFunction("stack_limit", 1, (c, t, lv) ->
                 new NumericValue(NBTSerializableValue.parseItem(lv.get(0).getString(), ((ScriptContext) c).registryAccess()).getMaxStackSize()));
 
-        expression.addContextFunction("item_category", -1, (c, t, lv) -> {
-            return Value.NULL;
-        });
-
         expression.addContextFunction("item_list", -1, (c, t, lv) ->
         {
             ScriptContext cc = (ScriptContext) c;

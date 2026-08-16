@@ -56,6 +56,13 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ### Rimosso
 
+- **Undici funzioni di gioco che non aggiungevano niente** (DECISIONI.md D-090): `material`,
+  `item_category` e `enable_hidden_dimensions` rispondevano sempre la stessa cosa; `world_time`,
+  `last_tick_times`, `seed`, `view_distance` e `current_dimension` erano il duplicato di una chiave
+  di `system_info`; `property` e `block_properties` sono un sottoinsieme di `block_state`;
+  `create_marker` e `remove_all_markers` erano un armor stand preconfezionato, che `spawn` fa in
+  modo piu' generale.
+
 - `core.mc.world.relight` e `core.mc.world.reset_chunk` **non esistono piu'**: erano dichiarate,
   documentate e implementate come `return null` — l'implementazione vera era commentata da prima
   dell'estrazione. Una funzione che non fa quello che dice e' peggio di una che non c'e'.

@@ -1,135 +1,378 @@
 {
   "$alias": "item",
-
   "inventory_size": {
-    "signatures": ["inventory_size(inventory)"],
+    "signatures": [
+      "inventory_size(inventory)"
+    ],
     "summary": "How many slots an inventory has.",
-    "params": [["inventory", "an entity carrying it, or the position of a block containing one"]],
+    "params": [
+      [
+        "inventory",
+        "an entity carrying it, or the position of a block containing one"
+      ]
+    ],
     "returns": "`num` — the number of slots, `null` when there is no inventory there.",
-    "examples": ["item.inventory_size(player);        // 41", "item.inventory_size(chest_pos);     // 27", "if(item.inventory_size(pos) == null, print('no container here'));"]
+    "examples": [
+      "item.inventory_size(player);        // 41",
+      "item.inventory_size(chest_pos);     // 27",
+      "if(item.inventory_size(pos) == null, print('no container here'));"
+    ]
   },
   "inventory_get": {
-    "signatures": ["inventory_get(inventory)", "inventory_get(inventory, slot)"],
+    "signatures": [
+      "inventory_get(inventory)",
+      "inventory_get(inventory, slot)"
+    ],
     "summary": "The content of a slot, or of the whole inventory.",
-    "params": [["inventory", "the entity or the position holding it"], ["slot", "optional: which slot; without it, all of them"]],
+    "params": [
+      [
+        "inventory",
+        "the entity or the position holding it"
+      ],
+      [
+        "slot",
+        "optional: which slot; without it, all of them"
+      ]
+    ],
     "returns": "`list` — the item as `[name, count, nbt]`, or the list of every slot; `null` when the slot is empty.",
-    "examples": ["item.inventory_get(player, 0);      // ['minecraft:stone', 64, {}]", "item.inventory_get(chest_pos);      // one entry per slot", "// counting what is in a chest\nlist.reduce(item.inventory_get(chest_pos), _a + (_ == null ? 0 : _:1), 0);"]
+    "examples": [
+      "item.inventory_get(player, 0);      // ['minecraft:stone', 64, {}]",
+      "item.inventory_get(chest_pos);      // one entry per slot",
+      "// counting what is in a chest\nlist.reduce(item.inventory_get(chest_pos), _a + (_ == null ? 0 : _:1), 0);"
+    ]
   },
   "inventory_set": {
-    "signatures": ["inventory_set(inventory, slot, count)", "inventory_set(inventory, slot, count, item)", "inventory_set(inventory, slot, count, item, nbt)"],
+    "signatures": [
+      "inventory_set(inventory, slot, count)",
+      "inventory_set(inventory, slot, count, item)",
+      "inventory_set(inventory, slot, count, item, nbt)"
+    ],
     "summary": "Writes a slot of an inventory.",
-    "params": [["inventory", "the entity or the position holding it"], ["slot", "which slot to write"], ["count", "how many; `0` empties the slot"], ["item", "optional: the item to put there; without it, only the count changes"], ["nbt", "optional: the data of the item"]],
+    "params": [
+      [
+        "inventory",
+        "the entity or the position holding it"
+      ],
+      [
+        "slot",
+        "which slot to write"
+      ],
+      [
+        "count",
+        "how many; `0` empties the slot"
+      ],
+      [
+        "item",
+        "optional: the item to put there; without it, only the count changes"
+      ],
+      [
+        "nbt",
+        "optional: the data of the item"
+      ]
+    ],
     "returns": "`list` — what was in the slot before.",
-    "examples": ["item.inventory_set(player, 0, 1, 'diamond');", "item.inventory_set(chest_pos, 5, 0);           // empties the slot", "item.inventory_set(player, 0, 1, 'diamond_sword', '{Enchantments:[{id:\"sharpness\",lvl:5}]}');"]
+    "examples": [
+      "item.inventory_set(player, 0, 1, 'diamond');",
+      "item.inventory_set(chest_pos, 5, 0);           // empties the slot",
+      "item.inventory_set(player, 0, 1, 'diamond_sword', '{Enchantments:[{id:\"sharpness\",lvl:5}]}');"
+    ]
   },
   "inventory_find": {
-    "signatures": ["inventory_find(inventory, item)", "inventory_find(inventory, item, from_slot)"],
+    "signatures": [
+      "inventory_find(inventory, item)",
+      "inventory_find(inventory, item, from_slot)"
+    ],
     "summary": "The first slot holding a given item.",
-    "params": [["inventory", "the entity or the position holding it"], ["item", "the item to look for; `null` finds the first empty slot"], ["from_slot", "optional: where to start looking"]],
+    "params": [
+      [
+        "inventory",
+        "the entity or the position holding it"
+      ],
+      [
+        "item",
+        "the item to look for; `null` finds the first empty slot"
+      ],
+      [
+        "from_slot",
+        "optional: where to start looking"
+      ]
+    ],
     "returns": "`num` — the slot, `null` when there is none.",
-    "examples": ["item.inventory_find(player, 'diamond');       // 3", "item.inventory_find(player, null);            // the first free slot"]
+    "examples": [
+      "item.inventory_find(player, 'diamond');       // 3",
+      "item.inventory_find(player, null);            // the first free slot"
+    ]
   },
   "inventory_remove": {
-    "signatures": ["inventory_remove(inventory, item)", "inventory_remove(inventory, item, count)"],
+    "signatures": [
+      "inventory_remove(inventory, item)",
+      "inventory_remove(inventory, item, count)"
+    ],
     "summary": "Takes items out of an inventory, wherever they are in it.",
-    "params": [["inventory", "the entity or the position holding it"], ["item", "the item to take out"], ["count", "optional: how many, one by default"]],
+    "params": [
+      [
+        "inventory",
+        "the entity or the position holding it"
+      ],
+      [
+        "item",
+        "the item to take out"
+      ],
+      [
+        "count",
+        "optional: how many, one by default"
+      ]
+    ],
     "returns": "`bool` — `true` when everything asked for was taken out.",
-    "examples": ["if(item.inventory_remove(player, 'emerald', 5), give_reward());"],
+    "examples": [
+      "if(item.inventory_remove(player, 'emerald', 5), give_reward());"
+    ],
     "note": "It is all or nothing: with fewer than `count` in the inventory it removes nothing and answers `false`."
   },
   "inventory_has_items": {
-    "signatures": ["inventory_has_items(inventory, item)", "inventory_has_items(inventory, ...items)"],
+    "signatures": [
+      "inventory_has_items(inventory, item)",
+      "inventory_has_items(inventory, ...items)"
+    ],
     "summary": "Whether the inventory holds everything asked for.",
-    "params": [["inventory", "the entity or the position holding it"], ["...items", "the items, as names or as `[name, count]` pairs"]],
+    "params": [
+      [
+        "inventory",
+        "the entity or the position holding it"
+      ],
+      [
+        "...items",
+        "the items, as names or as `[name, count]` pairs"
+      ]
+    ],
     "returns": "`bool` — whether all of them are there.",
-    "examples": ["item.inventory_has_items(player, ['emerald', 5], ['stick', 2]);"]
+    "examples": [
+      "item.inventory_has_items(player, ['emerald', 5], ['stick', 2]);"
+    ]
   },
   "drop_item": {
-    "signatures": ["drop_item(inventory, slot)", "drop_item(inventory, slot, count)"],
+    "signatures": [
+      "drop_item(inventory, slot)",
+      "drop_item(inventory, slot, count)"
+    ],
     "summary": "Throws the content of a slot on the ground.",
-    "params": [["inventory", "the entity or the position holding it"], ["slot", "which slot to empty"], ["count", "optional: how many; without it, everything"]],
+    "params": [
+      [
+        "inventory",
+        "the entity or the position holding it"
+      ],
+      [
+        "slot",
+        "which slot to empty"
+      ],
+      [
+        "count",
+        "optional: how many; without it, everything"
+      ]
+    ],
     "returns": "`num` — how many were dropped.",
-    "examples": ["item.drop_item(player, 0);        // the whole stack", "item.drop_item(player, 0, 1);     // one only"]
+    "examples": [
+      "item.drop_item(player, 0);        // the whole stack",
+      "item.drop_item(player, 0, 1);     // one only"
+    ]
   },
-
   "item_list": {
-    "signatures": ["item_list()", "item_list(tag)"],
+    "signatures": [
+      "item_list()",
+      "item_list(tag)"
+    ],
     "summary": "Every item the game knows, or the ones carrying a tag.",
-    "params": [["tag", "optional: only the items of that tag"]],
+    "params": [
+      [
+        "tag",
+        "optional: only the items of that tag"
+      ]
+    ],
     "returns": "`list` — the names of the items.",
-    "examples": ["length(item.item_list());                   // how many items exist", "item.item_list('minecraft:planks');"]
+    "examples": [
+      "length(item.item_list());                   // how many items exist",
+      "item.item_list('minecraft:planks');"
+    ]
   },
   "item_tags": {
-    "signatures": ["item_tags(item)", "item_tags(item, tag)"],
+    "signatures": [
+      "item_tags(item)",
+      "item_tags(item, tag)"
+    ],
     "summary": "The tags of an item, or whether it carries one of them.",
-    "params": [["item", "the item to ask about"], ["tag", "optional: the tag to check"]],
+    "params": [
+      [
+        "item",
+        "the item to ask about"
+      ],
+      [
+        "tag",
+        "optional: the tag to check"
+      ]
+    ],
     "returns": "`list` of tags, or `bool` when a tag is given.",
-    "examples": ["item.item_tags('oak_planks');                       // ['minecraft:planks', ...]", "item.item_tags('oak_planks', 'minecraft:planks');   // true"]
-  },
-  "item_category": {
-    "signatures": ["item_category(item)"],
-    "summary": "The tab of the creative menu the item lives in.",
-    "params": [["item", "the item to ask about"]],
-    "returns": "`str` — the name of the category, `null` when it is in none.",
-    "examples": ["item.item_category('diamond_sword');   // 'combat'"]
+    "examples": [
+      "item.item_tags('oak_planks');                       // ['minecraft:planks', ...]",
+      "item.item_tags('oak_planks', 'minecraft:planks');   // true"
+    ]
   },
   "stack_limit": {
-    "signatures": ["stack_limit(item)"],
+    "signatures": [
+      "stack_limit(item)"
+    ],
     "summary": "How high that item stacks.",
-    "params": [["item", "the item to ask about"]],
+    "params": [
+      [
+        "item",
+        "the item to ask about"
+      ]
+    ],
     "returns": "`num` — the maximum size of a stack.",
-    "examples": ["item.stack_limit('stone');           // 64", "item.stack_limit('diamond_sword');   // 1"]
+    "examples": [
+      "item.stack_limit('stone');           // 64",
+      "item.stack_limit('diamond_sword');   // 1"
+    ]
   },
   "crafting_remaining_item": {
-    "signatures": ["crafting_remaining_item(item)"],
+    "signatures": [
+      "crafting_remaining_item(item)"
+    ],
     "summary": "What is left in the grid after using that item in a recipe.",
-    "params": [["item", "the item used"]],
+    "params": [
+      [
+        "item",
+        "the item used"
+      ]
+    ],
     "returns": "`str` — the name of what remains, `null` when nothing does.",
-    "examples": ["item.crafting_remaining_item('water_bucket');   // 'minecraft:bucket'", "item.crafting_remaining_item('stone');          // null"]
+    "examples": [
+      "item.crafting_remaining_item('water_bucket');   // 'minecraft:bucket'",
+      "item.crafting_remaining_item('stone');          // null"
+    ]
   },
   "item_display_name": {
-    "signatures": ["item_display_name(item)"],
+    "signatures": [
+      "item_display_name(item)"
+    ],
     "summary": "The name of the item as the game shows it, translated.",
-    "params": [["item", "the item, as a name or as a triple"]],
+    "params": [
+      [
+        "item",
+        "the item, as a name or as a triple"
+      ]
+    ],
     "returns": "`str` — the readable name.",
-    "examples": ["item.item_display_name('diamond_sword');   // 'Diamond Sword'", "text.print(player, 'you found ' + item.item_display_name(found));"]
+    "examples": [
+      "item.item_display_name('diamond_sword');   // 'Diamond Sword'",
+      "text.print(player, 'you found ' + item.item_display_name(found));"
+    ]
   },
   "recipe_data": {
-    "signatures": ["recipe_data(item)", "recipe_data(item, type)"],
+    "signatures": [
+      "recipe_data(item)",
+      "recipe_data(item, type)"
+    ],
     "summary": "The recipes producing an item: ingredients, result and kind.",
-    "params": [["item", "what is produced"], ["type", "optional: `'crafting'` (the default), `'smelting'`, `'blasting'`, `'smoking'`, `'campfire'`, `'stonecutting'`, `'smithing'`"]],
+    "params": [
+      [
+        "item",
+        "what is produced"
+      ],
+      [
+        "type",
+        "optional: `'crafting'` (the default), `'smelting'`, `'blasting'`, `'smoking'`, `'campfire'`, `'stonecutting'`, `'smithing'`"
+      ]
+    ],
     "returns": "`list` — one entry per recipe, `null` when there is none.",
-    "examples": ["item.recipe_data('stick');", "item.recipe_data('iron_ingot', 'smelting');"]
+    "examples": [
+      "item.recipe_data('stick');",
+      "item.recipe_data('iron_ingot', 'smelting');"
+    ]
   },
-
   "item_components": {
-    "signatures": ["item_components(item)", "item_components(item, default)"],
+    "signatures": [
+      "item_components(item)",
+      "item_components(item, default)"
+    ],
     "summary": "Every data component of an item, as a map from id to value.",
-    "params": [["item", "the item to read"], ["default", "optional: with `true` it reads the components the **kind of item** has, not the ones this stack carries"]],
+    "params": [
+      [
+        "item",
+        "the item to read"
+      ],
+      [
+        "default",
+        "optional: with `true` it reads the components the **kind of item** has, not the ones this stack carries"
+      ]
+    ],
     "returns": "`map` — from component id to its value.",
-    "examples": ["item.item_components(stack);           // {'minecraft:max_stack_size' -> 64, ...}", "// what was set on purpose: the difference between the two\nitem.item_components(stack);\nitem.item_components(stack, true);"],
+    "examples": [
+      "item.item_components(stack);           // {'minecraft:max_stack_size' -> 64, ...}",
+      "// what was set on purpose: the difference between the two\nitem.item_components(stack);\nitem.item_components(stack, true);"
+    ],
     "note": "Since 1.20.5 an item is an id plus typed components, not free-form NBT. Reading through the raw NBT still works for what is in the NBT, but it cannot tell an absent value from one equal to the default."
   },
   "item_component": {
-    "signatures": ["item_component(item, name)", "item_component(item, name, default)"],
+    "signatures": [
+      "item_component(item, name)",
+      "item_component(item, name, default)"
+    ],
     "summary": "A single data component of an item.",
-    "params": [["item", "the item to read"], ["name", "the id of the component, as `'minecraft:damage'`"], ["default", "optional: with `true` it reads the value of the kind of item"]],
+    "params": [
+      [
+        "item",
+        "the item to read"
+      ],
+      [
+        "name",
+        "the id of the component, as `'minecraft:damage'`"
+      ],
+      [
+        "default",
+        "optional: with `true` it reads the value of the kind of item"
+      ]
+    ],
     "returns": "the value of the component, `null` when the stack does not carry it.",
-    "examples": ["item.item_component(stack, 'minecraft:damage');        // 12", "item.item_component(stack, 'minecraft:custom_name');   // null"]
+    "examples": [
+      "item.item_component(stack, 'minecraft:damage');        // 12",
+      "item.item_component(stack, 'minecraft:custom_name');   // null"
+    ]
   },
   "set_item_component": {
-    "signatures": ["set_item_component(item, name, value)"],
+    "signatures": [
+      "set_item_component(item, name, value)"
+    ],
     "summary": "The item with one component changed, or removed when the value is `null`.",
-    "params": [["item", "the item to start from"], ["name", "the id of the component"], ["value", "the new value; `null` removes the component"]],
+    "params": [
+      [
+        "item",
+        "the item to start from"
+      ],
+      [
+        "name",
+        "the id of the component"
+      ],
+      [
+        "value",
+        "the new value; `null` removes the component"
+      ]
+    ],
     "returns": "`list` — a **copy** of the item with the change; the original is untouched.",
-    "examples": ["fixed = item.set_item_component(stack, 'minecraft:damage', 0);\nitem.inventory_set(player, 0, 1, fixed:0, fixed:2);", "item.set_item_component(stack, 'minecraft:damage', null);   // removes it"],
+    "examples": [
+      "fixed = item.set_item_component(stack, 'minecraft:damage', 0);\nitem.inventory_set(player, 0, 1, fixed:0, fixed:2);",
+      "item.set_item_component(stack, 'minecraft:damage', null);   // removes it"
+    ],
     "note": "A value that makes no sense for that component is refused right away by the codec, with a `TypeMismatchError` — the alternative is a broken item discovered much later, when somebody tries to use it."
   },
   "component_list": {
-    "signatures": ["component_list()"],
+    "signatures": [
+      "component_list()"
+    ],
     "summary": "The ids of every data component this game knows.",
     "params": [],
     "returns": "`list` — the ids, as strings.",
-    "examples": ["item.component_list();   // ['minecraft:damage', 'minecraft:custom_name', ...]"]
+    "examples": [
+      "item.component_list();   // ['minecraft:damage', 'minecraft:custom_name', ...]"
+    ]
   }
 }

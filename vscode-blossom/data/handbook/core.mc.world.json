@@ -1,17 +1,5 @@
 {
   "$alias": "world",
-  "world_time": {
-    "signatures": [
-      "world_time()"
-    ],
-    "summary": "The total age of the world in ticks, which never goes back.",
-    "params": [],
-    "returns": "`num` — the ticks since the world was created.",
-    "examples": [
-      "world.world_time();   // 1284933",
-      "days = floor(world.world_time() / 24000);"
-    ]
-  },
   "day_time": {
     "signatures": [
       "day_time()",
@@ -41,18 +29,6 @@
     "examples": [
       "// doing something every 20 ticks, from inside a tick event\nif(world.tick_time() % 20 == 0, work());"
     ]
-  },
-  "last_tick_times": {
-    "signatures": [
-      "last_tick_times()"
-    ],
-    "summary": "How long the last hundred ticks took, in milliseconds.",
-    "params": [],
-    "returns": "`list` — a hundred numbers, the most recent last.",
-    "examples": [
-      "times = world.last_tick_times();\nprint(list.reduce(times, _a + _, 0) / length(times));   // the average"
-    ],
-    "note": "Anything over 50 ms is a tick that could not keep up: it is the quick way to see whether something is weighing on the server."
   },
   "game_tick": {
     "signatures": [
@@ -95,17 +71,6 @@
       "world.weather();                 // 'clear'",
       "world.weather('rain', 6000);     // it rains for five minutes",
       "world.weather('thunder');        // ticks of thunder left"
-    ]
-  },
-  "seed": {
-    "signatures": [
-      "seed()"
-    ],
-    "summary": "The seed of the world.",
-    "params": [],
-    "returns": "`num` — the seed.",
-    "examples": [
-      "world.seed();   // -2748104373516887"
     ]
   },
   "save": {
@@ -583,17 +548,6 @@
       "world.set_poi([0, 64, 0], null);"
     ]
   },
-  "current_dimension": {
-    "signatures": [
-      "current_dimension()"
-    ],
-    "summary": "The dimension the script is running in.",
-    "params": [],
-    "returns": "`str` — `'minecraft:overworld'`, `'minecraft:the_nether'`, ...",
-    "examples": [
-      "world.current_dimension();   // 'minecraft:overworld'"
-    ]
-  },
   "in_dimension": {
     "signatures": [
       "in_dimension(dimension, expression)"
@@ -615,27 +569,5 @@
       "// following a player wherever they are\nworld.in_dimension(player, block.set(block.pos(player), 'stone'));"
     ],
     "note": "Every function of the game layer inside it looks at that dimension: it is the way to touch the Nether from a script running in the Overworld."
-  },
-  "view_distance": {
-    "signatures": [
-      "view_distance()"
-    ],
-    "summary": "The render distance of the server, in chunks.",
-    "params": [],
-    "returns": "`num` — the chunks of render distance.",
-    "examples": [
-      "world.view_distance();   // 10"
-    ]
-  },
-  "enable_hidden_dimensions": {
-    "signatures": [
-      "enable_hidden_dimensions()"
-    ],
-    "summary": "Turns on the dimensions a datapack declared but the server does not load on its own.",
-    "params": [],
-    "returns": "`list` — the dimensions turned on.",
-    "examples": [
-      "world.enable_hidden_dimensions();   // ['mypack:cave_world']"
-    ]
   }
 }

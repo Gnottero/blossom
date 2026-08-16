@@ -22,25 +22,25 @@ public final class BlossomApi
 {
     /** {@code core.mc.block} - leggere e scrivere blocchi, e quello che si sa di un blocco */
     public static final Set<String> BLOCK = Set.of(
-            "block", "block_data", "block_state", "block_properties", "block_tags", "block_list",
+            "block", "block_data", "block_state", "block_tags", "block_list",
             "set", "destroy", "harvest", "place_item",
             "update", "block_tick", "random_tick", "without_updates",
             "solid", "air", "liquid", "flammable", "transparent", "suffocates",
             "blocks_movement", "ticks_randomly", "power",
             "light", "block_light", "sky_light", "effective_light", "emitted_light", "see_sky", "brightness",
-            "hardness", "blast_resistance", "block_sound", "material", "map_colour", "property",
+            "hardness", "blast_resistance", "block_sound", "map_colour",
             "create_explosion", "pos", "pos_offset");
 
     /** {@code core.mc.world} - il mondo intorno: tempo, chunk, biomi, strutture, dimensioni */
     public static final Set<String> WORLD = Set.of(
-            "weather", "top", "biome", "set_biome", "seed", "save",
+            "weather", "top", "biome", "set_biome", "save",
             "loaded", "loaded_ep", "loaded_status", "is_chunk_generated", "generation_status",
             "chunk_tickets", "add_chunk_ticket", "reload_chunk", "inhabited_time",
             "in_slime_chunk", "spawn_potential", "sample_noise",
             "structures", "set_structure", "structure_references", "structure_eligibility",
             "poi", "set_poi", "plop",
-            "current_dimension", "in_dimension", "view_distance", "enable_hidden_dimensions",
-            "world_time", "day_time", "tick_time", "last_tick_times", "game_tick");
+            "in_dimension",
+            "day_time", "tick_time", "game_tick");
 
     /** {@code core.mc.scan} - percorrere volumi di blocchi senza scriversi tre cicli annidati */
     public static final Set<String> SCAN = Set.of("scan", "volume", "neighbours", "rect", "diamond");
@@ -49,11 +49,11 @@ public final class BlossomApi
     public static final Set<String> ENTITY = Set.of(
             "player", "spawn", "entity_id", "entity_list", "entity_area", "entity_selector",
             "entity_types", "query", "modify", "entity_event", "entity_load_handler",
-            "create_marker", "remove_all_markers", "has_client");
+            "has_client");
 
     /** {@code core.mc.item} - inventari, oggetti, ricette e data component */
     public static final Set<String> ITEM = java.util.stream.Stream.concat(
-            Set.of("stack_limit", "item_category", "item_list", "item_tags", "item_display_name",
+            Set.of("stack_limit", "item_list", "item_tags", "item_display_name",
                     "recipe_data", "crafting_remaining_item", "drop_item",
                     "inventory_size", "inventory_has_items", "inventory_get", "inventory_set",
                     "inventory_find", "inventory_remove").stream(),

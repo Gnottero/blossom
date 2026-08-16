@@ -108,7 +108,6 @@ import static java.lang.Math.min;
 
 public class Auxiliary
 {
-    public static final String MARKER_STRING = "__blossom_marker";
     private static final Map<String, SoundSource> mixerMap = Arrays.stream(SoundSource.values()).collect(Collectors.toMap(SoundSource::getName, k -> k));
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().registerTypeAdapter(Value.class, new BlossomJsonDeserializer()).create();
 
@@ -395,96 +394,6 @@ public class Auxiliary
         });
 
 
-        expression.addContextFunction("create_marker", -1, (c, t, lv) -> {
-            ScriptContext cc = (ScriptContext) c;
-            BlockState targetBlock = null;
-            Vector3Argument pointLocator;
-            boolean interactable = true;
-            Component name;
-            try
-            {
-                Value nameValue = lv.get(0);
-                name = nameValue.isNull() ? null : FormattedTextValue.getTextByValue(nameValue);
-                pointLocator = Vector3Argument.findIn(lv, 1, true, false);
-                if (lv.size() > pointLocator.offset)
-                {
-                    BlockArgument blockLocator = BlockArgument.findIn(cc, lv, pointLocator.offset, true, true, false);
-                    if (!(blockLocator instanceof BlockArgument.MissingBlockArgument))
-                    {
-                        targetBlock = blockLocator.block.getBlockState();
-                    }
-                    if (lv.size() > blockLocator.offset)
-                    {
-                        interactable = lv.get(blockLocator.offset).getBoolean();
-                    }
-                }
-            }
-            catch (IndexOutOfBoundsException e)
-            {
-                throw new InternalExpressionException("'create_marker' requires a name and three coordinates, with optional direction, and optional block on its head");
-            }
-            Level level = cc.level();
-            ArmorStand armorstand = new ArmorStand(EntityTypes.ARMOR_STAND, level);
-            double yoffset;
-            if (targetBlock == null && name == null)
-            {
-                yoffset = 0.0;
-            }
-            else if (!interactable && targetBlock == null)
-            {
-                yoffset = -0.41;
-            }
-            else
-            {
-                if (targetBlock == null)
-                {
-                    yoffset = -armorstand.getBbHeight() - 0.41;
-                }
-                else
-                {
-                    yoffset = -armorstand.getBbHeight() + 0.3;
-                }
-            }
-            armorstand.snapTo(
-                    pointLocator.vec.x,
-                    //pointLocator.vec.y - ((!interactable && targetBlock == null)?0.41f:((targetBlock==null)?(armorstand.getHeight()+0.41):(armorstand.getHeight()-0.3))),
-                    pointLocator.vec.y + yoffset,
-                    pointLocator.vec.z,
-                    (float) pointLocator.yaw,
-                    (float) pointLocator.pitch
-            );
-            armorstand.addTag(MARKER_STRING + "_" + ((cc.host.getName() == null) ? "" : cc.host.getName()));
-            armorstand.addTag(MARKER_STRING);
-            if (targetBlock != null)
-            {
-                armorstand.setItemSlot(EquipmentSlot.HEAD, new ItemStack(targetBlock.getBlock().asItem()));
-            }
-            if (name != null)
-            {
-                armorstand.setCustomName(name);
-                armorstand.setCustomNameVisible(true);
-            }
-            armorstand.setHeadPose(new Rotations((int) pointLocator.pitch, 0, 0));
-            armorstand.setNoGravity(true);
-            armorstand.setInvisible(true);
-            armorstand.setInvulnerable(true);
-            armorstand.getEntityData().set(ArmorStand.DATA_CLIENT_FLAGS, (byte) (interactable ? 8 : 16 | 8));
-            level.addFreshEntity(armorstand);
-            return new EntityValue(armorstand);
-        });
-
-        expression.addContextFunction("remove_all_markers", 0, (c, t, lv) -> {
-            ScriptContext cc = (ScriptContext) c;
-            int total = 0;
-            String markerName = MARKER_STRING + "_" + ((cc.host.getName() == null) ? "" : cc.host.getName());
-            for (Entity e : cc.level().getEntities(EntityTypes.ARMOR_STAND, as -> as.entityTags().contains(markerName)))
-            {
-                total++;
-                e.discard();
-            }
-            return new NumericValue(total);
-        });
-
         expression.addUnaryFunction("nbt", NBTSerializableValue::fromValue);
 
         expression.addUnaryFunction("escape_nbt", v -> new StringValue(StringTag.quoteAndEscape(v.getString())));
@@ -752,10 +661,6 @@ public class Auxiliary
         expression.addContextFunction("tick_time", 0, (c, t, lv) ->
                 new NumericValue(((ScriptContext) c).server().getTickCount()));
 
-        expression.addContextFunction("world_time", 0, (c, t, lv) -> {
-            return new NumericValue(((ScriptContext) c).level().getGameTime());
-        });
-
         expression.addContextFunction("day_time", -1, (c, t, lv) ->
         {
             Value time = new NumericValue(((ScriptContext) c).level().getOverworldClockTime());
@@ -770,12 +675,6 @@ public class Auxiliary
             }
             return time;
         });
-
-        expression.addContextFunction("last_tick_times", -1, (c, t, lv) ->
-        {
-            return SystemInfo.get("server_last_tick_times", (ScriptContext) c);
-        });
-
 
         expression.addContextFunction("game_tick", -1, (c, t, lv) -> {
             ScriptContext cc = (ScriptContext) c;
@@ -828,19 +727,6 @@ public class Auxiliary
                 throw new ExitStatement(Value.NULL);
             }
             return Value.TRUE;
-        });
-
-        expression.addContextFunction("seed", -1, (c, t, lv) -> {
-            CommandSourceStack s = ((ScriptContext) c).source();
-            return new NumericValue(s.getLevel().getSeed());
-        });
-
-        // Should this be deprecated for system_info('source_dimension')?
-        expression.addContextFunction("current_dimension", 0, (c, t, lv) ->
-                ValueConversions.of(((ScriptContext) c).level()));
-
-        expression.addContextFunction("view_distance", 0, (c, t, lv) -> {
-            return new NumericValue(((ScriptContext) c).server().getPlayerList().getViewDistance());
         });
 
         // lazy due to passthrough and context changing ability
@@ -1266,10 +1152,6 @@ public class Auxiliary
             return BooleanValue.of(successful[0]);
         });
 
-        expression.addContextFunction("enable_hidden_dimensions", 0, (c, t, lv) -> {
-            ScriptContext cc = (ScriptContext) c;
-            return Value.NULL;
-        });
     }
 
     private static void zipValueToJson(Path path, Value output) throws IOException

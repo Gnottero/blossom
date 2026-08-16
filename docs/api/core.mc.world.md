@@ -5,18 +5,19 @@ The world around the blocks: time, chunks, biomes, structures, dimensions.
 ```
 import "core.mc.world" as world;
 
-world.current_dimension();        // 'minecraft:overworld'
 world.day_time();                 // the time of the world
 world.biome([0, 64, 0]);          // 'minecraft:plains'
 ```
 
 ## Time
 
-### `world_time()` · `day_time()` · `day_time(new_value)`
-The total time of the world and the time of day; with an argument it sets the time.
+### `day_time()` · `day_time(new_value)`
+The time of day; with an argument it sets it. The total time of the world is
+`system.system_info('world_time')`.
 
-### `tick_time()` · `last_tick_times()`
-The current tick of the server, and the times of the last 100 ticks in milliseconds.
+### `tick_time()`
+The current tick of the server. The duration of the last 100 ticks is
+`system.system_info('server_last_tick_times')`.
 
 ### `game_tick()` · `game_tick(max_milliseconds)`
 Forces the server to advance by one tick. With the argument, it keeps running ticks until it has used
@@ -27,8 +28,8 @@ up that time. It is what makes the game move forward from a script running insid
 ### `weather()` · `weather(type)` · `weather(type, duration)`
 Reads or sets rain and thunder.
 
-### `seed()` · `save()`
-The seed of the world, and a forced save to disk.
+### `save()`
+Forces a save to disk. The seed of the world is `system.system_info('world_seed')`.
 
 ### `top(type, pos)`
 The first free height according to one of the height maps (`'surface'`, `'motion_blocking'`, ...).
@@ -85,13 +86,7 @@ Creates or removes a point of interest.
 
 ## Dimensions
 
-### `current_dimension()`
-The dimension the script is running in.
-
 ### `in_dimension(dimension, expression)`
 Evaluates the expression as if it were in another dimension: every world function inside it looks
-there.
-
-### `view_distance()` · `enable_hidden_dimensions()`
-The render distance of the server, and turning on the normally hidden dimensions.
+there. The dimension the script is running in is `system.system_info('source_dimension')`.
 

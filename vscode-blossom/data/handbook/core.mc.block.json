@@ -1,285 +1,680 @@
 {
   "$alias": "block",
-
   "block": {
-    "signatures": ["block(pos)", "block(x, y, z)", "block(name)"],
+    "signatures": [
+      "block(pos)",
+      "block(x, y, z)",
+      "block(name)"
+    ],
     "summary": "The block at a position, as a value that compares and prints as its name.",
-    "params": [["pos", "the position, as `[x, y, z]` or as three loose arguments"], ["name", "or the name of a block, to build the value without reading the world"]],
+    "params": [
+      [
+        "pos",
+        "the position, as `[x, y, z]` or as three loose arguments"
+      ],
+      [
+        "name",
+        "or the name of a block, to build the value without reading the world"
+      ]
+    ],
     "returns": "`block` — printed and compared it is its name, `'minecraft:stone'`.",
-    "examples": ["block.block([10, 64, 10]);                      // 'minecraft:stone'", "if(block.block(pos) == 'diamond_ore', print('found'));", "block.block('oak_stairs[facing=north]');        // from a name, with properties"]
+    "examples": [
+      "block.block([10, 64, 10]);                      // 'minecraft:stone'",
+      "if(block.block(pos) == 'diamond_ore', print('found'));",
+      "block.block('oak_stairs[facing=north]');        // from a name, with properties"
+    ]
   },
   "block_state": {
-    "signatures": ["block_state(pos)", "block_state(pos, property)"],
+    "signatures": [
+      "block_state(pos)",
+      "block_state(pos, property)"
+    ],
     "summary": "The properties of the block as a map, or the value of one of them.",
-    "params": [["pos", "the position of the block"], ["property", "optional: the name of a single property"]],
+    "params": [
+      [
+        "pos",
+        "the position of the block"
+      ],
+      [
+        "property",
+        "optional: the name of a single property"
+      ]
+    ],
     "returns": "`map` of name to value, or the single value; `null` when the property is not there.",
-    "examples": ["block.block_state([0, 64, 0]);              // {'facing' -> 'north', 'half' -> 'bottom'}", "block.block_state([0, 64, 0], 'facing');    // 'north'"]
-  },
-  "block_properties": {
-    "signatures": ["block_properties(pos)"],
-    "summary": "The names of the properties that block has.",
-    "params": [["pos", "the position of the block, or a block value"]],
-    "returns": "`list` — the names, as strings.",
-    "examples": ["block.block_properties([0, 64, 0]);   // ['facing', 'half', 'shape', 'waterlogged']"]
-  },
-  "property": {
-    "signatures": ["property(pos, name)"],
-    "summary": "The value of a single property of a block.",
-    "params": [["pos", "the position of the block"], ["name", "the name of the property"]],
-    "returns": "`str` — the value, `null` when the block has no such property.",
-    "examples": ["block.property([0, 64, 0], 'facing');    // 'north'", "block.property([0, 64, 0], 'colour');    // null"]
+    "examples": [
+      "block.block_state([0, 64, 0]);              // {'facing' -> 'north', 'half' -> 'bottom'}",
+      "block.block_state([0, 64, 0], 'facing');    // 'north'"
+    ]
   },
   "block_data": {
-    "signatures": ["block_data(pos)"],
+    "signatures": [
+      "block_data(pos)"
+    ],
     "summary": "The NBT of the block entity - the content of a chest, the text of a sign.",
-    "params": [["pos", "the position of the block"]],
+    "params": [
+      [
+        "pos",
+        "the position of the block"
+      ]
+    ],
     "returns": "`nbt` — the data, `null` when that block has no block entity.",
-    "examples": ["block.block_data(chest_pos);                     // {Items: [...]}", "nbt.parse_nbt(block.block_data(sign_pos)):'front_text';"]
+    "examples": [
+      "block.block_data(chest_pos);                     // {Items: [...]}",
+      "nbt.parse_nbt(block.block_data(sign_pos)):'front_text';"
+    ]
   },
   "block_tags": {
-    "signatures": ["block_tags(pos)", "block_tags(pos, tag)"],
+    "signatures": [
+      "block_tags(pos)",
+      "block_tags(pos, tag)"
+    ],
     "summary": "The tags the block belongs to, or whether it belongs to one of them.",
-    "params": [["pos", "the position of the block, or a block value"], ["tag", "optional: the tag to check"]],
+    "params": [
+      [
+        "pos",
+        "the position of the block, or a block value"
+      ],
+      [
+        "tag",
+        "optional: the tag to check"
+      ]
+    ],
     "returns": "`list` of tags, or `bool` when a tag is given.",
-    "examples": ["block.block_tags([0, 64, 0]);                   // ['minecraft:mineable/pickaxe', ...]", "block.block_tags(pos, 'minecraft:logs');        // true"]
+    "examples": [
+      "block.block_tags([0, 64, 0]);                   // ['minecraft:mineable/pickaxe', ...]",
+      "block.block_tags(pos, 'minecraft:logs');        // true"
+    ]
   },
   "block_list": {
-    "signatures": ["block_list()", "block_list(tag)"],
+    "signatures": [
+      "block_list()",
+      "block_list(tag)"
+    ],
     "summary": "Every block the game knows, or the ones carrying a tag.",
-    "params": [["tag", "optional: only the blocks of that tag"]],
+    "params": [
+      [
+        "tag",
+        "optional: only the blocks of that tag"
+      ]
+    ],
     "returns": "`list` — the names, as strings.",
-    "examples": ["length(block.block_list());                  // how many blocks exist", "block.block_list('minecraft:logs');          // ['minecraft:oak_log', ...]"]
+    "examples": [
+      "length(block.block_list());                  // how many blocks exist",
+      "block.block_list('minecraft:logs');          // ['minecraft:oak_log', ...]"
+    ]
   },
-
   "solid": {
-    "signatures": ["solid(pos)"],
+    "signatures": [
+      "solid(pos)"
+    ],
     "summary": "Whether the block is solid - something you can stand on and cannot walk through.",
-    "params": [["pos", "the position of the block"]],
+    "params": [
+      [
+        "pos",
+        "the position of the block"
+      ]
+    ],
     "returns": "`bool` — whether it is solid.",
-    "examples": ["if(block.solid([x, y - 1, z]), print('there is ground here'));"]
+    "examples": [
+      "if(block.solid([x, y - 1, z]), print('there is ground here'));"
+    ]
   },
   "air": {
-    "signatures": ["air(pos)"],
+    "signatures": [
+      "air(pos)"
+    ],
     "summary": "Whether there is air at that point.",
-    "params": [["pos", "the position to check"]],
+    "params": [
+      [
+        "pos",
+        "the position to check"
+      ]
+    ],
     "returns": "`bool` — whether the block is air.",
-    "examples": ["if(block.air(pos), block.set(pos, 'torch'));"]
+    "examples": [
+      "if(block.air(pos), block.set(pos, 'torch'));"
+    ]
   },
   "liquid": {
-    "signatures": ["liquid(pos)"],
+    "signatures": [
+      "liquid(pos)"
+    ],
     "summary": "Whether the block is a liquid - water, lava, or something modded that behaves like one.",
-    "params": [["pos", "the position to check"]],
+    "params": [
+      [
+        "pos",
+        "the position to check"
+      ]
+    ],
     "returns": "`bool` — whether it is a liquid.",
-    "examples": ["if(block.liquid(pos), print('do not dig here'));"]
+    "examples": [
+      "if(block.liquid(pos), print('do not dig here'));"
+    ]
   },
   "flammable": {
-    "signatures": ["flammable(pos)"],
+    "signatures": [
+      "flammable(pos)"
+    ],
     "summary": "Whether fire can catch on that block.",
-    "params": [["pos", "the position of the block"]],
+    "params": [
+      [
+        "pos",
+        "the position of the block"
+      ]
+    ],
     "returns": "`bool` — whether it burns.",
-    "examples": ["block.flammable([0, 64, 0]);   // true on planks"]
+    "examples": [
+      "block.flammable([0, 64, 0]);   // true on planks"
+    ]
   },
   "transparent": {
-    "signatures": ["transparent(pos)"],
+    "signatures": [
+      "transparent(pos)"
+    ],
     "summary": "Whether the block lets light through.",
-    "params": [["pos", "the position of the block"]],
+    "params": [
+      [
+        "pos",
+        "the position of the block"
+      ]
+    ],
     "returns": "`bool` — whether it is transparent to light.",
-    "examples": ["block.transparent(pos);   // true on glass"]
+    "examples": [
+      "block.transparent(pos);   // true on glass"
+    ]
   },
   "blocks_movement": {
-    "signatures": ["blocks_movement(pos)"],
+    "signatures": [
+      "blocks_movement(pos)"
+    ],
     "summary": "Whether the block stops whoever walks into it.",
-    "params": [["pos", "the position of the block"]],
+    "params": [
+      [
+        "pos",
+        "the position of the block"
+      ]
+    ],
     "returns": "`bool` — whether it blocks movement.",
-    "examples": ["passable = !block.blocks_movement(pos);"]
+    "examples": [
+      "passable = !block.blocks_movement(pos);"
+    ]
   },
   "suffocates": {
-    "signatures": ["suffocates(pos)"],
+    "signatures": [
+      "suffocates(pos)"
+    ],
     "summary": "Whether the block suffocates whoever ends up inside it.",
-    "params": [["pos", "the position of the block"]],
+    "params": [
+      [
+        "pos",
+        "the position of the block"
+      ]
+    ],
     "returns": "`bool` — whether it suffocates.",
-    "examples": ["if(block.suffocates(destination), print('do not teleport there'));"]
+    "examples": [
+      "if(block.suffocates(destination), print('do not teleport there'));"
+    ]
   },
   "hardness": {
-    "signatures": ["hardness(pos)"],
+    "signatures": [
+      "hardness(pos)"
+    ],
     "summary": "How hard the block is to break.",
-    "params": [["pos", "the position of the block"]],
+    "params": [
+      [
+        "pos",
+        "the position of the block"
+      ]
+    ],
     "returns": "`num` — the hardness; `-1` when it cannot be broken, as for bedrock.",
-    "examples": ["block.hardness([0, 64, 0]);   // 1.5 on stone"]
+    "examples": [
+      "block.hardness([0, 64, 0]);   // 1.5 on stone"
+    ]
   },
   "blast_resistance": {
-    "signatures": ["blast_resistance(pos)"],
+    "signatures": [
+      "blast_resistance(pos)"
+    ],
     "summary": "How well the block resists explosions.",
-    "params": [["pos", "the position of the block"]],
+    "params": [
+      [
+        "pos",
+        "the position of the block"
+      ]
+    ],
     "returns": "`num` — the resistance.",
-    "examples": ["block.blast_resistance([0, 64, 0]);   // 6.0 on stone"]
+    "examples": [
+      "block.blast_resistance([0, 64, 0]);   // 6.0 on stone"
+    ]
   },
   "block_sound": {
-    "signatures": ["block_sound(pos)"],
+    "signatures": [
+      "block_sound(pos)"
+    ],
     "summary": "The sound group of the block, the one deciding the noise of steps and breaking.",
-    "params": [["pos", "the position of the block"]],
+    "params": [
+      [
+        "pos",
+        "the position of the block"
+      ]
+    ],
     "returns": "`str` — the name of the group, as `'stone'` or `'wood'`.",
-    "examples": ["block.block_sound([0, 64, 0]);   // 'stone'"]
-  },
-  "material": {
-    "signatures": ["material(pos)"],
-    "summary": "The material of the block, the family it belongs to.",
-    "params": [["pos", "the position of the block"]],
-    "returns": "`str` — the name of the material.",
-    "examples": ["block.material([0, 64, 0]);   // 'stone'"]
+    "examples": [
+      "block.block_sound([0, 64, 0]);   // 'stone'"
+    ]
   },
   "map_colour": {
-    "signatures": ["map_colour(pos)"],
+    "signatures": [
+      "map_colour(pos)"
+    ],
     "summary": "The colour the block shows on a map.",
-    "params": [["pos", "the position of the block"]],
+    "params": [
+      [
+        "pos",
+        "the position of the block"
+      ]
+    ],
     "returns": "`str` — the name of the colour on the map.",
-    "examples": ["block.map_colour([0, 64, 0]);   // 'stone_gray'"]
+    "examples": [
+      "block.map_colour([0, 64, 0]);   // 'stone_gray'"
+    ]
   },
   "ticks_randomly": {
-    "signatures": ["ticks_randomly(pos)"],
+    "signatures": [
+      "ticks_randomly(pos)"
+    ],
     "summary": "Whether the block gets random ticks - the ones growing crops and spreading grass.",
-    "params": [["pos", "the position of the block"]],
+    "params": [
+      [
+        "pos",
+        "the position of the block"
+      ]
+    ],
     "returns": "`bool` — whether it takes random ticks.",
-    "examples": ["block.ticks_randomly(wheat_pos);   // true"]
+    "examples": [
+      "block.ticks_randomly(wheat_pos);   // true"
+    ]
   },
   "power": {
-    "signatures": ["power(pos)"],
+    "signatures": [
+      "power(pos)"
+    ],
     "summary": "The redstone signal the block emits.",
-    "params": [["pos", "the position of the block"]],
+    "params": [
+      [
+        "pos",
+        "the position of the block"
+      ]
+    ],
     "returns": "`num` — from 0 to 15.",
-    "examples": ["if(block.power(lever_pos) > 0, print('it is on'));"]
+    "examples": [
+      "if(block.power(lever_pos) > 0, print('it is on'));"
+    ]
   },
-
   "light": {
-    "signatures": ["light(pos)"],
+    "signatures": [
+      "light(pos)"
+    ],
     "summary": "The total light at that point, whatever it comes from.",
-    "params": [["pos", "the position to sample"]],
+    "params": [
+      [
+        "pos",
+        "the position to sample"
+      ]
+    ],
     "returns": "`num` — from 0 to 15.",
-    "examples": ["block.light([0, 64, 0]);   // 15 in the open sun"]
+    "examples": [
+      "block.light([0, 64, 0]);   // 15 in the open sun"
+    ]
   },
   "block_light": {
-    "signatures": ["block_light(pos)"],
+    "signatures": [
+      "block_light(pos)"
+    ],
     "summary": "The light coming from blocks - torches, lava, glowstone.",
-    "params": [["pos", "the position to sample"]],
+    "params": [
+      [
+        "pos",
+        "the position to sample"
+      ]
+    ],
     "returns": "`num` — from 0 to 15.",
-    "examples": ["block.block_light(cave_pos);   // 0 in the dark"]
+    "examples": [
+      "block.block_light(cave_pos);   // 0 in the dark"
+    ]
   },
   "sky_light": {
-    "signatures": ["sky_light(pos)"],
+    "signatures": [
+      "sky_light(pos)"
+    ],
     "summary": "The light coming from the sky, before the time of day is taken into account.",
-    "params": [["pos", "the position to sample"]],
+    "params": [
+      [
+        "pos",
+        "the position to sample"
+      ]
+    ],
     "returns": "`num` — from 0 to 15.",
-    "examples": ["block.sky_light([0, 100, 0]);   // 15 outdoors, day or night"]
+    "examples": [
+      "block.sky_light([0, 100, 0]);   // 15 outdoors, day or night"
+    ]
   },
   "effective_light": {
-    "signatures": ["effective_light(pos)"],
+    "signatures": [
+      "effective_light(pos)"
+    ],
     "summary": "The light that really counts for spawning: the sky one lowered by the time of day.",
-    "params": [["pos", "the position to sample"]],
+    "params": [
+      [
+        "pos",
+        "the position to sample"
+      ]
+    ],
     "returns": "`num` — from 0 to 15.",
-    "examples": ["if(block.effective_light(pos) == 0, print('mobs can spawn here'));"],
+    "examples": [
+      "if(block.effective_light(pos) == 0, print('mobs can spawn here'));"
+    ],
     "note": "It is this one, not `light`, that answers \"can something spawn here at night\"."
   },
   "emitted_light": {
-    "signatures": ["emitted_light(pos)"],
+    "signatures": [
+      "emitted_light(pos)"
+    ],
     "summary": "The light the block itself gives off.",
-    "params": [["pos", "the position of the block"]],
+    "params": [
+      [
+        "pos",
+        "the position of the block"
+      ]
+    ],
     "returns": "`num` — from 0 to 15.",
-    "examples": ["block.emitted_light(torch_pos);   // 14"]
+    "examples": [
+      "block.emitted_light(torch_pos);   // 14"
+    ]
   },
   "see_sky": {
-    "signatures": ["see_sky(pos)"],
+    "signatures": [
+      "see_sky(pos)"
+    ],
     "summary": "Whether that point has open sky above it.",
-    "params": [["pos", "the position to check"]],
+    "params": [
+      [
+        "pos",
+        "the position to check"
+      ]
+    ],
     "returns": "`bool` — whether it sees the sky.",
-    "examples": ["if(block.see_sky(pos), print('it rains here'));"]
+    "examples": [
+      "if(block.see_sky(pos), print('it rains here'));"
+    ]
   },
   "brightness": {
-    "signatures": ["brightness(pos)"],
+    "signatures": [
+      "brightness(pos)"
+    ],
     "summary": "The brightness at that point as a number between zero and one, the way the game renders it.",
-    "params": [["pos", "the position to sample"]],
+    "params": [
+      [
+        "pos",
+        "the position to sample"
+      ]
+    ],
     "returns": "`num` — from 0 to 1.",
-    "examples": ["block.brightness([0, 64, 0]);   // 1.0 in full light"]
+    "examples": [
+      "block.brightness([0, 64, 0]);   // 1.0 in full light"
+    ]
   },
-
   "set": {
-    "signatures": ["set(pos, block)", "set(pos, block, property, value, ...)", "set(pos, block, properties_map)"],
+    "signatures": [
+      "set(pos, block)",
+      "set(pos, block, property, value, ...)",
+      "set(pos, block, properties_map)"
+    ],
     "summary": "Places a block, with its properties.",
-    "params": [["pos", "where to place it"], ["block", "the name of the block, or a block value taken from the world"], ["property, value", "the properties, as pairs or as a single map"]],
+    "params": [
+      [
+        "pos",
+        "where to place it"
+      ],
+      [
+        "block",
+        "the name of the block, or a block value taken from the world"
+      ],
+      [
+        "property, value",
+        "the properties, as pairs or as a single map"
+      ]
+    ],
     "returns": "`block` — the block placed, `null` when nothing changed.",
-    "examples": ["block.set([10, 65, 10], 'stone');", "block.set([10, 65, 10], 'oak_stairs', 'facing', 'north');", "block.set(pos, 'oak_stairs', {'facing' -> 'north', 'half' -> 'top'});", "// copying a block along with its data\nblock.set(there, block.block(here));"],
+    "examples": [
+      "block.set([10, 65, 10], 'stone');",
+      "block.set([10, 65, 10], 'oak_stairs', 'facing', 'north');",
+      "block.set(pos, 'oak_stairs', {'facing' -> 'north', 'half' -> 'top'});",
+      "// copying a block along with its data\nblock.set(there, block.block(here));"
+    ],
     "note": "A property the block does not have is an error, with the right name suggested — not a silent default."
   },
   "destroy": {
-    "signatures": ["destroy(pos)", "destroy(pos, -1)", "destroy(pos, tool)"],
+    "signatures": [
+      "destroy(pos)",
+      "destroy(pos, -1)",
+      "destroy(pos, tool)"
+    ],
     "summary": "Breaks the block: with drops, without, or as if a given tool had broken it.",
-    "params": [["pos", "the position of the block"], ["tool", "`-1` for no drops, or an item such as `'diamond_pickaxe'`; with `[name, count, nbt]` its enchantments count"]],
+    "params": [
+      [
+        "pos",
+        "the position of the block"
+      ],
+      [
+        "tool",
+        "`-1` for no drops, or an item such as `'diamond_pickaxe'`; with `[name, count, nbt]` its enchantments count"
+      ]
+    ],
     "returns": "`bool` — whether something was broken.",
-    "examples": ["block.destroy([0, 64, 0]);                        // with its drops", "block.destroy([0, 64, 0], -1);                    // no drops", "block.destroy(pos, ['diamond_pickaxe', 1, {}]);   // as that tool would"]
+    "examples": [
+      "block.destroy([0, 64, 0]);                        // with its drops",
+      "block.destroy([0, 64, 0], -1);                    // no drops",
+      "block.destroy(pos, ['diamond_pickaxe', 1, {}]);   // as that tool would"
+    ]
   },
   "harvest": {
-    "signatures": ["harvest(player, pos)"],
+    "signatures": [
+      "harvest(player, pos)"
+    ],
     "summary": "Breaks a block the way that player would break it, with their tool and enchantments.",
-    "params": [["player", "the player doing the breaking"], ["pos", "the position of the block"]],
+    "params": [
+      [
+        "player",
+        "the player doing the breaking"
+      ],
+      [
+        "pos",
+        "the position of the block"
+      ]
+    ],
     "returns": "`bool` — whether the block was broken.",
-    "examples": ["block.harvest(player, [0, 64, 0]);"],
+    "examples": [
+      "block.harvest(player, [0, 64, 0]);"
+    ],
     "note": "Unlike `destroy`, it fires the events and the statistics of a real breaking: it counts for the tool durability and for whoever is listening."
   },
   "place_item": {
-    "signatures": ["place_item(item, pos)", "place_item(item, pos, face)", "place_item(item, pos, face, consider_flags)"],
+    "signatures": [
+      "place_item(item, pos)",
+      "place_item(item, pos, face)",
+      "place_item(item, pos, face, consider_flags)"
+    ],
     "summary": "Uses an item on a block, the way a player clicking on it would.",
-    "params": [["item", "the item to use, as a name or a triple"], ["pos", "the block to click on"], ["face", "optional: which side, `'up'` by default"], ["consider_flags", "optional: whether to respect the placement rules of the game"]],
+    "params": [
+      [
+        "item",
+        "the item to use, as a name or a triple"
+      ],
+      [
+        "pos",
+        "the block to click on"
+      ],
+      [
+        "face",
+        "optional: which side, `'up'` by default"
+      ],
+      [
+        "consider_flags",
+        "optional: whether to respect the placement rules of the game"
+      ]
+    ],
     "returns": "`bool` — whether the use had an effect.",
-    "examples": ["block.place_item('bone_meal', [0, 64, 0], 'up');", "block.place_item('oak_sapling', ground, 'up');"]
+    "examples": [
+      "block.place_item('bone_meal', [0, 64, 0], 'up');",
+      "block.place_item('oak_sapling', ground, 'up');"
+    ]
   },
   "update": {
-    "signatures": ["update(pos)"],
+    "signatures": [
+      "update(pos)"
+    ],
     "summary": "Forces a block update at that point, as if a neighbour had changed.",
-    "params": [["pos", "the position to update"]],
+    "params": [
+      [
+        "pos",
+        "the position to update"
+      ]
+    ],
     "returns": "`null`.",
-    "examples": ["// after a bulk build inside without_updates\nfor(edges, block.update(_));"]
+    "examples": [
+      "// after a bulk build inside without_updates\nfor(edges, block.update(_));"
+    ]
   },
   "block_tick": {
-    "signatures": ["block_tick(pos)"],
+    "signatures": [
+      "block_tick(pos)"
+    ],
     "summary": "Runs the scheduled tick of the block right away.",
-    "params": [["pos", "the position of the block"]],
+    "params": [
+      [
+        "pos",
+        "the position of the block"
+      ]
+    ],
     "returns": "`null`.",
-    "examples": ["block.block_tick(water_pos);   // makes the water flow one step"]
+    "examples": [
+      "block.block_tick(water_pos);   // makes the water flow one step"
+    ]
   },
   "random_tick": {
-    "signatures": ["random_tick(pos)"],
+    "signatures": [
+      "random_tick(pos)"
+    ],
     "summary": "Gives the block one random tick, the kind that grows crops.",
-    "params": [["pos", "the position of the block"]],
+    "params": [
+      [
+        "pos",
+        "the position of the block"
+      ]
+    ],
     "returns": "`null`.",
-    "examples": ["loop(20, block.random_tick(wheat_pos));   // makes it grow"]
+    "examples": [
+      "loop(20, block.random_tick(wheat_pos));   // makes it grow"
+    ]
   },
   "without_updates": {
-    "signatures": ["without_updates(expression)"],
+    "signatures": [
+      "without_updates(expression)"
+    ],
     "summary": "Runs an expression without letting block updates spread.",
-    "params": [["expression", "what to run, usually a build"]],
+    "params": [
+      [
+        "expression",
+        "what to run, usually a build"
+      ]
+    ],
     "returns": "the value of the expression.",
-    "examples": ["// building in bulk without setting off redstone and falling sand\nblock.without_updates(\n    for(positions, block.set(_, 'sand'))\n);"],
+    "examples": [
+      "// building in bulk without setting off redstone and falling sand\nblock.without_updates(\n    for(positions, block.set(_, 'sand'))\n);"
+    ],
     "note": "Nothing is updated when it ends either: call `update` on the edges if the build has to settle."
   },
   "create_explosion": {
-    "signatures": ["create_explosion(pos)", "create_explosion(pos, power, type, fire, source, cause)"],
+    "signatures": [
+      "create_explosion(pos)",
+      "create_explosion(pos, power, type, fire, source, cause)"
+    ],
     "summary": "Sets off an explosion at a point.",
-    "params": [["pos", "the centre"], ["power", "optional: the strength, `4` like TNT by default"], ["type", "optional: `'none'`, `'break'` (the default), `'destroy'`"], ["fire", "optional: whether it leaves fires"], ["source", "optional: the entity that exploded"], ["cause", "optional: the entity to blame for the damage"]],
+    "params": [
+      [
+        "pos",
+        "the centre"
+      ],
+      [
+        "power",
+        "optional: the strength, `4` like TNT by default"
+      ],
+      [
+        "type",
+        "optional: `'none'`, `'break'` (the default), `'destroy'`"
+      ],
+      [
+        "fire",
+        "optional: whether it leaves fires"
+      ],
+      [
+        "source",
+        "optional: the entity that exploded"
+      ],
+      [
+        "cause",
+        "optional: the entity to blame for the damage"
+      ]
+    ],
     "returns": "`null`.",
-    "examples": ["block.create_explosion([0, 64, 0]);", "block.create_explosion(pos, 8, 'destroy', true);"]
+    "examples": [
+      "block.create_explosion([0, 64, 0]);",
+      "block.create_explosion(pos, 8, 'destroy', true);"
+    ]
   },
-
   "pos": {
-    "signatures": ["pos(entity)"],
+    "signatures": [
+      "pos(entity)"
+    ],
     "summary": "The position of an entity, with its decimals.",
-    "params": [["entity", "the entity to ask"]],
+    "params": [
+      [
+        "entity",
+        "the entity to ask"
+      ]
+    ],
     "returns": "`list` — `[x, y, z]`.",
-    "examples": ["block.pos(player);   // [10.5, 64.0, -3.2]", "block.set(block.pos(player), 'stone');   // it floors on its own"]
+    "examples": [
+      "block.pos(player);   // [10.5, 64.0, -3.2]",
+      "block.set(block.pos(player), 'stone');   // it floors on its own"
+    ]
   },
   "pos_offset": {
-    "signatures": ["pos_offset(pos, direction)", "pos_offset(pos, direction, how_much)"],
+    "signatures": [
+      "pos_offset(pos, direction)",
+      "pos_offset(pos, direction, how_much)"
+    ],
     "summary": "A position shifted in a direction.",
-    "params": [["pos", "the starting position"], ["direction", "`'north'`, `'south'`, `'east'`, `'west'`, `'up'`, `'down'`, or a number from 0 to 5"], ["how_much", "optional: how many blocks, one by default"]],
+    "params": [
+      [
+        "pos",
+        "the starting position"
+      ],
+      [
+        "direction",
+        "`'north'`, `'south'`, `'east'`, `'west'`, `'up'`, `'down'`, or a number from 0 to 5"
+      ],
+      [
+        "how_much",
+        "optional: how many blocks, one by default"
+      ]
+    ],
     "returns": "`list` — the shifted position.",
-    "examples": ["block.pos_offset([0, 64, 0], 'up');        // [0, 65, 0]", "block.pos_offset(pos, 'north', 5);", "// the block a face is pointing at, inside an event\nblock.pos_offset(clicked, face);"]
+    "examples": [
+      "block.pos_offset([0, 64, 0], 'up');        // [0, 65, 0]",
+      "block.pos_offset(pos, 'north', 5);",
+      "// the block a face is pointing at, inside an event\nblock.pos_offset(clicked, face);"
+    ]
   }
 }

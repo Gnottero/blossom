@@ -3,7 +3,7 @@ module main;
 import "torre/costruzione" as costruzione;
 import "torre/registro" as registro;
 import "core.mc.block" as block;
-import "core.mc.world" as world;
+import "core.mc.system" as system;
 import "core.mc.entity" as entity;
 import "core.mc.text" as text;
 import "core.mc.event" as event;
@@ -44,4 +44,4 @@ pub fn demolisci_tutte() -> (
 );
 
 event.on('bell_rings', su_campana);
-print('torre-guardiana pronta in ' + world.current_dimension());
+print('torre-guardiana pronta in ' + system.system_info('source_dimension'));

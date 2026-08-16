@@ -1165,42 +1165,10 @@ public class WorldAccess
                 stateStringQuery(c, "block_sound", lv, (s, p) ->
                         Colors.soundName.get(s.getSoundType())));
 
-        expression.addContextFunction("material", -1, (c, t, lv) -> {
-            return StringValue.of("unknown");
-        });
-
         expression.addContextFunction("map_colour", -1, (c, t, lv) ->
                 stateStringQuery(c, "map_colour", lv, (s, p) ->
                         Colors.mapColourName.get(s.getMapColor(((ScriptContext) c).level(), p))));
 
-        // Deprecated for block_state()
-        expression.addContextFunction("property", -1, (c, t, lv) ->
-        {
-            BlockArgument locator = BlockArgument.findIn((ScriptContext) c, lv, 0);
-            BlockState state = locator.block.getBlockState();
-            if (lv.size() <= locator.offset)
-            {
-                throw new InternalExpressionException("'property' requires to specify a property to query");
-            }
-            String tag = lv.get(locator.offset).getString();
-            StateDefinition<Block, BlockState> states = state.getBlock().getStateDefinition();
-            Property<?> property = states.getProperty(tag);
-            return property == null ? Value.NULL : new StringValue(state.getValue(property).toString().toLowerCase(Locale.ROOT));
-        });
-
-        // Deprecated for block_state()
-        expression.addContextFunction("block_properties", -1, (c, t, lv) ->
-        {
-            BlockArgument locator = BlockArgument.findIn((ScriptContext) c, lv, 0);
-            BlockState state = locator.block.getBlockState();
-            StateDefinition<Block, BlockState> states = state.getBlock().getStateDefinition();
-            return ListValue.wrap(states.getProperties().stream().map(
-                    p -> new StringValue(p.getName()))
-            );
-        });
-
-        // block_state(block)
-        // block_state(block, property)
         expression.addContextFunction("block_state", -1, (c, t, lv) ->
         {
             BlockArgument locator = BlockArgument.findIn((ScriptContext) c, lv, 0, true);

@@ -34,8 +34,8 @@ Whether the inventory holds everything needed.
 ### `drop_item(inventory, slot, count?)`
 Throws the content of a slot on the ground.
 
-### `item_list(tag?)` · `item_tags(item, tag?)` · `item_category(item)`
-The registered items, the tags of an item, and its category in the creative menu.
+### `item_list(tag?)` · `item_tags(item, tag?)`
+The registered items and the tags of an item.
 
 ### `stack_limit(item)` · `crafting_remaining_item(item)`
 How high it stacks, and what is left after using it in a recipe (the empty bucket, say).

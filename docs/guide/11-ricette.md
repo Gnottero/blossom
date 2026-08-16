@@ -183,7 +183,8 @@ import "core.mc.effect" as effect;
 
 effect.particle_box('happy_villager', angolo_a, angolo_b, 1);       // l'area di lavoro
 effect.particle_line('flame', da, a, 1);                            // un percorso
-entity.create_marker('bersaglio', pos);                             // un punto, finché non lo togli
+entity.spawn('armor_stand', pos, {'Invisible' -> 1, 'CustomName' -> '"bersaglio"',
+        'CustomNameVisible' -> 1, 'NoGravity' -> 1});                   // un punto, finché non lo togli
 ```
 
 Con un client Blossom, [`core.mc.shape`](../api/core.mc.shape.md) disegna le stesse cose in modo

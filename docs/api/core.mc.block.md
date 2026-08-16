@@ -24,12 +24,6 @@ The block at that position. Compared with a string it answers on the name.
 ### `block_state(pos)` · `block_state(pos, property)`
 The properties of the block as a map, or the value of a single property.
 
-### `block_properties(pos)`
-The names of the properties that block has.
-
-### `property(pos, name)`
-The value of a property, `null` when the block does not have it.
-
 ### `block_data(pos)`
 The NBT of the block entity, `null` when that block does not have one.
 
@@ -53,8 +47,8 @@ Whether it stops movement, and whether it suffocates whoever is inside it.
 ### `hardness(pos)` · `blast_resistance(pos)`
 How hard it is to break and how well it resists explosions.
 
-### `block_sound(pos)` · `material(pos)` · `map_colour(pos)`
-Sound group, material and colour on the map.
+### `block_sound(pos)` · `map_colour(pos)`
+Sound group and colour on the map.
 
 ### `ticks_randomly(pos)` · `power(pos)`
 Whether it gets random ticks, and the redstone signal it emits.

@@ -54,11 +54,6 @@ The handler lives inside the entity, so it follows it between worlds and disappe
 The first argument passed to the handler is always the entity itself; the number of arguments is
 checked right away, not at the first event.
 
-## Markers
-
-### `create_marker(name, pos, block?, tag?)` · `remove_all_markers()`
-Markers shown while debugging a script; `remove_all_markers` cleans up the ones of the app.
-
 ### `entity_load_handler(types, function)`
 Calls `function(entity)` every time an entity of one of those types appears. `types` is a type or a
 list of types (`'zombie'`, `['zombie', 'minecraft:husk']`); with `null` you hear about all of them.
