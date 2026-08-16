@@ -72,8 +72,8 @@ a call for every entity appearing in the world. To really hear about all of them
 `entity_loads` event in [`core.mc.event`](core.mc.event.md); this function is the same thing with the
 filter included.
 
-In Scarpet this was a family of over a hundred events generated from the entity registry, one per
-type, with two signature variants, one of them already deprecated.
+One event with a filter, rather than one generated event per entity type: a catalogue of a hundred
+names is not something anybody reads.
 
 ## The client of the player
 

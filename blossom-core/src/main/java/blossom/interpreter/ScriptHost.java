@@ -10,14 +10,11 @@ import blossom.exception.UndefinedSymbolError;
 import blossom.value.FunctionValue;
 import blossom.value.Value;
 import blossom.value.ValueGuard;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import org.jspecify.annotations.Nullable;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -48,7 +45,6 @@ public abstract class ScriptHost
     public Expression.LoadOverride loadOverrides;
     public Expression.@Nullable ExpressionNode root;
 
-    private final Set<String> deprecations = new HashSet<>();
 
     /**
      * I limiti di esecuzione di questa app (PIANO_LINGUAGGIO.md §9): li dichiara il manifesto, e li
@@ -813,19 +809,6 @@ public abstract class ScriptHost
                 });
             });
         }
-    }
-
-    public static final Logger DEPRECATION_LOG = LoggerFactory.getLogger("Blossom Deprecation Warnings");
-
-    public boolean issueDeprecation(String feature)
-    {
-        if (deprecations.contains(feature))
-        {
-            return false;
-        }
-        deprecations.add(feature);
-        DEPRECATION_LOG.warn("App '" + getVisualName() + "' uses '" + feature + "', which is deprecated for removal. Check the docs for a replacement");
-        return true;
     }
 
     public ScriptServer scriptServer()

@@ -21,7 +21,7 @@ import com.gnottero.blossom.access.Host;
 import com.gnottero.blossom.util.SnoopyCommandSource;
 import com.gnottero.blossom.util.SystemInfo;
 import com.gnottero.blossom.util.InputValidator;
-import blossom.utils.ScarpetJsonDeserializer;
+import blossom.utils.BlossomJsonDeserializer;
 import com.gnottero.blossom.util.Particles;
 import blossom.value.BooleanValue;
 import com.gnottero.blossom.value.EntityValue;
@@ -108,9 +108,9 @@ import static java.lang.Math.min;
 
 public class Auxiliary
 {
-    public static final String MARKER_STRING = "__scarpet_marker";
+    public static final String MARKER_STRING = "__blossom_marker";
     private static final Map<String, SoundSource> mixerMap = Arrays.stream(SoundSource.values()).collect(Collectors.toMap(SoundSource::getName, k -> k));
-    public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().registerTypeAdapter(Value.class, new ScarpetJsonDeserializer()).create();
+    public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().registerTypeAdapter(Value.class, new BlossomJsonDeserializer()).create();
 
     @Deprecated
     public static String recognizeResource(Value value, boolean isFloder)
@@ -753,7 +753,6 @@ public class Auxiliary
                 new NumericValue(((ScriptContext) c).server().getTickCount()));
 
         expression.addContextFunction("world_time", 0, (c, t, lv) -> {
-            c.host.issueDeprecation("world_time()");
             return new NumericValue(((ScriptContext) c).level().getGameTime());
         });
 
@@ -774,7 +773,6 @@ public class Auxiliary
 
         expression.addContextFunction("last_tick_times", -1, (c, t, lv) ->
         {
-            c.host.issueDeprecation("last_tick_times()");
             return SystemInfo.get("server_last_tick_times", (ScriptContext) c);
         });
 
@@ -834,7 +832,6 @@ public class Auxiliary
 
         expression.addContextFunction("seed", -1, (c, t, lv) -> {
             CommandSourceStack s = ((ScriptContext) c).source();
-            c.host.issueDeprecation("seed()");
             return new NumericValue(s.getLevel().getSeed());
         });
 
@@ -843,7 +840,6 @@ public class Auxiliary
                 ValueConversions.of(((ScriptContext) c).level()));
 
         expression.addContextFunction("view_distance", 0, (c, t, lv) -> {
-            c.host.issueDeprecation("view_distance()");
             return new NumericValue(((ScriptContext) c).server().getPlayerList().getViewDistance());
         });
 
@@ -869,7 +865,7 @@ public class Auxiliary
             {
                 Map<Value, Value> plopData = new HashMap<>();
                 ScriptContext cc = (ScriptContext) c;
-                plopData.put(StringValue.of("scarpet_custom"),
+                plopData.put(StringValue.of("blossom_custom"),
                         ListValue.wrap(FeatureGenerator.featureMap.keySet().stream().sorted().map(StringValue::of))
                 );
                 plopData.put(StringValue.of("feature_types"),
@@ -1040,7 +1036,6 @@ public class Auxiliary
             FileArgument fdesc = new FileArgument(null, FileArgument.Type.NBT, null, false, false, FileArgument.Reason.READ, c.host);
             if (!lv.isEmpty())
             {
-                c.host.issueDeprecation("load_app_data(...) with arguments");
                 String resource = recognizeResource(lv.get(0), false);
                 boolean shared = lv.size() > 1 && lv.get(1).getBoolean();
                 fdesc = new FileArgument(resource, FileArgument.Type.NBT, null, false, shared, FileArgument.Reason.READ, c.host);
@@ -1058,7 +1053,6 @@ public class Auxiliary
             FileArgument fdesc = new FileArgument(null, FileArgument.Type.NBT, null, false, false, FileArgument.Reason.CREATE, c.host);
             if (lv.size() > 1)
             {
-                c.host.issueDeprecation("store_app_data(...) with more than one argument");
                 String resource = recognizeResource(lv.get(1), false);
                 boolean shared = lv.size() > 2 && lv.get(2).getBoolean();
                 fdesc = new FileArgument(resource, FileArgument.Type.NBT, null, false, shared, FileArgument.Reason.CREATE, c.host);
@@ -1230,7 +1224,7 @@ public class Auxiliary
                                         StringValue.of("min_format"), new NumericValue(SharedConstants.getCurrentVersion().packVersion(PackType.SERVER_DATA).major()),
                                         StringValue.of("max_format"), new NumericValue(SharedConstants.getCurrentVersion().packVersion(PackType.SERVER_DATA).major()),
                                         StringValue.of("description"), StringValue.of(name),
-                                        StringValue.of("source"), StringValue.of("scarpet")
+                                        StringValue.of("source"), StringValue.of("blossom")
                                 )))
                         ));
                         walkTheDPMap(dpMap, zipRoot);
@@ -1274,7 +1268,6 @@ public class Auxiliary
 
         expression.addContextFunction("enable_hidden_dimensions", 0, (c, t, lv) -> {
             ScriptContext cc = (ScriptContext) c;
-            cc.host.issueDeprecation("enable_hidden_dimensions in 1.18.2 and 1.19+");
             return Value.NULL;
         });
     }

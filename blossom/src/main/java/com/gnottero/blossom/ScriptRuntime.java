@@ -28,7 +28,7 @@ import blossom.value.Value;
  */
 public class ScriptRuntime
 {
-    /** lo stesso logger del mod: le classi portate da Scarpet lo cercano qui */
+    /** lo stesso logger del mod: le classi del core lo cercano qui */
     public static final org.slf4j.Logger LOG = BlossomMod.LOG;
 
     /** dove vivono gli script di un mondo */
@@ -143,7 +143,7 @@ public class ScriptRuntime
     }
 
     /**
-     * Carica (o ricarica) l'app {@code name} dal file {@code <mondo>/blossom/<name>.sc}, eseguendone
+     * Carica (o ricarica) l'app {@code name} dal file {@code <mondo>/blossom/<name>.bs}, eseguendone
      * il codice a livello di modulo.
      */
     public Value load(CommandSourceStack source, String name) throws IOException

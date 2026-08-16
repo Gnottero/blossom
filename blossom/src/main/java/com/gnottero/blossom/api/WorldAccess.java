@@ -4,7 +4,7 @@ import com.gnottero.blossom.ScriptContext;
 import com.gnottero.blossom.ScriptRuntime;
 import blossom.interpreter.Context;
 import blossom.interpreter.Expression;
-import blossom.interpreter.Fluff;
+import blossom.interpreter.Callables;
 import com.gnottero.blossom.access.Host;
 import com.gnottero.blossom.access.Vanilla;
 import com.gnottero.blossom.util.Colors;
@@ -200,7 +200,7 @@ public class WorldAccess
             Context c,
             String name,
             List<Value> params,
-            Fluff.TriFunction<BlockState, BlockPos, Level, Value> test
+            Callables.TriFunction<BlockState, BlockPos, Level, Value> test
     )
     {
         ScriptContext cc = (ScriptContext) c;
@@ -605,7 +605,6 @@ public class WorldAccess
         // Deprecated, use loaded_status as more indicative
         expression.addContextFunction("loaded_ep", -1, (c, t, lv) ->
         {
-            c.host.issueDeprecation("loaded_ep(...)");
             BlockPos pos = BlockArgument.findIn((ScriptContext) c, lv, 0).block.getPos();
             return BooleanValue.of(((ScriptContext) c).level().isPositionEntityTicking(pos));
         });
@@ -1167,7 +1166,6 @@ public class WorldAccess
                         Colors.soundName.get(s.getSoundType())));
 
         expression.addContextFunction("material", -1, (c, t, lv) -> {
-            c.host.issueDeprecation("material(...)"); // deprecated for block_state()
             return StringValue.of("unknown");
         });
 
@@ -1178,7 +1176,6 @@ public class WorldAccess
         // Deprecated for block_state()
         expression.addContextFunction("property", -1, (c, t, lv) ->
         {
-            c.host.issueDeprecation("property(...)");
             BlockArgument locator = BlockArgument.findIn((ScriptContext) c, lv, 0);
             BlockState state = locator.block.getBlockState();
             if (lv.size() <= locator.offset)
@@ -1194,7 +1191,6 @@ public class WorldAccess
         // Deprecated for block_state()
         expression.addContextFunction("block_properties", -1, (c, t, lv) ->
         {
-            c.host.issueDeprecation("block_properties(...)");
             BlockArgument locator = BlockArgument.findIn((ScriptContext) c, lv, 0);
             BlockState state = locator.block.getBlockState();
             StateDefinition<Block, BlockState> states = state.getBlock().getStateDefinition();

@@ -14,8 +14,9 @@ import blossom.language.StdLib;
  * chiamata non paga niente in piu', perche' il legame simbolo → implementazione si risolve al
  * caricamento e non ad ogni invocazione.
  *
- * <p>I nomi sono quelli di Scarpet dove il nome era gia' buono: chi arriva da li' non deve
- * reimparare l'API, e la documentazione di Scarpet resta leggibile come riferimento.
+ * <p>I nomi sono quelli che descrivono l'operazione nel modo piu' corto che resta chiaro:
+ * {@code set}, {@code block_state}, {@code entity_load}. Chi legge uno script deve capire cosa fa
+ * senza aprire la documentazione.
  */
 public final class BlossomApi
 {

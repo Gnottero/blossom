@@ -5,7 +5,7 @@ import blossom.exception.TypeMismatchError;
 import blossom.interpreter.Blossom;
 import blossom.interpreter.Context;
 import blossom.interpreter.Expression;
-import blossom.interpreter.Fluff;
+import blossom.interpreter.Callables;
 import blossom.interpreter.LazyValue;
 import blossom.interpreter.Module;
 import blossom.interpreter.Token;
@@ -27,7 +27,7 @@ import java.util.function.Consumer;
 
 import org.jspecify.annotations.Nullable;
 
-public class FunctionValue extends Value implements Fluff.ILazyFunction
+public class FunctionValue extends Value implements Callables.ILazyFunction
 {
     private final Expression expression;
     private final Token token;

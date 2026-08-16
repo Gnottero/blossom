@@ -13,7 +13,7 @@ public class ThrowStatement extends InternalExpressionException
 
     /**
      * Creates a throw exception from a value, and assigns it a specified message.
-     * <p>To be used when throwing from Scarpet's {@code throw} function
+     * <p>To be used when throwing from the {@code throw} function
      *
      * @param data The value to pass
      * @param type Exception type

@@ -100,7 +100,7 @@ public class Sys
                     // Anything between the start of the string and the beginning
                     // of the format specifier is either fixed text or contains
                     // an invalid format string.
-                    // [[scarpet]] but we skip it and let the String.format fail
+                    // we skip it and let the String.format fail
                     char fmt = m.group(6).toLowerCase().charAt(0);
                     if (fmt == 's')
                     {
@@ -149,7 +149,7 @@ public class Sys
                 {
                     // No more valid format specifiers.  Check for possible invalid
                     // format specifiers.
-                    // [[scarpet]] but we skip it and let the String.format fail
+                    // we skip it and let the String.format fail
                     break;
                 }
             }

@@ -61,7 +61,6 @@ public class Inventories
                 new NumericValue(NBTSerializableValue.parseItem(lv.get(0).getString(), ((ScriptContext) c).registryAccess()).getMaxStackSize()));
 
         expression.addContextFunction("item_category", -1, (c, t, lv) -> {
-            c.host.issueDeprecation("item_category in 1.19.3+");
             return Value.NULL;
         });
 

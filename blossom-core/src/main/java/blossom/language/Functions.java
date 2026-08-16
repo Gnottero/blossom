@@ -3,7 +3,7 @@ package blossom.language;
 import blossom.exception.BlossomRuntimeError;
 import blossom.interpreter.Context;
 import blossom.interpreter.Expression;
-import blossom.interpreter.Fluff;
+import blossom.interpreter.Callables;
 import blossom.interpreter.LazyValue;
 import blossom.interpreter.Token;
 import blossom.interpreter.argument.FunctionArgument;
@@ -27,7 +27,7 @@ public class Functions
         // preambolo, risolta a caricamento, e i simboli si raggiungono per alias (vedi DECISIONI.md)
 
         // needs to be lazy because of custom context of execution of arguments as a signature
-        expression.addCustomFunction("call", new Fluff.AbstractLazyFunction(-1, "call")
+        expression.addCustomFunction("call", new Callables.AbstractLazyFunction(-1, "call")
         {
             @Override
             public LazyValue lazyEval(Context c, Context.Type t, Expression expr, Token tok, List<LazyValue> lv)
@@ -39,7 +39,7 @@ public class Functions
                 //lv.remove(lv.size()-1); // aint gonna cut it // maybe it will because of the eager eval changes
                 if (t != Context.SIGNATURE) // just call the function
                 {
-                    List<Value> args = Fluff.AbstractFunction.unpackLazy(lv, c, Context.NONE);
+                    List<Value> args = Callables.AbstractFunction.unpackLazy(lv, c, Context.NONE);
                     FunctionArgument functionArgument = FunctionArgument.findIn(c, expression.module, args, 0, false, true);
                     FunctionValue fun = functionArgument.function;
                     return fun.callInContext(c, t, functionArgument.args);

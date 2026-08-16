@@ -20,7 +20,7 @@ import blossom.value.NumericValue;
 import blossom.value.StringValue;
 import blossom.value.Value;
 
-public class ScarpetJsonDeserializer implements JsonDeserializer<Value>
+public class BlossomJsonDeserializer implements JsonDeserializer<Value>
 {
 
     @Override

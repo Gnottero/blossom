@@ -92,7 +92,7 @@ public final class ClientShapes
      */
     private static final int MAX_SHAPES = 4096;
 
-    /** la scala di Scarpet fra le unità del font e i blocchi */
+    /** la scala fra le unità del font e i blocchi */
     private static final float FONT_SCALE = 0.0025F;
 
     private final List<Shape> shapes = new CopyOnWriteArrayList<>();

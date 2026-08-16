@@ -159,7 +159,6 @@ public class Scoreboards
             Objective objective = scoreboard.getObjective(objectiveName);
             if (objective != null)
             {
-                c.host.issueDeprecation("reading or modifying an objective's criterion with scoreboard_add");
                 if (lv.size() == 1)
                 {
                     return StringValue.of(objective.getCriteria().getName());

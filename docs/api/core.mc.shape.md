@@ -116,14 +116,12 @@ A block turns around its own centre, an item around the point it sits at. Whoeve
 a `block_marker` particle (or `item`, for items) at the point: it is not the model, but it says at
 least which block it is and where it is.
 
-The names and the meanings are the ones of Scarpet — whoever comes from there has nothing to relearn
-— but they live in a map instead of being spread across the arguments, and **a name that shape does
-not have is an error**, with the right name suggested, instead of a silent default.
+The attributes live in a map instead of being spread across the arguments, and **a name that shape
+does not have is an error**, with the right name suggested, instead of a silent default.
 
 There are seven types because they are the things needed to show what a script is computing: a path,
-a volume, a radius, a column, a number, a block, an item. What is missing from Scarpet is `polygon` —
-arbitrary polygonal faces — which is for making graphics, not for understanding what your own code is
-doing.
+a volume, a radius, a column, a number, a block, an item. Arbitrary polygonal faces are deliberately
+not among them: that is for making graphics, not for understanding what your own code is doing.
 
 ### `clear_shapes()`
 Forgets the shapes still waiting to be redrawn as particles. It does not remove the ones already sent

@@ -27,6 +27,15 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ### Cambiato
 
+- **Un'app è una sola per tutto il server, come un plugin.** Sparita la distinzione fra app globale e
+  app per giocatore: con lei escono gli host per giocatore, i global condivisi per app (quel ruolo
+  ce l'hanno i binding di modulo) e le chiavi `system_info('app_scope')` e `system_info('app_players')`.
+  Vedi DECISIONI.md D-087.
+- **I nomi di Scarpet escono dall'API e dai messaggi.** `system_info('scarpet_version')` diventa
+  `system_info('blossom_version')`, il marcatore NBT `__scarpet_marker` diventa `__blossom_marker`,
+  la chiave `scarpet_custom` di `plop` diventa `blossom_custom`, e un data pack generato si dichiara
+  di `'source' -> 'blossom'`. Vedi DECISIONI.md D-088.
+
 - **Le radici di `core.io` stanno dentro la cartella del mondo.** I loro percorsi si scrivono
   relativi al mondo; uno assoluto vale solo se punta comunque dentro, altrimenti la radice viene
   scartata con un avviso nel log. Il confine è ricontrollato dopo aver risolto i link simbolici, così
@@ -54,6 +63,12 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
   (avanzi del layer Carpet in `access/Host`, del sistema di import di Scarpet in `ScriptHost`, e
   alcuni convertitori mai usati), i blocchi di codice commentato rimasti da Scarpet in `WorldTools`,
   `EntityValue`, `WorldAccess` e `Expression`, e 85 import inutilizzati.
+- `system_info('world_carpet_rules')`: rispondeva una mappa vuota per definizione, perché Carpet non
+  c'è, quindi non informava di niente.
+- Gli avvisi di deprecazione ereditati, e la macchina che li emetteva (`issueDeprecation`,
+  `Expression.alias`). Una funzione o c'è o non c'è: a questo punto del progetto non c'è niente da
+  cui migrare, e le funzioni che portavano l'avviso (`world_time`, `seed`, `view_distance`,
+  `material`, `property`, ...) sono documentate e restano.
 
 ### Corretto
 

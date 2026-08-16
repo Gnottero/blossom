@@ -235,7 +235,6 @@ public class Entities
             String what = lv.get(1).getString().toLowerCase(Locale.ROOT);
             if (what.equals("tags"))
             {
-                c.host.issueDeprecation("'tags' for entity querying");
             }
             return switch (lv.size())
                     {
@@ -315,11 +314,10 @@ public class Entities
          * entity_load_handler(tipi, funzione) - chiamata ogni volta che compare un'entita' di uno
          * di quei tipi.
          *
-         * In Scarpet questa era una famiglia di 100+ eventi generati dal registro delle entita', uno
-         * per tipo: un catalogo che nessuno poteva leggere e due varianti di firma di cui una gia'
-         * deprecata. Qui l'evento e' uno solo ('entity_loads') e il filtro per tipo viene fatto in
-         * java prima di chiamare l'handler, quindi ascoltare un tipo raro non costa una chiamata per
-         * ogni entita' che compare.
+         * L'evento e' uno solo ('entity_loads') invece di uno generato per ogni tipo di entita':
+         * un catalogo di 100+ nomi non lo legge nessuno. Il filtro per tipo viene fatto in java prima
+         * di chiamare l'handler, quindi ascoltare un tipo raro non costa una chiamata per ogni
+         * entita' che compare.
          *
          * 'tipi' e' un tipo o una lista di tipi; con null si ascoltano tutte le entita'.
          */

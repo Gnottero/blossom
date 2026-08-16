@@ -28,7 +28,7 @@ public class Operators
 {
     public static final Map<String, Integer> precedence = new HashMap<>()
     {{
-        // valori decuplicati rispetto a scarpet per lasciare spazio a livelli intermedi senza
+        // valori a passi di dieci, per lasciare spazio a livelli intermedi senza
         // dover rinumerare tutto ogni volta che il linguaggio cresce
         put("attribute~:", 800);
         put("unary+-!...", 600);

@@ -153,7 +153,7 @@ applica_due_volte('triplica', 2);       // 18   - o per nome
 
 `call(f, ...)` invoca una funzione che arriva come valore o come nome. Una funzione passata a un
 altro modulo continua a risolversi correttamente: si porta dietro il modulo in cui è stata definita,
-e questa è una differenza esplicita rispetto a Scarpet, dove il caso era rotto.
+quindi le sue chiamate interne vedono sempre i simboli giusti, non quelli di chi la invoca.
 
 È anche il motivo per cui gli handler di evento si registrano **passando la funzione**, non il suo
 nome in una stringa:

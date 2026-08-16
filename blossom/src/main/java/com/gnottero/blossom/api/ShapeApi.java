@@ -43,9 +43,8 @@ import blossom.value.Value;
  * </pre>
  *
  * <p>Chi ha Blossom anche sul client vede il disegno vero, chi gioca vanilla la stessa geometria a
- * particelle: chi scrive lo script non deve sapere chi ha cosa. Le attribute sono quelle di Scarpet,
- * con gli stessi nomi, ma stanno in una mappa invece che sparse fra gli argomenti, e un nome che non
- * esiste per quella forma e' un errore invece di un silenzio.
+ * particelle: chi scrive lo script non deve sapere chi ha cosa. Gli attributi stanno tutti in una
+ * mappa, e un nome che non esiste per quella forma e' un errore invece di un silenzio.
  */
 public final class ShapeApi
 {
@@ -102,9 +101,8 @@ public final class ShapeApi
         /*
          * draw_shape(tipo, durata_in_tick, attributi)
          *
-         * Un solo modo di chiamarla, con gli attributi in una mappa: in Scarpet erano coppie
-         * chiave-valore sparse negli argomenti, il che rendeva impossibile capire dove finiva la
-         * geometria e cominciavano le opzioni.
+         * Un solo modo di chiamarla, con gli attributi in una mappa: sparsi fra gli argomenti non
+         * si capirebbe dove finisce la geometria e dove cominciano le opzioni.
          */
         expression.addContextFunction("draw_shape", -1, (c, t, lv) ->
         {
@@ -154,8 +152,8 @@ public final class ShapeApi
     /**
      * Un nome di attributo che non esiste è un errore, non un silenzio.
      *
-     * <p>Un {@code 'radiu'} scritto male in Scarpet passava inosservato e la forma usciva col
-     * default: si vedeva qualcosa di sbagliato e non si capiva perché. Qui si sa subito, e con il
+     * <p>Un {@code 'radiu'} scritto male, accettato in silenzio, farebbe uscire la forma col valore
+     * di default: si vedrebbe qualcosa di sbagliato senza capire perché. Qui si sa subito, e con il
      * nome giusto suggerito.
      */
     private static void checkAttributes(String type, Map<Value, Value> attributes)
@@ -330,7 +328,7 @@ public final class ShapeApi
                 bool(attributes, "doublesided"));
     }
 
-    /** {@code -1} a sinistra, {@code 0} centrato, {@code 1} a destra: come in Scarpet. */
+    /** {@code -1} a sinistra, {@code 0} centrato, {@code 1} a destra. */
     private static int align(Map<Value, Value> attributes)
     {
         String align = choice(attributes, "align", Set.of("center", "left", "right"), "center");

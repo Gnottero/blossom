@@ -10,7 +10,14 @@ import blossom.value.Value;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class Fluff
+/**
+ * Le forme che può avere una cosa chiamabile dall'interprete: funzioni e operatori, ciascuno nella
+ * variante che riceve gli argomenti già valutati e in quella che se li valuta da sé.
+ *
+ * <p>Un solo file perché sono un insieme chiuso e si riferiscono l'un l'altro: chi implementa una
+ * funzione built-in deriva da una di queste classi e non guarda altrove.
+ */
+public abstract class Callables
 {
     @FunctionalInterface
     public interface TriFunction<A, B, C, R>

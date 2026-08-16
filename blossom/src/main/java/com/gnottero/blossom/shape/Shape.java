@@ -414,8 +414,8 @@ public abstract class Shape
      * Quanti lati per cerchio, quando chi scrive non lo dice.
      *
      * <p>Cresce con la radice del raggio: una sfera grande vista da vicino ha bisogno di più lati
-     * per non sembrare un poligono, una piccola no e non vale la pena pagarli. È la stessa regola di
-     * Scarpet, e il numero si può sempre imporre con {@code level}.
+     * per non sembrare un poligono, una piccola no e non vale la pena pagarli. Il numero si può
+     * sempre imporre con {@code level}.
      */
     static int subdivisionsFor(int level, double radius)
     {
@@ -717,7 +717,7 @@ public abstract class Shape
      */
     public static final class Label extends Shape
     {
-        /** la stessa scala di Scarpet: il testo è pensato in unità di font, non di blocchi */
+        /** il testo è pensato in unità di font, non di blocchi */
         public static final float DEFAULT_SIZE = 10.0F;
 
         /**

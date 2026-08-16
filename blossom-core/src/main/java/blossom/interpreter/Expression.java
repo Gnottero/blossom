@@ -1,16 +1,16 @@
 package blossom.interpreter;
 
-import blossom.interpreter.Fluff.AbstractFunction;
-import blossom.interpreter.Fluff.AbstractLazyFunction;
-import blossom.interpreter.Fluff.AbstractLazyOperator;
-import blossom.interpreter.Fluff.AbstractOperator;
-import blossom.interpreter.Fluff.AbstractUnaryOperator;
-import blossom.interpreter.Fluff.ILazyFunction;
-import blossom.interpreter.Fluff.ILazyOperator;
-import blossom.interpreter.Fluff.QuadFunction;
-import blossom.interpreter.Fluff.QuinnFunction;
-import blossom.interpreter.Fluff.SexFunction;
-import blossom.interpreter.Fluff.TriFunction;
+import blossom.interpreter.Callables.AbstractFunction;
+import blossom.interpreter.Callables.AbstractLazyFunction;
+import blossom.interpreter.Callables.AbstractLazyOperator;
+import blossom.interpreter.Callables.AbstractOperator;
+import blossom.interpreter.Callables.AbstractUnaryOperator;
+import blossom.interpreter.Callables.ILazyFunction;
+import blossom.interpreter.Callables.ILazyOperator;
+import blossom.interpreter.Callables.QuadFunction;
+import blossom.interpreter.Callables.QuinnFunction;
+import blossom.interpreter.Callables.SexFunction;
+import blossom.interpreter.Callables.TriFunction;
 import blossom.exception.BreakStatement;
 import blossom.exception.ContinueStatement;
 import blossom.exception.ExitStatement;
@@ -711,7 +711,7 @@ public class Expression
         }
         // unexpected really - should be caught earlier and converted to InternalExpressionException
         Blossom.LOG.error("Unexpected exception while running blossom code", exc);
-        return new ExpressionException(c, e, token, "Internal error (please report this issue to Carpet) while evaluating: " + exc);
+        return new ExpressionException(c, e, token, "Internal error (please report this issue to Blossom) while evaluating: " + exc);
     }
 
     public void addUnaryOperator(String surface, String function, boolean leftAssoc, Function<Value, Value> fun)
@@ -896,7 +896,7 @@ public class Expression
                 if (numParams >= 0 && lazyParams.size() != numParams)
                 {
                     String error = "Function '" + name + "' requires " + numParams + " arguments, got " + lazyParams.size() + ". ";
-                    throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "evaluation", error + (fun instanceof Fluff.UsageProvider up ? up.getUsage() : ""));
+                    throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "evaluation", error + (fun instanceof Callables.UsageProvider up ? up.getUsage() : ""));
                 }
 
                 try
@@ -1057,51 +1057,6 @@ public class Expression
         return result;
     }
 
-    public void alias(String copy, String original)
-    {
-        ILazyFunction originalFunction = functions.get(original);
-        functions.put(copy, new ILazyFunction()
-        {
-            @Override
-            public int getNumParams()
-            {
-                return originalFunction.getNumParams();
-            }
-
-            @Override
-            public boolean numParamsVaries()
-            {
-                return originalFunction.numParamsVaries();
-            }
-
-            @Override
-            public boolean pure()
-            {
-                return originalFunction.pure();
-            }
-
-            @Override
-            public boolean transitive()
-            {
-                return originalFunction.transitive();
-            }
-
-            @Override
-            public Context.Type staticType(Context.Type outerType)
-            {
-                return originalFunction.staticType(outerType);
-            }
-
-            @Override
-            public LazyValue lazyEval(Context c, Context.Type type, Expression expr, Token token, List<LazyValue> lazyParams)
-            {
-                c.host.issueDeprecation(copy + "(...)");
-                return originalFunction.lazyEval(c, type, expr, token, lazyParams);
-            }
-        });
-    }
-
-
     public static final String GLOBAL_VARIABLE_PREFIX = "global_";
 
     /**
@@ -1197,7 +1152,7 @@ public class Expression
      * Locals live in the calling frame, which no other thread can reach, so they need no lock.
      *
      * <p>{@code updater} runs inside that guard, therefore it must only combine the values it is
-     * given and must not evaluate arbitrary scarpet code.
+     * given and must not evaluate arbitrary app code.
      */
     public LazyValue updateAnyVariable(Context c, String name, UnaryOperator<Value> updater)
     {
@@ -1922,7 +1877,7 @@ public class Expression
         }
         // function or operator
         String symbol = node.token.surface;
-        Fluff.EvalNode operation = ((token == Token.TokenType.FUNCTION) ? functions : operators).get(symbol);
+        Callables.EvalNode operation = ((token == Token.TokenType.FUNCTION) ? functions : operators).get(symbol);
         Context.Type requestedType = operation.staticType(expectedType);
         for (ExpressionNode arg : node.args)
         {
@@ -2041,7 +1996,7 @@ public class Expression
         }
         // function or operator
 
-        Fluff.EvalNode operation = ((token == Token.TokenType.FUNCTION) ? functions : operators).get(symbol);
+        Callables.EvalNode operation = ((token == Token.TokenType.FUNCTION) ? functions : operators).get(symbol);
         Context.Type requestedType = operation.staticType(expectedType);
         for (ExpressionNode arg : node.args)
         {

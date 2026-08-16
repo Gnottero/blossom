@@ -77,7 +77,7 @@ public class ScreenValue extends Value implements Nbt.Serializable
     private final String hostname;
     private final ServerPlayer player;
 
-    public static Map<String, ScarpetScreenHandlerFactory> screenHandlerFactories;
+    public static Map<String, BlossomScreenHandlerFactory> screenHandlerFactories;
 
     static
     {
@@ -109,7 +109,7 @@ public class ScreenValue extends Value implements Nbt.Serializable
     }
 
 
-    protected interface ScarpetScreenHandlerFactory
+    protected interface BlossomScreenHandlerFactory
     {
         AbstractContainerMenu create(int syncId, Inventory playerInventory);
     }
@@ -216,7 +216,7 @@ public class ScreenValue extends Value implements Nbt.Serializable
             return;
         }
 
-        screenHandler.addSlotListener(new ScarpetScreenHandlerListener()
+        screenHandler.addSlotListener(new BlossomScreenHandlerListener()
         {
             @Override
             public boolean onSlotClick(ServerPlayer player, ContainerInput actionType, int slot, int button)
@@ -393,7 +393,7 @@ public class ScreenValue extends Value implements Nbt.Serializable
     }
 
 
-    public interface ScarpetScreenHandlerListener extends ContainerListener
+    public interface BlossomScreenHandlerListener extends ContainerListener
     {
         boolean onSlotClick(ServerPlayer player, ContainerInput actionType, int slot, int button);
 

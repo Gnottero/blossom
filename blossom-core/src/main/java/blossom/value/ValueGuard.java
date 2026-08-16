@@ -98,7 +98,7 @@ public final class ValueGuard
      * already guarded container, so that a structure nested inside a shared global is guarded as
      * well as the global itself.
      *
-     * <p>Scarpet structures may be cyclic - {@code global_l += global_l} is legal - hence the
+     * <p>Structures may be cyclic - {@code global_l += global_l} is legal - hence the
      * identity based visited set. A container that already carries this very guard is left alone
      * together with its contents: it was walked when it got the guard, and anything added to it
      * since was adopted on the way in.
@@ -147,6 +147,6 @@ public final class ValueGuard
             });
             return children;
         }
-        return List.of(); // nbt values hold tags, not scarpet values
+        return List.of(); // nbt values hold tags, not language values
     }
 }

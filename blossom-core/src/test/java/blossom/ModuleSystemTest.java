@@ -87,8 +87,8 @@ class ModuleSystemTest
     @Test
     void resolvesFunctionsPassedBetweenModules(@TempDir Path tmp) throws IOException
     {
-        // il bug esplicito di scarpet: una funzione passata come valore a un altro modulo deve
-        // continuare a risolversi dovunque venga chiamata
+        // una funzione passata come valore a un altro modulo deve continuare a risolversi dovunque
+        // venga chiamata: e' il FunctionValue a viaggiare, non il suo nome
         Path root = project(tmp, SIMPLE_MANIFEST);
         module(root, "runner.bs", """
                 module runner;

@@ -14,7 +14,7 @@ import blossom.value.Value;
 public final class JsonSupport
 {
     public static final Gson GSON = new GsonBuilder()
-            .registerTypeAdapter(Value.class, new ScarpetJsonDeserializer())
+            .registerTypeAdapter(Value.class, new BlossomJsonDeserializer())
             .create();
 
     private JsonSupport()

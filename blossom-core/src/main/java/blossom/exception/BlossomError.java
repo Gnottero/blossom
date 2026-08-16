@@ -90,8 +90,8 @@ public abstract class BlossomError extends InternalExpressionException
      *
      * <pre>
      * UndefinedSymbolError
-     *   in math.vector.add  (src/math/vector.sc:4:12)
-     *   called from main    (src/main.sc:8:1)
+     *   in math.vector.add  (src/math/vector.bs:4:12)
+     *   called from main    (src/main.bs:8:1)
      *
      *   Simbolo 'ad' non trovato nel modulo 'math.vector'.
      *   Did you mean: 'add'?

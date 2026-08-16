@@ -3,7 +3,7 @@ package com.gnottero.blossom.api;
 import com.gnottero.blossom.ScriptContext;
 import blossom.interpreter.Context;
 import blossom.interpreter.Expression;
-import blossom.interpreter.Fluff;
+import blossom.interpreter.Callables;
 import blossom.interpreter.LazyValue;
 import com.gnottero.blossom.argument.BlockArgument;
 import com.gnottero.blossom.argument.Vector3Argument;
@@ -40,7 +40,7 @@ public class BlockIterators
             {
                 throw new InternalExpressionException("'scan' needs many more arguments");
             }
-            List<Value> lv = Fluff.AbstractFunction.unpackLazy(llv.subList(0, llv.size() - 1), c, Context.NONE);
+            List<Value> lv = Callables.AbstractFunction.unpackLazy(llv.subList(0, llv.size() - 1), c, Context.NONE);
             ScriptContext cc = (ScriptContext) c;
             BlockArgument centerLocator = BlockArgument.findIn(cc, lv, 0);
             Vector3Argument rangeLocator = Vector3Argument.findIn(lv, centerLocator.offset);
@@ -158,7 +158,7 @@ public class BlockIterators
             {
                 throw new InternalExpressionException("'volume' needs many more arguments");
             }
-            List<Value> lv = Fluff.AbstractFunction.unpackLazy(llv.subList(0, llv.size() - 1), c, Context.NONE);
+            List<Value> lv = Callables.AbstractFunction.unpackLazy(llv.subList(0, llv.size() - 1), c, Context.NONE);
 
             BlockArgument pos1Locator = BlockArgument.findIn(cc, lv, 0);
             BlockArgument pos2Locator = BlockArgument.findIn(cc, lv, pos1Locator.offset);

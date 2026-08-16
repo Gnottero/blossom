@@ -29,9 +29,8 @@ import com.gnottero.blossom.client.BlossomClient;
  * significa che vengono raccolte dal frame successivo, e siccome la traslazione relativa alla camera
  * viene fissata al momento della consegna, il disegno insegue la camera invece di stare fermo.
  *
- * <p>È lo stesso problema che il fork aveva risolto per Scarpet (voce BE-7 dell'inventario): qui è
- * risolto per costruzione, agganciandosi subito dopo {@code submitFeatures} invece di aggiungere una
- * fase propria.
+ * <p>Risolto per costruzione, agganciandosi subito dopo {@code submitFeatures} invece di aggiungere
+ * una fase di rendering propria (voce BE-7 dell'inventario).
  */
 @Mixin(LevelRenderer.class)
 public abstract class LevelRenderer_blossomShapesMixin

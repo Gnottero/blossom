@@ -29,8 +29,8 @@ dei test: se il linguaggio cambia e la guida non viene aggiornata, la build si a
 
 - non hai mai scritto uno script per Minecraft → [1](01-primi-passi.md), poi
   [11](11-ricette.md), copia e cambia
-- arrivi da Scarpet → [6](06-moduli.md) e [7](07-errori.md) sono le due differenze vere, il resto
-  della sintassi ti è familiare
+- hai già scritto script per Minecraft altrove → [6](06-moduli.md) e [7](07-errori.md) sono le due
+  parti che probabilmente non ti aspetti, il resto della sintassi ti sarà familiare
 - devi mettere in piedi un progetto grosso → [6](06-moduli.md), [9](09-concorrenza.md),
   [10](10-prestazioni.md)
 

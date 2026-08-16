@@ -5,8 +5,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * This class contains default Scarpet catchable types, as well as their inheritance and
- * methods to check whether filters are compatible with those.
+ * The catchable exception types of the language, their inheritance, and the methods that check
+ * whether a filter matches one of them.
  */
 public class Throwables
 {
@@ -38,8 +38,8 @@ public class Throwables
 
     /**
      * Creates an exception and registers it to be used as parent for
-     * user defined exceptions in Scarpet's throw function.
-     * <p>Scarpet exceptions should have a top-level parent being {@link Throwables#THROWN_EXCEPTION_TYPE}
+     * user defined exceptions in the {@code throw} function.
+     * <p>Every such type must have {@link Throwables#THROWN_EXCEPTION_TYPE} as its top-level parent
      *
      * @param id     The value for the exception as a {@link String}.
      * @param parent The parent of the exception being created, or <code>null</code> if top-level

@@ -15,9 +15,8 @@ import blossom.exception.Throwables;
 /**
  * Disegnare con le particelle.
  *
- * <p>In Scarpet questa parte stava dentro il dispatcher delle forme, che pero' disegna sul client
- * con un protocollo suo. Qui restano solo le particelle, che sono vanilla e le vede chiunque:
- * nessun client modificato, nessun pacchetto in piu' (vedi ROADMAP_FUTURA.md per le forme vere).
+ * <p>Solo particelle, separate dal dispatcher delle forme: sono vanilla e le vede chiunque, senza
+ * client modificato e senza pacchetti in piu'. Le forme vere stanno in {@code core.mc.shape}.
  */
 public final class Particles
 {

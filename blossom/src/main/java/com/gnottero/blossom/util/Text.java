@@ -21,14 +21,15 @@ import net.minecraft.network.chat.TextColor;
  * ({@code ^} suggerimento al passaggio del mouse, {@code !} esegue un comando, {@code ?} lo scrive
  * in chat, {@code @} apre un indirizzo, {@code &} copia negli appunti).
  *
- * <p>La sintassi e' la stessa di Scarpet, perche' e' compatta e chi la conosce non deve reimparare
- * niente; quello che e' cambiato e' che i colori si possono anche scrivere per esteso.
+ * <p>La sintassi e' compatta apposta: formattare una riga di chat e' una cosa che si fa spesso e
+ * di sfuggita, e non deve costare tre chiamate annidate. I colori si scrivono con la lettera o
+ * per esteso.
  */
 public final class Text
 {
     private static final Pattern HEX_COLOR = Pattern.compile("#([0-9a-fA-F]{6})");
 
-    /** le lettere dei colori, come in Scarpet, piu' i nomi per esteso */
+    /** le lettere dei colori, piu' i nomi per esteso */
     private static final Map<Character, ChatFormatting> COLORS = Map.ofEntries(
             Map.entry('w', ChatFormatting.WHITE),
             Map.entry('y', ChatFormatting.YELLOW),

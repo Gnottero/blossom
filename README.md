@@ -1,11 +1,14 @@
 # Blossom
 
-Un linguaggio di scripting per Minecraft, e il mod Fabric che lo esegue. Nasce dal codice di Scarpet
-(fabric-carpet, MIT) estratto e ridisegnato attorno a tre cose che a Scarpet mancavano: **moduli
-veri**, **errori leggibili** e una **API di gioco curata** invece di una superficie enorme e piatta.
+Un linguaggio di scripting per Minecraft, e il mod Fabric che lo esegue. È costruito attorno a tre
+cose: **moduli veri**, **errori leggibili** e una **API di gioco curata** invece di una superficie
+enorme e piatta.
 
-Non richiede Carpet. Non ne eredita rules, ottimizzazioni o strumenti di amministrazione: fa una cosa
-sola, eseguire codice che manipola il mondo.
+Fa una cosa sola, eseguire codice che manipola il mondo: niente rules, niente ottimizzazioni del
+server, niente strumenti di amministrazione.
+
+L'interprete discende dal codice di Scarpet (fabric-carpet, MIT), da cui è stato estratto e
+ridisegnato; l'attribuzione completa è in [`NOTICE`](NOTICE).
 
 È **server-side**: si installa sul server e chi gioca vanilla non perde nessuna funzione. Lo stesso
 jar messo anche su un client aggiunge una cosa sola — il disegno delle forme di
@@ -364,7 +367,7 @@ TypeMismatchError
 
 Fuori da una firma `:` resta quello che era, cioè l'accesso a un elemento: `lista:0`, `mappa:'chiave'`.
 
-Cosa cambia rispetto a Scarpet:
+In sintesi:
 
 - **un file è un modulo**, con il suo spazio dei nomi: niente `global_` condivisi per convenzione
 - **gli import hanno sempre un alias**, quindi due librerie non possono litigare sui nomi
@@ -374,8 +377,8 @@ Cosa cambia rispetto a Scarpet:
 - **niente spazio globale implicito**: `sqrt(4)` senza import è un errore che ti dice cosa importare
 - **gli errori hanno una categoria, una posizione e uno stack** che attraversa i moduli
 
-Il resto della sintassi — espressioni, `for`/`while`/`map`/`filter`/`reduce`, liste, mappe,
-operatori — è quella di Scarpet, che era già buona.
+Il resto è sintassi da linguaggio a espressioni: `for`/`while`/`map`/`filter`/`reduce`, liste,
+mappe, operatori.
 
 ## Errori
 

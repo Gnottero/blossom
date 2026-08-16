@@ -18,9 +18,8 @@ import com.gnottero.blossom.argument.FileArgument;
 /**
  * Un'app caricata, vista da chi deve richiamarla da fuori: eventi, schermate, callback.
  *
- * <p>In Scarpet la stessa cosa era un host di script con dentro anche il caricamento, i permessi e i
- * comandi. Qui e' solo il minimo che serve per chiamare una funzione dentro un'app sapendo chi l'ha
- * chiesto - il resto lo fa {@link ScriptRuntime}.
+ * <p>E' solo il minimo che serve per chiamare una funzione dentro un'app sapendo chi l'ha chiesto:
+ * caricamento, permessi e comandi stanno in {@link ScriptRuntime}, che e' un oggetto diverso apposta.
  */
 public record AppHost(String name, Interpreter interpreter)
 {

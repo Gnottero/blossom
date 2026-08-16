@@ -174,9 +174,9 @@ public class Context
 
         public void badProgrammer()
         {
-            throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "context", "Attempting to access the execution context while optimizing the code;" +
-                    " This is not the problem with your code, but the error cause by improper use of code compile optimizations" +
-                    "of scarpet authors. Please report this issue directly to the scarpet issue tracker");
+            throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "context",
+                    "Attempting to access the execution context while compiling the code. This is not a problem with "
+                            + "your script but a bug in Blossom's compilation step: please report it.");
 
         }
 
