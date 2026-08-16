@@ -1,0 +1,27 @@
+{
+  "$alias": "shape",
+
+  "draw_shape": {
+    "signatures": ["draw_shape(type, duration, attributes)"],
+    "summary": "Draws a shape in the world for a while - the way to see what a script is computing.",
+    "params": [["type", "`'line'`, `'box'`, `'sphere'`, `'cylinder'`, `'label'`, `'block'`, `'item'`"], ["duration", "how long it stays, in ticks"], ["attributes", "a map: the geometry of that type plus the common ones — `player`, `color`, `fill`, `line`, `follow`, `snap`, `debug`"]],
+    "returns": "`num` — how many players got it as a real shape rather than as particles.",
+    "examples": ["shape.draw_shape('box', 100, {'from' -> [0, 64, 0], 'to' -> [8, 70, 8], 'color' -> 'red'});", "shape.draw_shape('sphere', 100, {'center' -> [0, 66, 0], 'radius' -> 4, 'color' -> 'cyan'});", "shape.draw_shape('label', 100, {'pos' -> [0, 70, 0], 'text' -> 'here'});", "// a ghost block, to show where a piece will go\nshape.draw_shape('block', 100, {'pos' -> pos, 'block' -> 'chest[facing=north]'});", "// following a player\nshape.draw_shape('line', 40, {'from' -> [0, 0, 0], 'to' -> [0, 3, 0], 'follow' -> player, 'snap' -> 'xz'});"],
+    "note": "Whoever has Blossom on the client sees the real shape; whoever plays vanilla sees the same geometry approximated with particles. You do not have to know which is which. A name the shape does not have is an error with the right one suggested, not a silent default — and a colour hand-written in hexadecimal with the alpha at zero is invisible, which is the mistake people make most."
+  },
+  "clear_shapes": {
+    "signatures": ["clear_shapes()"],
+    "summary": "Forgets the shapes still waiting to be redrawn as particles.",
+    "params": [],
+    "returns": "`null`.",
+    "examples": ["shape.clear_shapes();"],
+    "note": "It does not remove the ones already sent to a client: those expire on their own when their duration runs out."
+  },
+  "shape_types": {
+    "signatures": ["shape_types()"],
+    "summary": "The names of the shapes `draw_shape` accepts.",
+    "params": [],
+    "returns": "`list` — the types available.",
+    "examples": ["shape.shape_types();   // ['line', 'box', 'sphere', 'cylinder', 'label', 'block', 'item']"]
+  }
+}

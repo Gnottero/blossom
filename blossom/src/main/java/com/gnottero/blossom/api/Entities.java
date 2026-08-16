@@ -1,7 +1,6 @@
 package com.gnottero.blossom.api;
 
 import com.gnottero.blossom.ScriptContext;
-import com.gnottero.blossom.AppHost;
 import blossom.interpreter.Context;
 import blossom.interpreter.Expression;
 import blossom.interpreter.argument.FunctionArgument;
@@ -16,8 +15,6 @@ import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -62,11 +59,6 @@ public class Entities
             if (lv.isEmpty())
             {
                 ScriptContext cc = (ScriptContext) c;
-                if (cc.host.user != null)
-                {
-                    ServerPlayer player = cc.server().getPlayerList().getPlayerByName(cc.host.user);
-                    return EntityValue.of(player);
-                }
                 Entity callingEntity = cc.source().getEntity();
                 if (callingEntity instanceof Player)
                 {

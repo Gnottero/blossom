@@ -11,24 +11,18 @@ import net.minecraft.world.phys.Vec3;
 /**
  * Una forma da far vedere a qualcuno per un po'.
  *
- * <p>È un valore, non un oggetto vivo: nasce dagli argomenti di {@code draw_shape}, viaggia sulla
- * rete come NBT, e sparisce quando scade. Il server non tiene nessuno stato per disegnarla — tiene
- * solo l'elenco di quelle ancora vive, per poterle ridisegnare a particelle a chi non ha il client.
+ * <p>E' un valore, non un oggetto vivo: nasce dagli argomenti di {@code draw_shape}, viaggia sulla
+ * rete come NBT e sparisce quando scade. Il server tiene solo l'elenco di quelle ancora vive, per
+ * ridisegnarle a particelle a chi non ha il client.
  *
- * <h2>Le tre strade</h2>
+ * <p>Ogni forma sa fare tre cose: scriversi in NBT (e un client Blossom la disegna vera), dire di
+ * quali <em>segmenti</em> e' fatta (approssimazione a particelle su qualunque client) e di quali
+ * <em>facce</em> (il riempimento). Chi scrive lo script disegna una sfera; cosa succede dall'altra
+ * parte non lo riguarda.
  *
- * <p>Una forma sa fare tre cose. Sa scriversi in NBT, e allora un client Blossom la disegna vera;
- * sa dire di quali <em>segmenti</em> è fatta, e allora la si approssima con particelle su qualunque
- * client; e sa dire di quali <em>facce</em> è fatta, che è quello che serve per riempirla quando è
- * stato chiesto un {@code fill}. Sono qualità della stessa cosa, non forme diverse: chi scrive lo
- * script disegna una sfera, e cosa succede dall'altra parte non lo riguarda.
- *
- * <h2>Ancoraggio a un'entità</h2>
- *
- * <p>Le coordinate scritte nello script sono sempre <em>relative</em> quando c'è un {@code follow}:
- * la forma si somma alla posizione dell'entità, asse per asse, secondo {@code snap}. Il calcolo sta
- * qui ({@link #anchored}) e non nei due renderer, perché server e client devono ottenere lo stesso
- * punto — l'uno per le particelle, l'altro per il disegno.
+ * <p>Con un {@code follow} le coordinate sono relative all'entita', sommate asse per asse secondo
+ * {@code snap}. Il calcolo sta in {@link #anchored} e non nei due renderer, perche' server e client
+ * devono ottenere lo stesso punto.
  */
 public abstract class Shape
 {

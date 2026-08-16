@@ -30,6 +30,7 @@ import blossom.exception.ReturnStatement;
 import blossom.language.Arithmetic;
 import blossom.language.ControlFlow;
 import blossom.language.DataStructures;
+import blossom.language.Http;
 import blossom.language.Io;
 import blossom.language.Functions;
 import blossom.language.Loops;
@@ -1231,6 +1232,7 @@ public class Expression
         Loops.apply(this);
         DataStructures.apply(this);
         Io.apply(this);
+        Http.apply(this);
         Modules.apply(this);
         for(String op : operators.keySet()) {
             assert functionalAliases.containsKey(op) : "Missing function for operator " + op;
@@ -1597,7 +1599,7 @@ public class Expression
                             "Module '" + target + "' does not export '" + symbol + "'.",
                             Suggestions.closestTo(symbol, StdLib.symbolsOf(target)));
                 }
-                return symbol;
+                return StdLib.implementationOf(target, symbol);
             }
             return name; // simbolo di un modulo dell'utente: si risolve a runtime, per il suo host
         }
@@ -2208,12 +2210,6 @@ public class Expression
                     stack.set(stack.size() - 1, stack.topInt() - 2 + 1);
                     break;
                 case FUNCTION:
-                    //ILazyFunction f = functions.get(token.surface);// don't validate global - userdef functions
-                    //int numParams = stack.pop();
-                    //if (f != null && !f.numParamsVaries() && numParams != f.getNumParams())
-                    //{
-                    //    throw ParseError.at(this, token, "Function " + token + " expected " + f.getNumParams() + " parameters, got " + numParams);
-                    //}
                     stack.popInt();
                     // due to unpacking, all functions can have variable number of arguments
                     // we will be checking that at runtime.

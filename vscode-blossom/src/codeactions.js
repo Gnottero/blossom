@@ -28,10 +28,61 @@ function freeAlias(moduleName, taken) {
     return parts.join('_') + '_module';
 }
 
+/** Every import nothing uses, in file order: same criterion as the `unused-import` diagnostic. */
+function unusedImports(index) {
+    return [...index.imports.values()]
+        .filter((declaration) => !index.aliasUses.get(declaration.alias))
+        .sort((a, b) => a.statementStart.line - b.statementStart.line);
+}
+
+/** One edit that deletes whole lines, newline included: what is left is the preamble without holes. */
+function removalEdit(document, declarations) {
+    const edit = new vscode.WorkspaceEdit();
+    for (const declaration of declarations) {
+        edit.replace(
+            document.uri,
+            new vscode.Range(declaration.statementStart.line, 0, declaration.statementEnd.line + 1, 0),
+            ''
+        );
+    }
+    return edit;
+}
+
+/** True when the editor did not restrict the request to some other kind of action. */
+function wants(context, kind) {
+    const only = context.only;
+    if (!only) return true;
+    if (typeof only.contains === 'function') return only.contains(kind) || kind.contains(only);
+    const wanted = typeof only === 'string' ? only : only.value;
+    const mine = typeof kind === 'string' ? kind : kind.value;
+    return wanted === mine || mine.startsWith(wanted + '.') || wanted.startsWith(mine + '.');
+}
+
 const provider = {
     provideCodeActions(document, range, context) {
         const index = analyzer.indexOf(document);
         const actions = [];
+        const unused = unusedImports(index);
+
+        // one fix for the whole file: removing imports one by one is busywork, and the editor can
+        // run this on save through `source.fixAll`
+        if (unused.length > 1) {
+            const all = new vscode.CodeAction(
+                `Remove all ${unused.length} unused imports`,
+                vscode.CodeActionKind.QuickFix
+            );
+            all.edit = removalEdit(document, unused);
+            all.diagnostics = context.diagnostics.filter((d) => d.code === 'unused-import');
+            actions.push(all);
+        }
+        if (unused.length && wants(context, vscode.CodeActionKind.SourceFixAll)) {
+            const fixAll = new vscode.CodeAction(
+                unused.length > 1 ? `Remove all ${unused.length} unused imports` : 'Remove the unused import',
+                vscode.CodeActionKind.SourceFixAll
+            );
+            fixAll.edit = removalEdit(document, unused);
+            actions.push(fixAll);
+        }
 
         for (const diagnostic of context.diagnostics) {
             if (diagnostic.source !== 'blossom') continue;
@@ -60,14 +111,11 @@ const provider = {
             }
 
             if (diagnostic.code === 'unused-import') {
-                // the whole line goes, newline included: what is left is the preamble without a hole
                 const action = new vscode.CodeAction('Remove the unused import', vscode.CodeActionKind.QuickFix);
-                action.edit = new vscode.WorkspaceEdit();
-                action.edit.replace(
-                    document.uri,
-                    new vscode.Range(diagnostic.range.start.line, 0, diagnostic.range.end.line + 1, 0),
-                    ''
-                );
+                action.edit = removalEdit(document, [{
+                    statementStart: diagnostic.range.start,
+                    statementEnd: diagnostic.range.end
+                }]);
                 action.diagnostics = [diagnostic];
                 action.isPreferred = true;
                 actions.push(action);
@@ -108,9 +156,12 @@ const provider = {
 function register(context) {
     context.subscriptions.push(
         vscode.languages.registerCodeActionsProvider({ language: 'blossom' }, provider, {
-            providedCodeActionKinds: [vscode.CodeActionKind.QuickFix]
+            providedCodeActionKinds: [
+                vscode.CodeActionKind.QuickFix,
+                vscode.CodeActionKind.SourceFixAll
+            ]
         })
     );
 }
 
-module.exports = { register };
+module.exports = { register, provider };

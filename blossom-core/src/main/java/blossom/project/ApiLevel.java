@@ -4,33 +4,16 @@ import blossom.exception.CompatibilityError;
 import blossom.exception.SourcePosition;
 
 /**
- * Il livello dell'API dichiarato nel manifesto, e la regola che dice se un'app può girare.
+ * Il livello dell'API dichiarato nel manifesto, e la regola che dice se un'app puo' girare.
  *
- * <h2>Cosa vuol dire un numero</h2>
+ * <p>{@code api_level} e' {@code MAJOR.MINOR} e descrive l'API di Blossom, non l'app. <b>MAJOR</b>
+ * cambia quando qualcosa che funzionava smette di funzionare (un simbolo tolto o rinominato, una
+ * firma o un evento che cambia); <b>MINOR</b> quando si aggiunge soltanto. Le correzioni di bug non
+ * muovono nessuno dei due.
  *
- * <p>{@code api_level} è {@code MAJOR.MINOR} e descrive <em>l'API di Blossom</em>, non la versione
- * dell'app. Il contratto è questo, e vale sia per il linguaggio sia per i moduli {@code core.*}:
- *
- * <ul>
- *   <li><b>MAJOR</b> cambia quando qualcosa che funzionava smette di funzionare: un simbolo tolto o
- *       rinominato, la firma o il significato di una funzione che cambia, una regola di grammatica
- *       che invalida codice già scritto, un evento che smette di scattare o cambia argomenti.</li>
- *   <li><b>MINOR</b> cambia quando si aggiunge: un modulo nuovo, una funzione nuova, un parametro
- *       opzionale in più, un evento nuovo. Codice scritto per un MINOR precedente continua a
- *       girare.</li>
- * </ul>
- *
- * <p>Correzioni di bug che non cambiano un comportamento documentato non muovono nessuno dei due.
- *
- * <h2>La regola</h2>
- *
- * <p>Un'app gira se {@code MAJOR} combacia esattamente e il suo {@code MINOR} non supera quello del
- * runtime. Le due direzioni falliscono per motivi diversi e il messaggio lo dice: con un MAJOR
- * diverso l'app è scritta per un'altra API; con un MINOR più alto l'app usa qualcosa che questa
- * versione non ha ancora.
- *
- * <p>Il campo resta facoltativo: chi non lo scrive dichiara implicitamente il livello più basso del
- * MAJOR corrente, cioè "non uso niente di recente".
+ * <p>Un'app gira se il MAJOR combacia esattamente e il suo MINOR non supera quello del runtime. Le
+ * due direzioni falliscono per motivi diversi e il messaggio lo dice. Il campo e' facoltativo: chi
+ * non lo scrive dichiara il MINOR piu' basso del MAJOR corrente.
  */
 public record ApiLevel(int major, int minor) implements Comparable<ApiLevel>
 {

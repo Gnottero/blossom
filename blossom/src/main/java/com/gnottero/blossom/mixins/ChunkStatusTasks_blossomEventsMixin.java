@@ -23,26 +23,15 @@ import com.gnottero.blossom.event.Fire;
 /**
  * Genera {@code chunk_generated} e {@code chunk_loaded}.
  *
- * <h2>Perche' qui</h2>
+ * <p>L'aggancio usato dall'upstream - un metodo intermedio di {@code ChunkMap} - non esiste piu' dopo
+ * la riscrittura della pipeline dei chunk. Il punto giusto su questa versione e'
+ * {@code ChunkStatusTasks.full}, l'ultimo passo con cui un chunk diventa un chunk vero: ci passano
+ * sia quelli appena generati sia quelli riletti dal disco, ed e' l'ultimo posto in cui i due casi
+ * sono distinguibili - un chunk gia' completo arriva avvolto in un {@link ImposterProtoChunk}.
  *
- * <p>Nel fork di partenza questi due eventi erano commentati, e anche nell'upstream: l'aggancio
- * usato allora - un metodo intermedio di {@code ChunkMap} - era sparito con la riscrittura della
- * pipeline dei chunk, e l'unico nome rimasto era offuscato. Il punto giusto su questa versione e'
- * {@code ChunkStatusTasks.full}, cioe' l'ultimo passo con cui un chunk diventa un chunk vero: ci
- * passano sia quelli appena generati sia quelli riletti dal disco, ed e' l'unico posto in cui i due
- * casi sono ancora distinguibili.
- *
- * <h2>Generato o riletto</h2>
- *
- * <p>Un chunk che arriva qui gia' completo e' avvolto in un {@link ImposterProtoChunk}: e' il
- * segnale che il gioco stesso usa per dire "questo esisteva gia'". Tutto il resto e' generazione.
- *
- * <h2>Il thread</h2>
- *
- * <p>Questo metodo gira su un thread di generazione, dove non si puo' eseguire codice di uno script:
- * gli eventi vengono rimandati al thread del server. Non e' una precauzione formale — un handler che
- * legge il mondo da un thread di worldgen e' esattamente il tipo di corsa che si manifesta un mese
- * dopo su un server pieno.
+ * <p>Il metodo gira su un thread di generazione, quindi gli eventi vengono rimandati al thread del
+ * server: un handler che legge il mondo da un thread di worldgen e' il tipo di corsa che si
+ * manifesta un mese dopo su un server pieno.
  */
 @Mixin(ChunkStatusTasks.class)
 public abstract class ChunkStatusTasks_blossomEventsMixin

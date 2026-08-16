@@ -25,20 +25,17 @@ import com.gnottero.blossom.client.AfterCloudsSubmits;
 /**
  * Aggiunge una fase di disegno che viene dopo le nuvole.
  *
- * <p>Il gioco esegue le fasi traslucide - tutte - prima di disegnare le nuvole, poi il tempo
- * atmosferico, poi il bordo del mondo. Per una faccia opaca non è un problema, perché scrive la
- * profondità e le nuvole vengono scartate dal loro stesso test (vedi {@code BlossomRenderTypes}). Per
- * una faccia traslucida invece sì: non scrive la profondità, quindi la nuvola disegnata dopo la copre
- * <b>del tutto</b>, quale che sia l'alfa del riempimento. Una sfera al 50% non lascia vedere metà
- * nuvola: la lascia vedere intera, come se la sfera non ci fosse.
+ * <p>Il gioco esegue tutte le fasi traslucide prima delle nuvole. Una faccia opaca non ne soffre -
+ * scrive la profondita' e le nuvole si scartano da sole (vedi {@code BlossomRenderTypes}) - ma una
+ * traslucida non scrive la profondita', quindi la nuvola disegnata dopo la copre del tutto: una
+ * sfera al 50% lascia vedere la nuvola intera, come se non ci fosse.
  *
- * <p>Scrivere la profondità anche per il traslucido sposterebbe l'errore dall'altra parte - nuvola
- * nascosta del tutto invece che visibile del tutto - perché un test di profondità è una decisione
- * binaria e la trasparenza non lo è. L'unico modo di mescolare nella proporzione giusta è disegnare
- * il riempimento <b>dopo</b> la nuvola, che è quello che questa fase permette di fare.
+ * <p>Scrivere la profondita' anche per il traslucido sposterebbe solo l'errore dall'altra parte, il
+ * test di profondita' essendo binario. L'unico modo di mescolare nella proporzione giusta e'
+ * disegnare il riempimento dopo la nuvola, che e' quello che questa fase permette.
  *
- * <p>Vale solo per la trasparenza classica. Con la trasparenza migliorata accesa (OIT) l'ordine non
- * conta per costruzione, le nuvole ci passano dentro, e il riempimento va nella fase normale.
+ * <p>Vale solo per la trasparenza classica: con la trasparenza migliorata (OIT) l'ordine non conta e
+ * il riempimento va nella fase normale.
  */
 @Mixin(SubmitNodeCollection.class)
 public abstract class SubmitNodeCollection_blossomAfterCloudsMixin implements AfterCloudsSubmits

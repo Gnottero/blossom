@@ -1,7 +1,6 @@
 package com.gnottero.blossom.util;
 
 import com.gnottero.blossom.ScriptContext;
-import com.gnottero.blossom.AppHost;
 import com.gnottero.blossom.access.Host;
 import com.gnottero.blossom.access.Vanilla;
 import blossom.value.BooleanValue;
@@ -19,7 +18,6 @@ import net.minecraft.world.level.gamerules.GameRule;
 import net.minecraft.world.level.gamerules.GameRuleTypeVisitor;
 import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.border.WorldBorder;
-import net.minecraft.world.level.storage.LevelData;
 import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.phys.Vec2;
 
@@ -30,7 +28,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Function;
 
 public class SystemInfo
@@ -43,8 +40,6 @@ public class SystemInfo
             return name == null ? Value.NULL : new StringValue(name);
         });
         put("app_list", c -> ListValue.wrap(com.gnottero.blossom.BlossomMod.runtime().loadedApps().stream().map(name -> (Value) StringValue.of(name)).toList()));
-        put("app_scope", c -> StringValue.of((c.host).isPerUser() ? "player" : "global"));
-        put("app_players", c -> ListValue.wrap(c.host.getUserList().stream().map(StringValue::new)));
 
         put("world_name", c -> new StringValue(c.server().getWorldData().getLevelName()));
         put("world_seed", c -> new NumericValue(c.level().getSeed()));
@@ -164,7 +159,6 @@ public class SystemInfo
                     OperatingSystemMXBean.class);
             return new NumericValue(osBean.getProcessCpuLoad());
         });
-        put("world_carpet_rules", c -> Host.getAllCarpetRules());
         put("world_gamerules", c -> {
             Map<Value, Value> rules = new HashMap<>();
             GameRules gameRules = c.level().getGameRules();
@@ -190,7 +184,7 @@ public class SystemInfo
             Vec2 rotation = c.source().getRotation();
             return ListValue.of(new NumericValue(rotation.x), new NumericValue(rotation.y));
         });
-        put("scarpet_version", c -> StringValue.of(Host.getCarpetVersion()));
+        put("blossom_version", c -> StringValue.of(Host.modVersion()));
     }};
 
     public static Value get(String what, ScriptContext cc)

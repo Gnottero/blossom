@@ -1,0 +1,641 @@
+{
+  "$alias": "world",
+  "world_time": {
+    "signatures": [
+      "world_time()"
+    ],
+    "summary": "The total age of the world in ticks, which never goes back.",
+    "params": [],
+    "returns": "`num` — the ticks since the world was created.",
+    "examples": [
+      "world.world_time();   // 1284933",
+      "days = floor(world.world_time() / 24000);"
+    ]
+  },
+  "day_time": {
+    "signatures": [
+      "day_time()",
+      "day_time(new_value)"
+    ],
+    "summary": "The time of day, and with an argument the way to set it.",
+    "params": [
+      [
+        "new_value",
+        "optional: the new time in ticks; `0` is dawn, `6000` noon, `18000` midnight"
+      ]
+    ],
+    "returns": "`num` — the time of day in ticks.",
+    "examples": [
+      "world.day_time();          // 13000",
+      "world.day_time(0);         // dawn",
+      "night = world.day_time() % 24000 > 13000;"
+    ]
+  },
+  "tick_time": {
+    "signatures": [
+      "tick_time()"
+    ],
+    "summary": "The number of the tick the server is running right now.",
+    "params": [],
+    "returns": "`num` — the counter of the ticks of the server.",
+    "examples": [
+      "// doing something every 20 ticks, from inside a tick event\nif(world.tick_time() % 20 == 0, work());"
+    ]
+  },
+  "last_tick_times": {
+    "signatures": [
+      "last_tick_times()"
+    ],
+    "summary": "How long the last hundred ticks took, in milliseconds.",
+    "params": [],
+    "returns": "`list` — a hundred numbers, the most recent last.",
+    "examples": [
+      "times = world.last_tick_times();\nprint(list.reduce(times, _a + _, 0) / length(times));   // the average"
+    ],
+    "note": "Anything over 50 ms is a tick that could not keep up: it is the quick way to see whether something is weighing on the server."
+  },
+  "game_tick": {
+    "signatures": [
+      "game_tick()",
+      "game_tick(max_milliseconds)"
+    ],
+    "summary": "Forces the server forward by a tick, and with an argument keeps ticking for that long.",
+    "params": [
+      [
+        "max_milliseconds",
+        "optional: how long to keep running ticks"
+      ]
+    ],
+    "returns": "`null`.",
+    "examples": [
+      "world.game_tick();          // one tick",
+      "world.game_tick(50);        // ticks for 50 ms"
+    ],
+    "note": "It is what makes the world move on from inside a script that is itself running inside a tick: without it, a loop waiting for something in the world waits forever."
+  },
+  "weather": {
+    "signatures": [
+      "weather()",
+      "weather(type)",
+      "weather(type, duration)"
+    ],
+    "summary": "Reads or sets rain and thunder.",
+    "params": [
+      [
+        "type",
+        "`'clear'`, `'rain'`, `'thunder'`; asking without a duration reads how long it has left"
+      ],
+      [
+        "duration",
+        "optional: how many ticks it lasts"
+      ]
+    ],
+    "returns": "`str` when read with no arguments, `num` of remaining ticks when a type is asked about, `null` when setting.",
+    "examples": [
+      "world.weather();                 // 'clear'",
+      "world.weather('rain', 6000);     // it rains for five minutes",
+      "world.weather('thunder');        // ticks of thunder left"
+    ]
+  },
+  "seed": {
+    "signatures": [
+      "seed()"
+    ],
+    "summary": "The seed of the world.",
+    "params": [],
+    "returns": "`num` — the seed.",
+    "examples": [
+      "world.seed();   // -2748104373516887"
+    ]
+  },
+  "save": {
+    "signatures": [
+      "save()"
+    ],
+    "summary": "Forces the world to be written to disk right now.",
+    "params": [],
+    "returns": "`null`.",
+    "examples": [
+      "world.save();"
+    ],
+    "note": "It is a heavy operation that runs inside the tick: fine before a risky change, not something to put in a loop."
+  },
+  "top": {
+    "signatures": [
+      "top(type, pos)"
+    ],
+    "summary": "The first free height at that column, according to one of the height maps.",
+    "params": [
+      [
+        "type",
+        "`'surface'`, `'motion_blocking'`, `'motion_blocking_no_leaves'`, `'ocean_floor'`, `'terrain'`"
+      ],
+      [
+        "pos",
+        "the position; only x and z are used"
+      ]
+    ],
+    "returns": "`num` — the y of the first free block.",
+    "examples": [
+      "y = world.top('surface', [10, 0, 10]);\nblock.set([10, y, 10], 'torch');"
+    ]
+  },
+  "sample_noise": {
+    "signatures": [
+      "sample_noise()",
+      "sample_noise(pos, type)"
+    ],
+    "summary": "Samples a density function of the world generator, or lists the ones that exist.",
+    "params": [
+      [
+        "pos",
+        "the point to sample"
+      ],
+      [
+        "type",
+        "the name of the density function"
+      ]
+    ],
+    "returns": "`list` of names with no arguments, `num` with them.",
+    "examples": [
+      "world.sample_noise();                                  // the available names",
+      "world.sample_noise([0, 64, 0], 'minecraft:continents');"
+    ]
+  },
+  "loaded": {
+    "signatures": [
+      "loaded(pos)"
+    ],
+    "summary": "Whether the chunk holding that point is in memory.",
+    "params": [
+      [
+        "pos",
+        "a position inside the chunk"
+      ]
+    ],
+    "returns": "`bool` — whether the chunk is loaded.",
+    "examples": [
+      "if(world.loaded(pos), block.set(pos, 'stone'), print('not loaded'));"
+    ]
+  },
+  "loaded_status": {
+    "signatures": [
+      "loaded_status(pos)"
+    ],
+    "summary": "How deeply the chunk is loaded.",
+    "params": [
+      [
+        "pos",
+        "a position inside the chunk"
+      ]
+    ],
+    "returns": "`num` — `0` not loaded, growing with the level of loading.",
+    "examples": [
+      "world.loaded_status([0, 64, 0]);   // 4"
+    ]
+  },
+  "loaded_ep": {
+    "signatures": [
+      "loaded_ep(pos)"
+    ],
+    "summary": "Whether the chunk is loaded deeply enough for entities to be processed in it.",
+    "params": [
+      [
+        "pos",
+        "a position inside the chunk"
+      ]
+    ],
+    "returns": "`bool` — whether entities tick there.",
+    "examples": [
+      "if(!world.loaded_ep(farm_pos), print('the farm is stopped'));"
+    ]
+  },
+  "is_chunk_generated": {
+    "signatures": [
+      "is_chunk_generated(pos)",
+      "is_chunk_generated(pos, force)"
+    ],
+    "summary": "Whether the chunk already exists on disk, without generating it.",
+    "params": [
+      [
+        "pos",
+        "a position inside the chunk"
+      ],
+      [
+        "force",
+        "optional: with `true` it loads it to check"
+      ]
+    ],
+    "returns": "`bool` — whether the chunk was already created.",
+    "examples": [
+      "world.is_chunk_generated([10000, 64, 10000]);   // false"
+    ]
+  },
+  "generation_status": {
+    "signatures": [
+      "generation_status(pos)",
+      "generation_status(pos, force)"
+    ],
+    "summary": "How far the generation of that chunk got.",
+    "params": [
+      [
+        "pos",
+        "a position inside the chunk"
+      ],
+      [
+        "force",
+        "optional: with `true` it loads it to check"
+      ]
+    ],
+    "returns": "`str` — `'full'`, `'features'`, `'surface'`, ..., `null` when it does not exist.",
+    "examples": [
+      "world.generation_status([0, 64, 0]);   // 'full'"
+    ]
+  },
+  "chunk_tickets": {
+    "signatures": [
+      "chunk_tickets()",
+      "chunk_tickets(pos)"
+    ],
+    "summary": "The tickets keeping chunks loaded, everywhere or at one point.",
+    "params": [
+      [
+        "pos",
+        "optional: only the tickets of that chunk"
+      ]
+    ],
+    "returns": "`list` — one entry per ticket, with type, level and position.",
+    "examples": [
+      "world.chunk_tickets();               // everything holding chunks up",
+      "world.chunk_tickets([0, 64, 0]);"
+    ]
+  },
+  "add_chunk_ticket": {
+    "signatures": [
+      "add_chunk_ticket(pos, type, radius)"
+    ],
+    "summary": "Adds a ticket to keep an area loaded.",
+    "params": [
+      [
+        "pos",
+        "the centre"
+      ],
+      [
+        "type",
+        "the kind of ticket, as `'portal'` or `'unknown'`"
+      ],
+      [
+        "radius",
+        "how many chunks around, from 1 to 32"
+      ]
+    ],
+    "returns": "`null`.",
+    "examples": [
+      "world.add_chunk_ticket([0, 64, 0], 'portal', 3);"
+    ],
+    "note": "Tickets expire on their own: this is not a permanent chunk loader, it is a way of holding an area up for a while."
+  },
+  "reload_chunk": {
+    "signatures": [
+      "reload_chunk(pos)"
+    ],
+    "summary": "Sends the chunk to the clients again, without changing anything on the server.",
+    "params": [
+      [
+        "pos",
+        "a position inside the chunk"
+      ]
+    ],
+    "returns": "`null`.",
+    "examples": [
+      "world.reload_chunk(pos);   // fixes a client that shows the wrong blocks"
+    ]
+  },
+  "inhabited_time": {
+    "signatures": [
+      "inhabited_time(pos)"
+    ],
+    "summary": "How long players have spent in that chunk, in ticks - what raises the local difficulty.",
+    "params": [
+      [
+        "pos",
+        "a position inside the chunk"
+      ]
+    ],
+    "returns": "`num` — the ticks lived in.",
+    "examples": [
+      "world.inhabited_time(base_pos);   // 1830000"
+    ]
+  },
+  "in_slime_chunk": {
+    "signatures": [
+      "in_slime_chunk(pos)"
+    ],
+    "summary": "Whether slimes can spawn in that chunk.",
+    "params": [
+      [
+        "pos",
+        "a position inside the chunk"
+      ]
+    ],
+    "returns": "`bool` — whether it is a slime chunk.",
+    "examples": [
+      "if(world.in_slime_chunk(pos), print('good spot for a farm'));"
+    ]
+  },
+  "spawn_potential": {
+    "signatures": [
+      "spawn_potential(pos)"
+    ],
+    "summary": "The spawn potential the game computes for that point.",
+    "params": [
+      [
+        "pos",
+        "the position to sample"
+      ]
+    ],
+    "returns": "`num` — the potential; the higher, the more crowded the game considers the area.",
+    "examples": [
+      "world.spawn_potential([0, 64, 0]);   // 0.32"
+    ]
+  },
+  "biome": {
+    "signatures": [
+      "biome(pos)",
+      "biome(name, property)"
+    ],
+    "summary": "The biome at a point, or a property of a biome by name.",
+    "params": [
+      [
+        "pos",
+        "the position to read"
+      ],
+      [
+        "name",
+        "or the name of a biome, with the property to ask for: `'temperature'`, `'downfall'`, `'category'`, `'fog_color'`, ..."
+      ]
+    ],
+    "returns": "`str` with the name of the biome, or the value of the property.",
+    "examples": [
+      "world.biome([0, 64, 0]);                          // 'minecraft:plains'",
+      "world.biome('minecraft:desert', 'temperature');    // 2.0"
+    ]
+  },
+  "set_biome": {
+    "signatures": [
+      "set_biome(pos, name)",
+      "set_biome(pos, name, update)"
+    ],
+    "summary": "Changes the biome at a point.",
+    "params": [
+      [
+        "pos",
+        "the position to change"
+      ],
+      [
+        "name",
+        "the biome to write"
+      ],
+      [
+        "update",
+        "optional: whether to send the change to the clients, `true` by default"
+      ]
+    ],
+    "returns": "`bool` — whether something changed.",
+    "examples": [
+      "world.set_biome([0, 64, 0], 'minecraft:desert');"
+    ],
+    "note": "It changes a whole vertical section of 4x4x4 blocks, not one block: that is the resolution biomes are stored at."
+  },
+  "structures": {
+    "signatures": [
+      "structures(pos)",
+      "structures(pos, name)"
+    ],
+    "summary": "The structures covering that point.",
+    "params": [
+      [
+        "pos",
+        "the position to check"
+      ],
+      [
+        "name",
+        "optional: only that structure"
+      ]
+    ],
+    "returns": "`map` from name to the box it takes up, or the single box; `null` when there is none.",
+    "examples": [
+      "world.structures([0, 64, 0]);                          // {'minecraft:village_plains' -> [...]}",
+      "world.structures(pos, 'minecraft:stronghold');"
+    ]
+  },
+  "structure_references": {
+    "signatures": [
+      "structure_references(pos)",
+      "structure_references(pos, name)"
+    ],
+    "summary": "The chunks referring to the structures that pass through that point.",
+    "params": [
+      [
+        "pos",
+        "a position inside the chunk"
+      ],
+      [
+        "name",
+        "optional: only that structure"
+      ]
+    ],
+    "returns": "`map` from name to a list of chunk coordinates, or the single list.",
+    "examples": [
+      "world.structure_references([0, 64, 0], 'minecraft:village_plains');"
+    ]
+  },
+  "structure_eligibility": {
+    "signatures": [
+      "structure_eligibility(pos)",
+      "structure_eligibility(pos, type)",
+      "structure_eligibility(pos, type, details)"
+    ],
+    "summary": "Whether a structure *could* be born in that chunk, without generating it.",
+    "params": [
+      [
+        "pos",
+        "a position inside the chunk"
+      ],
+      [
+        "type",
+        "optional: which structure to ask about, `null` for all of them"
+      ],
+      [
+        "details",
+        "optional: with `true` it also returns the pieces of the structure"
+      ]
+    ],
+    "returns": "`map` or `list` of the eligible structures, `null` when there are none.",
+    "examples": [
+      "world.structure_eligibility([1000, 64, 1000]);",
+      "world.structure_eligibility(pos, 'minecraft:village_plains', true);"
+    ],
+    "note": "It asks the generator, not the world: it answers on chunks nobody has ever visited, without generating them and without loading anything."
+  },
+  "set_structure": {
+    "signatures": [
+      "set_structure(pos, name)",
+      "set_structure(pos, name, null)"
+    ],
+    "summary": "Generates a structure at that point, or removes its reference.",
+    "params": [
+      [
+        "pos",
+        "a position inside the chunk"
+      ],
+      [
+        "name",
+        "the structure to place"
+      ]
+    ],
+    "returns": "`bool` — whether it succeeded.",
+    "examples": [
+      "world.set_structure([0, 64, 0], 'minecraft:village_plains');",
+      "world.set_structure(pos, 'minecraft:village_plains', null);   // removes the reference"
+    ]
+  },
+  "plop": {
+    "signatures": [
+      "plop(pos, what)"
+    ],
+    "summary": "Places a feature or a structure of the generator at that point: trees, geysers, villages.",
+    "params": [
+      [
+        "pos",
+        "where to place it"
+      ],
+      [
+        "what",
+        "the name of the feature or of the structure"
+      ]
+    ],
+    "returns": "`bool` — whether something was placed.",
+    "examples": [
+      "world.plop([0, 64, 0], 'oak_bees');",
+      "world.plop(pos, 'village_plains');"
+    ]
+  },
+  "poi": {
+    "signatures": [
+      "poi(pos)",
+      "poi(pos, radius)",
+      "poi(pos, radius, sort, type, state)"
+    ],
+    "summary": "The points of interest around a point: beds, work stations, portals.",
+    "params": [
+      [
+        "pos",
+        "the centre"
+      ],
+      [
+        "radius",
+        "optional: how far to look"
+      ],
+      [
+        "sort",
+        "optional: with `true` the nearest come first"
+      ],
+      [
+        "type",
+        "optional: only that kind of point"
+      ],
+      [
+        "state",
+        "optional: `'any'`, `'occupied'`, `'available'`"
+      ]
+    ],
+    "returns": "`map` of the single point, or `list` of the points found.",
+    "examples": [
+      "world.poi([0, 64, 0], 32);",
+      "world.poi(pos, 64, true, 'minecraft:home', 'available');"
+    ]
+  },
+  "set_poi": {
+    "signatures": [
+      "set_poi(pos, type)",
+      "set_poi(pos, type, occupancy)",
+      "set_poi(pos, null)"
+    ],
+    "summary": "Creates a point of interest, or removes the one at that position.",
+    "params": [
+      [
+        "pos",
+        "the position of the point"
+      ],
+      [
+        "type",
+        "its kind, or `null` to remove it"
+      ],
+      [
+        "occupancy",
+        "optional: how many free places it has"
+      ]
+    ],
+    "returns": "`bool` — whether something changed.",
+    "examples": [
+      "world.set_poi([0, 64, 0], 'minecraft:home');",
+      "world.set_poi([0, 64, 0], null);"
+    ]
+  },
+  "current_dimension": {
+    "signatures": [
+      "current_dimension()"
+    ],
+    "summary": "The dimension the script is running in.",
+    "params": [],
+    "returns": "`str` — `'minecraft:overworld'`, `'minecraft:the_nether'`, ...",
+    "examples": [
+      "world.current_dimension();   // 'minecraft:overworld'"
+    ]
+  },
+  "in_dimension": {
+    "signatures": [
+      "in_dimension(dimension, expression)"
+    ],
+    "summary": "Runs an expression as if the script were in another dimension.",
+    "params": [
+      [
+        "dimension",
+        "the dimension to move to, or an entity to borrow it from"
+      ],
+      [
+        "expression",
+        "what to run over there"
+      ]
+    ],
+    "returns": "the value of the expression.",
+    "examples": [
+      "world.in_dimension('minecraft:the_nether',\n    block.block([0, 64, 0])\n);",
+      "// following a player wherever they are\nworld.in_dimension(player, block.set(block.pos(player), 'stone'));"
+    ],
+    "note": "Every function of the game layer inside it looks at that dimension: it is the way to touch the Nether from a script running in the Overworld."
+  },
+  "view_distance": {
+    "signatures": [
+      "view_distance()"
+    ],
+    "summary": "The render distance of the server, in chunks.",
+    "params": [],
+    "returns": "`num` — the chunks of render distance.",
+    "examples": [
+      "world.view_distance();   // 10"
+    ]
+  },
+  "enable_hidden_dimensions": {
+    "signatures": [
+      "enable_hidden_dimensions()"
+    ],
+    "summary": "Turns on the dimensions a datapack declared but the server does not load on its own.",
+    "params": [],
+    "returns": "`list` — the dimensions turned on.",
+    "examples": [
+      "world.enable_hidden_dimensions();   // ['mypack:cave_world']"
+    ]
+  }
+}

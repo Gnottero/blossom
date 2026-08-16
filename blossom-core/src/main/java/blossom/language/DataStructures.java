@@ -7,7 +7,6 @@ import blossom.interpreter.Context;
 import blossom.interpreter.Expression;
 import blossom.interpreter.LazyValue;
 import blossom.utils.JsonSupport;
-import blossom.exception.InternalExpressionException;
 import blossom.exception.ThrowStatement;
 import blossom.exception.Throwables;
 import blossom.value.BooleanValue;

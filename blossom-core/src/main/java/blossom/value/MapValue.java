@@ -3,7 +3,6 @@ package blossom.value;
 import blossom.exception.BlossomRuntimeError;
 import blossom.exception.SourcePosition;
 import blossom.exception.TypeMismatchError;
-import blossom.exception.InternalExpressionException;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
@@ -23,7 +22,7 @@ import org.jspecify.annotations.Nullable;
 public class MapValue extends AbstractListValue implements ContainerValueInterface, Guardable
 {
     private final Map<Value, Value> map;
-    // null unless this map became reachable from a shared global, see ValueGuard
+    /** null unless this map became reachable from a shared global, see ValueGuard */
     private volatile @Nullable ValueGuard guard = null;
 
     @Override
@@ -56,8 +55,10 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
         return map;
     }
 
-    // an entry stored into a guarded map has to be guarded too, or mutating it through the map
-    // would race even though the map itself is protected
+    /**
+     * an entry stored into a guarded map has to be guarded too, or mutating it through the map
+     * would race even though the map itself is protected
+     */
     private void adopt(Value value)
     {
         ValueGuard current = guard;

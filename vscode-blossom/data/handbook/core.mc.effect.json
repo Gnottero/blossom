@@ -1,0 +1,41 @@
+{
+  "$alias": "effect",
+
+  "sound": {
+    "signatures": ["sound()", "sound(name, pos)", "sound(name, pos, volume, pitch, category)"],
+    "summary": "Plays a sound at a point, for whoever is close enough to hear it. With no arguments, the sounds that exist.",
+    "params": [["name", "the sound, as `'entity.experience_orb.pickup'`"], ["pos", "where it comes from"], ["volume", "optional: also how far it reaches, `1` by default"], ["pitch", "optional: from `0.5` to `2`, `1` by default"], ["category", "optional: `'master'`, `'music'`, `'record'`, `'weather'`, `'block'`, `'hostile'`, `'neutral'`, `'player'`, `'ambient'`, `'voice'`"]],
+    "returns": "`list` of the names with no arguments, `num` of the players who heard it otherwise.",
+    "examples": ["effect.sound('entity.experience_orb.pickup', pos, 1, 1);", "effect.sound('block.note_block.harp', pos, 1, 1.5, 'record');", "effect.sound();   // every sound the game knows"]
+  },
+  "particle": {
+    "signatures": ["particle()", "particle(name, pos)", "particle(name, pos, how_many, spread, speed, player)"],
+    "summary": "Spawns particles at a point. With no arguments, the particles that exist.",
+    "params": [["name", "the particle, as `'flame'`; it takes parameters too, `'dust 1 0 0 1'`"], ["pos", "where to spawn them"], ["how_many", "optional: how many, one by default"], ["spread", "optional: how far around the point they scatter"], ["speed", "optional: how fast they move"], ["player", "optional: only that player sees them"]],
+    "returns": "`list` of the names with no arguments, `null` otherwise.",
+    "examples": ["effect.particle('flame', pos, 20, 0.2, 0.01);", "effect.particle('happy_villager', pos, 5, 0.5, 0);", "effect.particle('dust 1 0 0 1', pos, 10, 0.3, 0, player);   // only for them"]
+  },
+  "particle_line": {
+    "signatures": ["particle_line(name, from, to)", "particle_line(name, from, to, density, player)"],
+    "summary": "A line of particles between two points.",
+    "params": [["name", "the particle to use"], ["from", "the start"], ["to", "the end"], ["density", "optional: how many particles per block"], ["player", "optional: only that player sees it"]],
+    "returns": "`num` — how many particles were sent.",
+    "examples": ["effect.particle_line('flame', block.pos(player), target, 1);"]
+  },
+  "particle_box": {
+    "signatures": ["particle_box(name, corner_a, corner_b)", "particle_box(name, corner_a, corner_b, density, player)"],
+    "summary": "The twelve edges of a box in particles - the quick way to show the area a script is working on.",
+    "params": [["name", "the particle to use"], ["corner_a", "one corner"], ["corner_b", "the opposite corner"], ["density", "optional: how many particles per block"], ["player", "optional: only that player sees it"]],
+    "returns": "`num` — how many particles were sent.",
+    "examples": ["effect.particle_box('happy_villager', corner_a, corner_b, 1);"],
+    "note": "For something that stays and takes colours there is `draw_shape` in `core.mc.shape`; this one costs nothing and needs no client."
+  },
+  "post_effect": {
+    "signatures": ["post_effect(players, action)", "post_effect(players, action, effect)"],
+    "summary": "The post-processing shaders of one or more players - what the game calls `/posteffect`.",
+    "params": [["players", "a player or a list of players"], ["action", "`'add'`, `'remove'`, `'clear'`, `'list'`"], ["effect", "the shader, as `'minecraft:invert'`, for `add` and `remove`"]],
+    "returns": "`num` of the players changed, or `list` of the active effects for `'list'`.",
+    "examples": ["effect.post_effect(player, 'add', 'minecraft:invert');", "effect.post_effect(entity.player('all'), 'clear');", "effect.post_effect(player, 'list');       // ['minecraft:invert']"],
+    "note": "It goes through the same packet as the vanilla command, so it works on any client and survives a trip out of the world and back. It has no duration: it is removed explicitly."
+  }
+}

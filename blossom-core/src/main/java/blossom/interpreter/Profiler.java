@@ -10,25 +10,18 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Dove va il tempo, per funzione e per modulo (PIANO_LINGUAGGIO.md §9).
  *
- * <p>Il piano chiede uno strumento per trovare i colli di bottiglia reali invece di ottimizzare a
- * intuito. {@code profile_expr} di {@code core.system} misura una singola espressione, che risponde
- * a "quanto ci mette questo pezzo" ma non a "chi si mangia il tick", che è la domanda vera quando
- * un'app ha venti handler.
+ * <p>{@code profile_expr} misura una singola espressione e risponde a "quanto ci mette questo
+ * pezzo"; questo risponde a "chi si mangia il tick", che e' la domanda vera quando un'app ha venti
+ * handler.
  *
- * <h2>Tempo proprio e tempo totale</h2>
+ * <p>Di ogni funzione si tengono due numeri: il <em>totale</em> comprende le funzioni chiamate, il
+ * <em>proprio</em> e' quello che resta togliendole. Serve la coppia - un totale enorme con un
+ * proprio minuscolo vuol solo dire che quella funzione sta in cima, e ottimizzarla non cambia
+ * niente.
  *
- * <p>Di ogni funzione si tengono due numeri. Il <em>totale</em> è il tempo passato dentro la
- * funzione, comprese le funzioni che chiama; il <em>proprio</em> è quello che resta togliendo le
- * chiamate. Serve la coppia: una funzione con un totale enorme e un proprio minuscolo non è lenta,
- * è solo quella che sta in cima: ottimizzarla non cambia niente. Chi va guardato è chi ha il
- * proprio grande.
- *
- * <h2>Costo quando è spento</h2>
- *
- * <p>Il caso normale è che il profiler sia spento, e in quel caso {@link #OFF} fa due return: non
- * legge l'orologio, non tocca nessuna mappa, non alloca. Accenderlo costa due letture di
- * {@code System.nanoTime()} per chiamata, e questo è il motivo per cui è un comando e non una cosa
- * sempre attiva.
+ * <p>Spento, {@link #OFF} fa due return: niente orologio, niente mappe, niente allocazioni. Acceso
+ * costa due {@code System.nanoTime()} per chiamata, ed e' per questo che e' un comando e non uno
+ * stato permanente.
  */
 public final class Profiler
 {

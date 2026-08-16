@@ -1,6 +1,5 @@
 package com.gnottero.blossom.event;
 
-import java.util.Collection;
 import java.util.List;
 
 import org.jspecify.annotations.Nullable;
@@ -19,12 +18,6 @@ public final class EventBus
 {
     private EventBus()
     {
-    }
-
-    /** Gli eventi che il mod sa generare. Registrarsi a un nome che non e' qui e' un errore. */
-    public static Collection<String> knownEvents()
-    {
-        return Event.names();
     }
 
     /**

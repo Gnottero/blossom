@@ -43,13 +43,21 @@ function fail(message) {
     process.exit(1);
 }
 
-// ------------------------------------------------ index of the Set<String>
+// ---------------------------------- index of the Set<String> and Map<String, String>
 
 /** `Class.FIELD` -> raw text of the initialiser, to resolve cross references */
 const fields = new Map();
 
 const FIELD_RE =
     /(?:public|private|protected)?\s*static\s+final\s+(?:java\.util\.)?Set<String>\s+(\w+)\s*=\s*([\s\S]*?);\s*\n/g;
+
+/*
+ * A module whose public names differ from the implementations declares them as a map, `public name`
+ * -> `builtin name` (see StdLib.implementationOf). Only the keys are the API: `core.http` exports
+ * `get`, which is registered as `http_get` because the flat map of builtins already has a `get`.
+ */
+const MAP_FIELD_RE =
+    /(?:public|private|protected)?\s*static\s+final\s+(?:java\.util\.)?Map<String,\s*String>\s+(\w+)\s*=\s*([\s\S]*?);\s*\n/g;
 
 for (const file of [
     ...walk(path.join(REPO, 'blossom-core', 'src', 'main', 'java')),
@@ -60,6 +68,12 @@ for (const file of [
     let match;
     while ((match = FIELD_RE.exec(source)) !== null) {
         fields.set(className + '.' + match[1], match[2]);
+    }
+    while ((match = MAP_FIELD_RE.exec(source)) !== null) {
+        const literals = (match[2].match(/"([^"\\]*)"/g) || []).map((literal) => literal.slice(1, -1));
+        // one literal in two is a key, and the keys are the names written in a script
+        const keys = literals.filter((_, index) => index % 2 === 0);
+        fields.set(className + '.' + match[1], keys.map((key) => `"${key}"`).join(', '));
     }
 }
 
@@ -185,11 +199,65 @@ if (fs.existsSync(eventDocs)) {
     }
 }
 
+// -------------------------------------------------------------- the handbook
+
+/*
+ * The prose the editor shows on hover — what a function does, its parameters, what it gives back
+ * and at least one example — lives in `data/handbook/<module>.json`, written by hand.
+ *
+ * The list of symbols still comes only from the sources: the handbook adds description to names it
+ * does not decide. That is why a key nobody exports is an error here and not a silent extra entry:
+ * a renamed function has to make the generator complain, otherwise the documentation of a symbol
+ * that no longer exists stays around for months.
+ */
+
+const HANDBOOK = path.join(__dirname, '..', 'data', 'handbook');
+
+function handbookFor(name) {
+    const file = path.join(HANDBOOK, name + '.json');
+    if (!fs.existsSync(file)) return {};
+    try {
+        return JSON.parse(read(file));
+    } catch (error) {
+        fail(`data/handbook/${name}.json is not valid json: ${error.message}`);
+    }
+}
+
+/** Puts together what the docs scraped and what the handbook says, the handbook winning. */
+function describe(symbol, scraped, written) {
+    const entry = {
+        signatures: scraped.signatures && scraped.signatures.length ? scraped.signatures : [symbol + '(...)'],
+        doc: scraped.doc || ''
+    };
+    if (!written) return entry;
+    if (written.signatures && written.signatures.length) entry.signatures = written.signatures;
+    if (written.summary) entry.doc = written.summary;
+    if (written.params && written.params.length) entry.params = written.params;
+    if (written.returns) entry.returns = written.returns;
+    if (written.examples && written.examples.length) entry.examples = written.examples;
+    if (written.note) entry.note = written.note;
+    return entry;
+}
+
+const missing = [];
+const orphan = [];
+
 // --------------------------------------------------------------- the json
+
+const preludeHandbook = handbookFor('prelude');
+const preludeSymbols = {};
+for (const name of prelude.sort()) {
+    if (!preludeHandbook[name]) missing.push('prelude.' + name);
+    preludeSymbols[name] = describe(name, {}, preludeHandbook[name]);
+}
+for (const key of Object.keys(preludeHandbook)) {
+    if (!key.startsWith('$') && !prelude.includes(key)) orphan.push('prelude.' + key);
+}
 
 const data = {
     generated: new Date().toISOString().slice(0, 10),
-    prelude: prelude.sort(),
+    prelude,
+    preludeSymbols,
     constants: ['true', 'false', 'null', 'pi', 'euler'],
     types: ['num', 'str', 'bool', 'list', 'map', 'func', 'null', 'any', 'entity', 'block', 'text', 'nbt', 'screen'],
     keywords: ['module', 'import', 'as', 'pub', 'fn', 'let', 'mut'],
@@ -199,15 +267,23 @@ const data = {
 
 for (const [name, symbols] of modules) {
     const docs = docsFor(name, symbols);
-    const entry = { doc: moduleDocs.get(name) || '', symbols: {} };
+    const written = handbookFor(name);
+    const entry = { doc: moduleDocs.get(name) || '', alias: written.$alias || name.split('.').pop(), symbols: {} };
     for (const symbol of [...symbols].sort()) {
-        const info = docs.get(symbol) || {};
-        entry.symbols[symbol] = {
-            signatures: info.signatures && info.signatures.length ? info.signatures : [symbol + '(...)'],
-            doc: info.doc || ''
-        };
+        if (!written[symbol]) missing.push(name + '.' + symbol);
+        entry.symbols[symbol] = describe(symbol, docs.get(symbol) || {}, written[symbol]);
+    }
+    for (const key of Object.keys(written)) {
+        if (!key.startsWith('$') && !symbols.has(key)) orphan.push(name + '.' + key);
     }
     data.modules[name] = entry;
+}
+
+if (orphan.length) {
+    fail(
+        'the handbook documents symbols that no module exports any more:\n  ' + orphan.join('\n  ') +
+        '\nremove them, or fix the name.'
+    );
 }
 
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
@@ -218,3 +294,9 @@ console.log(
     `data/api.json: ${Object.keys(data.modules).length} modules, ${symbolCount} symbols, ` +
     `${events.length} events, ${prelude.length} in the prelude`
 );
+if (missing.length) {
+    console.log(`handbook: ${missing.length} symbols without documentation`);
+    for (const name of missing) console.log('  ' + name);
+} else {
+    console.log('handbook: every symbol documented, with parameters, return value and example');
+}

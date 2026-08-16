@@ -13,31 +13,27 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
 /**
- * The lock that protects a mutable scarpet value shared between the threads of an app.
+ * The lock that protects a mutable value shared between the threads of an app.
  *
- * <p>Scarpet containers are plain java collections - a list is an {@code ArrayList}, a map a
- * {@code HashMap} - so two threads mutating the same one at the same time can lose entries or
- * corrupt the table outright. That could not happen often while {@code global_} variables were
- * per module, but an app that declares {@code 'global_scope' -> 'app'} shares one namespace across
- * all of its files, which makes it the normal case.
+ * <p>Containers are plain java collections - a list is an {@code ArrayList}, a map a
+ * {@code HashMap} - so two threads mutating the same one can lose entries or corrupt the table.
  *
- * <p>The lock travels with the value, not with the variable name: everything reachable from a
- * shared global is marked by {@link #attach(Value, ValueGuard)}, and every mutation or bulk read of
- * a marked container runs through {@link #guarded}. Values that were never stored in a shared
- * global keep a {@code null} guard, so the common path only pays a null check.
+ * <p>The lock travels with the value, not with the variable name: everything reachable from a shared
+ * global is marked by {@link #attach(Value, ValueGuard)}, and every mutation or bulk read of a
+ * marked container runs through {@link #guarded}. Unmarked values keep a {@code null} guard, so the
+ * common path only pays a null check. A host owns one guard for all of its globals, which makes
+ * aliasing ({@code global_a = global_b}) harmless and rules out lock ordering deadlocks.
  *
- * <p>A host owns a single guard for all of its globals. That makes aliasing between globals a non
- * issue - {@code global_a = global_b} shares the underlying list, and two locks over one list would
- * protect nothing - and it rules out lock ordering deadlocks by construction.
- *
- * <p><b>Invariant: arbitrary scarpet code is never evaluated while a guard is held.</b> Only the
- * container operation itself runs inside, so the critical sections stay short and cannot re-enter
- * the interpreter, which could otherwise take a second guard and deadlock against another host.
+ * <p><b>Invariant: arbitrary script code is never evaluated while a guard is held.</b> Only the
+ * container operation runs inside, so a critical section cannot re-enter the interpreter and take a
+ * second guard.
  */
 public final class ValueGuard
 {
-    // fair, like the locks behind synchronize(): tasks queueing on a hot global are served in
-    // arrival order rather than one of them starving
+    /**
+     * fair, like the locks behind synchronize(): tasks queueing on a hot global are served in
+     * arrival order rather than one of them starving
+     */
     private final ReentrantLock lock = new ReentrantLock(true);
 
     /**

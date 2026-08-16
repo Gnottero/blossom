@@ -236,16 +236,6 @@ public final class Interpreter
             return this;
         }
 
-        /** Il modulo principale, dato come sorgente completo di preambolo. */
-        public Builder mainSource(String name, String code)
-        {
-            ModuleSource source = ModuleSource.parse(name, code);
-            this.main = new Module(name, source.body(), false);
-            importAliases.put(name, aliasesOf(source));
-            libraries.put(name, this.main);
-            return this;
-        }
-
         /** Dove l'interprete può leggere e scrivere file; senza, ogni accesso al disco fallisce. */
         public Builder storage(Path root)
         {

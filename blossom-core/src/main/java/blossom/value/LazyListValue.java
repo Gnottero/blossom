@@ -2,7 +2,6 @@ package blossom.value;
 
 import blossom.exception.SourcePosition;
 import blossom.exception.BlossomRuntimeError;
-import blossom.exception.InternalExpressionException;
 
 import java.util.ArrayList;
 import java.util.Iterator;

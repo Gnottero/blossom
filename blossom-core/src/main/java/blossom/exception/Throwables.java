@@ -31,6 +31,9 @@ public class Throwables
     public static final Throwables NBT_ERROR = register("nbt_error", IO_EXCEPTION);
     public static final Throwables JSON_ERROR = register("json_error", IO_EXCEPTION);
     public static final Throwables B64_ERROR = register("b64_error", IO_EXCEPTION);
+    /** rete: host irraggiungibile, timeout, risposta oltre il limite. Sotto io_exception perche' e' la
+     * stessa categoria di guai - il mondo fuori dal processo non ha risposto come sperato */
+    public static final Throwables HTTP_EXCEPTION = register("http_exception", IO_EXCEPTION);
     public static final Throwables USER_DEFINED = register("user_exception", THROWN_EXCEPTION_TYPE);
 
     /**

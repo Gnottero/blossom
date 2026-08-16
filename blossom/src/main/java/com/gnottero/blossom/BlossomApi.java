@@ -32,9 +32,9 @@ public final class BlossomApi
 
     /** {@code core.mc.world} - il mondo intorno: tempo, chunk, biomi, strutture, dimensioni */
     public static final Set<String> WORLD = Set.of(
-            "weather", "top", "biome", "set_biome", "seed", "relight", "save",
+            "weather", "top", "biome", "set_biome", "seed", "save",
             "loaded", "loaded_ep", "loaded_status", "is_chunk_generated", "generation_status",
-            "chunk_tickets", "add_chunk_ticket", "reload_chunk", "reset_chunk", "inhabited_time",
+            "chunk_tickets", "add_chunk_ticket", "reload_chunk", "inhabited_time",
             "in_slime_chunk", "spawn_potential", "sample_noise",
             "structures", "set_structure", "structure_references", "structure_eligibility",
             "poi", "set_poi", "plop",

@@ -23,6 +23,7 @@ dei test: se il linguaggio cambia e la guida non viene aggiornata, la build si a
 | [9. Concorrenza](09-concorrenza.md) | `task`, `synchronize`, `task_dock`, il watchdog |
 | [10. Prestazioni](10-prestazioni.md) | cosa costa, come si misura, come si sistema |
 | [11. Ricette](11-ricette.md) | pezzi di codice pronti, uno per problema |
+| [12. Configurazione del server](12-configurazione.md) | `blossomscript.json`: registry, `io`, `http`, watchdog |
 
 ## Da dove partire
 

@@ -2,7 +2,6 @@ package blossom.interpreter;
 
 import blossom.exception.SourcePosition;
 import blossom.exception.BlossomRuntimeError;
-import blossom.exception.InternalExpressionException;
 import blossom.value.ThreadValue;
 import blossom.value.Value;
 

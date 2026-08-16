@@ -4,25 +4,16 @@ import java.nio.file.Path;
 import java.util.List;
 
 /**
- * Da dove si prendono i pack che non stanno già su disco.
+ * Da dove si prendono i pack che non stanno gia' su disco.
  *
- * <p>È un'interfaccia e non una classe perché il core non deve sapere se dall'altra parte c'è una
- * cartella, un server http o niente: chi incorpora il core decide, e in un test decide di essere una
- * cartella. Il registry è l'unico punto del sistema che può toccare la rete, e per questo è anche
- * l'unico che si può spegnere del tutto ({@link PackEnvironment#registry()} può essere {@code null}).
+ * <p>Un'interfaccia perche' il core non deve sapere se dall'altra parte c'e' una cartella, un server
+ * http o niente: e' l'unico punto del sistema che puo' toccare la rete, ed e' anche l'unico che si
+ * puo' spegnere del tutto ({@link PackEnvironment#registry()} puo' essere {@code null}).
  *
- * <h2>Cosa deve garantire un'implementazione</h2>
- *
- * <ul>
- *   <li>{@link #availableVersions} non lancia se il pack non esiste: restituisce una lista vuota, e
- *       la differenza fra "non c'è" e "non c'è una versione compatibile" la racconta chi chiama, che
- *       conosce il vincolo;</li>
- *   <li>{@link #fetch} restituisce una cartella <em>già completa</em>: chi la riceve la legge come
- *       un qualunque progetto su disco, senza sapere se è stata scaricata adesso o presa da cache;
- *   <li>quello che scarica va verificato prima di essere restituito. Un archivio scaricato e
- *       scompattato senza controllarne l'impronta è codice arbitrario che gira su un server, e
- *       "tanto è il nostro registry" non è una garanzia di integrità.</li>
- * </ul>
+ * <p>Un'implementazione deve garantire tre cose: {@link #availableVersions} non lancia se il pack non
+ * esiste ma restituisce una lista vuota; {@link #fetch} restituisce una cartella gia' completa, che
+ * chi la riceve legge come un progetto qualunque; e quello che scarica va verificato prima, perche'
+ * un archivio scompattato senza controllo e' codice arbitrario su un server.
  */
 public interface PackRegistry
 {

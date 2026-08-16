@@ -23,8 +23,8 @@ There are no absolute paths in scripts. An administrator declares **roots** with
 {
   "io": {
     "roots": {
-      "shared": "/srv/blossom-shared",
-      "log": "/var/log/my-server"
+      "shared": "shared",
+      "log": "blossom/logs"
     },
     "writable": ["shared"]
   }
@@ -32,8 +32,11 @@ There are no absolute paths in scripts. An administrator declares **roots** with
 ```
 
 Every function starts with the name of the root, and the rest of the path is always relative to it.
-Three consequences, all of them intended:
+Four consequences, all of them intended:
 
+- **the roots live in the world folder.** Their paths are written relative to it; an absolute path is
+  accepted only when it points inside the world anyway, and is dropped with a warning in the log
+  otherwise. The rest of the disk of the server is not reachable by any configuration.
 - **without a declaration you get nowhere.** `core.io` imported on a server that configured nothing
   exists but opens nothing, and says so.
 - **the root is visible at the call site.** Reading the code is enough to know where the data ends
@@ -41,8 +44,8 @@ Three consequences, all of them intended:
 - **writing is a separate permission.** A root is read-only unless it appears in `writable`.
 
 A path that leaves the root is an error, and not only when it tries with `..`: the path is really
-resolved before the comparison, so a symbolic link placed inside the root pointing outside is
-refused in the same way.
+resolved before the comparison, so a symbolic link placed inside the root pointing outside — or a
+root that is itself a link out of the world folder — is refused in the same way.
 
 ```
 RuntimeError[io]

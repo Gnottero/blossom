@@ -151,6 +151,36 @@ class IoTest
     }
 
     @Test
+    void aRootOutsideTheConfinementOpensNothing(@TempDir Path tmp) throws IOException
+    {
+        // sul mod il confine e' la cartella del mondo: una radice dichiarata altrove nel disco del
+        // server viene comunque fermata qui, che e' l'ultima linea prima del filesystem
+        Path world = Files.createDirectories(tmp.resolve("mondo"));
+        Path outside = Files.createDirectories(tmp.resolve("fuori"));
+        Files.writeString(outside.resolve("segreto.txt"), "non si legge");
+        Interpreter interpreter = Interpreter.builder().storage(world).build();
+        ((BlossomServer) interpreter.host().scriptServer())
+                .setIoRoots(new IoRoots(Map.of("fuori", outside), Set.of(), world));
+
+        BlossomRuntimeError error = assertThrows(BlossomRuntimeError.class,
+                () -> interpreter.eval(IMPORT + "io.read_text('fuori', 'segreto.txt')"));
+        assertTrue(error.getMessage().contains("escapes root"), error.getMessage());
+    }
+
+    @Test
+    void insideTheConfinementEverythingWorksAsBefore(@TempDir Path tmp) throws IOException
+    {
+        Path world = Files.createDirectories(tmp.resolve("mondo"));
+        Path data = Files.createDirectories(world.resolve("dati"));
+        Interpreter interpreter = Interpreter.builder().storage(world).build();
+        ((BlossomServer) interpreter.host().scriptServer())
+                .setIoRoots(new IoRoots(Map.of("dati", data), Set.of("dati"), world));
+
+        interpreter.eval(IMPORT + "io.write_text('dati', 'nota.txt', 'ciao')");
+        assertEquals("ciao", interpreter.eval(IMPORT + "io.read_text('dati', 'nota.txt')").getString());
+    }
+
+    @Test
     void noBuiltinNameIsRegisteredTwice()
     {
         // core.io ha dovuto chiamarsi 'delete_file' e non 'delete' proprio per questo: le

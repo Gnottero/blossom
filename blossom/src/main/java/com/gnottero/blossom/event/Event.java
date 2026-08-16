@@ -247,11 +247,6 @@ public final class Event
         return event;
     }
 
-    public boolean isCustom()
-    {
-        return custom;
-    }
-
     public static Collection<Event> all()
     {
         return BY_NAME.values();

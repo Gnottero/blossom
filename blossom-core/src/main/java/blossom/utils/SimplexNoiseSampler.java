@@ -6,7 +6,7 @@ import blossom.utils.MathUtils;
 import java.util.Map;
 import java.util.Random;
 
-// extracted from import net.minecraft.util.math.noise.SimplexNoiseSampler
+/** extracted from import net.minecraft.util.math.noise.SimplexNoiseSampler */
 public class SimplexNoiseSampler extends PerlinNoiseSampler
 {
     private static final double sqrt3 = Math.sqrt(3.0D);

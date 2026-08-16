@@ -95,7 +95,6 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.village.poi.PoiManager;
 import net.minecraft.world.entity.ai.village.poi.PoiRecord;
@@ -132,7 +131,6 @@ import net.minecraft.world.level.levelgen.WorldgenRandom;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
 import net.minecraft.world.level.pathfinder.PathComputationType;
-import net.minecraft.world.level.storage.ServerLevelData;
 import net.minecraft.world.phys.Vec3;
 
 import org.jspecify.annotations.Nullable;
@@ -155,7 +153,7 @@ public class WorldAccess
             "teleport", TicketType.ENDER_PEARL,
             "unknown", TicketType.UNKNOWN
     );
-    // dummy entity for dummy requirements in the loot tables (see snowball)
+    /** dummy entity for dummy requirements in the loot tables (see snowball) */
     private static FallingBlockEntity DUMMY_ENTITY = null;
 
     private static Value booleanStateTest(
@@ -1589,72 +1587,6 @@ public class WorldAccess
             return result[0]; // preventing from lazy evaluating of the result in case a future completes later
         });
 
-        // todo maybe enable chunk blending?
-        expression.addContextFunction("reset_chunk", -1, (c, t, lv) ->
-        {
-            return Value.NULL;
-            /*
-            ScriptContext cc = (ScriptContext) c;
-            List<ChunkPos> requestedChunks = new ArrayList<>();
-            if (lv.size() == 1)
-            {
-                //either one block or list of chunks
-                Value first = lv.get(0);
-                if (first instanceof final ListValue list)
-                {
-                    List<Value> listVal = list.getItems();
-                    BlockArgument locator = BlockArgument.findIn(cc, listVal, 0);
-                    requestedChunks.add(new ChunkPos(locator.block.getPos()));
-                    while (listVal.size() > locator.offset)
-                    {
-                        locator = BlockArgument.findIn(cc, listVal, locator.offset);
-                        requestedChunks.add(new ChunkPos(locator.block.getPos()));
-                    }
-                }
-                else
-                {
-                    BlockArgument locator = BlockArgument.findIn(cc, Collections.singletonList(first), 0);
-                    requestedChunks.add(new ChunkPos(locator.block.getPos()));
-                }
-            }
-            else
-            {
-                BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
-                ChunkPos from = new ChunkPos(locator.block.getPos());
-                if (lv.size() > locator.offset)
-                {
-                    locator = BlockArgument.findIn(cc, lv, locator.offset);
-                    ChunkPos to = new ChunkPos(locator.block.getPos());
-                    int xmax = Math.max(from.x, to.x);
-                    int zmax = Math.max(from.z, to.z);
-                    for (int x = Math.min(from.x, to.x); x <= xmax; x++)
-                    {
-                        for (int z = Math.min(from.z, to.z); z <= zmax; z++)
-                        {
-                            requestedChunks.add(new ChunkPos(x, z));
-                        }
-                    }
-                }
-                else
-                {
-                    requestedChunks.add(from);
-                }
-            }
-            ServerLevel world = cc.level();
-            Value[] result = new Value[]{Value.NULL};
-            ((ScriptContext) c).server().executeBlocking(() ->
-            {
-                Map<String, Integer> report = Vanilla.ChunkMap_regenerateChunkRegion(world.getChunkSource().chunkMap, requestedChunks);
-                result[0] = MapValue.wrap(report.entrySet().stream().collect(Collectors.toMap(
-                        e -> new StringValue(e.getKey()),
-                        e -> new NumericValue(e.getValue())
-                )));
-            });
-            return result[0];
-
-             */
-        });
-
         expression.addContextFunction("inhabited_time", -1, (c, t, lv) ->
         {
             ScriptContext cc = (ScriptContext) c;
@@ -1761,7 +1693,7 @@ public class WorldAccess
         return densityFunction.compute(new DensityFunction.SinglePointContext(pos.getX(), pos.getY(), pos.getZ()));
     }
 
-    // to be used with future seedable noise
+    /** to be used with future seedable noise */
     public static final Function<Pair<ServerLevel, String>, DensityFunction> stupidWorldgenNoiseCacheGetter = Util.memoize(pair -> {
         ServerLevel level = pair.getKey();
         String densityFunctionQuery = pair.getValue();

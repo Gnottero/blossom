@@ -7,7 +7,6 @@ import blossom.interpreter.Fluff;
 import blossom.interpreter.LazyValue;
 import blossom.interpreter.Token;
 import blossom.interpreter.argument.FunctionArgument;
-import blossom.exception.InternalExpressionException;
 import blossom.exception.ParseError;
 import blossom.exception.SourcePosition;
 import blossom.exception.ReturnStatement;
@@ -15,12 +14,10 @@ import blossom.value.FunctionSignatureValue;
 import blossom.value.FunctionValue;
 import blossom.value.FunctionAnnotationValue;
 import blossom.value.ListValue;
-import blossom.value.StringValue;
 import blossom.value.Value;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 public class Functions
 {

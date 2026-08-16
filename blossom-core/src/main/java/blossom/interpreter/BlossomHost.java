@@ -35,13 +35,7 @@ public class BlossomHost extends ScriptHost
     public BlossomHost(@Nullable Module code, BlossomServer server, Map<String, Module> libraries,
                        Map<String, Map<String, String>> importAliases, UnaryOperator<Expression> setup)
     {
-        this(code, server, libraries, importAliases, setup, null);
-    }
-
-    protected BlossomHost(@Nullable Module code, BlossomServer server, Map<String, Module> libraries,
-                          Map<String, Map<String, String>> importAliases, UnaryOperator<Expression> setup, @Nullable ScriptHost parent)
-    {
-        super(code, server, false, parent, Expression.LoadOverride.DEFAULT);
+        super(code, server, Expression.LoadOverride.DEFAULT);
         this.libraries = libraries;
         this.importAliases = importAliases;
         this.setup = setup;
@@ -100,12 +94,6 @@ public class BlossomHost extends ScriptHost
     protected void runModuleCode(Context c, Module module)
     {
         prepare(module, module.code()).executeAndEvaluate(c, true, loadOverrides, null);
-    }
-
-    @Override
-    protected ScriptHost duplicate()
-    {
-        return new BlossomHost(main, (BlossomServer) scriptServer(), libraries, importAliases, setup, this);
     }
 
     /** Copia difensiva delle librerie note, per chi vuole costruire un host imparentato. */

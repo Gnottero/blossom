@@ -35,9 +35,4 @@ public class ParticleParser
         }
         return particleCache.computeIfAbsent(name, particle -> parseParticle(particle, lookup));
     }
-
-    public static void resetCache()
-    {
-        particleCache.clear();
-    }
 }

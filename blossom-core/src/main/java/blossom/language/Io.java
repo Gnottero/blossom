@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
-import blossom.exception.SourcePosition;
 import blossom.exception.ThrowStatement;
 import blossom.exception.Throwables;
 import blossom.interpreter.Context;

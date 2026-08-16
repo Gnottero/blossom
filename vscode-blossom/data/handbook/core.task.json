@@ -1,0 +1,94 @@
+{
+  "$alias": "task",
+
+  "task": {
+    "signatures": ["task(function)", "task(function, ...arguments)"],
+    "summary": "Starts a function on another thread and comes back at once with a handle to it.",
+    "params": [["function", "the function to run, passed as a value"], ["...arguments", "what to call it with"]],
+    "returns": "the handle of the task, to be passed to the other functions of this module.",
+    "examples": ["t = task.task(count_ores, [0, 64, 0], 32);\n// ... other work meanwhile ...\ntask.task_join(t);   // the result", "task.task(fn(n) -> print('done ' + n), 1);"],
+    "note": "The task runs **outside** the tick of the game: to touch blocks, entities or anything else of the world from inside it, wrap that part in `task_dock`."
+  },
+  "task_join": {
+    "signatures": ["task_join(t)"],
+    "summary": "Waits for the task to finish and returns its value.",
+    "params": [["t", "the handle returned by `task`"]],
+    "returns": "the value the function returned.",
+    "examples": ["t = task.task(heavy_computation);\nresult = task.task_join(t);"],
+    "note": "It blocks the thread that calls it. Calling it from the tick of the game means stopping the server until the task ends — from there use `task_join` of `core.mc.system`, which knows how to wait without blocking the tick."
+  },
+  "task_await": {
+    "signatures": ["task_await(t)"],
+    "summary": "Waits for the task to finish without asking for its value.",
+    "params": [["t", "the handle of the task"]],
+    "returns": "`null`.",
+    "examples": ["for(tasks, task.task_await(_));   // waits for all of them"]
+  },
+  "task_completed": {
+    "signatures": ["task_completed(t)"],
+    "summary": "Whether the task has already finished, without waiting for it.",
+    "params": [["t", "the handle of the task"]],
+    "returns": "`bool` — `true` when it is done.",
+    "examples": ["if(task.task_completed(t), print(task.task_value(t)), print('still going'));"]
+  },
+  "task_value": {
+    "signatures": ["task_value(t)"],
+    "summary": "The value of the task when it has one, without waiting.",
+    "params": [["t", "the handle of the task"]],
+    "returns": "the value produced, or `null` when it is not ready.",
+    "examples": ["if(task.task_completed(t), use(task.task_value(t)));"]
+  },
+  "task_count": {
+    "signatures": ["task_count()", "task_count(group)"],
+    "summary": "How many tasks are running right now.",
+    "params": [["group", "optional: only the ones of that group"]],
+    "returns": "`num` — the number of tasks in flight.",
+    "examples": ["task.task_count();   // 3", "// waiting for everything to quiet down\nwhile(task.task_count() > 0, 1000, task.sleep(50));"]
+  },
+  "task_send": {
+    "signatures": ["task_send(t, value)"],
+    "summary": "Sends a value into a running task, where a `yield` is waiting for it.",
+    "params": [["t", "the handle of the task"], ["value", "what to send"]],
+    "returns": "`null`.",
+    "examples": ["t = task.task(worker);\ntask.task_send(t, 'next');"]
+  },
+  "task_ready": {
+    "signatures": ["task_ready(t)"],
+    "summary": "Whether the task has a value waiting to be read.",
+    "params": [["t", "the handle of the task"]],
+    "returns": "`bool` — whether there is something ready.",
+    "examples": ["if(task.task_ready(t), print(task.task_value(t)));"]
+  },
+  "yield": {
+    "signatures": ["yield(value)", "yield()"],
+    "summary": "From inside a task: hands a value out and suspends until somebody asks for the next one.",
+    "params": [["value", "what to hand out; without it, `null`"]],
+    "returns": "the value the next `task_send` delivers.",
+    "examples": ["fn producer() -> for(range(10), yield(_ * _));\n\nt = task.task(producer);\ntask.task_value(t);   // 0\ntask.task_send(t, null);\ntask.task_value(t);   // 1"],
+    "note": "It is what turns a task into a generator: it produces on demand instead of computing everything and holding it in memory."
+  },
+  "task_dock": {
+    "signatures": ["task_dock(expression)"],
+    "summary": "Runs the expression on the main thread of the game and waits for its result.",
+    "params": [["expression", "what to run inside the tick"]],
+    "returns": "the value of the expression.",
+    "examples": ["// inside a task: the world can only be touched from here\ntask.task_dock(block.set([0, 64, 0], 'stone'));", "positions = task.task_dock(scan.rect([0, 64, 0], 8));"],
+    "note": "Everything in `core.mc.*` needs this when it is called from a task. Keep what goes inside it short: it runs in the tick, and while it runs the server waits."
+  },
+  "synchronize": {
+    "signatures": ["synchronize(lock, expression)"],
+    "summary": "Runs the expression with a lock held, so two tasks never do it at the same time.",
+    "params": [["lock", "the name of the lock, any value; the same name means the same lock"], ["expression", "the critical section"]],
+    "returns": "the value of the expression.",
+    "examples": ["// read and write are two steps: without the lock a count gets lost\ntask.synchronize('counter', counter = counter + 1);"],
+    "note": "The lock is reentrant (a synchronised function can call another one on the same lock) and fair (whoever waits gets in in the order they arrived). Single operations — an assignment, a `put`, a `delete` — are already atomic on their own and need no lock; it is *sequences* that do."
+  },
+  "sleep": {
+    "signatures": ["sleep(milliseconds)"],
+    "summary": "Suspends the current thread for a while.",
+    "params": [["milliseconds", "how long to wait"]],
+    "returns": "`null`.",
+    "examples": ["task.sleep(1000);   // one second"],
+    "note": "Inside a task it is fine. On the main thread it stops the server: to wait in the game there is `schedule` in `core.mc.event`, which counts ticks and lets the world go on."
+  }
+}

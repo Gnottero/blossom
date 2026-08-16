@@ -110,13 +110,6 @@ public record AppHost(String name, Interpreter interpreter)
         return file.listFolder(main());
     }
 
-    public boolean applyActionForResource(String path, boolean shared, java.util.function.Consumer<java.nio.file.Path> action)
-    {
-        FileArgument file = FileArgument.resourceFromPath(
-                host(), path, FileArgument.Reason.CREATE, shared);
-        return file.findPathAndApply(main(), action);
-    }
-
     /**
      * Chiama una funzione dell'app.
      *

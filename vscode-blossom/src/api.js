@@ -67,6 +67,12 @@ function prelude() {
     return load().prelude;
 }
 
+/** The documentation of a function of the prelude, or null when the name is not one of them. */
+function preludeInfo(name) {
+    const symbols = load().preludeSymbols || {};
+    return symbols[name] || null;
+}
+
 function keywords() {
     return load().keywords;
 }
@@ -131,6 +137,7 @@ module.exports = {
     events,
     eventInfo,
     prelude,
+    preludeInfo,
     keywords,
     constants,
     types,

@@ -20,20 +20,16 @@ import com.gnottero.blossom.mixins.client.RenderType_blossomCreateInvoker;
 /**
  * Il modo di disegnare un riempimento che copre davvero quello che ha dietro.
  *
- * <p>Le primitive di disegno del gioco - i <em>gizmo</em> - hanno una sola pipeline per le facce:
- * {@code DEBUG_FILLED_BOX}, che mescola sempre in trasparenza e <b>non scrive la profondità</b>. Va
- * benissimo per una hitbox, ma vuol dire che una faccia con alfa {@code ff} non nasconde niente: le
- * nuvole, che vengono disegnate dopo e col loro test di profondità, ci passano sopra. Non è un
- * difetto del colore, è la pipeline: nessun valore di alfa può cambiarlo.
+ * <p>Le primitive di debug del gioco hanno una sola pipeline per le facce, {@code DEBUG_FILLED_BOX},
+ * che mescola sempre in trasparenza e non scrive la profondita': una faccia con alfa {@code ff} non
+ * nasconde niente, e le nuvole ci passano sopra. Non e' il colore, e' la pipeline. Per il
+ * riempimento opaco ce ne serve quindi una uguale ma senza mescolare e che scriva la profondita';
+ * quello traslucido continua a passare dai gizmo.
  *
- * <p>Quindi per il riempimento opaco ce ne facciamo una: la stessa cosa, ma senza mescolare e
- * scrivendo la profondità. Il riempimento traslucido continua a passare dai gizmo, dove la
- * trasparenza è quello che si vuole davvero.
- *
- * <p>Il resto dei parametri è copiato da {@code DEBUG_FILLED_BOX} e non a caso: il confronto di
- * profondità è {@code GREATER_THAN_OR_EQUAL} perché il gioco usa la profondità rovesciata, il culling
- * è spento perché una forma si guarda anche da dentro, e lo scostamento di layering è lo stesso delle
- * linee, così reticolo e riempimento della stessa forma non litigano sullo stesso piano.
+ * <p>Il resto dei parametri e' copiato da {@code DEBUG_FILLED_BOX} apposta: confronto di profondita'
+ * {@code GREATER_THAN_OR_EQUAL} perche' il gioco la usa rovesciata, culling spento perche' una forma
+ * si guarda anche da dentro, e lo stesso scostamento di layering delle linee, cosi' reticolo e
+ * riempimento della stessa forma non litigano sullo stesso piano.
  */
 @Environment(EnvType.CLIENT)
 public final class BlossomRenderTypes

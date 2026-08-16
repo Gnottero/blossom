@@ -1,0 +1,71 @@
+{
+  "$alias": "http",
+
+  "hosts": {
+    "signatures": ["hosts()"],
+    "summary": "The host patterns an administrator has allowed in `config/blossomscript.json`.",
+    "params": [],
+    "returns": "`list` — the patterns; empty when this server has no network open.",
+    "examples": ["http.hosts();   // ['api.example.com', '*.status.example.org']", "if(length(http.hosts()) == 0, print('no network on this server'));"],
+    "note": "Nothing is reachable until it is declared. A host is either exact or has one leading wildcard (`*.example.com`, which does not match `example.com` itself)."
+  },
+  "get": {
+    "signatures": ["get(url)", "get(url, headers)"],
+    "summary": "A GET request, giving back the whole response.",
+    "params": [["url", "the absolute url, scheme included"], ["headers", "optional map of header name to value"]],
+    "returns": "`map` — `status`, `body`, `headers`, `url`.",
+    "examples": ["response = http.get('https://api.example.com/motd');\nif(response:'status' == 200, print(response:'body'));", "http.get('https://api.example.com/me', {'authorization' -> 'Bearer ' + token});"],
+    "note": "A request never runs on the server thread: wrap the call in `task(...)`, or it fails with an error saying so. A status outside 2xx is an answer, not an error."
+  },
+  "post": {
+    "signatures": ["post(url, body)", "post(url, body, headers)"],
+    "summary": "A POST request with the body sent as UTF-8 text.",
+    "params": [["url", "the absolute url"], ["body", "the body to send"], ["headers", "optional map of header name to value"]],
+    "returns": "`map` — `status`, `body`, `headers`, `url`.",
+    "examples": ["http.post('https://api.example.com/events', 'player=steve', {'content-type' -> 'text/plain'});"]
+  },
+  "request": {
+    "signatures": ["request(method, url)", "request(method, url, body)", "request(method, url, body, headers)"],
+    "summary": "Any method: GET, POST, PUT, PATCH, DELETE or HEAD.",
+    "params": [["method", "the method, in any case"], ["url", "the absolute url"], ["body", "the body, or `null`"], ["headers", "optional map of header name to value"]],
+    "returns": "`map` — `status`, `body`, `headers`, `url`.",
+    "examples": ["http.request('delete', 'https://api.example.com/session/' + id);"]
+  },
+  "get_json": {
+    "signatures": ["get_json(url)", "get_json(url, headers)"],
+    "summary": "A GET asking for json, giving back the body already decoded.",
+    "params": [["url", "the absolute url"], ["headers", "optional map of header name to value"]],
+    "returns": "the decoded body, as maps, lists and values.",
+    "examples": ["players = http.get_json('https://api.example.com/players');\nprint(players:0:'name');"],
+    "note": "A body that is not valid json throws `json_error`. The status is not visible here: use `get` when it matters."
+  },
+  "post_json": {
+    "signatures": ["post_json(url, value)", "post_json(url, value, headers)"],
+    "summary": "Sends a value encoded as json and decodes the answer the same way.",
+    "params": [["url", "the absolute url"], ["value", "what to encode as the body"], ["headers", "optional map of header name to value"]],
+    "returns": "the decoded body, as maps, lists and values.",
+    "examples": ["http.post_json('https://api.example.com/events', {'kind' -> 'joined', 'player' -> 'steve'});"]
+  },
+  "encode_url": {
+    "signatures": ["encode_url(text)"],
+    "summary": "Percent-encodes one piece of a url.",
+    "params": [["text", "the text to encode"]],
+    "returns": "`str` — the encoded text.",
+    "examples": ["http.encode_url('due parole');   // 'due+parole'"]
+  },
+  "decode_url": {
+    "signatures": ["decode_url(text)"],
+    "summary": "Reads back percent-encoded text.",
+    "params": [["text", "the encoded text"]],
+    "returns": "`str` — the text as it was.",
+    "examples": ["http.decode_url('a+b%2Fc');   // 'a b/c'"],
+    "note": "A malformed sequence throws `value_exception`."
+  },
+  "encode_query": {
+    "signatures": ["encode_query(parameters)"],
+    "summary": "A map turned into a query string, keys and values encoded.",
+    "params": [["parameters", "map of parameter name to value"]],
+    "returns": "`str` — the pairs joined with `&`, sorted so the same map always gives the same string.",
+    "examples": ["'https://api.example.com/search?' + http.encode_query({'q' -> 'due parole', 'page' -> 2});\n// https://api.example.com/search?page=2&q=due+parole"]
+  }
+}

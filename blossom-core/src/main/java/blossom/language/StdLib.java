@@ -25,6 +25,16 @@ public final class StdLib
     private static final Map<String, Set<String>> MODULES = new LinkedHashMap<>();
     /** simbolo → modulo che lo esporta, per dire a chi sbaglia da dove viene il nome che ha usato */
     private static final Map<String, String> HOME_MODULE = new LinkedHashMap<>();
+    /**
+     * {@code modulo.simbolo} → nome dell'implementazione, per i pochi casi in cui i due differiscono.
+     *
+     * <p>Le built-in vivono in una mappa piatta e il nome pubblico di un modulo è la chiave di quella
+     * mappa: {@code core.list} e {@code core.map} esportano entrambi {@code get} perché è la stessa
+     * implementazione, ma {@code core.http} non può chiamare {@code get} la sua, che è un'altra cosa.
+     * Invece di storpiare il nome che si legge nel codice ({@code http.http_get}) il modulo dichiara
+     * {@code get} e lo si risolve qui, a caricamento, sull'implementazione {@code http_get}.
+     */
+    private static final Map<String, String> IMPLEMENTATION = new LinkedHashMap<>();
 
     /**
      * Quello che si può usare senza importare niente: costrutti di controllo, che sono grammatica
@@ -70,6 +80,8 @@ public final class StdLib
 
         module("core.io", Io.MODULE.toArray(String[]::new));
 
+        module("core.http", Http.MODULE);
+
         module("core.system",
                 "time", "unix_time", "convert_date", "profile_expr", "type", "var", "vars",
                 "system_variable_get", "system_variable_set", "undef", "bool", "copy");
@@ -91,6 +103,13 @@ public final class StdLib
         module(name, symbols.toArray(String[]::new));
     }
 
+    /** Dichiara un modulo i cui nomi pubblici non coincidono con quelli delle implementazioni. */
+    private static void module(String name, Map<String, String> symbols)
+    {
+        module(name, symbols.keySet().toArray(String[]::new));
+        symbols.forEach((symbol, implementation) -> IMPLEMENTATION.put(name + '.' + symbol, implementation));
+    }
+
     private static void module(String name, String... symbols)
     {
         Set<String> exported = new LinkedHashSet<>(List.of(symbols));
@@ -110,6 +129,16 @@ public final class StdLib
     {
         Set<String> exported = MODULES.get(moduleName);
         return exported != null && exported.contains(symbol);
+    }
+
+    /**
+     * Il nome con cui cercare fra le built-in il simbolo {@code symbol} di {@code moduleName}.
+     *
+     * @return il nome dell'implementazione, che per quasi tutti i moduli è il simbolo stesso
+     */
+    public static String implementationOf(String moduleName, String symbol)
+    {
+        return IMPLEMENTATION.getOrDefault(moduleName + '.' + symbol, symbol);
     }
 
     public static Set<String> symbolsOf(String moduleName)

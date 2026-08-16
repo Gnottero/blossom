@@ -14,6 +14,7 @@ public class BlossomServer extends ScriptServer
 {
     private final @Nullable Path root;
     private blossom.language.IoRoots ioRoots = blossom.language.IoRoots.NONE;
+    private blossom.language.HttpAccess httpAccess = blossom.language.HttpAccess.NONE;
 
     public BlossomServer(@Nullable Path root)
     {
@@ -30,6 +31,18 @@ public class BlossomServer extends ScriptServer
     public blossom.language.IoRoots ioRoots()
     {
         return ioRoots;
+    }
+
+    /** Dichiara gli host di {@code core.http}: e' il mod - o un test - a decidere quali sono. */
+    public void setHttpAccess(blossom.language.HttpAccess access)
+    {
+        this.httpAccess = access;
+    }
+
+    @Override
+    public blossom.language.HttpAccess httpAccess()
+    {
+        return httpAccess;
     }
 
     @Override

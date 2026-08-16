@@ -282,6 +282,31 @@ quel momento un suo ciclo infinito richiede il riavvio del server.
 L'errore del watchdog **non è catturabile** con `try`: se lo fosse, un ciclo infinito dentro un
 `try` continuerebbe a girare.
 
+## Configurazione del server
+
+Un file solo, facoltativo: `config/blossomscript.json`. Quattro sezioni, ognuna spenta finché non la
+scrivi.
+
+```json
+{
+  "registry": { "directory": "/srv/blossom-packs" },
+  "io": { "roots": { "condiviso": "condiviso" }, "writable": ["condiviso"] },
+  "http": { "hosts": ["api.esempio.org"] },
+  "watchdog": { "timeout_ms": 2000, "max_depth": 256 }
+}
+```
+
+- **`registry`** — da dove arrivano le dipendenze che non stanno già su disco.
+- **`io`** — le cartelle che [`core.io`](docs/api/core.io.md) può aprire. I percorsi sono relativi
+  alla **cartella del mondo** e non possono uscirne: il resto del disco del server non è
+  raggiungibile da nessuna configurazione.
+- **`http`** — gli host che [`core.http`](docs/api/core.http.md) può contattare, uno per nome. Senza
+  questa sezione gli script non hanno rete.
+- **`watchdog`** — i limiti di esecuzione per le app che non ne dichiarano di propri.
+
+Tutte le chiavi, con tipo e default, sono in
+[12. Configurazione del server](docs/guide/12-configurazione.md).
+
 ## Il linguaggio in due minuti
 
 ```

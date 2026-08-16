@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.jspecify.annotations.Nullable;
+
 import blossom.exception.BlossomRuntimeError;
 import blossom.exception.SourcePosition;
 import blossom.exception.Suggestions;
@@ -15,31 +17,17 @@ import blossom.exception.Suggestions;
 /**
  * Le cartelle a cui {@code core.io} può arrivare, e con che permessi.
  *
- * <h2>Perché non basta "una cartella per app"</h2>
+ * <p>Negli script non esistono percorsi assoluti: un amministratore dichiara delle <em>radici</em>
+ * con un nome e le chiamate partono da quello - {@code io.read_text('condiviso', 'note/oggi.txt')}.
+ * Ne seguono tre proprietà volute: senza dichiarazioni non si apre niente, la radice si vede nel
+ * punto della chiamata, e la scrittura è un permesso a parte da concedere radice per radice.
  *
- * <p>{@code core.mc.file} dà a ogni app la propria cartella dati, e per quasi tutto basta. Quello
- * che non copre è il caso in cui gli script devono parlare con qualcosa che sul server c'è già: una
- * cartella condivisa fra app, i log di un altro strumento, una cartella di scambio con un processo
- * esterno. Senza un modo di farlo, chi ne ha bisogno smette di usare il linguaggio.
+ * <p>Il percorso viene normalizzato e poi risolto davvero prima del confronto, perché {@code ..} non
+ * è l'unico modo di uscire da una cartella: un link simbolico dentro la radice punta fuori senza che
+ * nessun controllo testuale se ne accorga. Un {@link #contains confine} esterno facoltativo - sul
+ * mod, la cartella del mondo - limita anche dove le radici stesse possono stare.
  *
- * <h2>Come sono fatti i confini</h2>
- *
- * <p>Non c'è nessun percorso assoluto negli script. Un amministratore dichiara delle <em>radici</em>
- * con un nome, e gli script scrivono {@code io.read_text('condiviso', 'note/oggi.txt')}: il nome
- * dice quale radice, il resto è sempre relativo a quella. Tre conseguenze volute:
- *
- * <ul>
- *   <li>senza dichiarazione non si arriva da nessuna parte — {@code core.io} importato su un server
- *       che non ha configurato niente non apre nulla;</li>
- *   <li>la radice si vede nel punto della chiamata, quindi leggere il codice basta a sapere dove
- *       finiscono i dati;</li>
- *   <li>la scrittura è un permesso a parte: una radice è di sola lettura salvo che sia dichiarata
- *       scrivibile.</li>
- * </ul>
- *
- * <p>Il percorso relativo viene normalizzato e poi <em>risolto davvero</em> prima del confronto:
- * {@code ../../etc} non è l'unico modo di uscire da una cartella, e un link simbolico piazzato
- * dentro la radice punterebbe altrove senza che nessun controllo testuale se ne accorga.
+ * @see Io il modulo che le usa
  */
 public final class IoRoots
 {
@@ -48,13 +36,31 @@ public final class IoRoots
 
     private final Map<String, Path> roots;
     private final Set<String> writable;
+    private final @Nullable Path confinement;
 
     public IoRoots(Map<String, Path> roots, Set<String> writable)
+    {
+        this(roots, writable, null);
+    }
+
+    /**
+     * @param confinement la cartella oltre la quale nessuna radice può portare, o {@code null} se non
+     *     c'è un limite esterno. Sul mod è la cartella del mondo: le radici si dichiarano dentro
+     *     quella e il resto del disco del server non è raggiungibile per nessuna configurazione.
+     */
+    public IoRoots(Map<String, Path> roots, Set<String> writable, @Nullable Path confinement)
     {
         Map<String, Path> normalized = new LinkedHashMap<>();
         roots.forEach((name, path) -> normalized.put(name, path.toAbsolutePath().normalize()));
         this.roots = Map.copyOf(normalized);
         this.writable = Set.copyOf(writable);
+        this.confinement = confinement == null ? null : confinement.toAbsolutePath().normalize();
+    }
+
+    /** @return se {@code directory} sta dentro il confine, o se non c'è nessun confine da rispettare */
+    public boolean contains(Path directory)
+    {
+        return confinement == null || directory.toAbsolutePath().normalize().startsWith(confinement);
     }
 
     public List<String> names()
@@ -92,7 +98,7 @@ public final class IoRoots
                             + " configuration.");
         }
         Path candidate = root.resolve(relative).normalize();
-        if (!candidate.startsWith(root))
+        if (!candidate.startsWith(root) || !contains(candidate))
         {
             throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "io",
                     "Path '" + relative + "' escapes root '" + name + "'.");
@@ -107,7 +113,7 @@ public final class IoRoots
      * radice che punta fuori. Se il file non esiste ancora - il caso di una scrittura - si controlla
      * la cartella che lo conterrà, che invece esiste.
      */
-    private static Path checkReal(Path root, Path candidate, String name, String relative)
+    private Path checkReal(Path root, Path candidate, String name, String relative)
     {
         try
         {
@@ -117,7 +123,8 @@ public final class IoRoots
             {
                 existing = existing.getParent();
             }
-            if (existing != null && !existing.toRealPath().startsWith(realRoot))
+            Path real = existing == null ? null : existing.toRealPath();
+            if (real != null && (!real.startsWith(realRoot) || !contains(real) || !contains(realRoot)))
             {
                 throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "io",
                         "Path '" + relative + "' escapes root '" + name + "' through a symbolic link.");

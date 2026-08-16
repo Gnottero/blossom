@@ -23,34 +23,21 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 
 /**
- * Un registry raggiunto via http, con un indice statico e archivi zip.
+ * Un registry raggiunto via http: un indice statico e degli archivi zip.
  *
- * <h2>Il formato dell'indice</h2>
- *
- * <p>{@code <base>/index.json}, e nient'altro: niente API, niente query, niente stato lato server.
- * Un file che si può servire da qualunque cosa serva file statici, compreso un bucket o una pagina
- * di progetto.
+ * <p>L'indice e' {@code <base>/index.json} e nient'altro - niente API, niente stato lato server,
+ * cosi' lo serve qualunque cosa serva file statici:
  *
  * <pre>
- * {
- *   "vector": {
- *     "1.4.0": { "url": "vector-1.4.0.zip", "sha256": "9f86d0..." },
- *     "2.0.0": { "url": "vector-2.0.0.zip", "sha256": "2c26b4..." }
- *   }
- * }
+ * { "vector": { "1.4.0": { "url": "vector-1.4.0.zip", "sha256": "9f86d0..." } } }
  * </pre>
  *
- * <p>{@code url} può essere relativo alla base o assoluto. {@code sha256} è <b>obbligatorio</b>: un
- * archivio che arriva dalla rete e viene scompattato senza controllo è codice arbitrario che gira su
- * un server, e "il registry è nostro" non è una garanzia di integrità — chiunque stia in mezzo alla
- * connessione può sostituirlo.
+ * <p>{@code url} e' relativo alla base o assoluto. {@code sha256} e' <b>obbligatorio</b>: un archivio
+ * scompattato senza controllo e' codice arbitrario su un server, e chiunque stia in mezzo alla
+ * connessione puo' sostituirlo.
  *
- * <h2>Cache</h2>
- *
- * <p>Ogni versione viene scaricata una volta sola e scompattata sotto
- * {@code <cache>/<nome>/<versione>/}. Le volte successive si usa quella copia senza toccare la rete:
- * un server che riavvia non deve rifare venti download, e uno senza connessione deve poter comunque
- * caricare le app che ha già.
+ * <p>Ogni versione si scarica una volta e resta sotto {@code <cache>/<nome>/<versione>/}: un riavvio
+ * non rifa' venti download, e un server senza connessione carica lo stesso le app che ha gia'.
  */
 public final class HttpRegistry implements PackRegistry
 {

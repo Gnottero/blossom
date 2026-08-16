@@ -2,7 +2,7 @@
   "name": "blossom",
   "displayName": "Blossom",
   "description": "Support for the Blossom language: highlighting, completion on the real API, preamble and import errors.",
-  "version": "0.1.2",
+  "version": "0.3.0",
   "publisher": "gnottero",
   "license": "MIT",
   "engines": {
@@ -25,7 +25,9 @@
   },
   "main": "./src/extension.js",
   "activationEvents": [
-    "onLanguage:blossom"
+    "onLanguage:blossom",
+    "onView:blossomApi",
+    "onCommand:blossom.openApiDocs"
   ],
   "contributes": {
     "languages": [
@@ -62,6 +64,10 @@
       {
         "fileMatch": "blossom.json",
         "url": "./schemas/blossom.schema.json"
+      },
+      {
+        "fileMatch": "blossomscript.json",
+        "url": "./schemas/blossomscript.schema.json"
       }
     ],
     "commands": [
@@ -72,8 +78,31 @@
       {
         "command": "blossom.copyRunCommand",
         "title": "Blossom: copy the load command of the app"
+      },
+      {
+        "command": "blossom.openApiDocs",
+        "title": "Blossom: browse the API",
+        "icon": "$(book)"
       }
     ],
+    "views": {
+      "explorer": [
+        {
+          "id": "blossomApi",
+          "name": "Blossom API",
+          "icon": "$(book)"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "blossom.openApiDocs",
+          "when": "view == blossomApi",
+          "group": "navigation"
+        }
+      ]
+    },
     "configuration": {
       "title": "Blossom",
       "properties": {

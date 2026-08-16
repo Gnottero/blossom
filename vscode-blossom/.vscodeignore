@@ -1,4 +1,6 @@
 test/**
 tools/**
+data/handbook/**
 .vscode/**
 **/.gitignore
+*.vsix

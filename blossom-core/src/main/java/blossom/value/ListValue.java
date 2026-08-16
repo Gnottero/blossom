@@ -5,17 +5,14 @@ import blossom.exception.SourcePosition;
 import blossom.exception.TypeMismatchError;
 import blossom.interpreter.LazyValue;
 import blossom.exception.IndexOutOfBoundsError;
-import blossom.exception.InternalExpressionException;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -29,7 +26,7 @@ import static java.lang.Math.abs;
 public class ListValue extends AbstractListValue implements ContainerValueInterface, Guardable
 {
     protected final List<Value> items;
-    // null unless this list became reachable from a shared global, see ValueGuard
+    /** null unless this list became reachable from a shared global, see ValueGuard */
     private volatile @Nullable ValueGuard guard = null;
 
     @Override
@@ -62,8 +59,10 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
         return items;
     }
 
-    // an element stored into a guarded list has to be guarded too, or mutating it through the
-    // list would race even though the list itself is protected
+    /**
+     * an element stored into a guarded list has to be guarded too, or mutating it through the
+     * list would race even though the list itself is protected
+     */
     private void adopt(Value value)
     {
         ValueGuard current = guard;
@@ -244,11 +243,6 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
             }
             return output;
         });
-    }
-
-    public void subtractFrom(Value v) // if I ever do -= then it wouod remove items
-    {
-        throw new UnsupportedOperationException(); // TODO
     }
 
 

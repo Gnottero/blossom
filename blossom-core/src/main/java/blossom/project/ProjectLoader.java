@@ -46,11 +46,6 @@ public final class ProjectLoader
         {
             return new ArrayList<>(modules.values());
         }
-
-        public ModuleUnit entryModule()
-        {
-            return modules.get(entrypoint);
-        }
     }
 
     /**

@@ -7,7 +7,6 @@ import blossom.interpreter.Expression;
 import blossom.interpreter.Token;
 import blossom.exception.ExitStatement;
 import blossom.exception.ExpressionException;
-import blossom.exception.InternalExpressionException;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -24,7 +23,7 @@ public class ThreadValue extends LazyListValue
 {
     private final CompletableFuture<Value> taskFuture;
     private final long id;
-    // tasks are started from any thread, and a plain increment would hand two of them the same id
+    /** tasks are started from any thread, and a plain increment would hand two of them the same id */
     private static final AtomicLong sequence = new AtomicLong(0L);
     private final Deque<Value> coState = new ArrayDeque<>();
     private final AtomicReference<Value> coLock = new AtomicReference<>(Value.EOL);

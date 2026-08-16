@@ -10,7 +10,6 @@ import blossom.value.Value;
 import blossom.exception.InternalExpressionException;
 import blossom.exception.ThrowStatement;
 import blossom.exception.Throwables;
-import com.gnottero.blossom.access.Vanilla;
 import com.gnottero.blossom.util.Colors;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -18,7 +17,6 @@ import net.minecraft.advancements.predicates.MinMaxBounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.HolderSet;
-import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.particles.ParticleOptions;
@@ -41,9 +39,7 @@ import net.minecraft.world.entity.ai.memory.WalkTarget;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.pattern.BlockInWorld;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
@@ -64,7 +60,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Predicate;
 import java.util.stream.StreamSupport;
 
 import org.jspecify.annotations.Nullable;
@@ -460,24 +455,6 @@ public class ValueConversions
         // chest itself on the donkey is wierd - use NBT to alter that.
         //hashMap.put("horse.chest", 499);
     }};
-
-    public static Value ofVanillaSlotResult(int itemSlot)
-    {
-        SlotParam ret = slotIdsToSlotParams.get(itemSlot);
-        return ret == null ? ListValue.of(Value.NULL, new NumericValue(itemSlot)) : ret.build();
-    }
-
-    public static Value ofBlockPredicate(RegistryAccess registryAccess, Predicate<BlockInWorld> blockPredicate)
-    {
-        Vanilla.BlockPredicatePayload payload = Vanilla.BlockPredicatePayload.of(blockPredicate);
-        Registry<Block> blocks = registryAccess.lookupOrThrow(Registries.BLOCK);
-        return ListValue.of(
-                payload.state() == null ? Value.NULL : of(blocks.getKey(payload.state().getBlock())),
-                payload.tagKey() == null ? Value.NULL : of(blocks.get(payload.tagKey()).get().key()),
-                MapValue.wrap(payload.properties()),
-                payload.tag() == null ? Value.NULL : new NBTSerializableValue(payload.tag())
-        );
-    }
 
     public static ItemStack getItemStackFromValue(Value value, boolean withCount, RegistryAccess regs)
     {

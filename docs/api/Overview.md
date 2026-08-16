@@ -17,6 +17,7 @@ import "core.list" as list;
 | [`core.json`](core.json.md) | conversion to and from json |
 | [`core.task`](core.task.md) | concurrency, waiting, critical sections |
 | [`core.io`](core.io.md) | the disk outside the folder of the app, inside declared roots |
+| [`core.http`](core.http.md) | http requests towards declared hosts |
 | [`core.system`](core.system.md) | time, introspection, measurement |
 
 ## The Minecraft layer

@@ -73,9 +73,4 @@ public final class ModuleSymbols
     {
         return Boolean.TRUE.equals(bindings.get(name));
     }
-
-    public Set<String> bindingNames()
-    {
-        return bindings.keySet();
-    }
 }

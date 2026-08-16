@@ -12,7 +12,6 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -54,7 +53,7 @@ public class BlockValue extends Value implements Nbt.Serializable
     private final ServerLevel world;
     private CompoundTag data;
 
-    // we only care for null values a few times, most of the time we would assume its all present
+    /** we only care for null values a few times, most of the time we would assume its all present */
     public static final BlockValue NONE = new BlockValue(Blocks.AIR.defaultBlockState(), null, BlockPos.ZERO, null);
 
     public static BlockValue fromCoords(ScriptContext c, int x, int y, int z)
@@ -63,8 +62,10 @@ public class BlockValue extends Value implements Nbt.Serializable
         return new BlockValue(null, c.level(), pos);
     }
 
-    // reachable from any app thread, hence concurrent: a plain hash map can be corrupted, and in
-    // the worst case spin forever, when two threads parse an unseen block at the same time
+    /**
+     * reachable from any app thread, hence concurrent: a plain hash map can be corrupted, and in
+     * the worst case spin forever, when two threads parse an unseen block at the same time
+     */
     private static final Map<String, BlockValue> bvCache = new ConcurrentHashMap<>();
 
     public static BlockValue fromString(String str, ServerLevel level)

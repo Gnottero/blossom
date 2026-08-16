@@ -8,27 +8,21 @@ import java.util.List;
 import java.util.stream.Stream;
 
 /**
- * Un registry che è una cartella: {@code <radice>/<nome>/<versione>/}, e dentro un progetto normale.
+ * Un registry che e' una cartella: {@code <radice>/<nome>/<versione>/}, e dentro un progetto normale.
  *
  * <pre>
  * registry/
  * ├── vector/
- * │   ├── 1.0.0/
- * │   │   ├── blossom.json
- * │   │   └── src/
+ * │   ├── 1.0.0/   (blossom.json, src/)
  * │   └── 1.4.0/
- * └── torre/
- *     └── 2.1.0/
+ * └── torre/2.1.0/
  * </pre>
  *
- * <p>Non è un ripiego per i test. È la forma che serve a un amministratore che tiene le proprie
- * librerie su una cartella condivisa, o su un disco di rete montato: nessun server da mantenere,
- * nessuna porta aperta, e il contenuto si ispeziona con {@code ls}. Il registry su http serve quando
- * i pack vengono da fuori, che è un caso diverso e più raro di quanto sembri.
- *
- * <p>Non scarica niente, quindi {@link #fetch} restituisce direttamente la cartella pubblicata.
- * Il lock ne registra comunque l'impronta: una cartella condivisa la può cambiare anche qualcun
- * altro.
+ * <p>Non e' un ripiego per i test: e' la forma per chi tiene le proprie librerie su una cartella
+ * condivisa o un disco di rete - nessun server da mantenere, nessuna porta aperta, contenuto
+ * ispezionabile con {@code ls}. Non scarica niente, quindi {@link #fetch} restituisce la cartella
+ * pubblicata; il lock ne registra comunque l'impronta, perche' una cartella condivisa la puo'
+ * cambiare anche qualcun altro.
  */
 public record DirectoryRegistry(Path root) implements PackRegistry
 {

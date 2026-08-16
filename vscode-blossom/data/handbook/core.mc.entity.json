@@ -1,0 +1,113 @@
+{
+  "$alias": "entity",
+
+  "player": {
+    "signatures": ["player()", "player(name)", "player(category)"],
+    "summary": "The player running the script, one by name, or the list of those in a category.",
+    "params": [["name", "the name of a player, or a category: `'all'`, `'survival'`, `'creative'`, `'spectating'`, `'!spectating'`"]],
+    "returns": "`entity` for a single player, `list` for a category, `null` when nobody matches.",
+    "examples": ["entity.player();               // whoever launched the script", "entity.player('ada');          // by name", "entity.player('all');          // every connected player", "for(entity.player('all'), text.print(_, 'hello'));"]
+  },
+  "entity_list": {
+    "signatures": ["entity_list(type)"],
+    "summary": "Every entity of a type in the loaded world.",
+    "params": [["type", "a type such as `'zombie'`, `'*'` for all of them, `'!player'` for everything but players"]],
+    "returns": "`list` — the entities found.",
+    "examples": ["entity.entity_list('zombie');      // every zombie loaded", "length(entity.entity_list('*'));   // how many entities there are"],
+    "note": "It walks over the whole loaded world: on a busy server this is not free, and `entity_area` is almost always the question you actually meant."
+  },
+  "entity_area": {
+    "signatures": ["entity_area(type, centre, radius)"],
+    "summary": "The entities of a type inside a box around a point.",
+    "params": [["type", "the type, `'*'` for all of them"], ["centre", "the middle of the box"], ["radius", "how far on the three axes, one number or a triple"]],
+    "returns": "`list` — the entities inside the box.",
+    "examples": ["entity.entity_area('*', block.pos(player), 10);", "entity.entity_area('item', pos, [5, 2, 5]);"]
+  },
+  "entity_selector": {
+    "signatures": ["entity_selector(selector)"],
+    "summary": "The entities a vanilla selector would pick.",
+    "params": [["selector", "the selector, as `'@e[type=cow,distance=..10]'`"]],
+    "returns": "`list` — the entities matched.",
+    "examples": ["entity.entity_selector('@e[type=cow,distance=..10]');", "entity.entity_selector('@a[tag=playing]');"]
+  },
+  "entity_id": {
+    "signatures": ["entity_id(id)", "entity_id(uuid)"],
+    "summary": "An entity from its numeric id or from its uuid.",
+    "params": [["id", "the numeric id of the entity, or its uuid as a string"]],
+    "returns": "`entity` — the entity, `null` when it is not loaded.",
+    "examples": ["entity.entity_id(1234);", "entity.entity_id('069a79f4-44e9-4726-a5be-fca90e38aaf5');"],
+    "note": "The numeric id only lives as long as the entity is loaded; the uuid follows it across restarts."
+  },
+  "entity_types": {
+    "signatures": ["entity_types()", "entity_types(type)"],
+    "summary": "The registered entity types, or the ones of a category.",
+    "params": [["type", "optional: a category such as `'monster'`, `'creature'`, `'*'`"]],
+    "returns": "`list` — the names of the types.",
+    "examples": ["entity.entity_types();             // every type", "entity.entity_types('monster');    // ['minecraft:zombie', ...]"]
+  },
+
+  "query": {
+    "signatures": ["query(entity, what)", "query(entity, what, ...arguments)"],
+    "summary": "Reads an attribute of an entity.",
+    "params": [["entity", "the entity to ask"], ["what", "the attribute: `'pos'`, `'x'`, `'y'`, `'z'`, `'motion'`, `'name'`, `'uuid'`, `'health'`, `'food'`, `'air'`, `'on_ground'`, `'sneaking'`, `'sprinting'`, `'gamemode'`, `'holds'`, `'inventory'`, `'effect'`, `'nbt'`, `'dimension'`, `'target'`, `'brain'`, `'look'`, `'facing'`, `'age'`, `'fire'`, and others"], ["...arguments", "what some attributes need: `query(e, 'holds', 'offhand')`"]],
+    "returns": "the value of the attribute, `null` when the entity does not have it.",
+    "examples": ["entity.query(player, 'health');            // 20", "entity.query(player, 'pos');               // [10.5, 64.0, -3.2]", "entity.query(player, 'holds', 'mainhand'); // ['diamond_sword', 1, {}]", "entity.query(e, 'nbt');                    // everything else"],
+    "note": "`query(entity, 'nbt')` is the way out when a script needs something the curated attributes do not cover."
+  },
+  "modify": {
+    "signatures": ["modify(entity, what, ...value)"],
+    "summary": "Writes an attribute of an entity.",
+    "params": [["entity", "the entity to change"], ["what", "the attribute: `'pos'`, `'motion'`, `'motion_x'`, `'custom_name'`, `'health'`, `'food'`, `'air'`, `'gamemode'`, `'nbt'`, `'nbt_merge'`, `'effect'`, `'persistence'`, `'jump'`, `'kill'`, `'mount'`, `'dismount'`, `'tag'`, `'fire'`, `'silent'`, `'gravity'`, `'invulnerable'`, and others"], ["...value", "what to write; some attributes take several values"]],
+    "returns": "the entity, so calls can be chained.",
+    "examples": ["entity.modify(e, 'motion', [0, 1, 0]);        // a push upwards", "entity.modify(e, 'health', 20);", "entity.modify(e, 'custom_name', 'Bob');", "entity.modify(e, 'effect', 'speed', 200, 1);"]
+  },
+  "spawn": {
+    "signatures": ["spawn(type, pos)", "spawn(type, pos, nbt)"],
+    "summary": "Creates an entity at a point.",
+    "params": [["type", "the type to create, as `'zombie'`"], ["pos", "where to put it"], ["nbt", "optional: the same data a `/summon` would take"]],
+    "returns": "`entity` — the entity created, `null` when it could not be.",
+    "examples": ["entity.spawn('zombie', [0, 64, 0]);", "entity.spawn('armor_stand', pos, '{Invisible:1b, NoGravity:1b}');"]
+  },
+
+  "entity_event": {
+    "signatures": ["entity_event(entity, event, function)", "entity_event(entity, event, function, ...fixed_arguments)"],
+    "summary": "Attaches a handler to *that* entity alone.",
+    "params": [["entity", "the entity to watch"], ["event", "`'on_tick'`, `'on_removed'`, `'on_death'`, `'on_damage'`, `'on_move'`"], ["function", "the handler, as a value; `null` removes it"], ["...fixed_arguments", "extra arguments, arriving after the ones of the event"]],
+    "returns": "`null`.",
+    "examples": ["fn watch(e) -> if(entity.query(e, 'y') < 0, entity.modify(e, 'kill'));\nentity.entity_event(mob, 'on_tick', watch);", "entity.entity_event(mob, 'on_tick', null);   // removed"],
+    "note": "The handler lives inside the entity: it follows it between worlds and disappears with it. The first argument is always the entity itself, and the number of arguments is checked at once, not at the first event."
+  },
+
+  "create_marker": {
+    "signatures": ["create_marker(name, pos)", "create_marker(name, pos, block)", "create_marker(name, pos, block, tag)"],
+    "summary": "Puts a visible marker in the world, to see what a script is computing.",
+    "params": [["name", "the text shown, `null` for none"], ["pos", "where to put it"], ["block", "optional: a block to show on the marker"], ["tag", "optional: a tag, to find it again later"]],
+    "returns": "`entity` — the marker created.",
+    "examples": ["entity.create_marker('start', [0, 64, 0]);", "entity.create_marker(null, pos, 'redstone_block');"]
+  },
+  "remove_all_markers": {
+    "signatures": ["remove_all_markers()"],
+    "summary": "Removes every marker this app has created.",
+    "params": [],
+    "returns": "`num` — how many were removed.",
+    "examples": ["entity.remove_all_markers();   // 12"]
+  },
+
+  "entity_load_handler": {
+    "signatures": ["entity_load_handler(types, function)"],
+    "summary": "Calls a function every time an entity of one of those types appears in the world.",
+    "params": [["types", "a type, a list of types, or `null` for all of them"], ["function", "called as `function(entity)`; `null` removes the handler"]],
+    "returns": "`null`.",
+    "examples": ["fn on_undead(e) -> entity.modify(e, 'custom_name', 'nope');\nentity.entity_load_handler(['zombie', 'skeleton'], on_undead);"],
+    "note": "The filter by type happens **before** the call: listening for a rare type costs nothing for every other entity appearing in the world. The unfiltered version is the `entity_loads` event in `core.mc.event`."
+  },
+
+  "has_client": {
+    "signatures": ["has_client(player)"],
+    "summary": "Whether that player has Blossom installed on the client too.",
+    "params": [["player", "the player to ask about"]],
+    "returns": "`bool` — whether they will see real shapes instead of particles.",
+    "examples": ["if(entity.has_client(player),\n    shape.draw_shape('label', 100, {'pos' -> pos, 'text' -> 'here'}),\n    text.print(player, 'here: ' + pos)\n);"],
+    "note": "It is not needed to draw: `draw_shape` decides on its own, player by player. It is for offering something different to those who have the client."
+  }
+}

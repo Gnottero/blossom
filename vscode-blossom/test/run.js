@@ -20,7 +20,9 @@ require.cache[require.resolve('./vscode-stub')] = { id: 'vscode', exports: stub,
 const api = require('../src/api');
 const analyzer = require('../src/analyzer');
 const providers = require('../src/providers');
+const docview = require('../src/docview');
 const diagnostics = require('../src/diagnostics');
+const codeactions = require('../src/codeactions');
 
 let failures = 0;
 function test(name, body) {
@@ -94,6 +96,45 @@ test('events carry name, arity and parameters', () => {
     assert.deepStrictEqual(event.params, ['player']);
     assert.strictEqual(event.arity, 1);
     assert.ok(api.eventInfo('bell_rings').cancellable);
+});
+
+test('every symbol is documented, with a real signature and at least one example', () => {
+    const bad = [];
+    const check = (label, info) => {
+        const name = label.split('.').pop();
+        if (!info.doc) bad.push(label + ': no description');
+        if (info.signatures.includes(name + '(...)')) bad.push(label + ': no real signature');
+        if (!info.examples || !info.examples.length) bad.push(label + ': no example');
+        if (!info.returns) bad.push(label + ': no return value');
+        // a function taking no arguments has no parameters to describe: only the others must
+        const takesArguments = info.signatures.some((s) => !/\(\s*\)$/.test(s));
+        if (takesArguments && (!info.params || !info.params.length)) bad.push(label + ': no parameters');
+    };
+    for (const moduleName of api.moduleNames()) {
+        for (const symbol of api.symbolsOf(moduleName)) {
+            check(moduleName + '.' + symbol, api.symbolInfo(moduleName, symbol));
+        }
+    }
+    for (const name of api.prelude()) {
+        const info = api.preludeInfo(name);
+        assert.ok(info, 'prelude.' + name + ': not documented');
+        check('prelude.' + name, info);
+    }
+    assert.deepStrictEqual(bad, []);
+});
+
+test('the examples call the symbol they document', () => {
+    const bad = [];
+    for (const moduleName of api.moduleNames()) {
+        const alias = api.moduleOf(moduleName).alias;
+        for (const symbol of api.symbolsOf(moduleName)) {
+            const info = api.symbolInfo(moduleName, symbol);
+            const call = new RegExp('(^|[^\\w.])' + symbol + '\\s*\\(');
+            const shown = info.examples.some((e) => call.test(e) || e.includes(alias + '.' + symbol));
+            if (!shown) bad.push(moduleName + '.' + symbol);
+        }
+    }
+    assert.deepStrictEqual(bad, []);
 });
 
 test('the fuzzy suggestion finds the near name and stays quiet on far ones', () => {
@@ -219,6 +260,48 @@ test('an alias named only in a comment or a string counts as unused', () => {
     assert.ok(found.includes('unused-import'));
 });
 
+test('one quick fix removes every unused import at once', () => {
+    const doc = document(
+        'module a;\nimport "core.math" as math;\nimport "core.list" as list;\nimport "core.map" as map;\nfn f() -> map.keys({});\n'
+    );
+    const found = diagnostics.analyzeDocument(doc).filter((d) => d.code === 'unused-import');
+    assert.strictEqual(found.length, 2);
+
+    const actions = codeactions.provider.provideCodeActions(doc, found[0].range, { diagnostics: found });
+    const all = actions.find((a) => a.title === 'Remove all 2 unused imports' && a.kind === 'QuickFix');
+    assert.ok(all, 'the fix for every unused import is missing');
+    assert.strictEqual(all.edit.edits.length, 2);
+    assert.deepStrictEqual(all.edit.edits.map((e) => e.range.start.line), [1, 2]);
+    assert.deepStrictEqual(all.edit.edits.map((e) => e.range.end.line), [2, 3]);
+    assert.strictEqual(all.diagnostics.length, 2);
+
+    // the same removal is offered as a fix-all source action, for `source.fixAll` on save
+    const fixAll = actions.find((a) => a.kind === 'SourceFixAll');
+    assert.ok(fixAll, 'the source.fixAll action is missing');
+    assert.strictEqual(fixAll.edit.edits.length, 2);
+
+    // the per-import fix stays: fixing only the one under the cursor is still possible
+    assert.strictEqual(actions.filter((a) => a.title === 'Remove the unused import').length, 2);
+});
+
+test('a single unused import gets no "remove all" quick fix', () => {
+    const doc = document('module a;\nimport "core.math" as math;\nfn f() -> 1;\n');
+    const found = diagnostics.analyzeDocument(doc).filter((d) => d.code === 'unused-import');
+    const actions = codeactions.provider.provideCodeActions(doc, found[0].range, { diagnostics: found });
+    assert.ok(!actions.some((a) => /^Remove all/.test(a.title) && a.kind === 'QuickFix'));
+    assert.ok(actions.some((a) => a.kind === 'SourceFixAll'));
+});
+
+test('the fix-all source action is offered even without diagnostics in context', () => {
+    const doc = document('module a;\nimport "core.math" as math;\nfn f() -> 1;\n');
+    const actions = codeactions.provider.provideCodeActions(doc, null, {
+        diagnostics: [],
+        only: stub.CodeActionKind.SourceFixAll
+    });
+    assert.strictEqual(actions.length, 1);
+    assert.strictEqual(actions[0].kind, 'SourceFixAll');
+});
+
 test('an alias passed around as a value is used', () => {
     const found = codes('module a;\nimport "core.math" as math;\nfn f(g) -> g(1);\nfn h() -> f(math);\n');
     assert.ok(!found.includes('unused-import'));
@@ -263,11 +346,88 @@ test('completion inside an import lists the modules', () => {
     assert.ok(list.some((item) => item.label === 'core.mc.entity'));
 });
 
+test('hovering a library symbol shows parameters, return value and an example', () => {
+    const doc = document('module a;\nimport "core.math" as math;\nmath.sqrt(16);\n');
+    const card = requireHover(doc, new stub.Position(2, 7)).contents.value;
+    assert.ok(/```blossom\nsqrt\(x\)\n```/.test(card), 'no signature');
+    assert.ok(card.includes('**Parameters**') && card.includes('`x`'), 'no parameters');
+    assert.ok(card.includes('**Returns**'), 'no return value');
+    assert.ok(card.includes('**Example') && card.includes('math.sqrt(16)'), 'no example');
+    assert.ok(card.includes('`core.math`'), 'no module');
+});
+
+test('hovering a function of the prelude works without an import', () => {
+    const doc = document('module a;\nfn f() -> loop(3, print(_));\n');
+    const card = requireHover(doc, new stub.Position(1, 12)).contents.value;
+    assert.ok(card.includes('loop(times, expression)'), 'no signature');
+    assert.ok(card.includes('**Example'), 'no example');
+    assert.ok(card.includes('no import needed'), 'not marked as prelude');
+});
+
+test('hovering a constant of the language says what it is', () => {
+    const doc = document('module a;\nlet x = pi;\n');
+    const card = requireHover(doc, new stub.Position(1, 9)).contents.value;
+    assert.ok(card.includes('3.141592653589793'));
+});
+
+test('hovering an event shows the handler to write', () => {
+    const doc = document("module a;\nimport \"core.mc.event\" as event;\nevent.on('player_jumps', f);\n");
+    const card = requireHover(doc, new stub.Position(2, 12)).contents.value;
+    assert.ok(card.includes('fn handle_player_jumps(player)'), 'no handler');
+    assert.ok(card.includes("event.on('player_jumps'"), 'no registration');
+});
+
 test('the call containing the cursor is recognised', () => {
     const text = 'module a;\nimport "core.math" as math;\nmath.max(1, 2';
     const call = providers.enclosingCall(analyzer.mask(text), text.length);
     assert.deepStrictEqual(call, { alias: 'math', name: 'max', argument: 1 });
 });
+
+test('the api viewer has a page per module, with every function on it', () => {
+    const data = api.load();
+    const page = docview.renderPage(data, 'core.io', 'nonce');
+    for (const moduleName of Object.keys(data.modules)) {
+        assert.ok(page.includes('id="module-' + moduleName + '"'), 'no page for ' + moduleName);
+    }
+    for (const symbol of Object.keys(data.modules['core.io'].symbols)) {
+        assert.ok(page.includes('data-name="' + symbol + '"'), 'no card for io.' + symbol);
+    }
+    assert.ok(page.includes('import "core.io" as io;'), 'no import line');
+    assert.ok(page.includes('id="module-events"'), 'no events page');
+    assert.ok(page.includes('id="module-prelude"'), 'no prelude page');
+});
+
+test('the api viewer writes calls the way they are typed, with the alias', () => {
+    const page = docview.modulePage('core.http', api.load().modules['core.http']);
+    assert.ok(page.includes('http.get(url)'), 'signature without the alias');
+    assert.ok(!/&lt;script/.test(page), 'unescaped markup');
+});
+
+test('the api tree lists the modules and their functions', () => {
+    const tree = new docview.ApiTree();
+    const modules = tree.getChildren();
+    assert.ok(modules.some((entry) => entry.module === 'core.http'), 'core.http is not in the tree');
+    const symbols = tree.getChildren({ module: 'core.http' });
+    assert.deepStrictEqual(symbols[0], { module: 'core.http', symbol: 'decode_url' });
+    const item = tree.getTreeItem(symbols[0]);
+    assert.strictEqual(item.command.command, 'blossom.openApiDocs');
+    assert.deepStrictEqual(item.command.arguments, ['core.http', 'decode_url']);
+});
+
+/** The hover provider, reached the same way as the completion one. */
+function requireHover(doc, position) {
+    let captured = null;
+    const original = stub.languages.registerHoverProvider;
+    stub.languages.registerHoverProvider = (selector, provider) => {
+        captured = provider;
+        return { dispose() {} };
+    };
+    providers.register({ subscriptions: [] });
+    stub.languages.registerHoverProvider = original;
+    const hover = captured.provideHover(doc, position);
+    assert.ok(hover, 'no hover here');
+    return hover;
+}
 
 /** The completion provider is internal to its module: it is reached by registering it on a stub. */
 function requireCompletion(doc, position) {

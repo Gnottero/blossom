@@ -12,29 +12,17 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
- * Una riga di testo che resta sopra la hotbar finché lo script non la cambia.
+ * Una riga di testo che resta sopra la hotbar finche' lo script non la cambia.
  *
- * <h2>Perché la action bar e non un pacchetto proprio</h2>
+ * <p>Il gioco non ha un pacchetto che dica "tieni questo testo li'": titolo e action bar svaniscono.
+ * Rimandare la action bar prima che sfumi da' lo stesso risultato su qualunque client, vanilla
+ * compreso - si perde la liberta' di posizionare il testo, si guadagna che funziona per tutti. Il
+ * limite dichiarato e' che la riga e' una sola.
  *
- * <p>Il gioco non ha nessun pacchetto che dica "tieni questo testo lì": il titolo e la action bar
- * hanno una durata e poi svaniscono. Una HUD vera richiederebbe quindi un pacchetto nostro e del
- * codice che disegni sul client - cioè funzionerebbe solo per chi ha il mod installato.
- *
- * <p>Rimandare la action bar prima che svanisca dà lo stesso risultato <em>su qualunque client</em>,
- * vanilla compreso. È il compromesso giusto: si perde la libertà di posizionare il testo dove si
- * vuole, si guadagna che funziona per tutti senza installare niente. Il limite vero è che la riga è
- * una sola, ed è dichiarato.
- *
- * <h2>Ogni quanto</h2>
- *
- * <p>Non ad ogni tick. La action bar usa i tempi dei titoli, che per default tengono il testo 70
- * tick prima di sfumare: rimandarlo ogni {@link #REFRESH_TICKS} basta perché non svanisca mai, e
- * costa venti volte meno di un pacchetto per tick. La soglia è tenuta bassa apposta rispetto ai 70
- * perché uno script può accorciare i tempi dei titoli con {@code display_title}, e la HUD non deve
- * cominciare a lampeggiare per quello.
- *
- * <p>Un cambio di testo invece parte subito: chi scrive {@code hud(p, contatore)} si aspetta di
- * vedere il numero nuovo adesso, non entro mezzo secondo.
+ * <p>Il rinvio e' ogni {@link #REFRESH_TICKS} tick e non ad ogni tick: la action bar usa i tempi dei
+ * titoli, che tengono il testo 70 tick. La soglia sta bassa apposta perche' uno script puo'
+ * accorciare quei tempi con {@code display_title}, e la HUD non deve lampeggiare per questo. Un
+ * cambio di testo invece parte subito.
  */
 public final class HudBoard
 {

@@ -5,7 +5,6 @@ import blossom.exception.BlossomRuntimeError;
 import blossom.interpreter.Context;
 import blossom.interpreter.Expression;
 import blossom.interpreter.LazyValue;
-import blossom.exception.InternalExpressionException;
 import blossom.value.AbstractListValue;
 import blossom.value.BooleanValue;
 import blossom.value.ContainerValueInterface;

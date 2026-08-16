@@ -1,6 +1,5 @@
 package com.gnottero.blossom.argument;
 
-import blossom.interpreter.argument.Argument;
 
 import com.gnottero.blossom.ScriptRuntime;
 import blossom.interpreter.Context;
@@ -502,7 +501,7 @@ public class FileArgument
         }
     }
 
-    //copied private method from net.minecraft.nbt.NbtIo.write() and client method safe_write
+    /** copied private method from net.minecraft.nbt.NbtIo.write() and client method safe_write */
     public static boolean writeTagDisk(Tag tag, Path path, boolean zipped)
     {
         Path original = path;

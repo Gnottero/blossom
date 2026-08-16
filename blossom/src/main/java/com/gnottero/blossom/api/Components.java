@@ -32,21 +32,15 @@ import blossom.value.Value;
 /**
  * I data component di un oggetto (voci SC-1 e SC-2 dell'inventario).
  *
- * <p>Dalla 1.20.5 un oggetto non è più "id + un blocco di NBT libero": è un id più una mappa di
- * componenti tipizzati, ognuno con il proprio codec. Leggere quei dati passando dal NBT grezzo
- * funziona ancora per quello che nel NBT c'è, ma non dice quali componenti esistono, non distingue
- * un valore assente da uno uguale al default, e non valida niente quando si scrive.
+ * <p>Dalla 1.20.5 un oggetto e' un id piu' una mappa di componenti tipizzati, ognuno col proprio
+ * codec. Leggerli dal NBT grezzo funziona per quello che nel NBT c'e', ma non dice quali componenti
+ * esistono, non distingue un valore assente da uno uguale al default, e non valida niente in
+ * scrittura. Qui il codec c'e': un valore che non ha senso per quel componente viene rifiutato
+ * invece di produrre un oggetto rotto.
  *
- * <p>Qui il codec c'è: un componente si legge e si scrive come il gioco lo intende, e un valore che
- * non ha senso per quel componente viene rifiutato al momento della scrittura invece di produrre un
- * oggetto rotto.
- *
- * <h2>Il default</h2>
- *
- * <p>Ogni componente ha un valore che l'oggetto ha "di suo" - il danno massimo di un'ascia, la
- * pila massima di una torcia - e uno che quella specifica pila porta. La distinzione serve: senza,
- * non c'è modo di sapere se un'ascia ha davvero un incantesimo o se è quello che tutte le asce di
- * quel tipo hanno.
+ * <p>Di ogni componente si distingue il valore che l'oggetto ha "di suo" - il danno massimo di
+ * un'ascia - da quello che porta quella pila: senza, non c'e' modo di sapere se un incantesimo e'
+ * davvero su quell'ascia o su tutte.
  */
 public final class Components
 {

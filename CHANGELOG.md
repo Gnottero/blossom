@@ -6,12 +6,33 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ### Aggiunto
 
+- **`core.http`**: richieste HTTP verso host dichiarati — `get`, `post`, `request`, `get_json`,
+  `post_json`, `hosts`, `encode_url`, `decode_url`, `encode_query`. Nessun host è raggiungibile
+  finché non è dichiarato in `config/blossomscript.json`, i redirect (spenti per default) ripassano
+  dall'allowlist ad ogni salto, e una richiesta sul thread del server è un errore che dice di
+  metterla in un `task`. Uno stato fuori dai 2xx è una risposta, non un errore; i guasti di rete
+  arrivano come `http_exception`. Documentazione in `docs/api/core.http.md`.
+- Un modulo di libreria può esportare un simbolo con un nome diverso da quello della sua
+  implementazione: `http.get` esiste anche se `get` è già di liste e mappe.
+- La sezione **`watchdog`** in `config/blossomscript.json`: `timeout_ms` e `max_depth` per le app che
+  non dichiarano limiti propri.
+- **`docs/guide/12-configurazione.md`**: tutte le chiavi di `blossomscript.json` in un posto solo,
+  con tipo, default ed effetto.
 - Gli errori che nascono fuori da un comando — handler di evento, chiamate rimandate con `schedule`,
   callback — compaiono **in chat agli operatori** oltre che nel log. Lo stesso errore ripetuto viene
   mostrato una volta ogni cinque secondi, con il conto di quelli soppressi: un handler rotto dentro
   una macchina a pistoni non rende più la chat illeggibile.
 - `"autoload": true` nel manifesto: il pack si carica da solo appena il mondo è aperto, prima che
   venga generato `server_starts`.
+
+### Cambiato
+
+- **Le radici di `core.io` stanno dentro la cartella del mondo.** I loro percorsi si scrivono
+  relativi al mondo; uno assoluto vale solo se punta comunque dentro, altrimenti la radice viene
+  scartata con un avviso nel log. Il confine è ricontrollato dopo aver risolto i link simbolici, così
+  nemmeno una radice che è un link in uscita passa. Una configurazione che puntava fuori dal mondo va
+  riscritta: quelle radici ora non aprono niente.
+
 
 ### Guida ed esempi
 
@@ -23,6 +44,16 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
   mente rompe la build.
 - Due nuovi progetti d'esempio: **`contapassi`** (un file: eventi, HUD, stato su disco) e
   **`vena-viva`** (quattro moduli, task fuori dal tick, sezione critica, evento fra app).
+
+### Rimosso
+
+- `core.mc.world.relight` e `core.mc.world.reset_chunk` **non esistono piu'**: erano dichiarate,
+  documentate e implementate come `return null` — l'implementazione vera era commentata da prima
+  dell'estrazione. Una funzione che non fa quello che dice e' peggio di una che non c'e'.
+- Codice morto: due classi (`GlocalFlag`, `LoadException`), ventisette metodi che nessuno chiamava
+  (avanzi del layer Carpet in `access/Host`, del sistema di import di Scarpet in `ScriptHost`, e
+  alcuni convertitori mai usati), i blocchi di codice commentato rimasti da Scarpet in `WorldTools`,
+  `EntityValue`, `WorldAccess` e `Expression`, e 85 import inutilizzati.
 
 ### Corretto
 

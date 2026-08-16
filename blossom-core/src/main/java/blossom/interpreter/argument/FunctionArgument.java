@@ -5,7 +5,6 @@ import blossom.exception.NullReferenceError;
 import blossom.interpreter.Context;
 import blossom.interpreter.Module;
 import blossom.exception.ArityError;
-import blossom.exception.InternalExpressionException;
 import blossom.exception.SourcePosition;
 import blossom.value.FunctionValue;
 import blossom.value.Value;

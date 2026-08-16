@@ -6,7 +6,6 @@ import blossom.exception.ArityError;
 import blossom.interpreter.Context;
 import blossom.interpreter.Expression;
 import blossom.interpreter.LazyValue;
-import blossom.exception.InternalExpressionException;
 import blossom.utils.PerlinNoiseSampler;
 import blossom.utils.SimplexNoiseSampler;
 import blossom.value.BooleanValue;
@@ -31,7 +30,7 @@ import java.util.regex.PatternSyntaxException;
 public class Sys
 {
     public static final Random randomizer = new Random();
-    // %[argument_index$][flags][width][.precision][t]conversion
+    /** %[argument_index$][flags][width][.precision][t]conversion */
     private static final Pattern formatPattern = Pattern.compile("%(\\d+\\$)?([-#+ 0,(<]*)?(\\d+)?(\\.\\d+)?([tT])?([a-zA-Z%])");
 
     public static void apply(Expression expression)

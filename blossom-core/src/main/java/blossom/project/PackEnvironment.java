@@ -16,7 +16,7 @@ import org.jspecify.annotations.Nullable;
  */
 public interface PackEnvironment
 {
-    /** Nessun pack installato intorno, nessun registry: solo dipendenze a percorso locale. */
+    // Nessun pack installato intorno, nessun registry: solo dipendenze a percorso locale.
     PackEnvironment NONE = new PackEnvironment()
     {
         @Override

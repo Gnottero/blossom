@@ -33,9 +33,7 @@ import net.minecraft.commands.arguments.NbtPathArgument;
 import net.minecraft.commands.arguments.item.ItemInput;
 import net.minecraft.commands.arguments.item.ItemParser;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
-import net.minecraft.core.particles.ItemParticleOption;
 import net.minecraft.nbt.CollectionTag;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.EndTag;
@@ -75,9 +73,11 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
     private Supplier<Tag> nbtSupplier = null;
     private boolean owned = false;
     private static TagParser<Tag> tagParser = TagParser.create(NbtOps.INSTANCE);
-    // null unless this value became reachable from a shared global, see ValueGuard. Even reads
-    // mutate an nbt value - the tag is parsed lazily and copied on first write - so both sides
-    // have to run under it
+    /**
+     * null unless this value became reachable from a shared global, see ValueGuard. Even reads
+     * mutate an nbt value - the tag is parsed lazily and copied on first write - so both sides
+     * have to run under it
+     */
     private volatile @Nullable ValueGuard guard = null;
 
     @Override
@@ -217,7 +217,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         return deepcopy();
     }
 
-    // stolen from HopperBlockEntity, adjusted for threaded operation
+    /** stolen from HopperBlockEntity, adjusted for threaded operation */
     public static Container getInventoryAt(ServerLevel world, BlockPos blockPos)
     {
         Container inventory = null;
@@ -377,8 +377,10 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         }
     }
 
-    // reachable from any app thread, hence concurrent: a plain hash map can be corrupted, and in
-    // the worst case spin forever, when two threads parse an unseen item at the same time
+    /**
+     * reachable from any app thread, hence concurrent: a plain hash map can be corrupted, and in
+     * the worst case spin forever, when two threads parse an unseen item at the same time
+     */
     private static final Map<String, ItemInput> itemCache = new ConcurrentHashMap<>();
 
     public static ItemStack parseItem(String itemString, RegistryAccess regs)
@@ -799,7 +801,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         }
     }
 
-    // concurrent for the same reason as itemCache above
+    /** concurrent for the same reason as itemCache above */
     private static final Map<String, NbtPathArgument.NbtPath> pathCache = new ConcurrentHashMap<>();
 
     private static NbtPathArgument.NbtPath cachePath(String arg)

@@ -7,7 +7,6 @@ import blossom.interpreter.Context;
 import blossom.interpreter.Expression;
 import blossom.interpreter.argument.FunctionArgument;
 import blossom.exception.ExitStatement;
-import blossom.exception.InternalExpressionException;
 import blossom.value.BooleanValue;
 import blossom.value.NumericValue;
 import blossom.value.ThreadValue;

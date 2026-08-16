@@ -67,7 +67,6 @@ import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeMap;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.MoveTowardsRestrictionGoal;
-import net.minecraft.world.entity.ai.memory.ExpirableValue;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.memory.MemorySlot;
 import net.minecraft.world.entity.animal.golem.IronGolem;
@@ -110,7 +109,7 @@ import java.util.stream.Stream;
 
 import static com.gnottero.blossom.value.NBTSerializableValue.nameFromRegistryId;
 
-// TODO: decide whether copy(entity) should duplicate entity in the world.
+/** TODO: decide whether copy(entity) should duplicate entity in the world. */
 public class EntityValue extends Value implements Nbt.Serializable
 {
     private Entity entity;
@@ -125,8 +124,10 @@ public class EntityValue extends Value implements Nbt.Serializable
         return e == null ? Value.NULL : new EntityValue(e);
     }
 
-    // reachable from any app thread, hence concurrent: a plain hash map can be corrupted, and in
-    // the worst case spin forever, when two threads parse an unseen selector at the same time
+    /**
+     * reachable from any app thread, hence concurrent: a plain hash map can be corrupted, and in
+     * the worst case spin forever, when two threads parse an unseen selector at the same time
+     */
     private static final Map<String, EntitySelector> selectorCache = new ConcurrentHashMap<>();
 
     public static Collection<? extends Entity> getEntitiesFromSelector(CommandSourceStack source, String selector)
@@ -638,11 +639,6 @@ public class EntityValue extends Value implements Nbt.Serializable
         put("player_type", (e, a) -> {
             if (e instanceof Player p)
             {
-                String moddedType = Host.isModdedPlayer(p);
-                if (moddedType != null)
-                {
-                    return StringValue.of(moddedType);
-                }
                 MinecraftServer server = p.level().getServer();
                 if (server.isDedicatedServer())
                 {
@@ -664,7 +660,8 @@ public class EntityValue extends Value implements Nbt.Serializable
             return Value.NULL;
         });
 
-        put("client_brand", (e, a) -> e instanceof ServerPlayer sp ? StringValue.of(Host.getPlayerStatus(sp)) : Value.NULL);
+        // Blossom non ha un protocollo di handshake con il client: da qui ogni giocatore e' vanilla
+        put("client_brand", (e, a) -> e instanceof ServerPlayer ? StringValue.of("vanilla") : Value.NULL);
         put("team", (e, a) -> e.getTeam() == null ? Value.NULL : new StringValue(e.getTeam().getName()));
         put("ping", (e, a) -> e instanceof ServerPlayer sp ? new NumericValue(sp.connection.latency()) : Value.NULL);
 
@@ -1050,21 +1047,6 @@ public class EntityValue extends Value implements Nbt.Serializable
             }
         });
 
-        // todo add handling of the source for extra effects
-        /*put("damage", (e, v) -> {
-            float dmgPoints;
-            DamageSource source;
-            if (v instanceof final ListValue lv && lv.getItems().size() > 1)
-            {
-                   List<Value> vals = lv.getItems();
-                   dmgPoints = (float) NumericValue.asNumber(v).getDouble();
-                   source = DamageSource ... yeah...
-            }
-            else
-            {
-
-            }
-        });*/
         put("kill", (e, v) -> e.kill((ServerLevel) e.level()));
         put("location", (e, v) ->
         {
@@ -1305,14 +1287,6 @@ public class EntityValue extends Value implements Nbt.Serializable
                 e.removeTag(v.getString());
             }
         });
-        //put("target", (e, v) -> {
-        //    // attacks indefinitely - might need to do it through tasks
-        //    if (e instanceof MobEntity)
-        //    {
-        //        LivingEntity elb = assertEntityArgType(LivingEntity.class, v);
-        //        ((MobEntity) e).setTarget(elb);
-        //    }
-        //});
         put("breeding_age", (e, v) ->
         {
             if (e instanceof AgeableMob am)

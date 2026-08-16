@@ -66,14 +66,14 @@ public class ScriptRuntime
     {
         this.server = server;
         ScriptHost.mainThread = Thread.currentThread();
+        Path world = server.getWorldPath(LevelResource.ROOT);
         this.config = ServerConfig.read(
                 net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir(),
-                scriptDirectory().resolve(REGISTRY_CACHE_DIRECTORY));
+                world,
+                world.resolve(SCRIPT_DIRECTORY));
         this.registry = config.registry();
+        this.defaultWatchdog = config.watchdog();
     }
-
-    /** dove il registry tiene quello che ha scaricato: dentro il mondo, come tutto il resto */
-    private static final String REGISTRY_CACHE_DIRECTORY = ".cache";
 
     /**
      * Il registry da cui prendere le dipendenze che non stanno già su disco, o {@code null} se su
@@ -85,13 +85,19 @@ public class ScriptRuntime
      */
     public volatile blossom.project.@org.jspecify.annotations.Nullable PackRegistry registry = null;
 
-    /** la configurazione del server: registry e radici di {@code core.io} */
+    /** la configurazione del server: registry, confini di {@code core.io} e {@code core.http}, watchdog */
     private final ServerConfig config;
 
-    /** Le cartelle a cui {@code core.io} puo' arrivare su questo server. */
+    /** Le cartelle del mondo a cui {@code core.io} puo' arrivare su questo server. */
     public blossom.language.IoRoots ioRoots()
     {
         return config.ioRoots();
+    }
+
+    /** Gli host a cui {@code core.http} puo' parlare su questo server. */
+    public blossom.language.HttpAccess httpAccess()
+    {
+        return config.httpAccess();
     }
 
     /** Cosa c'è intorno a un pack: gli altri pack del mondo e, se configurato, il registry. */
@@ -106,10 +112,15 @@ public class ScriptRuntime
         return server;
     }
 
-    /** La cartella degli script del mondo corrente, creata alla prima richiesta. */
+    /**
+     * La cartella degli script, creata alla prima richiesta.
+     *
+     * <p>È {@code <mondo>/blossom/}, a meno che la configurazione del server non dichiari una
+     * {@code root} propria: in quel caso comanda quella (vedi {@link ServerConfig}).
+     */
     public Path scriptDirectory()
     {
-        Path directory = server.getWorldPath(LevelResource.ROOT).resolve(SCRIPT_DIRECTORY);
+        Path directory = config.scriptRoot();
         try
         {
             Files.createDirectories(directory);
@@ -213,7 +224,7 @@ public class ScriptRuntime
                         apps.put(appName, Interpreter.of(host));
                         // i default del server; se il manifesto dichiara i suoi, li sovrascrive subito dopo
                         host.setWatchdog(defaultWatchdog);
-                        applyIoRoots(host);
+                        applyAccess(host);
                         return new ScriptContext(host, source);
                     },
                     packEnvironment(), refreshLock);
@@ -434,14 +445,16 @@ public class ScriptRuntime
         }
         Interpreter interpreter = builder.build();
         interpreter.host().setWatchdog(defaultWatchdog);
-        applyIoRoots(interpreter.host());
+        applyAccess(interpreter.host());
         return interpreter;
     }
 
-    /** Dichiara all'host le cartelle a cui {@code core.io} puo' arrivare su questo server. */
-    private void applyIoRoots(ScriptHost host)
+    /** Dichiara all'host i confini di questo server: cartelle per {@code core.io}, host per {@code core.http}. */
+    private void applyAccess(ScriptHost host)
     {
-        ((blossom.interpreter.BlossomServer) host.scriptServer()).setIoRoots(ioRoots());
+        blossom.interpreter.BlossomServer scriptServer = (blossom.interpreter.BlossomServer) host.scriptServer();
+        scriptServer.setIoRoots(ioRoots());
+        scriptServer.setHttpAccess(httpAccess());
     }
 
     private Value evaluate(Interpreter interpreter, CommandSourceStack source, String code)

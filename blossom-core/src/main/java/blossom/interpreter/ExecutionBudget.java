@@ -4,33 +4,20 @@ import blossom.exception.ExecutionBudgetError;
 import blossom.exception.SourcePosition;
 
 /**
- * Il watchdog: quanto può girare un'esecuzione prima che venga fermata (PIANO_LINGUAGGIO.md §9).
+ * Il watchdog: quanto puo' girare un'esecuzione prima che venga fermata (PIANO_LINGUAGGIO.md §9).
  *
- * <p>Il problema concreto è che il codice gira dentro il tick loop del server: uno script che cicla
- * all'infinito dentro un evento non rallenta l'app, ferma il mondo. Il fork di partenza non aveva
- * nessuna protezione da riportare, quindi questa è disegnata da zero.
+ * <p>Il codice gira dentro il tick loop del server: uno script che cicla dentro un evento non
+ * rallenta l'app, ferma il mondo.
  *
- * <h2>Come conta</h2>
+ * <p>Il contatore viene battuto solo dove l'esecuzione puo' ripetersi all'infinito - iterazioni dei
+ * loop e chiamate a funzione utente - perche' un'espressione senza cicli ne' chiamate e' finita per
+ * costruzione. L'orologio si legge una volta ogni {@link #CLOCK_CHECK_MASK}+1 battute: dentro il
+ * loop stretto di un interprete tree-walking, {@code System.nanoTime()} si vede nel benchmark.
  *
- * <p>Il contatore viene battuto solo dove l'esecuzione può ripetersi all'infinito: le iterazioni dei
- * loop e le chiamate a funzione definita dall'utente. Battere un contatore su ogni singolo nodo
- * dell'albero costerebbe più di quello che protegge, e non servirebbe: un'espressione senza cicli né
- * chiamate è finita per costruzione.
- *
- * <p>L'orologio invece viene letto una volta ogni {@link #CLOCK_CHECK_MASK}+1 battute. {@code
- * System.nanoTime()} costa decine di nanosecondi ed è il tipo di chiamata che, dentro un loop stretto
- * di un interprete tree-walking, si vede nel benchmark; un incremento di un {@code long} no.
- *
- * <h2>Un budget per esecuzione, non per app</h2>
- *
- * <p>Un'istanza misura una singola esecuzione: una chiamata di evento, un comando, il caricamento di
- * un modulo. Vive sul {@link Context} e viene ereditata dai frame figli, quindi il tempo speso in una
- * funzione conta per il budget di chi l'ha chiamata - altrimenti basterebbe spezzare il ciclo
- * infinito in due funzioni per aggirarlo.
- *
- * <p>Un'istanza non è condivisa fra thread: un {@code task()} parte su un thread suo e riceve il
- * proprio budget dalla stessa politica (vedi {@link Policy#start()}), perché un task in background
- * non occupa il tick del server e non ha senso misurarlo insieme a chi l'ha lanciato.
+ * <p>Un'istanza misura una singola esecuzione (un evento, un comando, un caricamento), vive sul
+ * {@link Context} ed e' ereditata dai frame figli - altrimenti basterebbe spezzare il ciclo in due
+ * funzioni per aggirarla. Un {@code task()} riceve invece il proprio budget dalla stessa politica:
+ * gira su un thread suo e non occupa il tick.
  */
 public final class ExecutionBudget
 {
@@ -162,18 +149,6 @@ public final class ExecutionBudget
         if (policy.maxDepth() > 0)
         {
             depth--;
-        }
-    }
-
-    /**
-     * Forza il controllo dell'orologio, senza aspettare la battuta buona: serve dove una singola
-     * operazione può essere lunga da sola, e dove il costo di una lettura in più è irrilevante.
-     */
-    public void checkNow()
-    {
-        if (deadlineNanos != Long.MAX_VALUE && System.nanoTime() > deadlineNanos)
-        {
-            throw timedOut();
         }
     }
 

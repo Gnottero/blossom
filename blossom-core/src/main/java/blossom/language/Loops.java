@@ -7,7 +7,6 @@ import blossom.interpreter.Expression;
 import blossom.interpreter.LazyValue;
 import blossom.exception.BreakStatement;
 import blossom.exception.ContinueStatement;
-import blossom.exception.InternalExpressionException;
 import blossom.value.AbstractListValue;
 import blossom.value.ListValue;
 import blossom.value.NumericValue;

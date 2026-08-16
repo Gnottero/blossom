@@ -6,7 +6,6 @@ import blossom.interpreter.Context;
 import blossom.interpreter.Expression;
 import blossom.interpreter.LazyValue;
 import blossom.exception.ExitStatement;
-import blossom.exception.InternalExpressionException;
 import blossom.exception.ProcessedThrowStatement;
 import blossom.exception.ThrowStatement;
 import blossom.exception.Throwables;

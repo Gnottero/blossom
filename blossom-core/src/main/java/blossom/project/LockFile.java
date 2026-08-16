@@ -21,24 +21,17 @@ import blossom.exception.ParseError;
 import blossom.exception.SourcePosition;
 
 /**
- * {@code blossom.lock}: quale versione esatta è stata scelta l'ultima volta, e con che impronta.
+ * {@code blossom.lock}: quale versione esatta e' stata scelta l'ultima volta, e con che impronta.
  *
- * <p>Serve a una cosa sola, ma importante: un vincolo come {@code ^1.0.0} è una domanda, e la
- * risposta cambia nel tempo. Senza lock, la stessa app caricata su due server nello stesso giorno
- * può prendere due versioni diverse della stessa dipendenza, e la seconda volta che si carica
- * "cambia da sola" senza che nessuno abbia toccato niente. Con il lock, la risposta viene scritta la
- * prima volta e riusata finché qualcuno non chiede esplicitamente di aggiornarla.
+ * <p>Un vincolo come {@code ^1.0.0} e' una domanda, e la risposta cambia nel tempo: senza lock la
+ * stessa app caricata due volte puo' prendere due versioni diverse e "cambiare da sola". Con il
+ * lock la risposta viene scritta la prima volta e riusata finche' qualcuno non chiede di aggiornarla.
  *
- * <h2>Cosa viene bloccato e cosa no</h2>
- *
- * <p>Solo quello che può cambiare senza che l'utente lo veda: le dipendenze prese dal registry
- * (versione e impronta) e quelle a pack installato (la sola versione). Una dipendenza a percorso non
- * viene bloccata: è la cartella accanto, che si sta modificando <em>adesso</em>, e bloccarla
- * significherebbe far fallire il progetto ad ogni salvataggio.
- *
- * <p>L'impronta c'è solo per il registry, perché è l'unico caso in cui il contenuto arriva da fuori.
- * Un archivio scaricato e scompattato senza verificarne l'impronta è codice arbitrario che gira su
- * un server.
+ * <p>Si blocca solo quello che puo' cambiare senza che l'utente lo veda: le dipendenze dal registry
+ * (versione e impronta) e quelle a pack installato (la sola versione). Una dipendenza a percorso e'
+ * la cartella accanto, che si sta modificando adesso, e bloccarla farebbe fallire il progetto ad
+ * ogni salvataggio. L'impronta c'e' solo per il registry, l'unico caso in cui il contenuto arriva
+ * da fuori.
  */
 public record LockFile(Map<String, Entry> dependencies)
 {

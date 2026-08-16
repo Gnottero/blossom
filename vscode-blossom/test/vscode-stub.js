@@ -68,8 +68,9 @@ class SignatureInformation {
 }
 
 class ParameterInformation {
-    constructor(label) {
+    constructor(label, documentation) {
         this.label = label;
+        this.documentation = documentation;
     }
 }
 
@@ -123,6 +124,19 @@ class WorkspaceEdit {
     }
 }
 
+class TreeItem {
+    constructor(label, collapsibleState) {
+        this.label = label;
+        this.collapsibleState = collapsibleState;
+    }
+}
+
+class ThemeIcon {
+    constructor(id) {
+        this.id = id;
+    }
+}
+
 const kinds = new Proxy({}, { get: (_, name) => name });
 
 module.exports = {
@@ -145,6 +159,10 @@ module.exports = {
     CodeAction,
     CodeActionKind: kinds,
     WorkspaceEdit,
+    TreeItem,
+    TreeItemCollapsibleState: { None: 0, Collapsed: 1, Expanded: 2 },
+    ThemeIcon,
+    ViewColumn: { Beside: -2, Active: -1, One: 1 },
     Uri: { file: (p) => ({ fsPath: p, toString: () => 'file://' + p }) },
     languages: {
         createDiagnosticCollection: () => ({ set() {}, delete() {} }),
@@ -164,6 +182,14 @@ module.exports = {
         textDocuments: []
     },
     commands: { registerCommand: () => ({ dispose() {} }) },
-    window: {},
+    window: {
+        registerTreeDataProvider: () => ({ dispose() {} }),
+        createWebviewPanel: () => ({
+            webview: { html: '', postMessage() {} },
+            reveal() {},
+            onDidDispose() {},
+            dispose() {}
+        })
+    },
     env: {}
 };

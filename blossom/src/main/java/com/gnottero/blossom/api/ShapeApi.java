@@ -42,16 +42,10 @@ import blossom.value.Value;
  * shape.draw_shape('box', 100, {'from' -&gt; [0, 64, 0], 'to' -&gt; [8, 70, 8], 'color' -&gt; 'red'});
  * </pre>
  *
- * <p>Il mod resta server-side. Chi ha Blossom anche sul client vede il disegno vero; chi gioca
- * vanilla vede la stessa geometria disegnata a particelle, che il server sa mandare a chiunque.
- * Nessuna funzione smette di funzionare per chi non ha installato niente, e chi scrive lo script non
- * deve sapere chi ha cosa.
- *
- * <h2>Le attribute</h2>
- *
- * <p>Sono quelle di Scarpet, con gli stessi nomi e gli stessi significati — chi arriva da lì non
- * deve reimparare niente - ma stanno in una mappa invece che sparse fra gli argomenti, e un nome
- * che non esiste per quella forma è un errore invece di un silenzio.
+ * <p>Chi ha Blossom anche sul client vede il disegno vero, chi gioca vanilla la stessa geometria a
+ * particelle: chi scrive lo script non deve sapere chi ha cosa. Le attribute sono quelle di Scarpet,
+ * con gli stessi nomi, ma stanno in una mappa invece che sparse fra gli argomenti, e un nome che non
+ * esiste per quella forma e' un errore invece di un silenzio.
  */
 public final class ShapeApi
 {

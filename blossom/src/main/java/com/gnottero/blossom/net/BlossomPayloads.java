@@ -11,25 +11,14 @@ import com.gnottero.blossom.BlossomMod;
 /**
  * I due canali con cui server e client Blossom si parlano.
  *
- * <h2>Perché esistono</h2>
+ * <p>Il mod e' server-side, ma alcune cose - disegnare linee nello spazio, testo fluttuante - non
+ * hanno nessun pacchetto vanilla che le esprima. Il patto e' che <b>il client e' facoltativo</b>:
+ * chi ce l'ha vede il disegno vero, chi non ce l'ha vede un'approssimazione di particelle. Nessuna
+ * funzione smette di funzionare per chi gioca vanilla.
  *
- * <p>Il mod è server-side: tutto quello che fa passa dal server, e un client vanilla vede il
- * risultato come vedrebbe qualunque altra cosa fatta da un server. C'è però una categoria di cose
- * che un server non può fare da solo — disegnare linee nello spazio, scrivere del testo fluttuante —
- * perché non esiste nessun pacchetto vanilla che le esprima. Per quelle serve qualcosa dall'altra
- * parte.
- *
- * <p>Il patto è: <b>il client è facoltativo</b>. Chi ce l'ha vede il disegno vero; chi non ce l'ha
- * vede un'approssimazione fatta di particelle, che il server sa mandare a chiunque. Nessuna
- * funzione smette di funzionare per chi gioca vanilla, e nessuno è costretto a installare niente.
- *
- * <h2>Come si riconosce un client Blossom</h2>
- *
- * <p>Appena un giocatore entra, il server gli manda un {@code hello}. Un client vanilla lo ignora -
- * un payload sconosciuto viene scartato, non è un errore - mentre un client Blossom risponde. Solo i
- * giocatori che hanno risposto ricevono i pacchetti di disegno. Non c'è nessun altro modo di saperlo:
- * il protocollo non offre un elenco dei mod del client, e chiederlo sarebbe comunque una risposta di
- * cui non fidarsi.
+ * <p>Appena un giocatore entra il server gli manda un {@code hello}: un client vanilla scarta il
+ * payload sconosciuto, uno Blossom risponde, e solo chi ha risposto riceve i pacchetti di disegno.
+ * Non c'e' altro modo di saperlo - il protocollo non elenca i mod del client.
  */
 public final class BlossomPayloads
 {

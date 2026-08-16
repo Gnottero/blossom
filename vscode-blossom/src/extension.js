@@ -12,11 +12,13 @@ const analyzer = require('./analyzer');
 const providers = require('./providers');
 const diagnostics = require('./diagnostics');
 const codeactions = require('./codeactions');
+const docview = require('./docview');
 
 function activate(context) {
     providers.register(context);
     diagnostics.register(context);
     codeactions.register(context);
+    docview.register(context);
 
     context.subscriptions.push(
         vscode.commands.registerCommand('blossom.openDocs', () => openDocs()),
@@ -24,10 +26,17 @@ function activate(context) {
     );
 }
 
-/** Opens the documentation page of the module under the cursor, when the repo is in the workspace. */
+/**
+ * Opens the documentation of the module under the cursor, scrolled to the function under it.
+ *
+ * <p>The page comes from the data bundled with the extension, so it works without the repo; the
+ * markdown of `docs/api/` is preferred when the workspace does have it, because that is the page the
+ * author is editing.
+ */
 async function openDocs() {
     const editor = vscode.window.activeTextEditor;
     let moduleName = null;
+    let symbol = null;
     if (editor && editor.document.languageId === 'blossom') {
         const index = analyzer.indexOf(editor.document);
         const position = editor.selection.active;
@@ -35,25 +44,23 @@ async function openDocs() {
         const word = range ? editor.document.getText(range) : '';
         moduleName = analyzer.targetModule(index, word) ||
             (api.homeModuleOf(word) || null);
+        if (moduleName && api.symbolInfo(moduleName, word)) symbol = word;
         if (!moduleName) {
             const before = editor.document.lineAt(position.line).text.slice(0, range ? range.start.character : 0);
             const memberOf = /([A-Za-z_]\w*)\s*\.\s*$/.exec(before);
             if (memberOf) moduleName = analyzer.targetModule(index, memberOf[1]);
         }
     }
-    if (!moduleName || !api.moduleOf(moduleName)) {
-        moduleName = await vscode.window.showQuickPick(api.moduleNames(), { title: 'Documentation of which module?' });
-    }
-    if (!moduleName) return;
+    if (moduleName && !api.moduleOf(moduleName)) moduleName = null;
 
-    const found = await vscode.workspace.findFiles(`**/docs/api/${moduleName}.md`, null, 1);
-    if (found.length) {
-        await vscode.commands.executeCommand('markdown.showPreview', found[0]);
-        return;
+    if (moduleName) {
+        const found = await vscode.workspace.findFiles(`**/docs/api/${moduleName}.md`, null, 1);
+        if (found.length) {
+            await vscode.commands.executeCommand('markdown.showPreview', found[0]);
+            return;
+        }
     }
-    vscode.window.showInformationMessage(
-        `The documentation of ${moduleName} is not in this workspace: open the Blossom repo folder to read it here.`
-    );
+    await docview.open(moduleName, symbol);
 }
 
 /** Copies to the clipboard the command that loads the open app, the one you type every time. */

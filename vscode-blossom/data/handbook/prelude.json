@@ -1,0 +1,115 @@
+{
+  "$alias": "",
+
+  "print": {
+    "signatures": ["print(message)", "print(target, message)"],
+    "summary": "Writes a message to whoever launched the script, or to a given target.",
+    "params": [["target", "optional: a player, or a list of players"], ["message", "what to write; formatted text works too"]],
+    "returns": "the message, so the call can be slipped in the middle of an expression.",
+    "examples": ["print('hello');", "print(player, 'you broke ' + block);", "// it returns its argument: handy while debugging\nresult = compute(print(input));"]
+  },
+  "if": {
+    "signatures": ["if(condition, then)", "if(condition, then, otherwise)", "if(c1, e1, c2, e2, ..., otherwise)"],
+    "summary": "Chooses between expressions. With more pairs it is a chain of cases, and the odd last argument is the fallback.",
+    "params": [["condition", "what to check"], ["then", "computed when the condition is true"], ["otherwise", "computed when none of the conditions is true"]],
+    "returns": "the value of the branch that ran, `null` when none did.",
+    "examples": ["if(health < 5, print('watch out'));", "if(x > 0, 'positive', x < 0, 'negative', 'zero');"],
+    "note": "Only the branch that is chosen is computed: the others are never touched."
+  },
+  "not": {
+    "signatures": ["not(value)"],
+    "summary": "The truth value turned round - the same thing the `!` operator does.",
+    "params": [["value", "the value to negate"]],
+    "returns": "`bool` — `true` when the value counted as false.",
+    "examples": ["not(0);        // true", "not([]);       // true: an empty list counts as false", "!condition;    // the usual way to write it"]
+  },
+  "try": {
+    "signatures": ["try(expression)", "try(expression, catch)", "try(expression, type, catch, type, catch, ...)"],
+    "summary": "Runs an expression and catches the errors it raises.",
+    "params": [["expression", "what to run"], ["type", "the kind of error to catch: `'value_exception'`, `'io_exception'`, `'json_error'`, `'nbt_error'`, `'user_exception'`, `'unknown_block'`, ..."], ["catch", "computed when the error was caught: `_` is the value thrown, `_trace` the stack"]],
+    "returns": "the value of the expression, or the one of the branch that caught the error.",
+    "examples": ["try(json.decode_json(text), 'json_error', print('malformed json'));", "try(risky(), 'io_exception', 'no disk', 'value_exception', 'bad value');", "// _ holds what was thrown\ntry(throw('too many'), print('failed: ' + _));"],
+    "note": "With no type it only catches what a script threw with `throw`, not the errors of the language: an error in your own code stays visible instead of being swallowed."
+  },
+  "throw": {
+    "signatures": ["throw(value)", "throw(type, value)"],
+    "summary": "Raises an error that a `try` further up can catch.",
+    "params": [["type", "optional: the name of the kind of error; without it, `'user_exception'`"], ["value", "what to hand to the catcher, where it arrives as `_`"]],
+    "returns": "it never returns: it unwinds to the nearest `try`.",
+    "examples": ["if(length(l) == 0, throw('the list is empty'));", "throw('value_exception', {'reason' -> 'out of range', 'value' -> x});"]
+  },
+  "return": {
+    "signatures": ["return()", "return(value)"],
+    "summary": "Leaves the current function at once, with a value.",
+    "params": [["value", "what the function gives back; without it, `null`"]],
+    "returns": "it never returns: the function ends here.",
+    "examples": ["fn find(l, wanted) -> (\n    for(l, if(_ == wanted, return(_i)));\n    -1\n);"],
+    "note": "The last expression of a function is already its value: `return` is for leaving early, in the middle of a loop or after a check."
+  },
+  "exit": {
+    "signatures": ["exit()", "exit(value)"],
+    "summary": "Stops the whole script, not just the current function.",
+    "params": [["value", "optional: the value of the script"]],
+    "returns": "it never returns: everything ends here.",
+    "examples": ["if(!entity.player(), exit('this script needs a player'));"]
+  },
+  "break": {
+    "signatures": ["break()", "break(value)"],
+    "summary": "Leaves the innermost loop.",
+    "params": [["value", "optional: the value the loop takes"]],
+    "returns": "it never returns: the loop ends here.",
+    "examples": ["for(range(100), if(block.air([_, 64, 0]), break()));", "// it works in map, filter and reduce too\nlist.map(l, if(_ < 0, break(), _ * 2));"]
+  },
+  "continue": {
+    "signatures": ["continue()", "continue(value)"],
+    "summary": "Skips to the next round of the innermost loop.",
+    "params": [["value", "optional: the value of this round"]],
+    "returns": "it never returns: this round ends here.",
+    "examples": ["for(l, if(_ == null, continue()); use(_));"]
+  },
+  "for": {
+    "signatures": ["for(list, expression)"],
+    "summary": "Runs an expression once for every element of a list.",
+    "params": [["list", "what to walk over"], ["expression", "computed for every element: `_` is the element, `_i` its index"]],
+    "returns": "`num` — how many times the expression came out true.",
+    "examples": ["for([1, 2, 3], print(_));", "// counting: it returns the number of true results\nfound = for(positions, block.block(_) == 'diamond_ore');"]
+  },
+  "while": {
+    "signatures": ["while(condition, expression)", "while(condition, limit, expression)"],
+    "summary": "Repeats an expression as long as the condition holds.",
+    "params": [["condition", "checked before every round"], ["limit", "optional: the maximum number of rounds"], ["expression", "the body; `_` is the number of the round"]],
+    "returns": "the value of the last round.",
+    "examples": ["i = 0;\nwhile(i < 10, i += 1);", "// with a ceiling, so a wrong condition does not hang the server\nwhile(!done, 1000, step());"]
+  },
+  "loop": {
+    "signatures": ["loop(times, expression)"],
+    "summary": "Repeats an expression a fixed number of times.",
+    "params": [["times", "how many rounds"], ["expression", "the body; `_` is the number of the round, from zero"]],
+    "returns": "the value of the last round.",
+    "examples": ["loop(5, print(_));       // 0 1 2 3 4", "loop(10, block.set([_, 64, 0], 'stone'));"],
+    "note": "It is the cheapest of the loops: it allocates no list, unlike `for(range(n), ...)`."
+  },
+  "c_for": {
+    "signatures": ["c_for(init, condition, step, expression)"],
+    "summary": "The loop of C: an initialisation, a condition, a step, and a body.",
+    "params": [["init", "computed once, at the beginning"], ["condition", "checked before every round"], ["step", "computed after every round"], ["expression", "the body"]],
+    "returns": "the value of the last round.",
+    "examples": ["c_for(i = 0, i < 10, i += 1, print(i));", "c_for(i = length(l) - 1, i >= 0, i -= 1, print(l:i));   // backwards"]
+  },
+  "call": {
+    "signatures": ["call(function, ...arguments)"],
+    "summary": "Calls a function held in a value, with those arguments.",
+    "params": [["function", "the function, as a value or as a name"], ["...arguments", "what to call it with"]],
+    "returns": "the value the function returns.",
+    "examples": ["handler = fn(x) -> x * 2;\ncall(handler, 21);   // 42", "// calling every function of a list\nfor(handlers, call(_, event));"],
+    "note": "Calling a function held in a variable directly (`handler(21)`) also works; `call` is for when the function arrives as a value from somewhere else."
+  },
+  "outer": {
+    "signatures": ["outer(name)"],
+    "summary": "Captures a variable of the enclosing scope inside a function, by value.",
+    "params": [["name", "the name of the variable to capture"]],
+    "returns": "the value captured.",
+    "examples": ["limit = 10;\nfn check(x, outer(limit)) -> x < limit;"],
+    "note": "It goes among the parameters of the function and captures **the value it has at that moment**: later changes to the outer variable are not seen."
+  }
+}

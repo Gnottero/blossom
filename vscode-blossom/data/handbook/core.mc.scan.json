@@ -1,0 +1,42 @@
+{
+  "$alias": "scan",
+
+  "scan": {
+    "signatures": ["scan(centre, radii, expression)", "scan(centre, radii_down, radii_up, expression)"],
+    "summary": "Walks over a box of blocks around a centre, running an expression at every point.",
+    "params": [["centre", "the middle of the box"], ["radii", "how far to go on the three axes: a triple `[2, 1, 2]` or three loose numbers"], ["radii_up", "optional: with two groups of radii the box can be asymmetric"], ["expression", "computed at every point: `_x`, `_y`, `_z` are the coordinates and `_` is the block"]],
+    "returns": "`num` — how many times the expression came out true.",
+    "examples": ["// filling a 5x5x5 cube\nscan.scan([0, 64, 0], [2, 2, 2], block.set([_x, _y, _z], 'stone'));", "// counting is a single line\nores = scan.scan(pos, 8, 8, 8, _ == 'diamond_ore');", "// a flat area: no radius on y\nscan.scan(pos, [8, 0, 8], block.set([_x, _y, _z], 'grass_block'));"],
+    "note": "Returning how many times the expression was true is what makes counting free: no accumulator, no `filter` over a materialised list."
+  },
+  "volume": {
+    "signatures": ["volume(from, to, expression)"],
+    "summary": "Like `scan`, but the box is given with two corners instead of a centre and radii.",
+    "params": [["from", "one corner, included"], ["to", "the opposite corner, included"], ["expression", "computed at every point: `_x`, `_y`, `_z` and `_`"]],
+    "returns": "`num` — how many times the expression came out true.",
+    "examples": ["scan.volume([0, 64, 0], [8, 70, 8], block.set([_x, _y, _z], 'air'));", "chests = scan.volume(corner_a, corner_b, _ == 'chest');"],
+    "note": "The order of the corners does not matter: it sorts them itself."
+  },
+  "rect": {
+    "signatures": ["rect(centre)", "rect(centre, radius)", "rect(centre, radius, skip)"],
+    "summary": "The positions of a box, as a lazy list.",
+    "params": [["centre", "the middle of the box"], ["radius", "optional: how far on the three axes, one number or a triple"], ["skip", "optional: the radii of an inner box to leave out, so only the shell is left"]],
+    "returns": "`list` — lazy: the positions come out as they are consumed.",
+    "examples": ["for(scan.rect([0, 64, 0], [4, 0, 4]), block.set(_, 'stone'));", "// only the shell: a box of radius 4 minus the one of radius 3\nfor(scan.rect(pos, [4, 4, 4], [3, 3, 3]), block.set(_, 'glass'));"],
+    "note": "Being lazy it builds no list in memory: a `rect` of radius 50 costs the same as one of radius 1 until it is consumed."
+  },
+  "diamond": {
+    "signatures": ["diamond(centre)", "diamond(centre, radius)", "diamond(centre, radius, height)"],
+    "summary": "The positions of an octahedron - everything within a given distance walking along the axes.",
+    "params": [["centre", "the middle"], ["radius", "optional: the distance on the horizontal plane"], ["height", "optional: how far up and down; without it, the shape is a full octahedron"]],
+    "returns": "`list` — lazy, like `rect`.",
+    "examples": ["for(scan.diamond([0, 64, 0], 3), block.set(_, 'glass'));", "// a flat disc, height zero\nfor(scan.diamond(pos, 5, 0), block.set(_, 'stone'));"]
+  },
+  "neighbours": {
+    "signatures": ["neighbours(pos)"],
+    "summary": "The six positions touching a block by a face.",
+    "params": [["pos", "the position in the middle"]],
+    "returns": "`list` — six positions.",
+    "examples": ["for(scan.neighbours(pos), if(block.liquid(_), print('water next door')));", "// a flood fill starts here\nnext = list.filter(scan.neighbours(pos), block.air(_));"]
+  }
+}

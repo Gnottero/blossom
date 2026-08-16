@@ -3,7 +3,6 @@ package blossom.value;
 import blossom.exception.BlossomRuntimeError;
 import blossom.exception.SourcePosition;
 import blossom.exception.TypeMismatchError;
-import blossom.exception.InternalExpressionException;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 import org.apache.commons.lang3.StringUtils;

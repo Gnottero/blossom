@@ -296,7 +296,7 @@ public class FeatureGenerator
         return new TreeFeature.Builder(BlockStateProvider.simple(block), new StraightTrunkPlacer(i, j, k), BlockStateProvider.simple(block2), new BlobFoliagePlacer(ConstantInt.of(l), ConstantInt.of(0), 3), new TwoLayersFeatureSize(1, 0, 1), belowTrees);
     }
 
-    // from AquaticFeatures
+    /** from AquaticFeatures */
     private static Holder<PlacedFeature> wallCoral(final HolderGetter<Block> blocks, final Direction direction) {
         return PlacementUtils.inlinePlaced(
                 new SimpleBlockFeature(new RotatedBlockProvider(new RandomBlockProvider(blocks.getOrThrow(BlockTags.WALL_CORALS)), Optional.of(direction))),

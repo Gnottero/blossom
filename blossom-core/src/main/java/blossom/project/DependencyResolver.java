@@ -20,23 +20,17 @@ import blossom.exception.Suggestions;
 /**
  * Da dipendenza dichiarata a cartella su disco, con la versione verificata.
  *
- * <p>Tre cose, in quest'ordine, per ogni dipendenza:
+ * <p>Per ogni dipendenza, in quest'ordine: <b>trovarla</b> (una cartella indicata, un pack installato
+ * nello stesso mondo, o il registry), <b>leggerne il manifesto</b> - che dice quale versione e'
+ * davvero e quali dipendenze ha lei - e <b>verificare il vincolo</b>, fermandosi se non e'
+ * soddisfatto.
  *
- * <ol>
- *   <li><b>trovarla</b> — una cartella indicata, un pack installato nello stesso mondo, o il
- *       registry;</li>
- *   <li><b>leggerne il manifesto</b> — che dice quale versione è davvero, e quali dipendenze ha lei;</li>
- *   <li><b>verificare il vincolo</b> — se la versione trovata non soddisfa quella dichiarata, si
- *       ferma qui.</li>
- * </ol>
+ * <p>Il terzo punto e' il motivo per cui la classe esiste: senza, "dipendo da utils ^1.2" e' un
+ * commento, e il primo segnale che la cartella accanto e' passata alla 2.0 arriva da una funzione
+ * che ha cambiato firma, tre schermate piu' in la'.
  *
- * <p>Il terzo punto è il motivo per cui questa classe esiste. Senza, "dipendo da utils ^1.2" è un
- * commento: la cartella accanto viene aggiornata alla 2.0, l'app continua a caricarsi, e il primo
- * segnale che qualcosa non va è un errore su una funzione che ha cambiato firma, tre schermate più
- * in là e senza nessun riferimento alla vera causa.
- *
- * <p>La risoluzione è <b>transitiva</b>: le dipendenze di una dipendenza vengono risolte a loro
- * volta, dentro il suo spazio dei nomi. Un ciclo fra progetti è un errore, come lo è fra moduli.
+ * <p>La risoluzione e' <b>transitiva</b>, dentro lo spazio dei nomi di ogni dipendenza; un ciclo fra
+ * progetti e' un errore, come lo e' fra moduli.
  */
 public final class DependencyResolver
 {

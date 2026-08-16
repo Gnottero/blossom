@@ -15,7 +15,7 @@ public final class Blossom
 {
     public static final Logger LOG = LoggerFactory.getLogger("blossom");
 
-    // volatile: l'host la imposta dal thread di avvio, gli script la leggono dai loro
+    /** volatile: l'host la imposta dal thread di avvio, gli script la leggono dai loro */
     private static volatile boolean debug = false;
 
     private Blossom()
@@ -29,10 +29,5 @@ public final class Blossom
     public static boolean isDebugEnabled()
     {
         return debug;
-    }
-
-    public static void setDebugEnabled(boolean enabled)
-    {
-        debug = enabled;
     }
 }

@@ -23,7 +23,6 @@ import com.gnottero.blossom.util.SystemInfo;
 import com.gnottero.blossom.util.InputValidator;
 import blossom.utils.ScarpetJsonDeserializer;
 import com.gnottero.blossom.util.Particles;
-import com.gnottero.blossom.util.WorldTools;
 import blossom.value.BooleanValue;
 import com.gnottero.blossom.value.EntityValue;
 import com.gnottero.blossom.value.FormattedTextValue;
@@ -38,7 +37,6 @@ import com.gnottero.blossom.value.ValueConversions;
 import com.google.common.collect.Lists;
 import net.minecraft.SharedConstants;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Rotations;
 import net.minecraft.core.particles.ParticleOptions;
@@ -96,12 +94,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.OptionalLong;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -575,12 +571,7 @@ public class Auxiliary
                 });
                 targets = playerTargets;
                 res = lv.get(1);
-            } else if (c.host.user != null) {
-                ServerPlayer player = cc.server().getPlayerList().getPlayerByName(cc.host.user);
-                if (player != null) {
-                    targets = Collections.singletonList(player.createCommandSourceStack());
-                }
-            } // optionally retrieve from CC.host.responsibleSource to print?
+            }
             Component message = FormattedTextValue.getTextByValue(res);
             if (targets == null)
             {
@@ -845,21 +836,6 @@ public class Auxiliary
             CommandSourceStack s = ((ScriptContext) c).source();
             c.host.issueDeprecation("seed()");
             return new NumericValue(s.getLevel().getSeed());
-        });
-
-        expression.addContextFunction("relight", -1, (c, t, lv) ->
-        {
-            return Value.NULL;
-            /*
-            ScriptContext cc = (ScriptContext) c;
-            BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
-            BlockPos pos = locator.block.getPos();
-            ServerLevel world = cc.level();
-            Vanilla.ChunkMap_relightChunk(world.getChunkSource().chunkMap, new ChunkPos(pos));
-            WorldTools.forceChunkUpdate(pos, world);
-            return Value.TRUE;
-
-             */
         });
 
         // Should this be deprecated for system_info('source_dimension')?

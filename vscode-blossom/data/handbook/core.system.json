@@ -1,0 +1,95 @@
+{
+  "$alias": "system",
+
+  "time": {
+    "signatures": ["time()"],
+    "summary": "A monotonic counter in milliseconds, with a decimal part - the one to measure durations with.",
+    "params": [],
+    "returns": "`num` — milliseconds since an arbitrary origin.",
+    "examples": ["start = system.time();\nheavy_work();\nprint(string.str('%.2f ms', system.time() - start));"],
+    "note": "It only means something as a difference: the origin is arbitrary. For an absolute date there is `unix_time`."
+  },
+  "unix_time": {
+    "signatures": ["unix_time()"],
+    "summary": "Absolute time in milliseconds since the first of January 1970.",
+    "params": [],
+    "returns": "`num` — milliseconds since the epoch.",
+    "examples": ["system.unix_time();   // 1786000000000", "system.convert_date(system.unix_time());   // today, broken into pieces"]
+  },
+  "convert_date": {
+    "signatures": ["convert_date(timestamp)", "convert_date(list)"],
+    "summary": "Breaks a timestamp into date pieces, and puts them back together the other way round.",
+    "params": [["timestamp", "milliseconds since the epoch, or a list `[year, month, day, hour, minute, second]` to go the other way"]],
+    "returns": "`list` — `[year, month, day, hour, minute, second, weekday, day_of_year]`, or `num` when given a list.",
+    "examples": ["system.convert_date(system.unix_time());\n// [2026, 8, 16, 14, 30, 12, 7, 228]", "system.convert_date([2026, 1, 1, 0, 0, 0]);   // back to a timestamp"]
+  },
+  "type": {
+    "signatures": ["type(value)"],
+    "summary": "The name of the type of a value.",
+    "params": [["value", "the value to inspect"]],
+    "returns": "`str` — `'number'`, `'string'`, `'list'`, `'map'`, `'function'`, `'null'`, and the game types.",
+    "examples": ["system.type([1, 2]);      // 'list'", "system.type(3);           // 'number'", "if(system.type(v) != 'list', throw('a list was expected'));"]
+  },
+  "bool": {
+    "signatures": ["bool(value)"],
+    "summary": "Reads a value as a truth value, the way a condition would.",
+    "params": [["value", "the value to convert"]],
+    "returns": "`bool` — `false` for `0`, the empty string, an empty list or map, `null`, and for the strings `'false'` and `'null'`.",
+    "examples": ["system.bool('false');   // false, not true", "system.bool([]);        // false", "system.bool('no');      // true: only 'false' and 'null' are special"],
+    "note": "The two special strings are there for values read from a configuration file, where `false` arrives as text and a plain non empty string would be true."
+  },
+  "copy": {
+    "signatures": ["copy(value)"],
+    "summary": "A deep copy of a value: lists and maps inside it are copied too.",
+    "params": [["value", "the value to copy"]],
+    "returns": "a new value, sharing nothing with the original.",
+    "examples": ["original = [[1, 2], [3, 4]];\nclone = system.copy(original);\nlist.put(clone:0, 0, 9);      // original is untouched"],
+    "note": "Assigning a list does not copy it: the two names point to the same list. This is the way to really have two."
+  },
+  "undef": {
+    "signatures": ["undef(name)", "undef(function)"],
+    "summary": "Removes a variable or a function by name.",
+    "params": [["name", "the name to remove; ending it with `*` removes everything with that prefix"]],
+    "returns": "`null`.",
+    "examples": ["system.undef('cache');        // the variable is gone", "system.undef('temp_*');       // everything starting with temp_"],
+    "note": "A tool for the console and for cleaning up, not for ordinary logic: code removing its own names at runtime cannot be read from the outside."
+  },
+  "var": {
+    "signatures": ["var(name)"],
+    "summary": "Reads (and creates, when it is not there) a variable from its name as a string.",
+    "params": [["name", "the name of the variable"]],
+    "returns": "the value of the variable, `null` when it did not exist.",
+    "examples": ["x = 5;\nsystem.var('x');   // 5"],
+    "note": "For debugging, not for normal logic: a direct access is clearer and faster, and it is the one the editor can follow."
+  },
+  "vars": {
+    "signatures": ["vars(prefix)"],
+    "summary": "The names of the visible variables starting with a prefix.",
+    "params": [["prefix", "the beginning of the name; `'global'` looks among the globals"]],
+    "returns": "`list` — the names found, as strings.",
+    "examples": ["system.vars('player_');   // ['player_score', 'player_name']"]
+  },
+  "system_variable_get": {
+    "signatures": ["system_variable_get(key)", "system_variable_get(key, default)"],
+    "summary": "Reads from a space shared by every app on the server.",
+    "params": [["key", "the name of the value"], ["default", "optional: what to write and return when the key is not there"]],
+    "returns": "the stored value, or the default.",
+    "examples": ["system.system_variable_get('event_running', false);"],
+    "note": "It is a global space with no namespace: prefix your keys with the name of the app, or two apps will end up sharing a key by accident."
+  },
+  "system_variable_set": {
+    "signatures": ["system_variable_set(key, value)"],
+    "summary": "Writes into the space shared by every app on the server.",
+    "params": [["key", "the name of the value"], ["value", "what to store"]],
+    "returns": "the value written.",
+    "examples": ["system.system_variable_set('event_running', true);"]
+  },
+  "profile_expr": {
+    "signatures": ["profile_expr(expression)"],
+    "summary": "Runs an expression over and over for a fixed interval and says how many times it managed to.",
+    "params": [["expression", "what to measure"]],
+    "returns": "`num` — the number of repetitions in the interval; the higher, the faster.",
+    "examples": ["system.profile_expr(list.map(range(100), _ * 2));   // 4210", "// comparing two implementations\nsystem.profile_expr(version_a());\nsystem.profile_expr(version_b());"],
+    "note": "It answers \"how long does this piece take\", not \"who is eating the tick\". For the second question there is `/blossom profile start <app>`, which measures function by function with self time and total time."
+  }
+}

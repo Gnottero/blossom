@@ -34,12 +34,12 @@ public class SnoopyCommandSource extends CommandSourceStack
     private final String simpleName;
     private final Component name;
     private final MinecraftServer server;
-    // skipping silent since snooper is never silent
+    /** skipping silent since snooper is never silent */
     private final Entity entity;
     private final CommandResultCallback resultConsumer;
     private final EntityAnchorArgument.Anchor entityAnchor;
     private final Vec2 rotation;
-    // good stuff
+    /** gli errori raccolti dal comando, invece di finire in chat */
     private final Component[] error;
     private final List<Component> chatOutput;
     private final CommandSigningContext signingContext;

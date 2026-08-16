@@ -1,0 +1,49 @@
+{
+  "$alias": "system",
+
+  "run": {
+    "signatures": ["run(command)"],
+    "summary": "Runs a vanilla command with the permissions of the app, collecting its outcome instead of printing it in chat.",
+    "params": [["command", "the command, without the leading slash"]],
+    "returns": "`list` — `[code, output]`: the return code and the lines the command produced.",
+    "examples": ["system.run('say hello');", "result = system.run('data get entity @p Pos');\nif(result:0 > 0, print(result:1));"],
+    "note": "It is the way out for what the curated API does not cover: everything it does have is faster and says what went wrong."
+  },
+  "system_info": {
+    "signatures": ["system_info()", "system_info(key)"],
+    "summary": "Information about the server and the process it runs in.",
+    "params": [["key", "optional: which piece — memory, threads, version, loaded mods, uptime, worlds, apps; without it, the available keys"]],
+    "returns": "`list` of the keys, or the value asked for.",
+    "examples": ["system.system_info();                  // the available keys", "system.system_info('server_mods');     // the loaded mods", "system.system_info('java_max_memory');"]
+  },
+  "get_mob_counts": {
+    "signatures": ["get_mob_counts()", "get_mob_counts(category)"],
+    "summary": "How many mobs of each category are around, and how many the cap would allow.",
+    "params": [["category", "optional: `'monster'`, `'creature'`, `'ambient'`, `'water_creature'`, ..."]],
+    "returns": "`map` from category to `[current, cap]`, or the single pair.",
+    "examples": ["system.get_mob_counts();                // {'monster' -> [42, 70], ...}", "system.get_mob_counts('monster');       // [42, 70]"]
+  },
+  "statistic": {
+    "signatures": ["statistic(player, category, entry)"],
+    "summary": "A statistic of a player.",
+    "params": [["player", "who to ask about"], ["category", "`'used'`, `'mined'`, `'killed'`, `'killed_by'`, `'crafted'`, `'broken'`, `'picked_up'`, `'dropped'`, `'custom'`"], ["entry", "the entry inside the category, as `'minecraft:jump'`"]],
+    "returns": "`num` — the value, `null` when there is no such statistic.",
+    "examples": ["system.statistic(player, 'custom', 'minecraft:jump');", "system.statistic(player, 'mined', 'minecraft:diamond_ore');"]
+  },
+  "logger": {
+    "signatures": ["logger(message)", "logger(level, message)"],
+    "summary": "Writes a line to the log of the server.",
+    "params": [["level", "optional: `'error'`, `'warn'`, `'info'` (the default), `'debug'`"], ["message", "what to write"]],
+    "returns": "`null`.",
+    "examples": ["system.logger('the app has started');", "system.logger('error', 'the state file is unreadable');"],
+    "note": "It goes to the console and to `latest.log`, where it stays: `print` only reaches whoever is playing right now."
+  },
+  "task_join": {
+    "signatures": ["task_join(task)"],
+    "summary": "Waits for a task started with `core.task`, from the server thread, without blocking the tick.",
+    "params": [["task", "the handle returned by `task`"]],
+    "returns": "the value the task produced.",
+    "examples": ["t = task.task(heavy_computation);\n// ... later, inside a tick handler ...\nresult = system.task_join(t);"],
+    "note": "It is the variant to use inside an event or a command: `task_join` of `core.task` blocks the thread that calls it, and on the main thread that means stopping the server."
+  }
+}

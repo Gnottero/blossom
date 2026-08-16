@@ -48,8 +48,8 @@ Whether the chunk exists on disk, and how far its generation got.
 ### `chunk_tickets()` · `add_chunk_ticket(pos, type, radius)`
 The tickets keeping chunks loaded, and how to add one.
 
-### `reload_chunk(pos)` · `reset_chunk(pos)`
-Sends the chunk back to the clients, or regenerates it from scratch.
+### `reload_chunk(pos)`
+Sends the chunk back to the clients.
 
 ### `inhabited_time(pos)` · `in_slime_chunk(pos)` · `spawn_potential(pos)`
 How much it has been lived in, whether it is a slime chunk, and the spawn potential computed by the
@@ -95,5 +95,3 @@ there.
 ### `view_distance()` · `enable_hidden_dimensions()`
 The render distance of the server, and turning on the normally hidden dimensions.
 
-### `relight(pos)`
-Recomputes the light around a point.

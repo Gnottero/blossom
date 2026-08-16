@@ -15,15 +15,54 @@ const analyzer = require('./analyzer');
 
 const SELECTOR = { language: 'blossom', scheme: 'file' };
 
+/** The constants of the language: few enough to be written here, and they never change. */
+const CONSTANTS = {
+    true: 'The true value. Any number other than zero counts as true too.',
+    false: 'The false value — like `0`, the empty string, the empty list and `null`.',
+    null: 'The absence of a value. Reading a key that is not there gives this back.',
+    pi: 'The ratio between a circumference and its diameter, `3.141592653589793`.',
+    euler: 'The base of natural logarithms, `2.718281828459045`.'
+};
+
+/*
+ * The card of a function: signatures, what it does, its parameters, what it gives back, and an
+ * example. The example is the part that is worth the space - a signature says the shape of a call,
+ * a line of real code says what it is for - so it is always there and always last, right above the
+ * note, which is where the surprises live.
+ */
+function describeSymbol(info, footer, withSignatures = true) {
+    const markdown = new vscode.MarkdownString();
+    // in signature help the signature is already the title of the popup: repeating it is noise
+    if (withSignatures) markdown.appendCodeblock(info.signatures.join('\n'), 'blossom');
+    if (info.doc) markdown.appendMarkdown('\n' + info.doc + '\n');
+    if (info.params && info.params.length) {
+        markdown.appendMarkdown('\n**Parameters**\n\n');
+        for (const [name, description] of info.params) {
+            markdown.appendMarkdown(`- \`${name}\` — ${description}\n`);
+        }
+    }
+    if (info.returns) markdown.appendMarkdown(`\n**Returns** ${info.returns}\n`);
+    if (info.examples && info.examples.length) {
+        markdown.appendMarkdown(`\n**Example${info.examples.length === 1 ? '' : 's'}**\n`);
+        markdown.appendCodeblock(info.examples.join('\n\n'), 'blossom');
+    }
+    if (info.note) markdown.appendMarkdown(`\n${info.note.replace(/\n/g, ' ')}\n`);
+    if (footer) markdown.appendMarkdown(`\n${footer}`);
+    return markdown;
+}
+
 /** The markdown shown for a library symbol. */
 function symbolMarkdown(moduleName, symbol) {
     const info = api.symbolInfo(moduleName, symbol);
     if (!info) return null;
-    const markdown = new vscode.MarkdownString();
-    markdown.appendCodeblock(info.signatures.join('\n'), 'blossom');
-    if (info.doc) markdown.appendMarkdown('\n' + info.doc);
-    markdown.appendMarkdown(`\n\n\`${moduleName}\``);
-    return markdown;
+    return describeSymbol(info, `\`${moduleName}\``);
+}
+
+/** The markdown shown for a function of the prelude, which needs no import. */
+function preludeMarkdown(name) {
+    const info = api.preludeInfo(name);
+    if (!info) return null;
+    return describeSymbol(info, '`prelude` — always available, no import needed');
 }
 
 function eventMarkdown(event) {
@@ -31,7 +70,19 @@ function eventMarkdown(event) {
     markdown.appendCodeblock(`${event.name}(${event.params.join(', ')})`, 'blossom');
     markdown.appendMarkdown(
         `\n${event.arity} parameter${event.arity === 1 ? '' : 's'}` +
-        (event.cancellable ? ', cancellable: returning `true` stops the action' : '')
+        (event.cancellable ? ', cancellable: returning `true` stops the action' : '') + '\n'
+    );
+    // the handler written out: the signature has to match, and the check happens at registration
+    const params = event.params.length ? event.params : Array.from({ length: event.arity }, (_, i) => `arg${i + 1}`);
+    const handler = `handle_${event.name}`;
+    markdown.appendMarkdown('\n**Example**\n');
+    markdown.appendCodeblock(
+        `fn ${handler}(${params.join(', ')}) -> (\n` +
+        `    print('${event.name}');\n` +
+        (event.cancellable ? '    false           // true = the action is cancelled\n' : '') +
+        `);\n\n` +
+        `event.on('${event.name}', ${handler});`,
+        'blossom'
     );
     return markdown;
 }
@@ -102,11 +153,15 @@ const completion = {
         }
         for (const name of api.prelude()) {
             const item = new vscode.CompletionItem(name, vscode.CompletionItemKind.Function);
-            item.detail = 'prelude';
+            const info = api.preludeInfo(name);
+            item.detail = info ? info.signatures[0] : 'prelude';
+            item.documentation = preludeMarkdown(name);
             items.push(item);
         }
         for (const name of api.constants()) {
-            items.push(new vscode.CompletionItem(name, vscode.CompletionItemKind.Constant));
+            const item = new vscode.CompletionItem(name, vscode.CompletionItemKind.Constant);
+            if (CONSTANTS[name]) item.documentation = new vscode.MarkdownString(CONSTANTS[name]);
+            items.push(item);
         }
         for (const [alias, declaration] of index.imports) {
             const item = new vscode.CompletionItem(alias, vscode.CompletionItemKind.Module);
@@ -185,6 +240,19 @@ const hover = {
             return new vscode.Hover(markdown, range);
         }
 
+        // a function of the prelude: it wins over the modules, because here it needs no import
+        const preludeCard = preludeMarkdown(word);
+        if (preludeCard) return new vscode.Hover(preludeCard, range);
+
+        // a constant of the language
+        const constant = CONSTANTS[word];
+        if (constant) {
+            const markdown = new vscode.MarkdownString();
+            markdown.appendCodeblock(word, 'blossom');
+            markdown.appendMarkdown('\n' + constant);
+            return new vscode.Hover(markdown, range);
+        }
+
         // a library symbol used without importing it: saying where it lives is half the work
         const home = api.homeModuleOf(word);
         if (home) {
@@ -228,22 +296,34 @@ const signatureHelp = {
         if (!call) return null;
 
         const signatures = [];
+        /** One entry per signature of a library symbol, with the description of each parameter. */
+        const libraryInfo = (info, footer) => {
+            for (const signature of info.signatures) {
+                const item = new vscode.SignatureInformation(signature);
+                const inside = signature.slice(signature.indexOf('(') + 1, signature.lastIndexOf(')'));
+                item.parameters = inside
+                    .split(',')
+                    .map((p) => p.trim())
+                    .filter(Boolean)
+                    .map((p) => {
+                        // the parameter is documented under its own name, or inside a group
+                        // ('x, y, z' on the same line), which is how the optional triples read
+                        const described = (info.params || []).find(
+                            ([name]) => name === p || name.split(/,\s*/).includes(p)
+                        );
+                        return described
+                            ? new vscode.ParameterInformation(p, new vscode.MarkdownString(described[1]))
+                            : new vscode.ParameterInformation(p);
+                    });
+                item.documentation = describeSymbol(info, footer, false);
+                signatures.push(item);
+            }
+        };
+
         if (call.alias) {
             const target = analyzer.targetModule(index, call.alias);
             const info = target && api.symbolInfo(target, call.name);
-            if (info) {
-                for (const signature of info.signatures) {
-                    const item = new vscode.SignatureInformation(signature);
-                    const inside = signature.slice(signature.indexOf('(') + 1, signature.lastIndexOf(')'));
-                    item.parameters = inside
-                        .split(',')
-                        .map((p) => p.trim())
-                        .filter(Boolean)
-                        .map((p) => new vscode.ParameterInformation(p));
-                    if (info.doc) item.documentation = new vscode.MarkdownString(info.doc);
-                    signatures.push(item);
-                }
-            }
+            if (info) libraryInfo(info, `\`${target}\``);
         } else {
             const fn = index.functions.find((f) => f.name === call.name);
             if (fn) {
@@ -252,6 +332,9 @@ const signatureHelp = {
                     (p) => new vscode.ParameterInformation(p.type ? `${p.name}: ${p.type}` : p.name)
                 );
                 signatures.push(item);
+            } else {
+                const info = api.preludeInfo(call.name);
+                if (info) libraryInfo(info, '`prelude` — always available, no import needed');
             }
         }
         if (!signatures.length) return null;

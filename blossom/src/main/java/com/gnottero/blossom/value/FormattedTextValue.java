@@ -4,10 +4,8 @@ import blossom.value.StringValue;
 import blossom.value.Value;
 
 import blossom.exception.InternalExpressionException;
-import com.mojang.serialization.DynamicOps;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.NbtOps;
-import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;

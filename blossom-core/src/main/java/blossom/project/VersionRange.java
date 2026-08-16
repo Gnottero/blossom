@@ -8,26 +8,19 @@ import org.jspecify.annotations.Nullable;
 /**
  * Un vincolo su una versione, nella forma che si scrive in {@code blossom.json}.
  *
- * <p>Le forme accettate, deliberatamente poche:
- *
  * <pre>
  * "1.2.0"     esattamente quella versione
- * "^1.2.0"    compatibile: dalla 1.2.0 (inclusa) fino alla 2.0.0 (esclusa)
- * "~1.2.0"    solo patch: dalla 1.2.0 (inclusa) fino alla 1.3.0 (esclusa)
+ * "^1.2.0"    compatibile: dalla 1.2.0 (inclusa) alla 2.0.0 (esclusa)
+ * "~1.2.0"    solo patch: dalla 1.2.0 (inclusa) alla 1.3.0 (esclusa)
  * "&gt;=1.2.0"   quella o successiva
- * "&gt;=1.2, &lt;2" più vincoli insieme, separati da virgola: valgono tutti
+ * "&gt;=1.2, &lt;2" piu' vincoli insieme, separati da virgola: valgono tutti
  * "*"         qualunque versione
  * </pre>
  *
- * <p>Non c'è l'operatore OR (il {@code ||} di npm). Un vincolo che accetta due intervalli scollegati
- * quasi sempre vuol dire che la dipendenza è stata rotta due volte e nessuno ha deciso quale
- * versione supportare davvero: meglio che quella decisione la prenda chi scrive il manifesto.
- *
- * <h2>Pre-release</h2>
- *
- * <p>Un pre-release non soddisfa mai un vincolo che non lo nomina esplicitamente. {@code ^1.0.0} non
- * accetta {@code 2.0.0-rc1}, e nemmeno {@code 1.1.0-rc1}: chi vuole una beta la chiede per nome.
- * Senza questa regola bastherebbe pubblicare una beta per farla installare a tutti.
+ * <p>Non c'e' l'OR di npm: un vincolo che accetta due intervalli scollegati quasi sempre vuol dire
+ * che nessuno ha deciso quale versione supportare, e quella decisione tocca a chi scrive il
+ * manifesto. Un pre-release non soddisfa mai un vincolo che non lo nomina - senza questa regola
+ * basterebbe pubblicare una beta per farla installare a tutti.
  */
 public final class VersionRange
 {

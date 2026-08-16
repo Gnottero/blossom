@@ -46,8 +46,10 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
      * chiamata. Non nel costruttore: l'espressione puo' ancora non sapere a quale modulo appartiene
      */
     private String moduleName = null;
-    // closures are created from any thread, and a plain increment would give two of them the same
-    // variant, which is part of how a function is identified
+    /**
+     * closures are created from any thread, and a plain increment would give two of them the same
+     * variant, which is part of how a function is identified
+     */
     private static final AtomicLong variantCounter = new AtomicLong(1);
     private long variant;
 
@@ -361,11 +363,6 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
         throw new TypeMismatchError(blossom.exception.BlossomError.positionOf(e, t),
                 "Parameter '" + parameter + "' of " + name + " wants a " + declared
                         + ", but got a " + value.getTypeString() + " (" + value.getPrettyString() + ").");
-    }
-
-    public Expression getExpression()
-    {
-        return expression;
     }
 
     public Token getToken()

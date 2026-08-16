@@ -128,7 +128,11 @@ esportano e come si dipende da un altro progetto è il [capitolo 6](06-moduli.md
 | i dati dell'app ([`core.mc.file`](../api/core.mc.file.md)) | `<mondo>/blossom/<app>.data/` |
 | i dati condivisi fra app | `<mondo>/blossom/shared/` |
 | le dipendenze scaricate da un registry | `<mondo>/blossom/.cache/` |
-| la configurazione del server | `config/blossomscript.json` |
+| la configurazione del server ([capitolo 12](12-configurazione.md)) | `config/blossomscript.json` |
+
+Tutto quello che uno script apre sta sotto la cartella del mondo: le radici di
+[`core.io`](../api/core.io.md) si dichiarano lì dentro e non possono uscirne, e il resto del disco
+del server non è raggiungibile da nessuna configurazione.
 
 Un'app non vede i dati di un'altra per sbaglio: per passarsi qualcosa ci sono i file `shared_*` e
 gli eventi di applicazione ([capitolo 8](08-eventi.md)).

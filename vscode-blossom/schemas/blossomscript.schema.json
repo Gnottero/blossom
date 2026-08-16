@@ -1,0 +1,96 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Server configuration of the Blossom mod (config/blossomscript.json)",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "registry": {
+      "type": "object",
+      "description": "Where the dependencies that are not already on disk come from. Off when absent.",
+      "additionalProperties": false,
+      "properties": {
+        "directory": {
+          "type": "string",
+          "description": "A folder laid out as <root>/<name>/<version>/, each holding a normal project."
+        },
+        "url": {
+          "type": "string",
+          "description": "The base url of a static index.json plus zip archives. Every entry needs its sha256."
+        }
+      }
+    },
+    "io": {
+      "type": "object",
+      "description": "The folders core.io can reach. Nothing is reachable when absent.",
+      "additionalProperties": false,
+      "properties": {
+        "roots": {
+          "type": "object",
+          "description": "Name of the root -> folder, written relative to the world folder. A path outside the world is dropped with a warning.",
+          "additionalProperties": { "type": "string" }
+        },
+        "writable": {
+          "type": "array",
+          "description": "Which of those roots can also be written to. A root is read-only unless it is named here.",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        }
+      }
+    },
+    "http": {
+      "type": "object",
+      "description": "The hosts core.http can talk to. Nothing is reachable when absent.",
+      "additionalProperties": false,
+      "properties": {
+        "hosts": {
+          "type": "array",
+          "description": "The allowed patterns: an exact name, *.domain for its subdomains, or * for everything (logged as a warning).",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        },
+        "schemes": {
+          "type": "array",
+          "description": "The allowed schemes. Default: https only. Allowing http is logged: those requests travel unencrypted.",
+          "items": { "type": "string", "enum": ["http", "https"] },
+          "uniqueItems": true,
+          "default": ["https"]
+        },
+        "timeout_ms": {
+          "type": "integer",
+          "description": "How long a request waits for an answer before failing.",
+          "minimum": 1,
+          "default": 5000
+        },
+        "max_response_bytes": {
+          "type": "integer",
+          "description": "Bodies larger than this are refused instead of read.",
+          "minimum": 1,
+          "default": 1048576
+        },
+        "follow_redirects": {
+          "type": "boolean",
+          "description": "Whether to follow 3xx answers, at most five hops, checking the host of every one against the list.",
+          "default": false
+        }
+      }
+    },
+    "watchdog": {
+      "type": "object",
+      "description": "Execution limits for the apps that do not declare their own in blossom.json.",
+      "additionalProperties": false,
+      "properties": {
+        "timeout_ms": {
+          "type": "integer",
+          "description": "How long a block of code may run before it is stopped. Zero or less removes the limit, and is logged.",
+          "default": 2000
+        },
+        "max_depth": {
+          "type": "integer",
+          "description": "How deep recursion may go.",
+          "minimum": 1,
+          "default": 256
+        }
+      }
+    }
+  }
+}

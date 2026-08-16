@@ -4,7 +4,6 @@ import blossom.exception.BlossomRuntimeError;
 import blossom.exception.ExpressionException;
 import blossom.exception.ImportError;
 import blossom.exception.IntegrityException;
-import blossom.exception.InternalExpressionException;
 import blossom.exception.SourcePosition;
 import blossom.exception.Suggestions;
 import blossom.exception.UndefinedSymbolError;
@@ -37,7 +36,7 @@ import java.util.stream.Stream;
 
 public abstract class ScriptHost
 {
-    // shared by every host, and reachable from any app thread through 'rand'
+    /** shared by every host, and reachable from any app thread through 'rand' */
     private static final Map<Long, Random> randomizers = new ConcurrentHashMap<>();
 
     public static Thread mainThread = null;
@@ -69,7 +68,6 @@ public abstract class ScriptHost
     public void setWatchdog(ExecutionBudget.Policy policy)
     {
         this.watchdog = policy;
-        userHosts.values().forEach(h -> h.setWatchdog(policy));
     }
 
     /**
@@ -90,7 +88,6 @@ public abstract class ScriptHost
     {
         Profiler started = new Profiler();
         this.profiler = started;
-        userHosts.values().forEach(h -> h.profiler = started); // un'app per giocatore si misura intera
         return started;
     }
 
@@ -98,7 +95,6 @@ public abstract class ScriptHost
     {
         profiler.stop();
         this.profiler = Profiler.OFF;
-        userHosts.values().forEach(h -> h.profiler = Profiler.OFF);
     }
 
     public Random getRandom(long aLong)
@@ -135,19 +131,19 @@ public abstract class ScriptHost
     {
         Module parent;
         public final Map<String, FunctionValue> globalFunctions = new ConcurrentHashMap<>();
-        // the module's own global variables, used while the app keeps globals per module. When the
-        // app opts into 'global_scope' -> 'app' this map is left behind and every module reads the
-        // host's shared one instead - always go through ScriptHost.globalsOf(ModuleData)
-        public final Map<String, LazyValue> ownGlobals = new ConcurrentHashMap<>();
+        /** the module's global variables: one namespace per module, never shared with another */
+        public final Map<String, LazyValue> globals = new ConcurrentHashMap<>();
         public final Map<String, ModuleData> functionImports = new ConcurrentHashMap<>(); // imported functions string to module
         public final Map<String, ModuleData> globalsImports = new ConcurrentHashMap<>(); // imported global variables string to module
         public final Map<String, ModuleData> futureImports = new ConcurrentHashMap<>(); // imports not known before used
         /** cosa il modulo dichiara ed esporta, e con che alias vede gli altri moduli */
         public final ModuleSymbols symbols = new ModuleSymbols();
 
-        // Import gate. A module that is registered but still running its top level code has no
-        // functions or globals yet, so threads that join an import already in flight queue here
-        // instead of seeing half a module. Null means the module is ready to use.
+        /**
+         * Import gate. A module that is registered but still running its top level code has no
+         * functions or globals yet, so threads that join an import already in flight queue here
+         * instead of seeing half a module. Null means the module is ready to use.
+         */
         private volatile @Nullable CountDownLatch loading = null;
         private volatile @Nullable Thread loadingThread = null;
         /**
@@ -163,61 +159,6 @@ public abstract class ScriptHost
         public boolean isExecuted()
         {
             return executed;
-        }
-
-        public ModuleData(Module parent, ModuleData other)
-        {
-            this(parent, other, false);
-        }
-
-        public ModuleData(Module parent, ModuleData other, boolean globalsAreShared)
-        {
-            super();
-            // imports are just pointers, but they still point to the wrong modules (point to the parent)
-            this.parent = parent;
-            globalFunctions.putAll(other.globalFunctions);
-            if (!globalsAreShared)
-            {
-                // when globals are app wide the caller copied them once for the whole host, and
-                // this map is never read, so copying it per module would only waste memory
-                ownGlobals.putAll(deepCopyGlobals(other.ownGlobals));
-            }
-        }
-
-        /**
-         * Copies globals for a new per player host, so that a player's app cannot reach into
-         * another player's values.
-         *
-         * <p>Evaluated with a {@code null} context on purpose: a stored global is always a plain
-         * holder of an already computed value, including the placeholder of a global that was only
-         * ever mentioned (see {@code Expression.uninitializedVariable}).
-         */
-        public static Map<String, LazyValue> deepCopyGlobals(Map<String, LazyValue> source)
-        {
-            Map<String, LazyValue> copies = new ConcurrentHashMap<>();
-            source.forEach((key, value) ->
-            {
-                Value var = value.evalValue(null);
-                Value copy = var.deepcopy();
-                copy.boundVariable = var.boundVariable;
-                copies.put(key, (c, t) -> copy);
-            });
-            return copies;
-        }
-
-        public void setImportsBasedOn(Map<Module, ModuleData> targetModules, ModuleData other)
-        {
-            // fixing imports
-            other.functionImports.forEach((name, targetData) -> {
-                functionImports.put(name, targetModules.get(targetData.parent));
-            });
-            other.globalsImports.forEach((name, targetData) -> {
-                globalsImports.put(name, targetModules.get(targetData.parent));
-            });
-            other.futureImports.forEach((name, targetData) -> {
-                futureImports.put(name, targetModules.get(targetData.parent));
-            });
-
         }
 
         public ModuleData(Module parent)
@@ -268,8 +209,6 @@ public abstract class ScriptHost
 
     private static final long MODULE_LOAD_TIMEOUT_SECONDS = 30;
 
-    protected final Map<String, ScriptHost> userHosts = new ConcurrentHashMap<>();
-
     /**
      * The set of modules of an app and their symbol tables, as one immutable snapshot.
      *
@@ -288,31 +227,30 @@ public abstract class ScriptHost
             return of(newModules, newData);
         }
 
-        // Map.copyOf would reject the null key of the appless host, so freeze the copies instead
+        /** Map.copyOf would reject the null key of the appless host, so freeze the copies instead */
         static ModuleRegistry of(Map<String, Module> modules, Map<Module, ModuleData> data)
         {
             return new ModuleRegistry(Collections.unmodifiableMap(modules), Collections.unmodifiableMap(data));
         }
     }
 
-    // read without locking, replaced wholesale under moduleRegistryLock: modules are registered
-    // rarely (only when importing) but symbols are resolved through here constantly, so readers
-    // must not pay for a lock
+    /**
+     * read without locking, replaced wholesale under moduleRegistryLock: modules are registered
+     * rarely (only when importing) but symbols are resolved through here constantly, so readers
+     * must not pay for a lock
+     */
     private volatile ModuleRegistry registry = new ModuleRegistry(Map.of(), Map.of());
-    // serializes registry writes, the app wide globals switch, and per player host creation, so
-    // that two threads importing the same module cannot both run its code
+    /**
+     * serializes registry writes, so that two threads importing the same module cannot both run
+     * its code
+     */
     private final Object moduleRegistryLock = new Object();
-    // non-null once the app declared 'global_scope' -> 'app': the single global variable map
-    // every module of this host reads from and writes to
-    private volatile @Nullable Map<String, LazyValue> sharedGlobals = null;
-    // the one lock of this host's globals, carried by every value stored in them. One guard for all
-    // of them rather than one per name, because globals alias each other freely - 'global_a =
-    // global_b' shares the underlying container - and because a single lock cannot deadlock
+    /**
+     * the one lock of this host's globals, carried by every value stored in them. One guard for all
+     * of them rather than one per name, because globals alias each other freely - 'global_a =
+     * global_b' shares the underlying container - and because a single lock cannot deadlock
+     */
     private final ValueGuard globalsGuard = new ValueGuard();
-
-    protected ScriptHost parent;
-    protected boolean perUser;
-    public String user;
 
     public String getName()
     {
@@ -322,11 +260,6 @@ public abstract class ScriptHost
     public String getVisualName()
     {
         return main == null ? "built-in default app" : main.name();
-    }
-
-    public boolean isDefaultApp()
-    {
-        return main == null;
     }
 
     @Nullable
@@ -340,77 +273,14 @@ public abstract class ScriptHost
 
     public ErrorSnooper errorSnooper = null;
 
-    protected ScriptHost(@Nullable Module code, ScriptServer scriptServer, boolean perUser, ScriptHost parent, Expression.LoadOverride loadOverrides)
+    protected ScriptHost(@Nullable Module code, ScriptServer scriptServer, Expression.LoadOverride loadOverrides)
     {
-        this.parent = parent;
         this.main = code;
-        this.perUser = perUser;
-        this.user = null;
         this.strict = false;
         this.loadOverrides = loadOverrides;
         this.scriptServer = scriptServer;
         ModuleData moduleData = new ModuleData(code);
         this.registry = registry.with(code == null ? null : code.name(), code, moduleData);
-    }
-
-    /**
-     * The map a module's {@code global_} variables live in: its own while globals are per module,
-     * the host wide one once the app opted into {@code 'global_scope' -> 'app'}.
-     *
-     * <p>Read through, rather than stored into each module, so that switching an app to app wide
-     * globals cannot leave a writer holding the map that is being abandoned.
-     */
-    private Map<String, LazyValue> globalsOf(ModuleData data)
-    {
-        Map<String, LazyValue> shared = sharedGlobals;
-        return shared == null ? data.ownGlobals : shared;
-    }
-
-    /**
-     * Makes all modules of this host share a single {@code global_} variable namespace, the way
-     * datapacks share storage per namespace. Called when the app declares
-     * {@code 'global_scope' -> 'app'} in its {@code __config()}.
-     *
-     * <p>Idempotent and order independent: the main module's map becomes the shared one, so
-     * top level assignments that ran before {@code __config()} was defined are preserved, and
-     * globals of modules imported earlier are merged in. On a name clash the main module wins.
-     *
-     * <p>A thread that started assigning a global just before the switch may still be writing into
-     * the module map that is being left behind; {@link #setGlobalVariable} repeats such a write
-     * into the shared map instead of losing it.
-     */
-    public void enableSharedGlobals()
-    {
-        synchronized (moduleRegistryLock) // no module may be registered while the maps are merged
-        {
-            if (sharedGlobals != null)
-            {
-                return;
-            }
-            Map<Module, ModuleData> currentModules = registry.data();
-            ModuleData mainData = currentModules.get(main);
-            if (mainData == null)
-            {
-                throw new IntegrityException("Cannot share globals of an app without a main module");
-            }
-            Map<String, LazyValue> shared = mainData.ownGlobals;
-            for (ModuleData data : currentModules.values())
-            {
-                if (data != mainData)
-                {
-                    data.ownGlobals.forEach(shared::putIfAbsent);
-                }
-            }
-            // values that were assigned while globals were still per module are only reachable by
-            // one thread each so far, and become shared exactly now
-            shared.values().forEach(lv -> ValueGuard.attach(lv.evalValue(null), globalsGuard));
-            sharedGlobals = shared;
-        }
-    }
-
-    public boolean hasSharedGlobals()
-    {
-        return sharedGlobals != null;
     }
 
     /**
@@ -526,63 +396,11 @@ public abstract class ScriptHost
     {
     }
 
-    /** Il modulo registrato con questo nome, se caricato. */
-    public @Nullable Module moduleByName(String name)
-    {
-        return registry.modules().get(name.toLowerCase(Locale.ROOT));
-    }
-
     private @Nullable ModuleData findModuleData(String moduleName)
     {
         ModuleRegistry currentRegistry = registry;
         Module module = currentRegistry.modules().get(moduleName);
         return module == null ? null : currentRegistry.data().get(module);
-    }
-
-    public void importNames(Context c, Module targetModule, String sourceModuleName, List<String> identifiers)
-    {
-        ModuleRegistry currentRegistry = registry;
-        if (!currentRegistry.data().containsKey(targetModule))
-        {
-            throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "module", "Cannot import to module that doesn't exist");
-        }
-        Module source = currentRegistry.modules().get(sourceModuleName);
-        ModuleData sourceData = currentRegistry.data().get(source);
-        ModuleData targetData = currentRegistry.data().get(targetModule);
-        if (sourceData == null || targetData == null)
-        {
-            throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "module", "Cannot import from module that is not imported");
-        }
-        for (String identifier : identifiers)
-        {
-            if (sourceData.globalFunctions.containsKey(identifier))
-            {
-                targetData.functionImports.put(identifier, sourceData);
-            }
-            else if (globalsOf(sourceData).containsKey(identifier))
-            {
-                targetData.globalsImports.put(identifier, sourceData);
-            }
-            else
-            {
-                targetData.futureImports.put(identifier, sourceData);
-            }
-        }
-    }
-
-    public Stream<String> availableImports(String moduleName)
-    {
-        ModuleRegistry currentRegistry = registry;
-        Module source = currentRegistry.modules().get(moduleName);
-        ModuleData sourceData = currentRegistry.data().get(source);
-        if (sourceData == null)
-        {
-            throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "module", "Cannot import from module that is not imported");
-        }
-        return Stream.concat(
-                globalVariableNames(source, Expression::isGlobalVariableName),
-                globalFunctionNames(source, s -> true)
-        ).distinct().sorted();
     }
 
     protected abstract Module getModuleOrLibraryByName(String name); // this should be shell out in the executor
@@ -684,7 +502,7 @@ public abstract class ScriptHost
     {
         ModuleData target = resolveQualifier(module, qualifiedName, false);
         String symbol = qualifiedName.substring(qualifiedName.lastIndexOf(QUALIFIER) + 1);
-        return globalsOf(target).get(symbol);
+        return target.globals.get(symbol);
     }
 
     public FunctionValue getAssertFunction(Module module, String name)
@@ -773,7 +591,7 @@ public abstract class ScriptHost
     {
         ModuleData local = getModuleData(module);
         // an app with shared globals finds everything right here, and never walks the import links
-        LazyValue ret = globalsOf(local).get(name); // most uses would be from local scope anyways
+        LazyValue ret = local.globals.get(name); // most uses would be from local scope anyways
         if (ret != null)
         {
             return ret;
@@ -781,7 +599,7 @@ public abstract class ScriptHost
         ModuleData target = local.globalsImports.get(name);
         if (target != null)
         {
-            ret = globalsOf(target).get(name);
+            ret = target.globals.get(name);
             if (ret != null)
             {
                 return ret;
@@ -800,7 +618,7 @@ public abstract class ScriptHost
         }
         local.futureImports.remove(name);
         local.globalsImports.put(name, target);
-        return globalsOf(target).get(name);
+        return target.globals.get(name);
     }
 
     private ModuleData findModuleDataFromGlobalImports(String name, ModuleData source, int ttl)
@@ -809,7 +627,7 @@ public abstract class ScriptHost
         {
             throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "module", "Cannot import " + name + ", either your imports are too deep or too loopy");
         }
-        if (globalsOf(source).containsKey(name))
+        if (source.globals.containsKey(name))
         {
             return source;
         }
@@ -841,14 +659,14 @@ public abstract class ScriptHost
     public void delGlobalVariableWithPrefix(Module module, String prefix)
     {
         ModuleData data = getModuleData(module);
-        globalsOf(data).entrySet().removeIf(e -> e.getKey().startsWith(prefix));
+        data.globals.entrySet().removeIf(e -> e.getKey().startsWith(prefix));
         data.globalsImports.entrySet().removeIf(e -> e.getKey().startsWith(prefix));
     }
 
     public void delGlobalVariable(Module module, String varName)
     {
         ModuleData data = getModuleData(module);
-        globalsOf(data).remove(varName);
+        data.globals.remove(varName);
         data.globalsImports.remove(varName);
     }
 
@@ -862,11 +680,6 @@ public abstract class ScriptHost
         return data;
     }
 
-    protected void assertAppIntegrity(Module module)
-    {
-        getModuleData(module);
-    }
-
     public void addUserDefinedFunction(Context ctx, Module module, String name, FunctionValue fun)
     {
         getModuleData(module).globalFunctions.put(name, fun);
@@ -878,18 +691,10 @@ public abstract class ScriptHost
      */
     public void setGlobalVariable(Module module, String name, LazyValue lv)
     {
-        // globals only ever hold already computed values, so this never runs user code, see
-        // ModuleData.deepCopyGlobals
+        // a global only ever holds an already computed value, including the placeholder of one that
+        // was merely mentioned (see Expression.uninitializedVariable), so this never runs user code
         ValueGuard.attach(lv.evalValue(null), globalsGuard);
-        Map<String, LazyValue> target = globalsOf(getModuleData(module));
-        target.put(name, lv);
-        Map<String, LazyValue> shared = sharedGlobals;
-        if (shared != null && shared != target)
-        {
-            // the app switched to shared globals while this write was on its way to the module's
-            // own map, which nothing reads any more: repeat it where it is now visible
-            shared.put(name, lv);
-        }
+        getModuleData(module).globals.put(name, lv);
     }
 
     /**
@@ -908,12 +713,7 @@ public abstract class ScriptHost
         }
         // the mapping function only builds a value, it never touches the map again, so it is safe
         // to run under the map's own entry lock
-        Map<String, LazyValue> target = globalsOf(getModuleData(module));
-        LazyValue created = target.computeIfAbsent(name, key -> fallback.get());
-        Map<String, LazyValue> shared = sharedGlobals;
-        return shared == null || shared == target
-                ? created
-                : shared.computeIfAbsent(name, key -> created); // see setGlobalVariable
+        return getModuleData(module).globals.computeIfAbsent(name, key -> fallback.get());
     }
 
     /**
@@ -923,7 +723,7 @@ public abstract class ScriptHost
      * <p>This is the same guard that every value stored in a global carries, so an update of a
      * variable and a mutation of the container it holds exclude each other. The guard is reentrant,
      * so nested updates on one thread cannot self deadlock. Note that {@code action} must not
-     * evaluate arbitrary scarpet code, which could try to take the guard of another app.
+     * evaluate arbitrary app code, which could try to take the guard of another app.
      */
     public <T> T withGlobalsLocked(Supplier<T> action)
     {
@@ -933,7 +733,7 @@ public abstract class ScriptHost
     public Stream<String> globalVariableNames(Module module, Predicate<String> predicate)
     {
         return Stream.concat(Stream.concat(
-                globalsOf(getModuleData(module)).keySet().stream(),
+                getModuleData(module).globals.keySet().stream(),
                 getModuleData(module).globalsImports.keySet().stream()
         ), getModuleData(module).futureImports.keySet().stream().filter(Expression::isGlobalVariableName)).filter(predicate);
     }
@@ -946,64 +746,10 @@ public abstract class ScriptHost
         ), getModuleData(module).futureImports.keySet().stream().filter(s -> !Expression.isGlobalVariableName(s))).filter(predicate);
     }
 
-    public ScriptHost retrieveForExecution(String /*Nullable*/ user)
-    {
-        if (!perUser)
-        {
-            return this;
-        }
-        ScriptHost oldUserHost = userHosts.get(user);
-        if (oldUserHost != null)
-        {
-            return oldUserHost;
-        }
-        // serialized, so two threads acting for the same player cannot build two hosts and lose one
-        // of them along with everything it stored
-        synchronized (moduleRegistryLock)
-        {
-            ScriptHost existing = userHosts.get(user);
-            if (existing != null)
-            {
-                return existing;
-            }
-            ScriptHost userHost = this.duplicate();
-            userHost.user = user;
-            this.setupUserHost(userHost);
-            userHosts.put(user, userHost);
-            return userHost;
-        }
-    }
-
-    protected void setupUserHost(ScriptHost host)
-    {
-        host.watchdog = this.watchdog; // l'host di un giocatore eredita i limiti dell'app
-        // app wide globals are copied once for the player and then read by all of their modules,
-        // otherwise each module would deep copy the shared map and sharing would break
-        Map<String, LazyValue> shared = this.sharedGlobals;
-        if (shared != null)
-        {
-            Map<String, LazyValue> playerGlobals = globalsGuard.call(() -> ModuleData.deepCopyGlobals(shared));
-            // the player's copies are shared between that player's threads, under the new host's
-            // own guard - two players never contend with each other
-            playerGlobals.values().forEach(lv -> ValueGuard.attach(lv.evalValue(null), host.globalsGuard));
-            host.sharedGlobals = playerGlobals;
-        }
-        // adding imports - the child's registry is built aside and published in one go
-        ModuleRegistry parentRegistry = this.registry;
-        Map<Module, ModuleData> childData = new HashMap<>();
-        parentRegistry.data().forEach((module, data) -> childData.put(module, new ModuleData(module, data, shared != null)));
-        // fixing imports
-        childData.forEach((module, data) -> data.setImportsBasedOn(childData, parentRegistry.data().get(data.parent)));
-        host.registry = ModuleRegistry.of(new HashMap<>(parentRegistry.modules()), childData);
-        host.root = this.root;
-    }
-
     public synchronized void handleExpressionException(String msg, ExpressionException exc)
     {
         System.out.println(msg + ": " + exc);
     }
-
-    protected abstract ScriptHost duplicate();
 
     /**
      * A named lock for {@code synchronize()}. Fair, so that tasks queueing on a busy critical
@@ -1037,10 +783,6 @@ public abstract class ScriptHost
     {
         inTermination = true;
         executorServices.values().forEach(ThreadPoolExecutor::shutdown);
-        for (ScriptHost uh : userHosts.values())
-        {
-            uh.onClose();
-        }
         if (taskCount() > 0)
         {
             executorServices.values().forEach(e -> {
@@ -1073,28 +815,7 @@ public abstract class ScriptHost
         }
     }
 
-    public void setPerPlayer(boolean isPerUser)
-    {
-        perUser = isPerUser;
-    }
-
-    public boolean isPerUser()
-    {
-        return perUser;
-    }
-
-    public Set<String> getUserList()
-    {
-        return userHosts.keySet();
-    }
-
-
-    public void resetErrorSnooper()
-    {
-        errorSnooper = null;
-    }
-
-    public static final Logger DEPRECATION_LOG = LoggerFactory.getLogger("Scarpet Deprecation Warnings");
+    public static final Logger DEPRECATION_LOG = LoggerFactory.getLogger("Blossom Deprecation Warnings");
 
     public boolean issueDeprecation(String feature)
     {

@@ -3,7 +3,6 @@ package blossom.interpreter;
 import blossom.exception.SourcePosition;
 import blossom.exception.BlossomRuntimeError;
 import blossom.exception.ExpressionException;
-import blossom.exception.InternalExpressionException;
 import blossom.value.FunctionUnpackedArgumentsValue;
 import blossom.value.ListValue;
 import blossom.value.Value;
