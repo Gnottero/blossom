@@ -42,41 +42,6 @@ public abstract class Value implements Comparable<Value>, Cloneable, blossom.int
     public static final UndefValue UNDEF = UndefValue.UNDEF;
     public static final UndefValue EOL = UndefValue.EOL;
 
-    public String boundVariable;
-
-    public boolean isBound()
-    {
-        return boundVariable != null;
-    }
-
-    public String getVariable()
-    {
-        return boundVariable;
-    }
-
-    public Value reboundedTo(String value)
-    {
-        Value copy;
-        try
-        {
-            copy = (Value) clone();
-        }
-        catch (CloneNotSupportedException e)
-        {
-            // should not happen
-            Blossom.LOG.error("Failed to clone variable", e);
-            throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "value", "Variable of type " + getTypeString() + " is not cloneable. Tell gnembon about it, this shoudn't happen");
-        }
-        copy.boundVariable = value;
-        return copy;
-    }
-
-    public Value bindTo(String value)
-    {
-        this.boundVariable = value;
-        return this;
-    }
-
     public abstract String getString();
 
     public String getPrettyString()
@@ -120,11 +85,6 @@ public abstract class Value implements Comparable<Value>, Cloneable, blossom.int
         return new StringValue(getString() + "/" + v.getString());
     }
 
-    public Value()
-    {
-        this.boundVariable = null;
-    }
-
     @Override
     public int compareTo(Value o)
     {
@@ -141,18 +101,6 @@ public abstract class Value implements Comparable<Value>, Cloneable, blossom.int
             return this.compareTo(v) == 0;
         }
         return false;
-    }
-
-    public void assertAssignable()
-    {
-        if (boundVariable == null)// || boundVariable.startsWith("_"))
-        {
-            /*if (boundVariable != null)
-            {
-                throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "value", boundVariable+ " cannot be assigned a new value");
-            }*/
-            throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "value", getString() + " is not a variable");
-        }
     }
 
     public Value in(Value value1)

@@ -109,17 +109,17 @@ public class BlockIterators
             for (int y = cy - yrange; y <= cy + yprange; y++)
             {
                 int yFinal = y;
-                c.setVariable("_y", (ct, tt) -> new NumericValue(yFinal).bindTo("_y"));
+                c.setVariable("_y", (ct, tt) -> new NumericValue(yFinal));
                 for (int x = cx - xrange; x <= cx + xprange; x++)
                 {
                     int xFinal = x;
-                    c.setVariable("_x", (ct, tt) -> new NumericValue(xFinal).bindTo("_x"));
+                    c.setVariable("_x", (ct, tt) -> new NumericValue(xFinal));
                     for (int z = cz - zrange; z <= cz + zprange; z++)
                     {
                         int zFinal = z;
 
-                        c.setVariable("_z", (ct, tt) -> new NumericValue(zFinal).bindTo("_z"));
-                        Value blockValue = BlockValue.fromCoords(((ScriptContext) c), xFinal, yFinal, zFinal).bindTo("_");
+                        c.setVariable("_z", (ct, tt) -> new NumericValue(zFinal));
+                        Value blockValue = BlockValue.fromCoords(((ScriptContext) c), xFinal, yFinal, zFinal);
                         c.implicitValue = (ct, tt) -> blockValue;
                         Value result;
                         try
@@ -189,16 +189,16 @@ public class BlockIterators
             for (int y = miny; y <= maxy; y++)
             {
                 int yFinal = y;
-                c.setVariable("_y", (ct, tt) -> new NumericValue(yFinal).bindTo("_y"));
+                c.setVariable("_y", (ct, tt) -> new NumericValue(yFinal));
                 for (int x = minx; x <= maxx; x++)
                 {
                     int xFinal = x;
-                    c.setVariable("_x", (ct, tt) -> new NumericValue(xFinal).bindTo("_x"));
+                    c.setVariable("_x", (ct, tt) -> new NumericValue(xFinal));
                     for (int z = minz; z <= maxz; z++)
                     {
                         int zFinal = z;
-                        c.setVariable("_z", (ct, tt) -> new NumericValue(zFinal).bindTo("_z"));
-                        Value blockValue = BlockValue.fromCoords(((ScriptContext) c), xFinal, yFinal, zFinal).bindTo("_");
+                        c.setVariable("_z", (ct, tt) -> new NumericValue(zFinal));
+                        Value blockValue = BlockValue.fromCoords(((ScriptContext) c), xFinal, yFinal, zFinal);
                         c.implicitValue = (ct, tt) -> blockValue;
                         Value result;
                         try

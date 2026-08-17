@@ -53,11 +53,12 @@ public class NumericValue extends Value
     /**
      * Il numero intero {@code value}.
      *
-     * <p>Qui c'è stata una cache di istanze condivise per gli interi piccoli, ed è stata tolta: i
-     * valori portano un campo mutabile ({@code boundVariable}, il nome della variabile a cui sono
-     * legati) che {@code bindTo} scrive sul posto. Con istanze condivise, iterare una lista di
-     * numeri piccoli avrebbe scritto quel campo sulle istanze globali, da più thread. Il guadagno
-     * misurato non valeva uno stato globale mutabile (vedi DECISIONI.md D-071).
+     * <p>Qui c'è stata una cache di istanze condivise per gli interi piccoli, tolta perché allora i
+     * valori portavano un campo mutabile con il nome della variabile a cui erano legati, e istanze
+     * condivise l'avrebbero fatto riscrivere da più thread (vedi DECISIONI.md D-071). Quel campo
+     * adesso non c'è più - il nome ce l'ha il nodo che legge la variabile, vedi {@link
+     * VariableReferenceValue} e D-093 - quindi l'ostacolo è caduto e la cache si può rivalutare
+     * sui numeri, non più su un problema di correttezza.
      */
     public static NumericValue of(long value)
     {

@@ -59,7 +59,7 @@ public class Loops
                 Value lastOne = Value.NULL;
                 //scoping
                 LazyValue defaultVal = c.implicitValue;
-                c.implicitValue = (cc, tt) -> new NumericValue(0).bindTo("_");
+                c.implicitValue = (cc, tt) -> new NumericValue(0);
                 final blossom.interpreter.ExecutionBudget budget = c.budget;
                 while (condition.evalValue(c, Context.BOOLEAN).getBoolean())
                 {
@@ -81,7 +81,7 @@ public class Loops
                     }
                     i++;
                     long seriously = i;
-                    c.implicitValue = (cc, tt) -> new NumericValue(seriously).bindTo("_");
+                    c.implicitValue = (cc, tt) -> new NumericValue(seriously);
                 }
                 //revering scope
                 c.implicitValue = defaultVal;
@@ -95,7 +95,7 @@ public class Loops
             Value lastOne = Value.NULL;
             //scoping
             LazyValue defaultVal = c.implicitValue;
-            c.implicitValue = (cc, tt) -> new NumericValue(0).bindTo("_");
+            c.implicitValue = (cc, tt) -> new NumericValue(0);
             // il watchdog letto una volta, fuori dal ciclo: vedi il commento in 'loop'
             final blossom.interpreter.ExecutionBudget budget = c.budget;
             while (i < limit && condition.evalValue(c, Context.BOOLEAN).getBoolean())
@@ -118,7 +118,7 @@ public class Loops
                 }
                 i++;
                 long seriously = i;
-                c.implicitValue = (cc, tt) -> new NumericValue(seriously).bindTo("_");
+                c.implicitValue = (cc, tt) -> new NumericValue(seriously);
             }
             //revering scope
             c.implicitValue = defaultVal;
@@ -142,7 +142,7 @@ public class Loops
             {
                 budget.tick();
                 long whyYouAsk = i;
-                c.implicitValue = (cc, tt) -> new NumericValue(whyYouAsk).bindTo("_");
+                c.implicitValue = (cc, tt) -> new NumericValue(whyYouAsk);
                 try
                 {
                     lastOne = expr.evalValue(c, t);
@@ -193,11 +193,9 @@ public class Loops
                 if(next == Value.EOL) {
                     continue;
                 }
-                String variable = next.boundVariable;
-                next.bindTo("_");
                 int doYouReally = i;
                 c.implicitValue = (cc, tt) -> next;
-                c.implicitIndex = (cc, tt) -> new NumericValue(doYouReally).bindTo("_i");
+                c.implicitIndex = (cc, tt) -> new NumericValue(doYouReally);
                 try
                 {
                     result.add(expr.evalValue(c, t));
@@ -210,11 +208,9 @@ public class Loops
                     }
                     if (stmt instanceof BreakStatement)
                     {
-                        next.boundVariable = variable;
                         break;
                     }
                 }
-                next.boundVariable = variable;
             }
             ((AbstractListValue) rval).fatality();
             Value ret = ListValue.wrap(result);
@@ -253,11 +249,9 @@ public class Loops
                 if(next == Value.EOL) {
                     continue;
                 }
-                String veriable = next.boundVariable;
-                next.bindTo("_");
                 int seriously = i;
                 c.implicitValue = (cc, tt) -> next;
-                c.implicitIndex = (cc, tt) -> new NumericValue(seriously).bindTo("_i");
+                c.implicitIndex = (cc, tt) -> new NumericValue(seriously);
                 try
                 {
                     if (expr.evalValue(c, Context.BOOLEAN).getBoolean())
@@ -273,11 +267,9 @@ public class Loops
                     }
                     if (stmt instanceof BreakStatement)
                     {
-                        next.boundVariable = veriable;
                         break;
                     }
                 }
-                next.boundVariable = veriable;
             }
             ((AbstractListValue) rval).fatality();
             Value ret = ListValue.wrap(result);
@@ -316,31 +308,26 @@ public class Loops
                 if(next == Value.EOL) {
                     continue;
                 }
-                String variable = next.boundVariable;
-                next.bindTo("_");
                 int seriously = i;
                 c.implicitValue = (cc, tt) -> next;
-                c.implicitIndex = (cc, tt) -> new NumericValue(seriously).bindTo("_i");
+                c.implicitIndex = (cc, tt) -> new NumericValue(seriously);
                 try
                 {
                     if (expr.evalValue(c, Context.BOOLEAN).getBoolean())
                     {
                         result = next;
-                        next.boundVariable = variable;
                         break;
                     }
                 }
                 catch (BreakStatement stmt)
                 {
                     result = stmt.retval == null ? next : stmt.retval;
-                    next.boundVariable = variable;
                     break;
                 }
                 catch (ContinueStatement ignored)
                 {
                     throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "loop", "'continue' inside 'first' function has no sense");
                 }
-                next.boundVariable = variable;
             }
             //revering scope
             ((AbstractListValue) rval).fatality();
@@ -379,18 +366,14 @@ public class Loops
                 if(next == Value.EOL) {
                     continue;
                 }
-                String variable = next.boundVariable;
-                next.bindTo("_");
                 int seriously = i;
                 c.implicitValue = (cc, tt) -> next;
-                c.implicitIndex = (cc, tt) -> new NumericValue(seriously).bindTo("_i");
+                c.implicitIndex = (cc, tt) -> new NumericValue(seriously);
                 if (!expr.evalValue(c, Context.BOOLEAN).getBoolean())
                 {
                     result = LazyValue.FALSE;
-                    next.boundVariable = variable;
                     break;
                 }
-                next.boundVariable = variable;
             }
             //revering scope
             ((AbstractListValue) rval).fatality();
@@ -458,11 +441,9 @@ public class Loops
                 if(next == Value.EOL) {
                     continue;
                 }
-                String variable = next.boundVariable;
-                next.bindTo("_");
                 int seriously = i;
                 c.implicitValue = (cc, tt) -> next;
-                c.implicitIndex = (cc, tt) -> new NumericValue(seriously).bindTo("_i");
+                c.implicitIndex = (cc, tt) -> new NumericValue(seriously);
                 Value result = Value.FALSE;
                 try
                 {
@@ -476,7 +457,6 @@ public class Loops
                     }
                     if (stmt instanceof BreakStatement)
                     {
-                        next.boundVariable = variable;
                         break;
                     }
                 }
@@ -484,7 +464,6 @@ public class Loops
                 {
                     successCount++;
                 }
-                next.boundVariable = variable;
             }
             //revering scope
             ((AbstractListValue) rval).fatality();
@@ -535,13 +514,11 @@ public class Loops
                 if(next == Value.EOL) {
                     continue;
                 }
-                String variable = next.boundVariable;
-                next.bindTo("_");
                 Value promiseWontChangeYou = acc;
                 int seriously = i;
-                c.implicitAccumulator = (cc, tt) -> promiseWontChangeYou.bindTo("_a");
+                c.implicitAccumulator = (cc, tt) -> promiseWontChangeYou;
                 c.implicitValue = (cc, tt) -> next;
-                c.implicitIndex = (cc, tt) -> new NumericValue(seriously).bindTo("_i");
+                c.implicitIndex = (cc, tt) -> new NumericValue(seriously);
                 try
                 {
                     acc = expr.evalValue(c, t);
@@ -554,11 +531,9 @@ public class Loops
                     }
                     if (stmt instanceof BreakStatement)
                     {
-                        next.boundVariable = variable;
                         break;
                     }
                 }
-                next.boundVariable = variable;
             }
             //reverting scope
             ((AbstractListValue) rval).fatality();

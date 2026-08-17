@@ -53,34 +53,34 @@ public class Functions
                 for (int i = 1; i < lv.size(); i++)
                 {
                     Value v = lv.get(i).evalValue(c, Context.LOCALIZATION);
-                    if (!v.isBound())
-                    {
-                        throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "function", "Only variables can be used in function signature, not  " + v.getString());
-                    }
                     if (v instanceof final FunctionAnnotationValue fav)
                     {
                         if (fav.type == FunctionAnnotationValue.Type.GLOBAL)
                         {
-                            globals.add(v.boundVariable);
+                            globals.add(fav.name());
                         }
                         else
                         {
                             if (varArgs != null)
                             {
-                                throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "function", "Variable argument identifier is already defined as " + varArgs + ", trying to overwrite with " + v.boundVariable);
+                                throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "function", "Variable argument identifier is already defined as " + varArgs + ", trying to overwrite with " + fav.name());
                             }
-                            varArgs = v.boundVariable;
+                            varArgs = fav.name();
                         }
                     }
                     else if (v instanceof final blossom.value.TypedParameterValue typed)
                     {
-                        args.add(typed.boundVariable);
+                        args.add(typed.parameter());
                         argumentTypes.add(typed.canonicalType());
+                    }
+                    else if (v instanceof final blossom.value.VariableReferenceValue reference)
+                    {
+                        args.add(reference.name());
+                        argumentTypes.add(null);
                     }
                     else
                     {
-                        args.add(v.boundVariable);
-                        argumentTypes.add(null);
+                        throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "function", "Only variables can be used in function signature, not  " + v.getString());
                     }
                 }
                 Value retval = new FunctionSignatureValue(name, args, argumentTypes, varArgs, globals);
@@ -107,13 +107,17 @@ public class Functions
         });
 
 
-        expression.addContextFunction("outer", 1, (c, t, lv) ->
+        // pigra perche' l'argomento le serve come nome, non come valore: addContextFunction valuta
+        // i propri argomenti in Context.NONE, dove un identificatore e' gia' stato letto
+        expression.addLazyFunction("outer", 1, (c, t, lv) ->
         {
             if (t != Context.LOCALIZATION)
             {
                 throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "function", "Outer scoping of variables is only possible in function signatures.");
             }
-            return new FunctionAnnotationValue(lv.get(0), FunctionAnnotationValue.Type.GLOBAL);
+            Value annotation = new FunctionAnnotationValue(lv.get(0).evalValue(c, Context.LOCALIZATION),
+                    FunctionAnnotationValue.Type.GLOBAL);
+            return (cc, tt) -> annotation;
         });
 
         //assigns const procedure to the lhs, returning its previous value

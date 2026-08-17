@@ -300,7 +300,9 @@ public class FunctionValue extends Value implements Callables.ILazyFunction
         for (int i = 0; i < args.size(); i++)
         {
             String arg = args.get(i);
-            Value val = params.get(i).reboundedTo(arg); // todo check if we need to copy that
+            // nessuna copia: il nome della variabile non vive piu' sul valore, quindi legare un
+            // argomento a un parametro non puo' piu' rinominarlo sotto al chiamante. Vedi D-093
+            Value val = params.get(i);
             if (argumentTypes != null)
             {
                 checkParameterType(i, arg, val, e, t);
@@ -312,11 +314,9 @@ public class FunctionValue extends Value implements Callables.ILazyFunction
             List<Value> extraParams = new ArrayList<>();
             for (int i = args.size(), mx = params.size(); i < mx; i++)
             {
-                extraParams.add(params.get(i).reboundedTo(null)); // copy by value I guess
+                extraParams.add(params.get(i));
             }
-            Value rest = ListValue.wrap(extraParams).bindTo(varArgs); // didn't we just copied that?
-            newFrame.setVariable(varArgs, rest);
-
+            newFrame.setVariable(varArgs, ListValue.wrap(extraParams));
         }
         Value retVal;
         // il watchdog conta la chiamata prima di aprirla e la chiude in ogni caso, anche quando la

@@ -12,20 +12,28 @@ public class FunctionAnnotationValue extends Value
 
     public Type type;
 
+    private final String name;
+
     public FunctionAnnotationValue(Value variable, Type type)
     {
-        if (variable.boundVariable == null)
+        if (!(variable instanceof final VariableReferenceValue reference))
         {
             throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "function", "You can only borrow variables from the outer scope");
         }
-        this.boundVariable = variable.boundVariable;
+        this.name = reference.name();
         this.type = type;
+    }
+
+    /** Il nome della variabile annotata: 'outer(x)' o '... rest' dentro una firma. */
+    public String name()
+    {
+        return name;
     }
 
     @Override
     public String getString()
     {
-        return boundVariable;
+        return name;
     }
 
     @Override

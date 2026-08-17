@@ -31,10 +31,32 @@ public class DataStructures
 {
     public static void apply(Expression expression)
     {
-        expression.addFunction("l", lv ->
-                lv.size() == 1 && lv.get(0) instanceof final LazyListValue llv
-                        ? ListValue.wrap(llv.unroll())
-                        : new ListValue.ListConstructorValue(lv));
+        // pigra per via dell'assegnamento multiplo: in 'l(a, b) = l(1, 2)' gli elementi di sinistra
+        // sono nomi da legare, non variabili da leggere, e la valutazione eager di AbstractFunction
+        // impone Context.NONE ai propri argomenti. Il contesto di l-value deve arrivare fino a loro
+        expression.addLazyFunction("l", (c, t, lv) ->
+        {
+            Context.Type inner = t == Context.LVALUE ? Context.LVALUE : Context.NONE;
+            List<Value> params = new ArrayList<>(lv.size());
+            for (LazyValue element : lv)
+            {
+                Value value = element.evalValue(c, inner);
+                // '...rest' dentro una lista si spiana: lo faceva la valutazione eager di
+                // AbstractFunction, che qui non c'e' piu'
+                if (value instanceof final blossom.value.FunctionUnpackedArgumentsValue unpacked)
+                {
+                    params.addAll(unpacked.getItems());
+                }
+                else
+                {
+                    params.add(value);
+                }
+            }
+            Value ret = params.size() == 1 && params.get(0) instanceof final LazyListValue llv
+                    ? ListValue.wrap(llv.unroll())
+                    : new ListValue.ListConstructorValue(params);
+            return (cc, tt) -> ret;
+        });
 
         expression.addFunction("join", lv ->
         {
@@ -216,13 +238,18 @@ public class DataStructures
             // diventa gia' un valore legato al proprio nome, quindi qui arrivano due nomi
             if (t == Context.LOCALIZATION)
             {
-                if (container.boundVariable == null || address.boundVariable == null)
+                if (!(container instanceof final blossom.value.VariableReferenceValue parameter)
+                        || !(address instanceof final blossom.value.VariableReferenceValue declaredType))
                 {
                     throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "function",
                             "Inside a signature ':' declares a parameter type, e.g. fn f(a: num) -> ...");
                 }
-                return new blossom.value.TypedParameterValue(container.boundVariable, address.boundVariable);
+                return new blossom.value.TypedParameterValue(parameter.name(), declaredType.name());
             }
+            // fuori da una firma il nome non serve: se il contenitore e' arrivato come riferimento
+            // a variabile - accade quando l'argomento viene valutato in contesto di l-value - a
+            // interessare e' il valore che ci sta dietro
+            container = blossom.value.VariableReferenceValue.dereference(container);
             if (container instanceof final LContainerValue lcv)
             {
                 ContainerValueInterface outerContainer = lcv.container();
@@ -326,7 +353,9 @@ public class DataStructures
             {
                 throw new ArityError(SourcePosition.UNKNOWN,"'put' takes at least three arguments, a container, address, and values to insert at that index");
             }
-            Value container = lv.get(0).evalValue(c, Context.LVALUE);
+            // in contesto di l-value una variabile si valuta al proprio riferimento: qui il nome
+            // non serve, serve il contenitore che ci sta dietro. Su un LContainerValue e' un no-op
+            Value container = blossom.value.VariableReferenceValue.dereference(lv.get(0).evalValue(c, Context.LVALUE));
             if (container instanceof final LContainerValue lcv)
             {
                 ContainerValueInterface internalContainer = lcv.container();

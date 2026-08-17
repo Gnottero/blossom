@@ -42,7 +42,9 @@ import blossom.language.Threading;
 import blossom.value.FunctionValue;
 import blossom.value.NumericValue;
 import blossom.value.StringValue;
+import blossom.value.UndefValue;
 import blossom.value.Value;
+import blossom.value.VariableReferenceValue;
 import it.unimi.dsi.fastutil.Stack;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -1110,7 +1112,8 @@ public class Expression
     {
         // tolerates a null context: a global that was only mentioned holds this very placeholder,
         // and it is read without a context when the app's globals are inspected
-        return (_c, _t) -> _c != null && _c.host.strict ? Value.UNDEF.reboundedTo(name) : Value.NULL.reboundedTo(name);
+        Value undefined = UndefValue.named(name);
+        return (_c, _t) -> _c != null && _c.host.strict ? undefined : Value.NULL;
     }
 
     /**
@@ -1131,20 +1134,55 @@ public class Expression
         {
             return switch (name)
             {
-                case Context.IMPLICIT_VALUE -> (c, t) -> c.implicitValue().evalValue(c, t);
-                case Context.IMPLICIT_INDEX -> (c, t) -> c.implicitIndex().evalValue(c, t);
-                default -> (c, t) -> c.implicitAccumulator().evalValue(c, t);
+                case Context.IMPLICIT_VALUE -> read(name, (c, t) -> c.implicitValue().evalValue(c, t));
+                case Context.IMPLICIT_INDEX -> read(name, (c, t) -> c.implicitIndex().evalValue(c, t));
+                default -> read(name, (c, t) -> c.implicitAccumulator().evalValue(c, t));
             };
         }
         if (ScriptHost.isQualified(name))
         {
-            return (c, t) -> qualifiedVariable(c, name).evalValue(c, t);
+            return read(name, (c, t) -> qualifiedVariable(c, name).evalValue(c, t));
         }
         if (isGlobalVariableName(name))
         {
-            return (c, t) -> c.host.getOrCreateGlobalVariable(module, name, () -> uninitializedVariable(name)).evalValue(c, t);
+            return read(name, (c, t) -> c.host.getOrCreateGlobalVariable(module, name, () -> uninitializedVariable(name)).evalValue(c, t));
         }
-        return (c, t) -> localVariable(c, name).evalValue(c, t);
+        return read(name, (c, t) -> localVariable(c, name).evalValue(c, t));
+    }
+
+    /**
+     * Il nodo che legge {@code name} valutando {@code value}, e che sa dire il proprio nome.
+     *
+     * <p>Nei due contesti in cui un identificatore non è una lettura - a sinistra di un assegnamento
+     * e dentro una firma - non produce il valore ma un {@link VariableReferenceValue}: è l'l-value
+     * delle variabili, e prende il posto del nome che ogni valore si portava dietro (D-093). Dentro
+     * una firma il valore non viene nemmeno cercato, perché lì il nome è quello di un parametro che
+     * ancora non esiste.
+     */
+    private static VariableRead read(String name, LazyValue value)
+    {
+        return new VariableRead()
+        {
+            @Override
+            public String variableName()
+            {
+                return name;
+            }
+
+            @Override
+            public Value evalValue(Context c, Context.Type t)
+            {
+                if (t == Context.LVALUE)
+                {
+                    return new VariableReferenceValue(name, value.evalValue(c, Context.NONE));
+                }
+                if (t == Context.LOCALIZATION)
+                {
+                    return new VariableReferenceValue(name);
+                }
+                return value.evalValue(c, t);
+            }
+        };
     }
 
     /** {@code alias.simbolo}: appartiene a un altro modulo, e non può essere creato da qui. */
@@ -1207,7 +1245,7 @@ public class Expression
 
     private LazyValue applyVariableUpdate(Context c, String name, UnaryOperator<Value> updater)
     {
-        Value current = getOrSetAnyVariable(c, name).evalValue(c, Context.LVALUE);
+        Value current = getOrSetAnyVariable(c, name).evalValue(c, Context.NONE);
         Value updated = updater.apply(current);
         LazyValue result = (cc, tt) -> updated;
         setAnyVariable(c, name, result);

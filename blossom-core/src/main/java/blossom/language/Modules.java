@@ -7,6 +7,7 @@ import blossom.interpreter.Expression;
 import blossom.interpreter.LazyValue;
 import blossom.interpreter.ModuleSymbols;
 import blossom.value.FunctionValue;
+import blossom.value.VariableReferenceValue;
 import blossom.value.Value;
 
 /**
@@ -66,21 +67,22 @@ public class Modules
         expression.addLazyUnaryOperator(keyword, "declare_" + keyword, precedence, false, false, t -> Context.Type.LVALUE, (c, t, lv) ->
         {
             Value assigned = lv.evalValue(c, Context.Type.LVALUE);
-            String name = assigned.boundVariable;
-            if (name == null)
+            if (!(assigned instanceof final VariableReferenceValue reference))
             {
                 throw new ParseError(SourcePosition.UNKNOWN,
                         "'" + keyword.replace('_', ' ') + "' wants a name to bind, e.g. "
                                 + keyword.replace('_', ' ') + " counter = 0;");
             }
+            String name = reference.name();
+            Value value = reference.current();
             ModuleSymbols symbols = c.host.symbolsOf(expression.module);
             symbols.declareBinding(name, mutable);
             // l'assegnamento interno ha creato una variabile locale al corpo del modulo: il valore
             // appartiene al modulo, quindi va spostato dove le funzioni possono vederlo
             c.delVariable(name);
-            LazyValue stored = (cc, tt) -> assigned;
-            c.host.setGlobalVariable(expression.module, name, stored);
-            return stored;
+            c.host.setGlobalVariable(expression.module, name, value);
+            // la dichiarazione vale il riferimento e non il valore: 'pub' ci sta sopra e vuole il nome
+            return new VariableReferenceValue(name, value);
         });
     }
 
@@ -90,6 +92,6 @@ public class Modules
         {
             return function.getString();
         }
-        return declared.boundVariable;
+        return declared instanceof final VariableReferenceValue reference ? reference.name() : null;
     }
 }

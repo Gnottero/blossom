@@ -5,6 +5,7 @@ import blossom.exception.BlossomRuntimeError;
 import blossom.interpreter.Context;
 import blossom.interpreter.Expression;
 import blossom.interpreter.LazyValue;
+import blossom.interpreter.VariableRead;
 import blossom.value.AbstractListValue;
 import blossom.value.BooleanValue;
 import blossom.value.ContainerValueInterface;
@@ -17,6 +18,7 @@ import blossom.value.MapValue;
 import blossom.value.NumericValue;
 import blossom.value.Value;
 import blossom.value.ValueGuard;
+import blossom.value.VariableReferenceValue;
 
 import java.util.Comparator;
 import java.util.HashMap;
@@ -350,6 +352,15 @@ public class Operators
         // lazy cause of assignment which is non-trivial
         expression.addLazyBinaryOperator("=", "assign", precedence.get("assign=<>"), false, false, t -> Context.Type.LVALUE, (c, t, lv1, lv2) ->
         {
+            // il caso normale: a sinistra c'e' il nome di una variabile, e il nodo che lo legge lo
+            // sa dal parsing. Niente da valutare a sinistra, e niente da copiare a destra
+            if (lv1 instanceof final VariableRead target)
+            {
+                Value v2 = lv2.evalValue(c);
+                expression.setAnyVariable(c, target.variableName(), v2);
+                // dentro una dichiarazione ('let x = 0') chi sta sopra ha bisogno del nome
+                return t == Context.LVALUE ? new VariableReferenceValue(target.variableName(), v2) : v2;
+            }
             Value v1 = lv1.evalValue(c, Context.LVALUE);
             Value v2 = lv2.evalValue(c);
             if (v1 instanceof final ListValue.ListConstructorValue lcv && v2 instanceof final ListValue list)
@@ -364,45 +375,40 @@ public class Operators
                 {
                     throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "operator", "Too few values to unpack");
                 }
-                for (Value v : ll)
-                {
-                    v.assertAssignable();
-                }
                 Iterator<Value> li = ll.iterator();
                 Iterator<Value> ri = rl.iterator();
                 while (li.hasNext())
                 {
-                    String lname = li.next().getVariable();
-                    Value vval = ri.next().reboundedTo(lname);
-                    expression.setAnyVariable(c, lname, (cc, tt) -> vval);
+                    expression.setAnyVariable(c, assignableName(li.next()), ri.next());
                 }
-                return (cc, tt) -> Value.TRUE;
+                return Value.TRUE;
             }
             if (v1 instanceof final LContainerValue lcv)
             {
                 ContainerValueInterface container = lcv.container();
                 if (container == null)
                 {
-                    return (cc, tt) -> Value.NULL;
+                    return Value.NULL;
                 }
                 Value address = lcv.address();
                 if (!(container.put(address, v2)))
                 {
-                    return (cc, tt) -> Value.NULL;
+                    return Value.NULL;
                 }
-                return (cc, tt) -> v2;
+                return v2;
             }
-            v1.assertAssignable();
-            String varname = v1.getVariable();
-            Value copy = v2.reboundedTo(varname);
-            LazyValue boundedLHS = (cc, tt) -> copy;
-            expression.setAnyVariable(c, varname, boundedLHS);
-            return boundedLHS;
+            String varname = assignableName(v1);
+            expression.setAnyVariable(c, varname, v2);
+            return t == Context.LVALUE ? new VariableReferenceValue(varname, v2) : v2;
         });
 
         // lazy due to assignment
         expression.addLazyBinaryOperator("+=", "append", precedence.get("assign=<>"), false, false, t -> Context.Type.LVALUE, (c, t, lv1, lv2) ->
         {
+            if (lv1 instanceof final VariableRead target)
+            {
+                return appendToVariable(expression, c, target.variableName(), lv2.evalValue(c));
+            }
             Value v1 = lv1.evalValue(c, Context.LVALUE);
             Value v2 = lv2.evalValue(c);
             if (v1 instanceof final ListValue.ListConstructorValue lcv && v2 instanceof final ListValue list)
@@ -417,20 +423,13 @@ public class Operators
                 {
                     throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "operator", "Too few values to unpack");
                 }
-                for (Value v : ll)
-                {
-                    v.assertAssignable();
-                }
                 Iterator<Value> li = ll.iterator();
                 Iterator<Value> ri = rl.iterator();
                 while (li.hasNext())
                 {
-                    Value lval = li.next();
-                    String lname = lval.getVariable();
-                    Value result = lval.add(ri.next()).bindTo(lname);
-                    expression.setAnyVariable(c, lname, (cc, tt) -> result);
+                    appendToVariable(expression, c, assignableName(li.next()), ri.next());
                 }
-                return (cc, tt) -> Value.TRUE;
+                return Value.TRUE;
             }
             if (v1 instanceof final LContainerValue lcv)
             {
@@ -455,23 +454,20 @@ public class Operators
                     return (cc, tt) -> res;
                 });
             }
-            v1.assertAssignable();
-            String varname = v1.getVariable();
-            // read, combine and store as one step - for a global that is done under the variable's
-            // own monitor, so concurrent tasks appending to it cannot lose each other's updates
-            return expression.updateAnyVariable(c, varname, current ->
-            {
-                if (current instanceof ListValue || current instanceof MapValue)
-                {
-                    ((AbstractListValue) current).append(v2);
-                    return current;
-                }
-                return current.add(v2).bindTo(varname);
-            });
+            return appendToVariable(expression, c, assignableName(v1), v2);
         });
 
-        expression.addBinaryContextOperator("<>", "swap", precedence.get("assign=<>"), false, false, false, (c, t, v1, v2) ->
+        // pigro come gli altri assegnamenti: i nomi delle due variabili li sanno i nodi a sinistra e
+        // a destra, e chiederglieli e' l'unico modo di scambiarle senza farsi dire da un valore come
+        // si chiama la variabile in cui sta
+        expression.addLazyBinaryOperator("<>", "swap", precedence.get("assign=<>"), false, false, t -> Context.Type.LVALUE, (c, t, lv1, lv2) ->
         {
+            if (lv1 instanceof final VariableRead left && lv2 instanceof final VariableRead right)
+            {
+                return swap(expression, c, left.variableName(), right.variableName());
+            }
+            Value v1 = lv1.evalValue(c, Context.LVALUE);
+            Value v2 = lv2.evalValue(c, Context.LVALUE);
             if (v1 instanceof final ListValue.ListConstructorValue lcv1 && v2 instanceof final ListValue.ListConstructorValue lcv2)
             {
                 List<Value> ll = lcv1.getItems();
@@ -484,38 +480,15 @@ public class Operators
                 {
                     throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "operator", "Too few values to unpack");
                 }
-                for (Value v : ll)
-                {
-                    v.assertAssignable();
-                }
-                for (Value v : rl)
-                {
-                    v.assertAssignable();
-                }
                 Iterator<Value> li = ll.iterator();
                 Iterator<Value> ri = rl.iterator();
                 while (li.hasNext())
                 {
-                    Value lval = li.next();
-                    Value rval = ri.next();
-                    String lname = lval.getVariable();
-                    String rname = rval.getVariable();
-                    lval.reboundedTo(rname);
-                    rval.reboundedTo(lname);
-                    expression.setAnyVariable(c, lname, (cc, tt) -> rval);
-                    expression.setAnyVariable(c, rname, (cc, tt) -> lval);
+                    swap(expression, c, assignableName(li.next()), assignableName(ri.next()));
                 }
                 return Value.TRUE;
             }
-            v1.assertAssignable();
-            v2.assertAssignable();
-            String lvalvar = v1.getVariable();
-            String rvalvar = v2.getVariable();
-            Value lval = v2.reboundedTo(lvalvar);
-            Value rval = v1.reboundedTo(rvalvar);
-            expression.setAnyVariable(c, lvalvar, (cc, tt) -> lval);
-            expression.setAnyVariable(c, rvalvar, (cc, tt) -> rval);
-            return lval;
+            return swap(expression, c, assignableName(v1), assignableName(v2));
         });
 
         expression.addUnaryOperator("-", "opposite", false, v -> NumericValue.asNumber(v).opposite());
@@ -528,11 +501,14 @@ public class Operators
         ); // might need context boolean
 
         // lazy because of typed evaluation of the argument
-        expression.addLazyUnaryOperator("...", "unpack", Operators.precedence.get("unary+-!..."), false, true, t -> t == Context.Type.LOCALIZATION ? Context.NONE : t, (c, t, lv) ->
+        // dentro una firma '...rest' dichiara un nome: il contesto di localizzazione deve arrivare
+        // all'operando, che li' si valuta al proprio riferimento invece che al proprio valore
+        expression.addLazyUnaryOperator("...", "unpack", Operators.precedence.get("unary+-!..."), false, true, t -> t, (c, t, lv) ->
         {
             if (t == Context.LOCALIZATION)
             {
-                return (cc, tt) -> new FunctionAnnotationValue(lv.evalValue(c), FunctionAnnotationValue.Type.VARARG);
+                Value annotation = new FunctionAnnotationValue(lv.evalValue(c, Context.LOCALIZATION), FunctionAnnotationValue.Type.VARARG);
+                return (cc, tt) -> annotation;
             }
             if (!(lv.evalValue(c, t) instanceof final AbstractListValue alv))
             {
@@ -542,5 +518,49 @@ public class Operators
             return (cc, tt) -> fuaval;
         });
 
+    }
+
+    /**
+     * Il nome della variabile che {@code value} rappresenta.
+     *
+     * <p>Ci arriva quello che ha prodotto la parte sinistra di un assegnamento valutata come
+     * l-value: o è il riferimento a una variabile, o non c'è niente a cui assegnare.
+     */
+    private static String assignableName(Value value)
+    {
+        if (value instanceof final VariableReferenceValue reference)
+        {
+            return reference.name();
+        }
+        throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "value", value.getPrettyString() + " is not a variable");
+    }
+
+    /**
+     * {@code variable += value}: legge, combina e riscrive in un passo solo.
+     *
+     * <p>Su un global quel passo avviene sotto il monitor della variabile, così due task che
+     * accodano allo stesso global non si perdono un aggiornamento a vicenda.
+     */
+    private static Value appendToVariable(Expression expression, Context c, String name, Value value)
+    {
+        return expression.updateAnyVariable(c, name, current ->
+        {
+            if (current instanceof ListValue || current instanceof MapValue)
+            {
+                ((AbstractListValue) current).append(value);
+                return current;
+            }
+            return current.add(value);
+        }).evalValue(c, Context.NONE);
+    }
+
+    /** {@code a <> b}: scambia il contenuto di due variabili, e vale il nuovo contenuto di {@code a}. */
+    private static Value swap(Expression expression, Context c, String left, String right)
+    {
+        Value leftValue = expression.getOrSetAnyVariable(c, left).evalValue(c, Context.NONE);
+        Value rightValue = expression.getOrSetAnyVariable(c, right).evalValue(c, Context.NONE);
+        expression.setAnyVariable(c, left, rightValue);
+        expression.setAnyVariable(c, right, leftValue);
+        return rightValue;
     }
 }

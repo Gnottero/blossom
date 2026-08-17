@@ -9,9 +9,29 @@ public class UndefValue extends NullValue
     public static final UndefValue UNDEF = new UndefValue();
     public static final UndefValue EOL = new UndefValue();
 
+    /** il nome della variabile mai inizializzata, per il messaggio d'errore */
+    private final String name;
+
+    public UndefValue()
+    {
+        this(null);
+    }
+
+    private UndefValue(String name)
+    {
+        this.name = name;
+    }
+
+    /** Il segnaposto della variabile {@code name}, che sotto 'strict' non si puo' leggere. */
+    public static UndefValue named(String name)
+    {
+        return new UndefValue(name);
+    }
+
     private RuntimeException getError()
     {
-        return new BlossomRuntimeError(SourcePosition.UNKNOWN, "value", "variable " + boundVariable + " was used before initialization under 'strict' app config");
+        return new BlossomRuntimeError(SourcePosition.UNKNOWN, "value",
+                "variable " + (name == null ? "" : name + " ") + "was used before initialization under 'strict' app config");
     }
 
     @Override
@@ -35,7 +55,7 @@ public class UndefValue extends NullValue
     @Override
     public Value clone()
     {
-        return new UndefValue();
+        return new UndefValue(name);
     }
 
     @Override

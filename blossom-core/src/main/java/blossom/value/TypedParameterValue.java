@@ -16,6 +16,7 @@ import blossom.exception.Suggestions;
  */
 public final class TypedParameterValue extends Value
 {
+    private final String parameter;
     private final String canonicalType;
 
     public TypedParameterValue(String parameter, String declaredType)
@@ -27,8 +28,14 @@ public final class TypedParameterValue extends Value
                     + "' in the signature: the types are " + String.join(", ", ValueTypes.names()) + ".",
                     Suggestions.closestTo(declaredType, ValueTypes.names()));
         }
-        this.boundVariable = parameter;
+        this.parameter = parameter;
         this.canonicalType = canonical;
+    }
+
+    /** Il nome del parametro dichiarato. */
+    public String parameter()
+    {
+        return parameter;
     }
 
     public String canonicalType()
@@ -39,7 +46,7 @@ public final class TypedParameterValue extends Value
     @Override
     public String getString()
     {
-        return boundVariable + ": " + canonicalType;
+        return parameter + ": " + canonicalType;
     }
 
     @Override
