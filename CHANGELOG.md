@@ -30,6 +30,11 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 - **Il frame di una chiamata non è più una mappa a hash**, e un valore vale come nodo di sé stesso:
   spariscono le lambda che avvolgevano ogni argomento e ogni risultato. Chiamate a funzione **-24%**,
   loop aritmetico **-32%**, accesso a lista **-25%**. Vedi `BENCHMARK.md` e DECISIONI.md D-091.
+- **Il nome di una variabile non vive più sul valore.** Sparisce il campo mutabile che ogni `Value`
+  portava per dire a quale variabile era legato, e con lui la copia difensiva che ogni argomento
+  subiva entrando in una chiamata: il nome ce l'ha il nodo che legge la variabile, dal parsing.
+  Chiamate a quattro argomenti **-20%**, a un argomento **-12%**, loop aritmetico **-6%**. Vedi
+  `BENCHMARK.md` e DECISIONI.md D-093.
 - `_x`, `_y` e `_z` non sono più preparate in ogni frame: le scrive `scan` prima di valutare il
   corpo, e fuori da uno scan sono variabili non definite come tutte le altre (cioè `null`, non `0`).
 
