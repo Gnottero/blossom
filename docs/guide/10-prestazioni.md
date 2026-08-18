@@ -10,12 +10,16 @@ Misure su AMD Ryzen 5 5600H, OpenJDK 25 (i numeri completi e il metodo sono in
 
 | Operazione | Costo |
 | --- | --- |
-| un'iterazione di loop aritmetico | ~92 ns |
-| una chiamata a funzione utente | ~214 ns (circa 2,3 iterazioni) |
-| una lettura indicizzata da lista | ~120 ns |
-| costruire una mappa da 2 chiavi | ~248 ns |
+| un'iterazione di loop aritmetico | ~55 ns |
+| una chiamata a funzione utente (1 argomento) | ~178 ns (circa 3 iterazioni) |
+| la stessa chiamata con 4 argomenti | ~332 ns |
+| una lettura indicizzata da lista | ~80 ns |
+| costruire una mappa da 2 chiavi | ~234 ns |
 
-Tradotto: in un tick da 50 ms ci stanno **circa 600.000 operazioni aritmetiche**. Il linguaggio non è
+Una chiamata costa ancora **per argomento**: circa 65 ns ciascuno oltre il primo. Se una funzione
+chiamata in un ciclo stretto prende sei parametri, la lista dei parametri è metà del suo costo.
+
+Tradotto: in un tick da 50 ms ci stanno **circa 900.000 operazioni aritmetiche**. Il linguaggio non è
 il collo di bottiglia di quasi nessuno script. Quello che costa davvero è un altro elenco:
 
 | Cosa | Perché costa |
@@ -96,6 +100,16 @@ già in fase di parsing invece che dentro il tuo `try`.
 
 Gli import sono risolti **una volta al caricamento**: `math.sqrt` non cerca niente per nome a
 runtime, e un modulo in più non rallenta le chiamate.
+
+Anche i nomi delle variabili si decidono al parsing: il nodo compilato sa già se sta leggendo una
+locale, una globale, un simbolo importato o una implicita (`_`, `_i`, `_a`, che sono campi del
+contesto e non voci di una mappa). A runtime non resta nessuna domanda sul nome.
+
+Il frame di una chiamata **non è una mappa a hash**: fino a sedici variabili locali sono due array
+paralleli con scansione lineare, e una funzione senza parametri non alloca niente. Un valore non
+viene avvolto in nessun oggetto pigro per essere passato o restituito, e gli argomenti non vengono
+copiati entrando nel frame. Le due cose insieme valgono **-24%** e **-12%** sulle chiamate a
+funzione, e portano il costo per parametro da ~110 a ~65 ns.
 
 Il watchdog costa circa **5 ns per iterazione** e **19 ns per chiamata**. Spegnerlo per andare più
 veloce non è un buon affare: si spegne quando dà fastidio, non per guadagnare quei nanosecondi.
