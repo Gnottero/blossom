@@ -73,6 +73,33 @@ public class ScriptRuntime
                 world.resolve(SCRIPT_DIRECTORY));
         this.registry = config.registry();
         this.defaultWatchdog = config.watchdog();
+        createWritableRoots();
+    }
+
+    /**
+     * Crea le cartelle delle radici scrivibili di {@code core.io}.
+     *
+     * <p>Una radice che non esiste non e' "vuota": il controllo sui link simbolici deve risolvere il
+     * percorso reale della radice, e su una cartella che non c'e' fallisce. Le radici di default -
+     * {@code data} e {@code shared} - non le crea nessuno prima del primo avvio, quindi le crea qui.
+     */
+    private void createWritableRoots()
+    {
+        config.ioRoots().paths().forEach((name, directory) ->
+        {
+            if (!config.ioRoots().isWritable(name))
+            {
+                return;
+            }
+            try
+            {
+                Files.createDirectories(directory);
+            }
+            catch (IOException e)
+            {
+                LOG.warn("Cannot create io root '{}' at {}: {}", name, directory, e.toString());
+            }
+        });
     }
 
     /**

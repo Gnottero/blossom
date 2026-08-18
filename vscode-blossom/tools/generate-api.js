@@ -121,6 +121,19 @@ if (fs.existsSync(apiFile)) {
         if (!raw) fail('field BlossomApi.' + match[2] + ' not found');
         modules.set(match[1], resolveSymbols(raw));
     }
+    /*
+     * A module of the core the game layer adds symbols to, instead of declaring its own: `core.io`
+     * gets `read_nbt`, `write_nbt` and `create_datapack`, which need Minecraft but are not a second
+     * way of opening a file. The extension has to show them under `core.io`, or completion would
+     * hide three functions that exist.
+     */
+    for (const match of api.matchAll(/extendModule\("([^"]+)"\s*,\s*(\w+)\)/g)) {
+        const raw = fields.get('BlossomApi.' + match[2]);
+        if (!raw) fail('field BlossomApi.' + match[2] + ' not found');
+        const existing = modules.get(match[1]);
+        if (!existing) fail('extendModule("' + match[1] + '") but that module was never declared');
+        for (const symbol of resolveSymbols(raw)) existing.add(symbol);
+    }
 }
 
 // ------------------------------------ descriptions and signatures from docs

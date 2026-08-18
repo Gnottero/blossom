@@ -3,7 +3,7 @@ module main;
 import "core.mc.event" as event;
 import "core.mc.entity" as entity;
 import "core.mc.text" as text;
-import "core.mc.file" as file;
+import "core.io" as io;
 import "core.list" as list;
 import "core.map" as map;
 
@@ -45,10 +45,15 @@ fn mostra(giocatore, s) -> text.hud(
 
 // --- persistenza ---------------------------------------------------------------------------
 
-fn carica() -> conteggi = file.read_file('conteggi', 'json') || {};
+// I dati stanno nella radice 'data', che c'e' su ogni server: una sottocartella con il nome
+// dell'app, cosi' due app non si pestano i piedi. Il controllo con 'exists' serve: leggere un file
+// che non c'e' e' un 'io_exception', non un null.
+let FILE = 'contapassi/conteggi.json';
+
+fn carica() -> conteggi = if(io.exists('data', FILE), io.read_json('data', FILE), {});
 
 fn salva() -> (
-    file.write_file('conteggi', 'json', conteggi);
+    io.write_json('data', FILE, conteggi);
     false
 );
 

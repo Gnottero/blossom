@@ -74,12 +74,25 @@ La cache dei download sta in `.cache/` dentro la cartella degli script, quindi s
 
 ## `io` — le cartelle raggiungibili da `core.io`
 
-Nessuna radice per default: `core.io` esiste ma non apre niente.
+Due radici ci sono sempre, anche senza questa sezione:
+
+| Radice | Dove | Scrivibile |
+| --- | --- | --- |
+| `data` | `<mondo>/blossom/data/` | sì |
+| `shared` | `<mondo>/blossom/shared/` | sì |
+
+Sono il posto dove un'app tiene i propri dati. Non c'è nessuna separazione automatica fra un'app e
+l'altra: chi vuole i suoi dati per sé usa una sottocartella con il proprio nome
+(`io.write_json('data', 'contapassi/conteggi.json', ...)`), che è visibile nel punto della chiamata
+invece che decisa dal mod. Le cartelle vengono create al primo avvio.
 
 | Chiave | Tipo | Default | Cosa fa |
 | --- | --- | --- | --- |
-| `io.roots` | mappa nome → percorso | `{}` | le cartelle raggiungibili, una per nome |
-| `io.writable` | lista di nomi | `[]` | quali di quelle radici si possono anche scrivere |
+| `io.roots` | mappa nome → percorso | `data`, `shared` | le cartelle raggiungibili, una per nome |
+| `io.writable` | lista di nomi | `data`, `shared` | quali di quelle radici si possono anche scrivere |
+
+Quello che dichiari qui si **aggiunge** alle due di default; una radice dichiarata con lo stesso nome
+di una di quelle la sostituisce.
 
 **I percorsi sono relativi alla cartella del mondo.** Un percorso assoluto vale solo se punta
 comunque dentro il mondo; se punta fuori, la radice viene scartata con un avviso nel log e le sue

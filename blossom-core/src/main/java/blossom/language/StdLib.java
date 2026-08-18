@@ -103,6 +103,29 @@ public final class StdLib
         module(name, symbols.toArray(String[]::new));
     }
 
+    /**
+     * Aggiunge simboli a un modulo gia' dichiarato, invece di sostituirlo.
+     *
+     * <p>Serve a un modulo che sta a cavallo dei due strati: {@code core.io} e' del core, ma leggere
+     * un file NBT o scrivere un datapack ha bisogno di Minecraft e quindi vive nel mod. Il posto in
+     * cui il simbolo si importa e' uno solo - chi legge non deve sapere quale meta' del programma lo
+     * implementa - e questa e' la funzione che lo tiene tale.
+     *
+     * @throws IllegalStateException se il modulo non e' stato dichiarato prima: estendere un nome che
+     *         non esiste vuol dire quasi sempre averlo scritto male, e crearlo in silenzio
+     *         nasconderebbe l'errore fino al primo import che non risolve
+     */
+    public static void extendModule(String name, Set<String> symbols)
+    {
+        Set<String> exported = MODULES.get(name);
+        if (exported == null)
+        {
+            throw new IllegalStateException("Cannot extend '" + name + "': no such built-in module.");
+        }
+        exported.addAll(symbols);
+        symbols.forEach(symbol -> HOME_MODULE.putIfAbsent(symbol, name));
+    }
+
     /** Dichiara un modulo i cui nomi pubblici non coincidono con quelli delle implementazioni. */
     private static void module(String name, Map<String, String> symbols)
     {

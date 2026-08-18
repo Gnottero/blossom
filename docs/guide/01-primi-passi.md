@@ -125,8 +125,8 @@ esportano e come si dipende da un altro progetto è il [capitolo 6](06-moduli.md
 | Cosa | Dove |
 | --- | --- |
 | il codice dell'app | `<mondo>/blossom/<app>.bs` o `<mondo>/blossom/<app>/` |
-| i dati dell'app ([`core.mc.file`](../api/core.mc.file.md)) | `<mondo>/blossom/<app>.data/` |
-| i dati condivisi fra app | `<mondo>/blossom/shared/` |
+| i dati delle app (radice `data` di [`core.io`](../api/core.io.md)) | `<mondo>/blossom/data/` |
+| i dati condivisi fra app (radice `shared`) | `<mondo>/blossom/shared/` |
 | le dipendenze scaricate da un registry | `<mondo>/blossom/.cache/` |
 | la configurazione del server ([capitolo 12](12-configurazione.md)) | `config/blossomscript.json` |
 

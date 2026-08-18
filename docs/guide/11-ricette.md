@@ -29,12 +29,13 @@ sparisce da sola. `text.hud(giocatore, null)` la toglie.
 ## Stato che sopravvive al riavvio
 
 ```
-import "core.mc.file" as file;
+import "core.io" as io;
 
 let mut stato = {};
+let FILE = 'mia-app/stato.json';        // 'data' e' una radice che c'e' su ogni server
 
-fn carica() -> stato = file.read_file('stato', 'json') || {};
-fn salva() -> file.write_file('stato', 'json', stato);
+fn carica() -> stato = if(io.exists('data', FILE), io.read_json('data', FILE), {});
+fn salva() -> io.write_json('data', FILE, stato);
 
 carica();                               // nel corpo del modulo: succede al load
 event.on('server_shuts_down', salva);

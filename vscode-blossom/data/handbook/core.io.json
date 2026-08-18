@@ -1,113 +1,378 @@
 {
   "$alias": "io",
-
   "roots": {
-    "signatures": ["roots()"],
+    "signatures": [
+      "roots()"
+    ],
     "summary": "The names of the roots an administrator has declared in `config/blossomscript.json`.",
     "params": [],
     "returns": "`list` — the names available; empty when nothing is configured.",
-    "examples": ["io.roots();   // ['shared', 'log']", "if(!(io.roots() ~ 'shared'), print('this server has no shared folder'));"],
+    "examples": [
+      "io.roots();   // ['shared', 'log']",
+      "if(!(io.roots() ~ 'shared'), print('this server has no shared folder'));"
+    ],
     "note": "There are no absolute paths in scripts: every function of this module starts with one of these names, and the rest of the path is relative to it."
   },
   "writable": {
-    "signatures": ["writable(root)"],
+    "signatures": [
+      "writable(root)"
+    ],
     "summary": "Whether that root can be written to, or is read only.",
-    "params": [["root", "the name of the root"]],
+    "params": [
+      [
+        "root",
+        "the name of the root"
+      ]
+    ],
     "returns": "`bool` — whether writing is allowed.",
-    "examples": ["io.writable('shared');   // true", "io.writable('log');      // false: reading only"]
+    "examples": [
+      "io.writable('shared');   // true",
+      "io.writable('log');      // false: reading only"
+    ]
   },
   "exists": {
-    "signatures": ["exists(root, path)"],
+    "signatures": [
+      "exists(root, path)"
+    ],
     "summary": "Whether a file or a folder is there.",
-    "params": [["root", "the name of the root"], ["path", "the path inside the root"]],
+    "params": [
+      [
+        "root",
+        "the name of the root"
+      ],
+      [
+        "path",
+        "the path inside the root"
+      ]
+    ],
     "returns": "`bool` — whether something exists at that path.",
-    "examples": ["io.exists('shared', 'notes/today.txt');   // true"]
+    "examples": [
+      "io.exists('shared', 'notes/today.txt');   // true"
+    ]
   },
   "is_directory": {
-    "signatures": ["is_directory(root, path)"],
+    "signatures": [
+      "is_directory(root, path)"
+    ],
     "summary": "Whether that path is a folder rather than a file.",
-    "params": [["root", "the name of the root"], ["path", "the path inside the root"]],
+    "params": [
+      [
+        "root",
+        "the name of the root"
+      ],
+      [
+        "path",
+        "the path inside the root"
+      ]
+    ],
     "returns": "`bool` — whether it is a folder.",
-    "examples": ["io.is_directory('shared', 'notes');   // true"]
+    "examples": [
+      "io.is_directory('shared', 'notes');   // true"
+    ]
   },
   "list": {
-    "signatures": ["list(root, path)"],
+    "signatures": [
+      "list(root, path)"
+    ],
     "summary": "The names inside a folder, sorted.",
-    "params": [["root", "the name of the root"], ["path", "the folder to read; `''` is the root itself"]],
+    "params": [
+      [
+        "root",
+        "the name of the root"
+      ],
+      [
+        "path",
+        "the folder to read; `''` is the root itself"
+      ]
+    ],
     "returns": "`list` — the names, without the path in front.",
-    "examples": ["io.list('shared', 'notes');   // ['today.txt', 'yesterday.txt']", "for(io.list('shared', ''), print(_));"],
+    "examples": [
+      "io.list('shared', 'notes');   // ['today.txt', 'yesterday.txt']",
+      "for(io.list('shared', ''), print(_));"
+    ],
     "note": "It is **not** recursive, on purpose: a recursion over a big root blocks the tick without the author noticing. Whoever wants to walk down a tree writes it one level at a time — and while writing it, sees it."
   },
   "read_text": {
-    "signatures": ["read_text(root, path)"],
+    "signatures": [
+      "read_text(root, path)"
+    ],
     "summary": "The whole content of a file as a single string.",
-    "params": [["root", "the name of the root"], ["path", "the file to read"]],
+    "params": [
+      [
+        "root",
+        "the name of the root"
+      ],
+      [
+        "path",
+        "the file to read"
+      ]
+    ],
     "returns": "`str` — the content of the file.",
-    "examples": ["io.read_text('shared', 'notes/today.txt');   // 'hello'", "try(io.read_text('shared', 'missing.txt'), 'io_exception', 'not there');"]
+    "examples": [
+      "io.read_text('shared', 'notes/today.txt');   // 'hello'",
+      "try(io.read_text('shared', 'missing.txt'), 'io_exception', 'not there');"
+    ]
   },
   "read_lines": {
-    "signatures": ["read_lines(root, path)"],
+    "signatures": [
+      "read_lines(root, path)"
+    ],
     "summary": "The content of a file as a list of lines.",
-    "params": [["root", "the name of the root"], ["path", "the file to read"]],
+    "params": [
+      [
+        "root",
+        "the name of the root"
+      ],
+      [
+        "path",
+        "the file to read"
+      ]
+    ],
     "returns": "`list` — one string per line, without the line breaks.",
-    "examples": ["for(io.read_lines('log', 'latest.log'),\n    if(_ ~ 'ERROR', print(_))\n);"]
+    "examples": [
+      "for(io.read_lines('log', 'latest.log'),\n    if(_ ~ 'ERROR', print(_))\n);"
+    ]
   },
   "read_json": {
-    "signatures": ["read_json(root, path)"],
+    "signatures": [
+      "read_json(root, path)"
+    ],
     "summary": "The content of a file read as json.",
-    "params": [["root", "the name of the root"], ["path", "the file to read"]],
+    "params": [
+      [
+        "root",
+        "the name of the root"
+      ],
+      [
+        "path",
+        "the file to read"
+      ]
+    ],
     "returns": "the value: a map, a list, a number, whatever the file holds.",
-    "examples": ["config = io.read_json('shared', 'config.json');\nconfig:'limit';"]
+    "examples": [
+      "config = io.read_json('shared', 'config.json');\nconfig:'limit';"
+    ]
   },
   "write_text": {
-    "signatures": ["write_text(root, path, text)"],
+    "signatures": [
+      "write_text(root, path, text)"
+    ],
     "summary": "Writes a string to a file, replacing what was there and creating the missing folders.",
-    "params": [["root", "the name of the root, which has to be writable"], ["path", "the file to write"], ["text", "the content"]],
+    "params": [
+      [
+        "root",
+        "the name of the root, which has to be writable"
+      ],
+      [
+        "path",
+        "the file to write"
+      ],
+      [
+        "text",
+        "the content"
+      ]
+    ],
     "returns": "`bool` — whether the write succeeded.",
-    "examples": ["io.write_text('shared', 'notes/today.txt', 'hello');"]
+    "examples": [
+      "io.write_text('shared', 'notes/today.txt', 'hello');"
+    ]
   },
   "append_text": {
-    "signatures": ["append_text(root, path, text)"],
+    "signatures": [
+      "append_text(root, path, text)"
+    ],
     "summary": "Adds a string at the end of a file, without reading it first.",
-    "params": [["root", "the name of the root, which has to be writable"], ["path", "the file to write"], ["text", "what to add"]],
+    "params": [
+      [
+        "root",
+        "the name of the root, which has to be writable"
+      ],
+      [
+        "path",
+        "the file to write"
+      ],
+      [
+        "text",
+        "what to add"
+      ]
+    ],
     "returns": "`bool` — whether the write succeeded.",
-    "examples": ["io.append_text('shared', 'audit.log', string.str('%s joined\\n', name));"]
+    "examples": [
+      "io.append_text('shared', 'audit.log', string.str('%s joined\\n', name));"
+    ]
   },
   "write_json": {
-    "signatures": ["write_json(root, path, value)"],
+    "signatures": [
+      "write_json(root, path, value)"
+    ],
     "summary": "Writes a value to a file as json.",
-    "params": [["root", "the name of the root, which has to be writable"], ["path", "the file to write"], ["value", "maps, lists, numbers, strings"]],
+    "params": [
+      [
+        "root",
+        "the name of the root, which has to be writable"
+      ],
+      [
+        "path",
+        "the file to write"
+      ],
+      [
+        "value",
+        "maps, lists, numbers, strings"
+      ]
+    ],
     "returns": "`bool` — whether the write succeeded.",
-    "examples": ["io.write_json('shared', 'state.json', {'round' -> 3, 'players' -> names});"]
+    "examples": [
+      "io.write_json('shared', 'state.json', {'round' -> 3, 'players' -> names});"
+    ]
   },
   "make_directory": {
-    "signatures": ["make_directory(root, path)"],
+    "signatures": [
+      "make_directory(root, path)"
+    ],
     "summary": "Creates a folder, and the intermediate ones it needs.",
-    "params": [["root", "the name of the root, which has to be writable"], ["path", "the folder to create"]],
+    "params": [
+      [
+        "root",
+        "the name of the root, which has to be writable"
+      ],
+      [
+        "path",
+        "the folder to create"
+      ]
+    ],
     "returns": "`bool` — whether it was created.",
-    "examples": ["io.make_directory('shared', 'archive/2026');"],
+    "examples": [
+      "io.make_directory('shared', 'archive/2026');"
+    ],
     "note": "The writing functions already create the folders they need: this one is for preparing an empty one."
   },
   "delete_file": {
-    "signatures": ["delete_file(root, path)"],
+    "signatures": [
+      "delete_file(root, path)"
+    ],
     "summary": "Deletes a file, or a folder that is **empty**.",
-    "params": [["root", "the name of the root, which has to be writable"], ["path", "what to delete"]],
+    "params": [
+      [
+        "root",
+        "the name of the root, which has to be writable"
+      ],
+      [
+        "path",
+        "what to delete"
+      ]
+    ],
     "returns": "`bool` — whether something was deleted.",
-    "examples": ["io.delete_file('shared', 'notes/today.txt');"],
+    "examples": [
+      "io.delete_file('shared', 'notes/today.txt');"
+    ],
     "note": "It does not delete trees, on purpose: a recursive deletion behind a short name is the easiest way to lose data to a path that is wrong by one character. It is called `delete_file` and not `delete` because `delete` already removes an element from a list or a map."
   },
   "size": {
-    "signatures": ["size(root, path)"],
+    "signatures": [
+      "size(root, path)"
+    ],
     "summary": "The size of a file in bytes.",
-    "params": [["root", "the name of the root"], ["path", "the file"]],
+    "params": [
+      [
+        "root",
+        "the name of the root"
+      ],
+      [
+        "path",
+        "the file"
+      ]
+    ],
     "returns": "`num` — the bytes, or `null` when the file is not there.",
-    "examples": ["io.size('log', 'latest.log');   // 20481", "if((io.size('shared', 'data.json') || 0) > 1000000, print('getting big'));"]
+    "examples": [
+      "io.size('log', 'latest.log');   // 20481",
+      "if((io.size('shared', 'data.json') || 0) > 1000000, print('getting big'));"
+    ]
   },
   "modified": {
-    "signatures": ["modified(root, path)"],
+    "signatures": [
+      "modified(root, path)"
+    ],
     "summary": "When the file was last modified.",
-    "params": [["root", "the name of the root"], ["path", "the file"]],
+    "params": [
+      [
+        "root",
+        "the name of the root"
+      ],
+      [
+        "path",
+        "the file"
+      ]
+    ],
     "returns": "`num` — milliseconds since the epoch, or `null` when the file is not there.",
-    "examples": ["age = system.unix_time() - io.modified('shared', 'state.json');\nif(age > 60000, print('older than a minute'));"]
+    "examples": [
+      "age = system.unix_time() - io.modified('shared', 'state.json');\nif(age > 60000, print('older than a minute'));"
+    ]
+  },
+  "read_nbt": {
+    "signatures": [
+      "read_nbt(root, path)"
+    ],
+    "summary": "Reads a compressed NBT io.",
+    "params": [
+      [
+        "root",
+        "the name of an io root: `'data'` and `'shared'` are always there"
+      ],
+      [
+        "path",
+        "the path inside that root, extension included"
+      ]
+    ],
+    "returns": "`nbt` — the compound tag; `null` when the file is not there.",
+    "examples": [
+      "state = io.read_nbt('data', 'my-app/state.nbt');\nif(state == null, state = nbt('{}'));"
+    ],
+    "note": "Same roots and same boundaries as every other function here. It is implemented in the Minecraft layer because NBT is a binary format of the game, and it is the one reader that gives back `null` instead of throwing on a missing file."
+  },
+  "write_nbt": {
+    "signatures": [
+      "write_nbt(root, path, tag)"
+    ],
+    "summary": "Writes a compound tag as a compressed NBT file, creating the missing folders.",
+    "params": [
+      [
+        "root",
+        "the name of a writable io root"
+      ],
+      [
+        "path",
+        "the path inside that root, extension included"
+      ],
+      [
+        "tag",
+        "the compound tag to write"
+      ]
+    ],
+    "returns": "`true`; disk failures are thrown as `io_exception`.",
+    "examples": [
+      "io.write_nbt('data', 'my-app/state.nbt', {'score' -> 12});"
+    ],
+    "note": "It needs a compound tag: a list or a bare number is not a valid NBT file, and refusing it at the call beats writing something no reader accepts."
+  },
+  "create_datapack": {
+    "signatures": [
+      "create_datapack(name, content)"
+    ],
+    "summary": "Creates a datapack from the given content and turns it on.",
+    "params": [
+      [
+        "name",
+        "the name of the pack"
+      ],
+      [
+        "content",
+        "a map from path to file content, nested"
+      ]
+    ],
+    "returns": "`bool` — whether it was created; `null` when a pack with that name is already there.",
+    "examples": [
+      "io.create_datapack('mine:extras', {\n    'data' -> {'mine' -> {'function' -> {'hello.mcfunction' -> ['say hello']}}}\n});"
+    ],
+    "note": "Turning the pack on reloads the server's resources: a call for the loading of an app, not for something inside `tick`. It is here because a datapack is a tree of files."
   }
 }

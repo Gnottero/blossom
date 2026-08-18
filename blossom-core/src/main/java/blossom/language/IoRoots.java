@@ -63,6 +63,18 @@ public final class IoRoots
         return confinement == null || directory.toAbsolutePath().normalize().startsWith(confinement);
     }
 
+    /** Le radici per nome, gia' normalizzate: serve a chi ne compone un insieme piu' grande. */
+    public Map<String, Path> paths()
+    {
+        return roots;
+    }
+
+    /** I nomi delle radici scrivibili. */
+    public Set<String> writableNames()
+    {
+        return writable;
+    }
+
     public List<String> names()
     {
         return roots.keySet().stream().sorted().toList();

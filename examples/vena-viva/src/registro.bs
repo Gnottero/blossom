@@ -2,7 +2,7 @@ module registro;
 
 import "core.list" as list;
 import "core.map" as map;
-import "core.mc.file" as file;
+import "core.io" as io;
 import "core.task" as task;
 
 // Lo stato dell'app, e il disco. Nessun altro modulo scrive qui dentro: si passa da queste
@@ -15,15 +15,19 @@ let mut totali = {};            // tipo -> quanti blocchi di quel tipo sono stat
 // leggi-modifica-scrivi non e' atomica, e va dentro una sezione critica.
 let LOCK = 'registro';
 
+// La radice 'data' c'e' su ogni server; la sottocartella con il nome dell'app tiene i dati
+// separati da quelli delle altre.
+let FILE = 'vena-viva/registro.json';
+
 pub fn carica() -> (
-    salvato = file.read_file('registro', 'json') || {};
+    salvato = if(io.exists('data', FILE), io.read_json('data', FILE), {});
     vene = salvato:'vene' || [];
     totali = salvato:'totali' || {};
     list.length(vene)
 );
 
 pub fn salva() -> (
-    file.write_file('registro', 'json', {'vene' -> vene, 'totali' -> totali});
+    io.write_json('data', FILE, {'vene' -> vene, 'totali' -> totali});
     false
 );
 

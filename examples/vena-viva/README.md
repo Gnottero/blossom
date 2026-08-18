@@ -25,7 +25,7 @@ Scendi in miniera e rompi un minerale. Poi:
 /blossom script in vena-viva azzera()
 ```
 
-Il registro sta in `<mondo>/blossom/vena-viva.data/registro.json`.
+Il registro sta in `<mondo>/blossom/data/vena-viva/registro.json`.
 
 Per sentire l'evento da un'altra app:
 

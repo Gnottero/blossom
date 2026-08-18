@@ -55,10 +55,39 @@ public record ServerConfig(Path scriptRoot, @Nullable PackRegistry registry, IoR
     /** dove il registry tiene quello che ha scaricato: dentro la cartella degli script, come tutto il resto */
     private static final String REGISTRY_CACHE_DIRECTORY = ".cache";
 
-    /** La configurazione di un server che non ha il file: solo la cartella degli script di default. */
-    public static ServerConfig defaults(Path scriptRoot)
+    /**
+     * La configurazione di un server che non ha il file: la cartella degli script di default e le
+     * radici di {@code core.io} che ogni app ha comunque.
+     */
+    public static ServerConfig defaults(Path scriptRoot, Path worldDirectory)
     {
-        return new ServerConfig(scriptRoot, null, IoRoots.NONE, HttpAccess.NONE, ExecutionBudget.Policy.DEFAULT);
+        return new ServerConfig(scriptRoot, null, defaultIoRoots(worldDirectory), HttpAccess.NONE,
+                ExecutionBudget.Policy.DEFAULT);
+    }
+
+    /**
+     * Le due radici che esistono sempre, senza che nessuno le dichiari.
+     *
+     * <p>Un tempo ogni app scriveva in una cartella sua, {@code <mondo>/blossom/<app>.data/}, che
+     * solo lei vedeva e che solo un modulo a parte sapeva raggiungere. Quella cartella non c'è
+     * più: c'è un posto solo dove gli script scrivono - {@code data} - e uno dove si scambiano roba -
+     * {@code shared} - e ci si arriva con {@code core.io} come a qualunque altra radice. Un'app che
+     * vuole i suoi dati per sé usa una sottocartella col suo nome, che è quello che
+     * {@code <app>.data} faceva, ma scritto nel punto della chiamata invece che nascosto dentro il
+     * mod.
+     *
+     * <p>Sono entrambe scrivibili: sono dentro la cartella del mondo, le crea il mod, e una radice
+     * di sola lettura che nessuno può riempire non servirebbe a niente. Se il file di
+     * configurazione dichiara una radice con lo stesso nome, vince la sua.
+     */
+    private static IoRoots defaultIoRoots(Path worldDirectory)
+    {
+        Path world = worldDirectory.toAbsolutePath().normalize();
+        return new IoRoots(
+                Map.of("data", world.resolve(BlossomMod.MOD_ID).resolve("data"),
+                        "shared", world.resolve(BlossomMod.MOD_ID).resolve("shared")),
+                Set.of("data", "shared"),
+                world);
     }
 
     /**
@@ -77,7 +106,7 @@ public record ServerConfig(Path scriptRoot, @Nullable PackRegistry registry, IoR
         Path file = configDirectory.resolve(FILE_NAME);
         if (!Files.isRegularFile(file))
         {
-            return defaults(defaultScriptRoot);
+            return defaults(defaultScriptRoot, worldDirectory);
         }
         try
         {
@@ -93,7 +122,7 @@ public record ServerConfig(Path scriptRoot, @Nullable PackRegistry registry, IoR
         catch (IOException | RuntimeException e)
         {
             BlossomMod.LOG.warn("{} is not readable ({}), starting with defaults", file, e.toString());
-            return defaults(defaultScriptRoot);
+            return defaults(defaultScriptRoot, worldDirectory);
         }
     }
 
@@ -156,10 +185,11 @@ public record ServerConfig(Path scriptRoot, @Nullable PackRegistry registry, IoR
         JsonObject io = section(root, "io");
         if (io == null)
         {
-            return IoRoots.NONE;
+            return defaultIoRoots(worldDirectory);
         }
         Path world = worldDirectory.toAbsolutePath().normalize();
-        Map<String, Path> roots = new LinkedHashMap<>();
+        // 'data' e 'shared' ci sono sempre; una dichiarazione con lo stesso nome le rimpiazza
+        Map<String, Path> roots = new LinkedHashMap<>(defaultIoRoots(world).paths());
         if (io.has("roots") && io.get("roots").isJsonObject())
         {
             io.getAsJsonObject("roots").entrySet().forEach(entry ->
@@ -174,7 +204,7 @@ public record ServerConfig(Path scriptRoot, @Nullable PackRegistry registry, IoR
                 roots.put(entry.getKey(), directory);
             });
         }
-        Set<String> writable = new LinkedHashSet<>();
+        Set<String> writable = new LinkedHashSet<>(defaultIoRoots(world).writableNames());
         if (io.has("writable") && io.get("writable").isJsonArray())
         {
             io.getAsJsonArray("writable").forEach(name -> writable.add(name.getAsString()));

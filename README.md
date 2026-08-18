@@ -300,9 +300,10 @@ scrivi.
 ```
 
 - **`registry`** — da dove arrivano le dipendenze che non stanno già su disco.
-- **`io`** — le cartelle che [`core.io`](docs/api/core.io.md) può aprire. I percorsi sono relativi
-  alla **cartella del mondo** e non possono uscirne: il resto del disco del server non è
-  raggiungibile da nessuna configurazione.
+- **`io`** — le cartelle che [`core.io`](docs/api/core.io.md) può aprire, **in più** a `data` e
+  `shared`, che ci sono sempre ed è dove le app tengono i propri dati. I percorsi sono relativi alla
+  **cartella del mondo** e non possono uscirne: il resto del disco del server non è raggiungibile da
+  nessuna configurazione.
 - **`http`** — gli host che [`core.http`](docs/api/core.http.md) può contattare, uno per nome. Senza
   questa sezione gli script non hanno rete.
 - **`watchdog`** — i limiti di esecuzione per le app che non ne dichiarano di propri.

@@ -10,10 +10,6 @@ import blossom.interpreter.Context;
 import blossom.interpreter.Interpreter;
 import blossom.value.FunctionValue;
 import blossom.value.Value;
-import net.minecraft.nbt.Tag;
-import com.google.gson.JsonElement;
-import java.util.stream.Stream;
-import com.gnottero.blossom.argument.FileArgument;
 
 /**
  * Un'app caricata, vista da chi deve richiamarla da fuori: eventi, schermate, callback.
@@ -60,53 +56,10 @@ public record AppHost(String name, Interpreter interpreter)
         return interpreter.host();
     }
 
-    /** Il modulo principale dell'app: e' lui a dare il nome alla cartella dei dati. */
+    /** Il modulo principale dell'app. */
     public blossom.interpreter.Module main()
     {
         return interpreter.host().main;
-    }
-
-    // --- file dell'app ---
-    // Ogni app scrive sotto <mondo>/blossom/<app>.data/, o sotto shared/ se il file e' condiviso:
-    // due app non si vedono i dati per sbaglio.
-
-    @Nullable
-    public Tag readFileTag(FileArgument file)
-    {
-        return file.getNbtData(main());
-    }
-
-    public boolean writeTagFile(Tag tag, FileArgument file)
-    {
-        return file.saveNbtData(main(), tag);
-    }
-
-    public boolean removeResourceFile(FileArgument file)
-    {
-        return file.dropExistingFile(main());
-    }
-
-    public boolean appendLogFile(FileArgument file, List<String> lines)
-    {
-        return file.appendToTextFile(main(), lines);
-    }
-
-    @Nullable
-    public List<String> readTextResource(FileArgument file)
-    {
-        return file.listFile(main());
-    }
-
-    @Nullable
-    public JsonElement readJsonFile(FileArgument file)
-    {
-        return file.readJsonFile(main());
-    }
-
-    @Nullable
-    public Stream<String> listFolder(FileArgument file)
-    {
-        return file.listFolder(main());
     }
 
     /**

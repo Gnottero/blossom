@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.5.0
+
+- `core.mc.file` no longer exists: `read_nbt`, `write_nbt` and `create_datapack` moved into
+  `core.io`, which is now the only place a script opens a file from
+- the generator understands `StdLib.extendModule(...)`, so a module of the core the game layer adds
+  symbols to shows all of them under one name in completion, hover and the API view
+
+## 0.4.0
+
+- **every event carries its documentation**: the generator now scrapes the per-event sections of
+  `docs/api/core.mc.event.md`, so hovering or completing an event name shows what it actually is —
+  when it fires, what the arguments mean, what cancelling it does — and the API view prints the same
+  prose under each row of the events table
+- the two new events `app_reloading` and `app_reloaded` are in the catalogue
+- `core.mc.file` is down to `read_nbt`, `write_nbt` and `create_datapack`: `read_file`, `write_file`,
+  `list_files`, `delete_file`, `load_app_data` and `store_app_data` were doing the same job as
+  `core.io` and are gone, together with the per-app data folder
+- `player_command` and `lightning` are described correctly: the first is not cancellable, and the
+  second passes a boolean, not an entity
+- the events table said cancelling happens on `false`; it happens on `true`
+
 ## 0.3.0
 
 - unused imports go away in one move: when a file has more than one, the quick fix offers

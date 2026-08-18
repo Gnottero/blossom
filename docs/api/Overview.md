@@ -16,7 +16,7 @@ import "core.list" as list;
 | [`core.map`](core.map.md) | maps: keys, values, pairs |
 | [`core.json`](core.json.md) | conversion to and from json |
 | [`core.task`](core.task.md) | concurrency, waiting, critical sections |
-| [`core.io`](core.io.md) | the disk outside the folder of the app, inside declared roots |
+| [`core.io`](core.io.md) | files, inside declared roots — NBT and datapacks included |
 | [`core.http`](core.http.md) | http requests towards declared hosts |
 | [`core.system`](core.system.md) | time, introspection, measurement |
 
@@ -37,7 +37,6 @@ import "core.list" as list;
 | [`core.mc.effect`](core.mc.effect.md) | sounds, particles, post effects |
 | [`core.mc.shape`](core.mc.shape.md) | showing what a script is computing |
 | [`core.mc.event`](core.mc.event.md) | reacting to what happens |
-| [`core.mc.file`](core.mc.file.md) | the data of the app on disk |
 | [`core.mc.system`](core.mc.system.md) | commands, statistics, diagnostics |
 
 ## The prelude

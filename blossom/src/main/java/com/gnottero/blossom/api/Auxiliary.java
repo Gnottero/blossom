@@ -6,7 +6,6 @@ import com.gnottero.blossom.value.Nbt;
 
 import com.gnottero.blossom.access.Vanilla;
 import com.gnottero.blossom.util.FeatureGenerator;
-import com.gnottero.blossom.argument.FileArgument;
 import com.gnottero.blossom.ScriptContext;
 import com.gnottero.blossom.AppHost;
 import com.gnottero.blossom.ScriptRuntime;
@@ -17,6 +16,9 @@ import blossom.interpreter.argument.FunctionArgument;
 import com.gnottero.blossom.argument.Vector3Argument;
 import blossom.exception.ExitStatement;
 import blossom.exception.InternalExpressionException;
+import blossom.exception.ThrowStatement;
+import blossom.exception.Throwables;
+import blossom.language.Io;
 import com.gnottero.blossom.access.Host;
 import com.gnottero.blossom.util.SnoopyCommandSource;
 import com.gnottero.blossom.util.SystemInfo;
@@ -42,6 +44,7 @@ import net.minecraft.core.Rotations;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.StringTag;
@@ -110,19 +113,6 @@ public class Auxiliary
 {
     private static final Map<String, SoundSource> mixerMap = Arrays.stream(SoundSource.values()).collect(Collectors.toMap(SoundSource::getName, k -> k));
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().registerTypeAdapter(Value.class, new BlossomJsonDeserializer()).create();
-
-    @Deprecated
-    public static String recognizeResource(Value value, boolean isFloder)
-    {
-        String origfile = value.getString();
-        String file = origfile.toLowerCase(Locale.ROOT).replaceAll("[^A-Za-z0-9\\-+_/]", "");
-        file = Arrays.stream(file.split("/+")).filter(s -> !s.isEmpty()).collect(Collectors.joining("/"));
-        if (file.isEmpty() && !isFloder)
-        {
-            throw new InternalExpressionException("Cannot use " + origfile + " as resource name - must have some letters and numbers");
-        }
-        return file;
-    }
 
     public static void apply(Expression expression)
     {
@@ -834,119 +824,64 @@ public class Auxiliary
             return res; // pass through for variables
         });
 
-        expression.addContextFunction("list_files", 2, (c, t, lv) ->
+        /*
+         * read_nbt / write_nbt - due funzioni di core.io che hanno bisogno di Minecraft.
+         *
+         * Stanno qui e non in blossom-core solo perche' NBT e' un formato binario del gioco; il
+         * modulo da cui si importano e' core.io come tutte le altre (vedi BlossomApi.IO). Chi legge
+         * uno script non deve sapere quale meta' del programma implementa cosa: apre un file, e i
+         * file si aprono da un posto solo.
+         *
+         * La firma e' quella delle altre - (radice, percorso) - quindi passare da read_json a
+         * read_nbt vuol dire cambiare il nome della funzione e basta.
+         */
+        expression.addContextFunction("read_nbt", 2, (c, t, lv) ->
         {
-            FileArgument fdesc = FileArgument.from(c, lv, true, FileArgument.Reason.READ);
-            Stream<String> files = AppHost.of(c).listFolder(fdesc);
-            return files == null ? Value.NULL : ListValue.wrap(files.map(StringValue::of));
+            Path file = Io.resolve(c, lv.get(0).getString(), lv.get(1).getString(), false);
+            if (!Files.isRegularFile(file))
+            {
+                return Value.NULL;
+            }
+            try (java.io.InputStream in = new java.io.BufferedInputStream(Files.newInputStream(file)))
+            {
+                return NBTSerializableValue.of(NbtIo.readCompressed(in, NbtAccounter.unlimitedHeap()));
+            }
+            catch (IOException e)
+            {
+                throw new ThrowStatement("cannot read '" + lv.get(1).getString() + "' in root '"
+                        + lv.get(0).getString() + "': " + e.getMessage(), Throwables.IO_EXCEPTION);
+            }
         });
 
-        expression.addContextFunction("read_file", 2, (c, t, lv) ->
+        expression.addContextFunction("write_nbt", 3, (c, t, lv) ->
         {
-            FileArgument fdesc = FileArgument.from(c, lv, false, FileArgument.Reason.READ);
-            if (fdesc.type == FileArgument.Type.NBT)
-            {
-                Tag state = AppHost.of(c).readFileTag(fdesc);
-                return state == null ? Value.NULL : new NBTSerializableValue(state);
-            }
-            else if (fdesc.type == FileArgument.Type.JSON)
-            {
-                JsonElement json;
-                json = AppHost.of(c).readJsonFile(fdesc);
-                Value parsedJson = GSON.fromJson(json, Value.class);
-                return parsedJson == null ? Value.NULL : parsedJson;
-            }
-            else
-            {
-                List<String> content = AppHost.of(c).readTextResource(fdesc);
-                return content == null ? Value.NULL : ListValue.wrap(content.stream().map(StringValue::new));
-            }
-        });
-
-        expression.addContextFunction("delete_file", 2, (c, t, lv) ->
-                BooleanValue.of(AppHost.of(c).removeResourceFile(FileArgument.from(c, lv, false, FileArgument.Reason.DELETE))));
-
-        expression.addContextFunction("write_file", -1, (c, t, lv) -> {
-            if (lv.size() < 3)
-            {
-                throw new InternalExpressionException("'write_file' requires three or more arguments");
-            }
-            FileArgument fdesc = FileArgument.from(c, lv, false, FileArgument.Reason.CREATE);
-
-            boolean success;
-            if (fdesc.type == FileArgument.Type.NBT)
-            {
-                Value val = lv.get(2);
-                NBTSerializableValue tagValue = (val instanceof final NBTSerializableValue nbtsv)
-                        ? nbtsv
-                        : new NBTSerializableValue(val.getString());
-                Tag tag = tagValue.getTag();
-                success = AppHost.of(c).writeTagFile(tag, fdesc);
-            }
-            else if (fdesc.type == FileArgument.Type.JSON)
-            {
-                List<String> data = Collections.singletonList(GSON.toJson(lv.get(2).toJson()));
-                AppHost.of(c).removeResourceFile(fdesc);
-                success = AppHost.of(c).appendLogFile(fdesc, data);
-            }
-            else
-            {
-                List<String> data = new ArrayList<>();
-                if (lv.size() == 3)
-                {
-                    Value val = lv.get(2);
-                    if (val instanceof final ListValue list)
-                    {
-                        List<Value> lval = list.getItems();
-                        lval.forEach(v -> data.add(v.getString()));
-                    }
-                    else
-                    {
-                        data.add(val.getString());
-                    }
-                }
-                else
-                {
-                    for (int i = 2; i < lv.size(); i++)
-                    {
-                        data.add(lv.get(i).getString());
-                    }
-                }
-                success = AppHost.of(c).appendLogFile(fdesc, data);
-            }
-            return BooleanValue.of(success);
-        });
-
-        expression.addContextFunction("load_app_data", -1, (c, t, lv) ->
-        {
-            FileArgument fdesc = new FileArgument(null, FileArgument.Type.NBT, null, false, false, FileArgument.Reason.READ, c.host);
-            if (!lv.isEmpty())
-            {
-                String resource = recognizeResource(lv.get(0), false);
-                boolean shared = lv.size() > 1 && lv.get(1).getBoolean();
-                fdesc = new FileArgument(resource, FileArgument.Type.NBT, null, false, shared, FileArgument.Reason.READ, c.host);
-            }
-            return NBTSerializableValue.of(AppHost.of(c).readFileTag(fdesc));
-        });
-
-        expression.addContextFunction("store_app_data", -1, (c, t, lv) ->
-        {
-            if (lv.isEmpty())
-            {
-                throw new InternalExpressionException("'store_app_data' needs NBT tag and an optional file");
-            }
-            Value val = lv.get(0);
-            FileArgument fdesc = new FileArgument(null, FileArgument.Type.NBT, null, false, false, FileArgument.Reason.CREATE, c.host);
-            if (lv.size() > 1)
-            {
-                String resource = recognizeResource(lv.get(1), false);
-                boolean shared = lv.size() > 2 && lv.get(2).getBoolean();
-                fdesc = new FileArgument(resource, FileArgument.Type.NBT, null, false, shared, FileArgument.Reason.CREATE, c.host);
-            }
+            Path file = Io.resolve(c, lv.get(0).getString(), lv.get(1).getString(), true);
+            Value val = lv.get(2);
             NBTSerializableValue tagValue = (val instanceof final NBTSerializableValue nbtsv)
                     ? nbtsv
                     : new NBTSerializableValue(val.getString());
-            return BooleanValue.of(AppHost.of(c).writeTagFile(tagValue.getTag(), fdesc));
+            Tag tag = tagValue.getTag();
+            if (!(tag instanceof final CompoundTag compound))
+            {
+                throw new InternalExpressionException("'write_nbt' needs a compound tag, not " + tag.getType().getName());
+            }
+            try
+            {
+                if (file.getParent() != null)
+                {
+                    Files.createDirectories(file.getParent());
+                }
+                try (java.io.OutputStream out = new java.io.BufferedOutputStream(Files.newOutputStream(file)))
+                {
+                    NbtIo.writeCompressed(compound, out);
+                }
+                return Value.TRUE;
+            }
+            catch (IOException e)
+            {
+                throw new ThrowStatement("cannot write '" + lv.get(1).getString() + "' in root '"
+                        + lv.get(0).getString() + "': " + e.getMessage(), Throwables.IO_EXCEPTION);
+            }
         });
 
         expression.addContextFunction("statistic", 3, (c, t, lv) ->

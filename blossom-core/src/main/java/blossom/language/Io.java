@@ -20,12 +20,20 @@ import blossom.value.StringValue;
 import blossom.value.Value;
 
 /**
- * {@code core.io}: il disco fuori dalla cartella dell'app, dentro confini dichiarati.
+ * {@code core.io}: il disco, dentro confini dichiarati.
  *
  * <p>Ogni funzione comincia con il nome di una radice, e il resto del percorso è sempre relativo a
- * quella: {@code io.read_text('condiviso', 'note/oggi.txt')}. Le radici le dichiara un
- * amministratore (vedi {@link IoRoots}); senza dichiarazioni queste funzioni esistono ma non aprono
- * niente.
+ * quella: {@code io.read_text('shared', 'note/oggi.txt')}. Le radici le dichiara un amministratore
+ * (vedi {@link IoRoots}); il layer di gioco ne aggiunge due che ci sono sempre, {@code data} e
+ * {@code shared}, ed è lì che un'app tiene i propri dati.
+ *
+ * <p>È l'unica API di file del linguaggio: qui c'è tutto quello che si può aprire, senza eccezioni.
+ * Tre funzioni - {@code read_nbt}, {@code write_nbt}, {@code create_datapack} - sono implementate nel
+ * layer di gioco, perché NBT è un formato binario di Minecraft e un datapack è un concetto del gioco,
+ * ma si importano da qui come tutte le altre (vedi {@code StdLib.extendModule}). C'era anche un
+ * {@code core.mc.file} che leggeva e scriveva dentro una cartella per app,
+ * {@code <mondo>/blossom/<app>.data/}: due modi di aprire un file sono una domanda in più ad ogni
+ * chiamata, e chi vuole tenere i propri dati per sé usa una sottocartella con il proprio nome.
  *
  * <p>Gli errori di io sono lanciati come {@code io_exception}, quindi si catturano con
  * {@code try(..., 'io_exception', ...)}: un file che non c'è o un disco pieno sono cose che uno
@@ -235,7 +243,22 @@ public final class Io
 
     private static Path path(Context c, List<Value> lv, boolean forWriting)
     {
-        return roots(c).resolve(lv.get(0).getString(), lv.get(1).getString(), forWriting);
+        return resolve(c, lv.get(0).getString(), lv.get(1).getString(), forWriting);
+    }
+
+    /**
+     * La stessa risoluzione che usano le funzioni di questo modulo, per chi ne aggiunge una fuori.
+     *
+     * <p>Serve al layer di gioco: {@code core.mc.file} legge e scrive NBT, che e' un formato di
+     * Minecraft e qui non puo' stare, ma deve rispettare gli stessi confini - stesse radici, stesso
+     * permesso di scrittura, stesso controllo sui link simbolici. Passare da qui e' il modo di non
+     * riscriverli, e quindi di non sbagliarli.
+     *
+     * @param forWriting se l'operazione modifica qualcosa: una radice di sola lettura fallisce qui
+     */
+    public static Path resolve(Context c, String root, String relative, boolean forWriting)
+    {
+        return roots(c).resolve(root, relative, forWriting);
     }
 
     private static ThrowStatement failure(String what, List<Value> lv, IOException cause)

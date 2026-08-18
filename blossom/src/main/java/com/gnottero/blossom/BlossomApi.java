@@ -92,10 +92,17 @@ public final class BlossomApi
             "on", "off", "available", "listeners", "describe",
             "handle_event", "signal_event", "schedule");
 
-    /** {@code core.mc.file} - i dati dell'app su disco */
-    public static final Set<String> FILE = Set.of(
-            "list_files", "read_file", "write_file", "delete_file",
-            "load_app_data", "store_app_data", "create_datapack");
+    /**
+     * I simboli che il layer di gioco aggiunge a {@code core.io}.
+     *
+     * <p>Non e' un modulo suo: leggere e scrivere file e' un lavoro solo, e chi lo fa lo importa da
+     * un posto solo. Queste tre stanno qui e non in {@code blossom-core} perche' NBT e' un formato
+     * binario di Minecraft e un datapack e' un concetto del gioco - non perche' siano un'altra
+     * categoria di operazione. C'era un {@code core.mc.file} e non c'e' piu': era un secondo modo di
+     * aprire un file, e un secondo modo di aprire un file e' una domanda in piu' ad ogni chiamata.
+     */
+    public static final Set<String> IO = Set.of(
+            "read_nbt", "write_nbt", "create_datapack");
 
     /** {@code core.mc.system} - il server visto da fuori: comandi, statistiche, diagnostica */
     public static final Set<String> SYSTEM = Set.of(
@@ -126,8 +133,10 @@ public final class BlossomApi
         StdLib.registerModule("core.mc.text", TEXT);
         StdLib.registerModule("core.mc.effect", EFFECT);
         StdLib.registerModule("core.mc.event", EVENT);
-        StdLib.registerModule("core.mc.file", FILE);
         StdLib.registerModule("core.mc.system", SYSTEM);
+        // non un modulo nuovo: i file si aprono da 'core.io', anche quando l'implementazione
+        // ha bisogno di Minecraft
+        StdLib.extendModule("core.io", IO);
         declareValueTypes();
     }
 

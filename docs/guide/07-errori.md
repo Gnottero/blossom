@@ -113,7 +113,7 @@ Serve per il log di diagnostica, non per la logica:
 
 ```
 try(lavoro(), 'exception', (
-    file.write_file('errori', 'text', 'fallito a ' + _trace:'token' + ': ' + _);
+    io.append_text('data', 'errori.txt', 'fallito a ' + _trace:'token' + ': ' + _ + '\n');
     null
 ));
 ```

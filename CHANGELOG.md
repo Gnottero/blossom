@@ -6,6 +6,20 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ### Aggiunto
 
+- Gli eventi **`app_reloading`** e **`app_reloaded`**, con il nome dell'app come argomento: il primo
+  scatta prima che la versione uscente venga smontata — l'ultimo momento in cui i suoi handler
+  esistono ancora — il secondo dopo che il codice nuovo ha girato, quindi la versione nuova sente il
+  proprio ricaricamento. Insieme sono il modo di far sopravvivere lo stato a un `reload`. Nessuno dei
+  due è annullabile, e nessuno dei due scatta a un primo caricamento o a un `unload`. Vedi
+  DECISIONI.md D-095.
+- **`core.io`**: `read_nbt(radice, percorso)` e `write_nbt(radice, percorso, tag)`, sulle stesse
+  radici e con gli stessi confini di tutto il resto del modulo.
+- Due radici di `core.io` che ci sono **sempre**, senza dichiararle: `data` e `shared`, entrambe
+  scrivibili, sotto la cartella del mondo. Vengono create all'avvio.
+- **Documentazione estesa di tutti gli eventi** in `docs/api/core.mc.event.md`: una scheda per evento
+  con quando scatta, cosa passa, cosa vuol dire annullarlo e i tranelli; più le sezioni su
+  registrazione, annullamento e costo.
+
 - **`core.http`**: richieste HTTP verso host dichiarati — `get`, `post`, `request`, `get_json`,
   `post_json`, `hosts`, `encode_url`, `decode_url`, `encode_query`. Nessun host è raggiungibile
   finché non è dichiarato in `config/blossomscript.json`, i redirect (spenti per default) ripassano
@@ -27,6 +41,15 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ### Cambiato
 
+- **Un'API di file sola.** `core.io` e `core.mc.file` facevano lo stesso lavoro. `core.mc.file` non
+  esiste più: `read_nbt`, `write_nbt` e `create_datapack` sono passate in `core.io`, che è l'unico
+  posto da cui uno script apre un file. Le tre restano implementate nel layer di gioco - NBT è un
+  formato binario di Minecraft, un datapack è un concetto del gioco - ma questo non si vede da uno
+  script, perché `StdLib.extendModule` permette di aggiungere simboli a un modulo del core invece di
+  dichiararne un secondo. Vedi DECISIONI.md D-094 e D-096.
+- `player_command` non è più dichiarato annullabile: non lo era mai stato davvero, perché il mixin
+  ignorava il valore di ritorno.
+
 - **Il frame di una chiamata non è più una mappa a hash**, e un valore vale come nodo di sé stesso:
   spariscono le lambda che avvolgevano ogni argomento e ogni risultato. Chiamate a funzione **-24%**,
   loop aritmetico **-32%**, accesso a lista **-25%**. Vedi `BENCHMARK.md` e DECISIONI.md D-091.
@@ -35,6 +58,10 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
   subiva entrando in una chiamata: il nome ce l'ha il nodo che legge la variabile, dal parsing.
   Chiamate a quattro argomenti **-20%**, a un argomento **-12%**, loop aritmetico **-6%**. Vedi
   `BENCHMARK.md` e DECISIONI.md D-093.
+- `docs/guide/10-prestazioni.md` rimisurato: gli ordini di grandezza tengono conto di D-089..D-093
+  (~55 ns per iterazione, ~178 ns per chiamata, ~900.000 operazioni in un tick), e "cosa fa già
+  l'interprete" cita la risoluzione dei nomi al parsing e il frame a due array. Nuovo: il costo per
+  argomento di una chiamata, ~65 ns oltre il primo.
 - `_x`, `_y` e `_z` non sono più preparate in ogni frame: le scrive `scan` prima di valutare il
   corpo, e fuori da uno scan sono variabili non definite come tutte le altre (cioè `null`, non `0`).
 
@@ -67,6 +94,13 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ### Rimosso
 
+- **La cartella `<mondo>/blossom/<app>.data/`**: le app scrivono nelle radici `data` e `shared` di
+  `core.io`, tenendo separati i propri dati con una sottocartella che porta il loro nome.
+- **Il modulo `core.mc.file`** per intero, con `read_file`, `write_file`, `list_files`,
+  `delete_file`, `load_app_data` e `store_app_data`. Tabella di migrazione in
+  `docs/api/core.io.md`. Tre differenze da tenere presenti: la radice è un argomento, un file assente
+  è un `io_exception` e non un `null` (`read_nbt` è l'eccezione e resta `null`), e l'estensione fa
+  parte del percorso.
 - **Undici funzioni di gioco che non aggiungevano niente** (DECISIONI.md D-090): `material`,
   `item_category` e `enable_hidden_dimensions` rispondevano sempre la stessa cosa; `world_time`,
   `last_tick_times`, `seed`, `view_distance` e `current_dimension` erano il duplicato di una chiave
