@@ -191,11 +191,29 @@ if (fs.existsSync(eventFile)) {
 // the parameters the javadoc does not declare live in the table in the documentation
 const eventDocs = path.join(DOCS, 'core.mc.event.md');
 if (fs.existsSync(eventDocs)) {
+    const source = read(eventDocs);
     const byName = new Map(events.map((event) => [event.name, event]));
-    for (const row of read(eventDocs).matchAll(/^\|\s*`(\w+)`\s*\|\s*`?([^|`]*)`?\s*\|/gm)) {
+    for (const row of source.matchAll(/^\|\s*`(\w+)`\s*\|\s*`?([^|`]*)`?\s*\|/gm)) {
         const event = byName.get(row[1]);
         if (!event || event.params.length) continue;
         event.params = row[2].split(',').map((p) => p.trim()).filter((p) => p && p !== '...');
+    }
+
+    /*
+     * The prose of an event: the `#### ` section that names it, down to the next heading.
+     *
+     * One heading can name more than one event — the pistons, the chunks — and then the same text
+     * belongs to all of them: they were written together because they are only understandable
+     * together, and splitting the paragraph to give each one a third of it would help nobody.
+     */
+    for (const section of source.matchAll(/^#### (.+)\n([\s\S]*?)(?=\n#{1,4} |$)/gm)) {
+        const named = [...section[1].matchAll(/`(\w+)\(/g)].map((m) => m[1]);
+        const body = section[2].trim();
+        if (!body) continue;
+        for (const name of named) {
+            const event = byName.get(name);
+            if (event) event.doc = body;
+        }
     }
 }
 

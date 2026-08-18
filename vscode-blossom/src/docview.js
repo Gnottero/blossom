@@ -96,18 +96,38 @@ function preludePage(data) {
     ].join('\n');
 }
 
+/**
+ * The prose of an event, from markdown to the little html this view needs.
+ *
+ * Only inline code, bold and paragraphs: the sections in `core.mc.event.md` use nothing else, and a
+ * markdown library pulled in for three constructs would be a dependency to keep alive for years.
+ */
+function eventProse(text) {
+    return escapeHtml(text)
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        .split(/\n\s*\n/)
+        .map((paragraph) => `<p>${paragraph.replace(/\n/g, ' ')}</p>`)
+        .join('');
+}
+
 function eventsPage(data) {
     const rows = data.events.map((event) => [
         `<tr id="event-${escapeHtml(event.name)}" data-name="${escapeHtml(event.name)}">`,
         `<td><code>${escapeHtml(event.name)}</code></td>`,
         `<td><code>${escapeHtml((event.params || []).join(', '))}</code></td>`,
         `<td>${event.cancellable ? 'cancellable' : ''}</td>`,
-        '</tr>'
+        '</tr>',
+        // the prose under the row, so the table stays readable and the answer is still here
+        event.doc
+            ? `<tr class="event-doc" data-name="${escapeHtml(event.name)}"><td colspan="3">` +
+              `${eventProse(event.doc)}</td></tr>`
+            : ''
     ].join(''));
     return [
         '<article class="module" id="module-events">',
         '<h2>events</h2>',
-        '<p class="summary">What a script can react to, with the arguments the handler receives. A cancellable event stops the action when the handler gives back <code>false</code>.</p>',
+        '<p class="summary">What a script can react to, with the arguments the handler receives. A cancellable event stops the action when the handler gives back <code>true</code>.</p>',
         `<p class="count">${data.events.length} events</p>`,
         '<table class="events"><tr><th>Event</th><th>Arguments</th><th></th></tr>',
         rows.join('\n'),
@@ -152,6 +172,9 @@ code { font-family: var(--vscode-editor-font-family); }
 table { border-collapse: collapse; margin: 0.3rem 0; }
 td, th { padding: 0.15rem 0.8rem 0.15rem 0; text-align: left; vertical-align: top; }
 .symbol { padding: 0.4rem 0 1rem; border-bottom: 1px solid var(--vscode-panel-border); }
+table.events tr[data-name]:not(.event-doc) td { padding-top: 0.9rem; font-weight: 600; }
+.event-doc td { padding: 0 0 0.4rem; opacity: 0.9; border-bottom: 1px solid var(--vscode-panel-border); }
+.event-doc p { margin: 0.3rem 0; max-width: 55rem; }
 .symbol.target { background: var(--vscode-editor-findMatchHighlightBackground); }
 #search { width: 100%; box-sizing: border-box; margin-bottom: 0.7rem; padding: 0.3rem 0.4rem;
   background: var(--vscode-input-background); color: var(--vscode-input-foreground);

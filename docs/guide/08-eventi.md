@@ -93,6 +93,45 @@ event.schedule(40, ricontrolla, pos);       // fra 40 tick, cioè 2 secondi
 I tempi sono in **tick** e non in millisecondi: uno script che aspetta venti tick aspetta lo stesso
 tempo *di gioco* anche se il server rallenta.
 
+## Ricaricare un'app senza perdere lo stato
+
+Un `reload` ributta via tutto: le variabili di modulo ripartono da zero. I due eventi che coprono il
+buco sono `app_reloading`, che scatta **prima** che la versione vecchia venga smontata, e
+`app_reloaded`, che scatta **dopo** che il codice nuovo ha girato.
+
+```
+module main;
+
+import "core.mc.event" as event;
+import "core.io" as io;
+
+let mut stato = {};
+let FILE = 'mia-app/stato.json';
+
+fn prima(app) -> (
+    if(app == 'mia-app', io.write_json('data', FILE, stato));
+    false
+);
+
+fn dopo(app) -> (
+    if(app == 'mia-app', stato = io.read_json('data', FILE));
+    false
+);
+
+event.on('app_reloading', prima);
+event.on('app_reloaded', dopo);
+```
+
+Tre cose da sapere:
+
+- **arrivano per ogni app**, non solo per la tua: il nome è l'argomento, e chi guarda solo sé stesso
+  lo confronta come qui sopra. È quello che li rende utili anche a un'app che ne sorveglia altre.
+- **la versione nuova sente il proprio `app_reloaded`**, perché l'evento scatta dopo il corpo dei
+  moduli: l'handler è già registrato quando arriva.
+- **un primo caricamento non genera niente**, e nemmeno un `unload`: non è un ricaricamento. Se il
+  codice nuovo esplode al caricamento, arriva `app_reloading` e non arriva `app_reloaded` — dalla
+  coppia si capisce com'è andata.
+
 ## Eventi di una singola entità
 
 Vivono dentro l'entità, la seguono fra i mondi e spariscono con lei:

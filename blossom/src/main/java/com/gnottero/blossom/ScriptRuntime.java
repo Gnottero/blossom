@@ -162,6 +162,7 @@ public class ScriptRuntime
                     + "' containing " + blossom.project.ProjectManifest.FILE_NAME + ".");
         }
         Module module = Module.fromPath(file);
+        boolean reloading = fireReloading(module.name());
         // un ricaricamento parte pulito: gli handler e i task della versione precedente non devono
         // sopravvivere alla loro app
         com.gnottero.blossom.event.EventBus.unregisterApp(module.name());
@@ -170,13 +171,45 @@ public class ScriptRuntime
         apps.put(module.name(), interpreter);
         try
         {
-            return evaluate(interpreter, source, module.code());
+            Value result = evaluate(interpreter, source, module.code());
+            fireReloaded(module.name(), reloading);
+            return result;
         }
         catch (RuntimeException e)
         {
             apps.remove(module.name());
             com.gnottero.blossom.event.EventBus.unregisterApp(module.name());
             throw e;
+        }
+    }
+
+    /**
+     * Genera {@code app_reloading} se quell'app e' gia' caricata, prima di smontarla.
+     *
+     * <p>Va chiamata mentre gli handler della versione vecchia ci sono ancora: e' l'unico momento in
+     * cui l'app che sta per sparire puo' salvare qualcosa. Un primo caricamento non e' un
+     * ricaricamento e non genera niente: non c'e' nessuna versione precedente di cui parlare.
+     *
+     * @return se era davvero un ricaricamento, cioe' se anche {@code app_reloaded} andra' generato
+     */
+    private boolean fireReloading(String appName)
+    {
+        if (!apps.containsKey(appName))
+        {
+            return false;
+        }
+        com.gnottero.blossom.event.Event.APP_RELOADING.fireOnServer(server,
+                () -> List.of(new blossom.value.StringValue(appName)));
+        return true;
+    }
+
+    /** Genera {@code app_reloaded} dopo che il codice nuovo ha girato, se era un ricaricamento. */
+    private void fireReloaded(String appName, boolean reloading)
+    {
+        if (reloading)
+        {
+            com.gnottero.blossom.event.Event.APP_RELOADED.fireOnServer(server,
+                    () -> List.of(new blossom.value.StringValue(appName)));
         }
     }
 
@@ -205,6 +238,7 @@ public class ScriptRuntime
      */
     private Value loadPack(CommandSourceStack source, String appName, Path root, boolean refreshLock) throws IOException
     {
+        boolean reloading = fireReloading(appName);
         com.gnottero.blossom.event.EventBus.unregisterApp(appName);
         scheduler.unregisterApp(appName);
         try
@@ -229,6 +263,7 @@ public class ScriptRuntime
                     },
                     packEnvironment(), refreshLock);
             apps.put(appName, interpreter);
+            fireReloaded(appName, reloading);
             return new blossom.value.StringValue(appName);
         }
         catch (RuntimeException e)

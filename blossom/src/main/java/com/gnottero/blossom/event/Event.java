@@ -47,6 +47,21 @@ public final class Event
     public static final Event SERVER_STARTS = new Event("server_starts", 0, false);
     /** {@code ()} - il server sta per chiudere; e' l'ultimo momento utile per salvare */
     public static final Event SERVER_SHUTS_DOWN = new Event("server_shuts_down", 0, false);
+    /**
+     * {@code (app)} - un'app sta per essere ricaricata, e non e' ancora stata smontata
+     *
+     * <p>E' l'ultimo momento in cui gli handler della versione vecchia esistono ancora: chi vuole
+     * salvare qualcosa prima di sparire lo salva qui.
+     */
+    public static final Event APP_RELOADING = new Event("app_reloading", 1, false);
+    /**
+     * {@code (app)} - un'app e' stata ricaricata, e il suo codice nuovo ha gia' girato
+     *
+     * <p>Scatta dopo il corpo dei moduli, quindi la versione nuova puo' ascoltare il proprio
+     * ricaricamento: registra l'handler nel preambolo e lo trova gia' registrato quando l'evento
+     * arriva.
+     */
+    public static final Event APP_RELOADED = new Event("app_reloaded", 1, false);
     /** {@code ()} - un tick dell'overworld */
     public static final Event TICK = new Event("tick", 0, false);
     /** {@code ()} - un tick, con il contesto del nether */
@@ -139,20 +154,26 @@ public final class Event
     public static final Event PLAYER_DISCONNECTS = new Event("player_disconnects", 2, false);
     /** {@code (player, message)} */
     public static final Event PLAYER_MESSAGE = new Event("player_message", 2, true);
-    /** {@code (player, command)} */
-    public static final Event PLAYER_COMMAND = new Event("player_command", 2, true);
+    /**
+     * {@code (player, command)} - un comando e' stato inviato dalla chat
+     *
+     * <p>Non annullabile: scatta a comando gia' accettato, e restituire vero da qui non lo ferma.
+     * Era dichiarato annullabile e non lo era: una bandiera che non fa niente e' peggio di una
+     * assente, perche' chi la legge scrive codice che crede di funzionare.
+     */
+    public static final Event PLAYER_COMMAND = new Event("player_command", 2, false);
     /** {@code (player, category, event, value)} */
     public static final Event STATISTIC = new Event("statistic", 4, false);
 
     // --- mondo ---
 
-    /** {@code (pos, entity)} - un fulmine e' caduto; {@code entity} e' il cavallo scheletro, se c'e' */
+    /** {@code (pos, skeleton_horse)} - un fulmine e' caduto; il secondo argomento e' un booleano */
     public static final Event LIGHTNING = new Event("lightning", 2, false);
-    /** {@code (pos, power, source, attacker, create_fire, block_interaction)} - prima dello scoppio */
+    /** {@code (pos, power, source, attacker, block_interaction, create_fire)} - prima dello scoppio */
     public static final Event EXPLOSION = new Event("explosion", 6, true);
-    /** {@code (pos, power, source, attacker, create_fire, block_interaction, blocks, entities)} */
+    /** {@code (pos, power, source, attacker, block_interaction, create_fire, blocks, entities)} */
     public static final Event EXPLOSION_OUTCOME = new Event("explosion_outcome", 8, false);
-    /** {@code (pos, block)} - un dispenser sta per attivarsi */
+    /** {@code (pos, item)} - un dispenser sta per attivarsi, con l'oggetto che sta per lanciare */
     public static final Event BLOCK_DISPENSES = new Event("block_dispenses", 2, true);
     /** {@code (x, z)} - un chunk e' stato scaricato */
     public static final Event CHUNK_UNLOADED = new Event("chunk_unloaded", 2, false);

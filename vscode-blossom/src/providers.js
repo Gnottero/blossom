@@ -72,6 +72,8 @@ function eventMarkdown(event) {
         `\n${event.arity} parameter${event.arity === 1 ? '' : 's'}` +
         (event.cancellable ? ', cancellable: returning `true` stops the action' : '') + '\n'
     );
+    // what the event actually is, taken from docs/api/core.mc.event.md by the generator
+    if (event.doc) markdown.appendMarkdown('\n' + event.doc + '\n');
     // the handler written out: the signature has to match, and the check happens at registration
     const params = event.params.length ? event.params : Array.from({ length: event.arity }, (_, i) => `arg${i + 1}`);
     const handler = `handle_${event.name}`;
