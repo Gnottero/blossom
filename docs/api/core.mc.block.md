@@ -62,6 +62,9 @@ spawning, and the one the block itself emits.
 ### `see_sky(pos)` · `brightness(pos)`
 Whether the point sees the sky, and the brightness as a number between 0 and 1.
 
+### `opacity(pos)` · `blocks_daylight(pos)`
+How much light the block absorbs, and whether it stops daylight from going further down.
+
 ## Writing
 
 ### `set(pos, block, properties...)`

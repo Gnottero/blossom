@@ -536,11 +536,13 @@ public class WorldAccess
         expression.addContextFunction("transparent", -1, (c, t, lv) ->
                 booleanStateTest(c, "transparent", lv, (s, p) -> !s.isSolid()));
 
-        /*this.expr.addContextFunction("opacity", -1, (c, t, lv) ->
-                genericStateTest(c, "opacity", lv, (s, p, w) -> new NumericValue(s.getOpacity(w, p))));
+        expression.addContextFunction("opacity", -1, (c, t, lv) ->
+                genericStateTest(c, "opacity", lv, (s, p, w) -> new NumericValue(s.getLightDampening())));
 
-        this.expr.addContextFunction("blocks_daylight", -1, (c, t, lv) ->
-                genericStateTest(c, "blocks_daylight", lv, (s, p, w) -> new NumericValue(s.propagatesSkylightDown(w, p))));*/ // investigate
+        // 'blocks_daylight' e' la negazione di 'propagatesSkylightDown': il nome dice cosa il blocco
+        // fa alla luce, non cosa la luce fa a lui - ed e' la domanda che si fa chi scrive uno script
+        expression.addContextFunction("blocks_daylight", -1, (c, t, lv) ->
+                booleanStateTest(c, "blocks_daylight", lv, (s, p) -> !s.propagatesSkylightDown()));
 
         expression.addContextFunction("emitted_light", -1, (c, t, lv) ->
                 genericStateTest(c, "emitted_light", lv, (s, p, w) -> new NumericValue(s.getLightEmission())));

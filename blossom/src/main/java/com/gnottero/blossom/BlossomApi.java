@@ -28,6 +28,7 @@ public final class BlossomApi
             "solid", "air", "liquid", "flammable", "transparent", "suffocates",
             "blocks_movement", "ticks_randomly", "power",
             "light", "block_light", "sky_light", "effective_light", "emitted_light", "see_sky", "brightness",
+            "opacity", "blocks_daylight",
             "hardness", "blast_resistance", "block_sound", "map_colour",
             "create_explosion", "pos", "pos_offset");
 

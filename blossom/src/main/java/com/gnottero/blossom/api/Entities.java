@@ -233,9 +233,6 @@ public class Entities
                 throw new InternalExpressionException("First argument to query should be an entity");
             }
             String what = lv.get(1).getString().toLowerCase(Locale.ROOT);
-            if (what.equals("tags"))
-            {
-            }
             return switch (lv.size())
                     {
                         case 2 -> ev.get(what, null);
@@ -276,40 +273,6 @@ public class Entities
             return EntityValue.getEntityDescriptor(desc, ((ScriptContext) c).server()).listValue(((ScriptContext) c).registryAccess());
         });
 
-        // or update
-        expression.addContextFunction("modify", -1, (c, t, lv) ->
-        {
-            if (lv.size() < 2)
-            {
-                throw new InternalExpressionException("'modify' takes entity as a first argument, and queried feature as a second");
-            }
-            Value v = lv.get(0);
-            if (!(v instanceof final EntityValue ev))
-            {
-                throw new InternalExpressionException("First argument to modify should be an entity");
-            }
-            String what = lv.get(1).getString();
-            switch (lv.size())
-            {
-                case 2 -> ev.set(what, null);
-                case 3 -> ev.set(what, lv.get(2));
-                default -> ev.set(what, ListValue.wrap(lv.subList(2, lv.size())));
-            }
-            return v;
-        });
-
-        expression.addContextFunction("entity_types", -1, (c, t, lv) ->
-        {
-            if (lv.size() > 1)
-            {
-                throw new InternalExpressionException("'entity_types' requires one or no arguments");
-            }
-            String desc = (lv.size() == 1) ? lv.get(0).getString() : "*";
-            return EntityValue.getEntityDescriptor(desc, ((ScriptContext) c).server()).listValue(((ScriptContext) c).registryAccess());
-        });
-
-
-        // or update
         /*
          * entity_load_handler(tipi, funzione) - chiamata ogni volta che compare un'entita' di uno
          * di quei tipi.
