@@ -124,6 +124,16 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ### Corretto
 
+- **L'ordine di esecuzione dei moduli di un progetto si perdeva.** `ProjectLoader` costruiva la
+  mappa dei moduli in ordine di dipendenza e poi la consegnava con `Map.copyOf`, che *non* conserva
+  l'ordine di inserimento; `inDependencyOrder()` leggeva quella mappa, e `Interpreter.forProject`
+  ci girava sopra per far partire i corpi. Il risultato: il corpo di un modulo poteva girare prima
+  del corpo di un modulo che importa, e una chiamata `alias.funzione()` nel corpo falliva con
+  `has not finished loading yet` a seconda dell'hash dei nomi. Ora la mappa resta un
+  `LinkedHashMap` non modificabile, qui e nelle due copie che finiscono in `BlossomHost`. Test di
+  regressione: `ModuleSystemTest.runsEveryModuleAfterTheOnesItImports`.
+- `modify(giocatore, 'breaking_progress', n)` andava in `NullPointerException` quando il giocatore
+  non stava rompendo niente: adesso, senza un blocco sotto il dito, non fa nulla.
 - Le nuvole si vedevano **intere** dietro un riempimento traslucido, come se la forma non ci fosse:
   il gioco disegna tutte le fasi traslucide prima delle nuvole, e una faccia traslucida non scrive la
   profondità. Ora il riempimento traslucido è disegnato dopo le nuvole, e le copre in proporzione al
