@@ -6,6 +6,13 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ### Aggiunto
 
+- I **commenti di documentazione**: `///` attaccato alla dichiarazione, con `@param`, `@returns`,
+  `@throws`, `@example`, `@see` e `@deprecated`. Per l'interprete restano commenti — non c'e' niente
+  di nuovo da imparare e niente che possa rompersi — e a leggerli e' l'editor: l'estensione VS Code
+  li mostra passando sopra al nome, nel completamento e nell'aiuto sui parametri, e sa scrivere lo
+  scheletro di un blocco con un `@param` per parametro. La convenzione e' descritta in
+  `docs/guide/04-funzioni.md`.
+
 - Gli eventi **`app_reloading`** e **`app_reloaded`**, con il nome dell'app come argomento: il primo
   scatta prima che la versione uscente venga smontata — l'ultimo momento in cui i suoi handler
   esistono ancora — il secondo dopo che il codice nuovo ha girato, quindi la versione nuova sente il
