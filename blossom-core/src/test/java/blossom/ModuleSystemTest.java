@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -15,6 +16,7 @@ import blossom.exception.ImportError;
 import blossom.exception.ParseError;
 import blossom.exception.UndefinedSymbolError;
 import blossom.interpreter.Interpreter;
+import blossom.project.ProjectLoader;
 
 /**
  * Il sistema a moduli della Fase 3: un file è un modulo, gli import hanno un alias obbligatorio, e
@@ -187,6 +189,47 @@ class ModuleSystemTest
         assertEquals("3", interpreter.eval("import \"a\" as a; a.both()").getString());
         assertEquals("5", interpreter.eval("value").getString());
         assertEquals("2", interpreter.eval("import \"b\" as b; b.doubled()").getString());
+    }
+
+    @Test
+    void runsEveryModuleAfterTheOnesItImports(@TempDir Path tmp) throws IOException
+    {
+        // il corpo di un modulo puo' chiamare una funzione di un modulo che importa: quella
+        // funzione esiste solo dopo che il corpo dell'altro e' girato, quindi l'ordine di
+        // esecuzione e' un contratto. Molti moduli, con nomi che in una mappa non ordinata
+        // finirebbero mescolati, per accorgersi se l'ordine si perde per strada
+        Path root = project(tmp, SIMPLE_MANIFEST);
+        module(root, "shared/registry.bs", """
+                module shared.registry;
+
+                let mut declared = 0;
+                pub fn declare(name) -> (declared += 1; name);
+                pub fn count() -> declared;
+                """);
+        StringBuilder mainSource = new StringBuilder("module main;\n\n");
+        for (int i = 0; i < 12; i++)
+        {
+            String name = "machines/unit_" + i;
+            module(root, name + ".bs", """
+                    module machines.unit_%d;
+
+                    import "shared/registry" as registry;
+
+                    pub let id = registry.declare('unit_%d');
+                    """.formatted(i, i));
+            mainSource.append("import \"").append(name).append("\" as unit_").append(i).append(";\n");
+        }
+        mainSource.append("\nimport \"shared/registry\" as registry;\npub let value = registry.count();\n");
+        module(root, "main.bs", mainSource.toString());
+
+        // l'ordine dichiarato dal loader: un modulo compare dopo tutti quelli che importa
+        ProjectLoader.LoadedProject loaded = ProjectLoader.load(root);
+        List<String> order = loaded.inDependencyOrder().stream().map(unit -> unit.name().value()).toList();
+        assertEquals(0, order.indexOf("shared.registry"), order.toString());
+        assertEquals(order.size() - 1, order.indexOf("main"), order.toString());
+
+        Interpreter interpreter = Interpreter.forProject(root);
+        assertEquals("12", interpreter.eval("value").getString());
     }
 
     @Test
