@@ -13,6 +13,7 @@ const providers = require('./providers');
 const diagnostics = require('./diagnostics');
 const codeactions = require('./codeactions');
 const docview = require('./docview');
+const docs = require('./docs');
 
 function activate(context) {
     providers.register(context);
@@ -22,7 +23,8 @@ function activate(context) {
 
     context.subscriptions.push(
         vscode.commands.registerCommand('blossom.openDocs', () => openDocs()),
-        vscode.commands.registerCommand('blossom.copyRunCommand', () => copyRunCommand())
+        vscode.commands.registerCommand('blossom.copyRunCommand', () => copyRunCommand()),
+        vscode.commands.registerCommand('blossom.generateDoc', () => generateDoc())
     );
 }
 
@@ -61,6 +63,39 @@ async function openDocs() {
         }
     }
     await docview.open(moduleName, symbol);
+}
+
+/**
+ * Writes the doc comment of the declaration the cursor is on - or of the first one below it, which
+ * is where the cursor ends up after typing a function. The template goes in as a snippet, so the
+ * summary and every `@param` are tabstops.
+ */
+async function generateDoc() {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor || editor.document.languageId !== 'blossom') return;
+    const index = analyzer.indexOf(editor.document);
+    const line = editor.selection.active.line;
+
+    const declarations = [...index.functions, ...index.bindings]
+        .sort((a, b) => a.start.line - b.start.line);
+    const target = declarations.find((item) => item.start.line === line) ||
+        declarations.find((item) => item.docRange &&
+            line >= item.docRange.startLine && line <= item.docRange.endLine) ||
+        declarations.find((item) => item.start.line > line);
+    if (!target) {
+        vscode.window.setStatusBarMessage('Blossom: no declaration to document here', 4000);
+        return;
+    }
+    if (target.doc && !docs.isEmpty(target.doc)) {
+        vscode.window.setStatusBarMessage(`Blossom: '${target.name}' is already documented`, 4000);
+        return;
+    }
+    const text = editor.document.lineAt(target.start.line).text;
+    const indent = /^[ \t]*/.exec(text)[0];
+    await editor.insertSnippet(
+        new vscode.SnippetString(docs.template(target, indent, true)),
+        new vscode.Position(target.start.line, 0)
+    );
 }
 
 /** Copies to the clipboard the command that loads the open app, the one you type every time. */

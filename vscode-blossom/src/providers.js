@@ -12,6 +12,7 @@ const vscode = require('vscode');
 const path = require('path');
 const api = require('./api');
 const analyzer = require('./analyzer');
+const docs = require('./docs');
 
 const SELECTOR = { language: 'blossom', scheme: 'file' };
 
@@ -173,6 +174,7 @@ const completion = {
         for (const fn of index.functions) {
             const item = new vscode.CompletionItem(fn.name, vscode.CompletionItemKind.Function);
             item.detail = localSignature(fn);
+            if (!docs.isEmpty(fn.doc)) item.documentation = docs.render(fn.doc, new vscode.MarkdownString());
             item.insertText = new vscode.SnippetString(
                 `${fn.name}(${fn.params.map((p, i) => `\${${i + 1}:${p.name}}`).join(', ')})`
             );
@@ -181,6 +183,9 @@ const completion = {
         for (const binding of index.bindings) {
             const item = new vscode.CompletionItem(binding.name, vscode.CompletionItemKind.Variable);
             item.detail = binding.mutable ? 'let mut' : 'let';
+            if (!docs.isEmpty(binding.doc)) {
+                item.documentation = docs.render(binding.doc, new vscode.MarkdownString());
+            }
             items.push(item);
         }
         for (const implicit of ['_', '_i', '_a']) {
@@ -224,6 +229,14 @@ const hover = {
             return new vscode.Hover(markdown, range);
         }
 
+        // the name of this module, when it carries a doc block
+        if (index.module && index.module.name.split('.').pop() === word && index.module.doc) {
+            const markdown = new vscode.MarkdownString();
+            markdown.appendCodeblock(`module ${index.module.name};`, 'blossom');
+            docs.render(index.module.doc, markdown);
+            return new vscode.Hover(markdown, range);
+        }
+
         // an event, inside a string
         const event = api.eventInfo(word);
         if (event && /['"]$/.test(before)) return new vscode.Hover(eventMarkdown(event), range);
@@ -233,12 +246,14 @@ const hover = {
         if (fn) {
             const markdown = new vscode.MarkdownString();
             markdown.appendCodeblock(localSignature(fn), 'blossom');
+            docs.render(fn.doc, markdown);
             return new vscode.Hover(markdown, range);
         }
         const binding = index.bindings.find((b) => b.name === word);
         if (binding) {
             const markdown = new vscode.MarkdownString();
             markdown.appendCodeblock(`let ${binding.mutable ? 'mut ' : ''}${binding.name}`, 'blossom');
+            docs.render(binding.doc, markdown);
             return new vscode.Hover(markdown, range);
         }
 
@@ -330,9 +345,16 @@ const signatureHelp = {
             const fn = index.functions.find((f) => f.name === call.name);
             if (fn) {
                 const item = new vscode.SignatureInformation(localSignature(fn));
-                item.parameters = fn.params.map(
-                    (p) => new vscode.ParameterInformation(p.type ? `${p.name}: ${p.type}` : p.name)
-                );
+                item.parameters = fn.params.map((p) => {
+                    const label = p.type ? `${p.name}: ${p.type}` : p.name;
+                    const described = docs.paramDoc(fn.doc, p.name);
+                    return described
+                        ? new vscode.ParameterInformation(label, new vscode.MarkdownString(described))
+                        : new vscode.ParameterInformation(label);
+                });
+                if (!docs.isEmpty(fn.doc)) {
+                    item.documentation = docs.render(fn.doc, new vscode.MarkdownString());
+                }
                 signatures.push(item);
             } else {
                 const info = api.preludeInfo(call.name);

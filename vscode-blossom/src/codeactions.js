@@ -8,6 +8,7 @@
 const vscode = require('vscode');
 const api = require('./api');
 const analyzer = require('./analyzer');
+const docs = require('./docs');
 
 /** The line where a new import goes: after the last one, or after the module declaration. */
 function importInsertionLine(document, index) {
@@ -48,6 +49,19 @@ function removalEdit(document, declarations) {
     return edit;
 }
 
+/** The function or binding declared on that line, when it has no doc block yet. */
+function declarationToDocument(index, line) {
+    const on = (item) => item.start.line === line;
+    const found = index.functions.find(on) || index.bindings.find(on) || null;
+    return found && docs.isEmpty(found.doc) ? found : null;
+}
+
+/** The indentation of a line, to write the doc block flush with the declaration. */
+function indentationOf(document, line) {
+    const match = /^[ \t]*/.exec(document.lineAt(line).text);
+    return match ? match[0] : '';
+}
+
 /** True when the editor did not restrict the request to some other kind of action. */
 function wants(context, kind) {
     const only = context.only;
@@ -82,6 +96,26 @@ const provider = {
             );
             fixAll.edit = removalEdit(document, unused);
             actions.push(fixAll);
+        }
+
+        // writing the doc of the declaration under the cursor: the same template the command
+        // writes, minus the tabstops, which an edit cannot carry
+        const target = range && wants(context, vscode.CodeActionKind.Refactor)
+            ? declarationToDocument(index, range.start.line)
+            : null;
+        if (target) {
+            const indent = indentationOf(document, target.start.line);
+            const action = new vscode.CodeAction(
+                `Write the doc comment of '${target.name}'`,
+                vscode.CodeActionKind.Refactor
+            );
+            action.edit = new vscode.WorkspaceEdit();
+            action.edit.insert(
+                document.uri,
+                new vscode.Position(target.start.line, 0),
+                docs.template(target, indent, false)
+            );
+            actions.push(action);
         }
 
         for (const diagnostic of context.diagnostics) {
@@ -158,10 +192,11 @@ function register(context) {
         vscode.languages.registerCodeActionsProvider({ language: 'blossom' }, provider, {
             providedCodeActionKinds: [
                 vscode.CodeActionKind.QuickFix,
+                vscode.CodeActionKind.Refactor,
                 vscode.CodeActionKind.SourceFixAll
             ]
         })
     );
 }
 
-module.exports = { register, provider };
+module.exports = { register, provider, declarationToDocument };

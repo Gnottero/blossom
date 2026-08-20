@@ -442,5 +442,95 @@ function requireCompletion(doc, position) {
     return captured.provideCompletionItems(doc, position);
 }
 
+
+// ------------------------------------------------------------ doc comments
+
+console.log('doc comments');
+
+const docs = require('../src/docs');
+
+const DOCUMENTED = [
+    'module main;',
+    '',
+    '/// Doubles a number.',
+    '///',
+    '/// The long story, which',
+    '/// spans two lines.',
+    '///',
+    '/// @param x  the number to double',
+    '/// @returns  twice x',
+    '/// @throws value_exception when x is not a number',
+    '/// @example double(21);',
+    'pub fn double(x: num) -> x * 2;',
+    '',
+    '/// How many times it ran.',
+    'let mut runs = 0;',
+    '',
+    'fn undocumented(a, b) -> a + b;',
+    ''
+].join('\n');
+
+test('a doc block is parsed into summary, body and tags', () => {
+    const index = analyzer.analyze(DOCUMENTED);
+    const fn = index.functions.find((f) => f.name === 'double');
+    assert.strictEqual(fn.doc.summary, 'Doubles a number.');
+    assert.strictEqual(fn.doc.body.join(' '), 'The long story, which spans two lines.');
+    assert.deepStrictEqual(fn.doc.params, [{ name: 'x', text: 'the number to double' }]);
+    assert.strictEqual(fn.doc.returns.text, 'twice x');
+    assert.strictEqual(fn.doc.throws[0].type, 'value_exception');
+    assert.strictEqual(fn.doc.examples[0].text, 'double(21);');
+});
+
+test('a binding takes its doc too, and a plain comment does not', () => {
+    const index = analyzer.analyze(DOCUMENTED);
+    assert.strictEqual(index.bindings.find((b) => b.name === 'runs').doc.summary, 'How many times it ran.');
+    assert.strictEqual(index.functions.find((f) => f.name === 'undocumented').doc, null);
+});
+
+test('a doc block detached by a blank line documents nothing', () => {
+    const index = analyzer.analyze('module main;\n\n/// Floating.\n\npub fn f() -> 1;\n');
+    assert.strictEqual(index.functions[0].doc, null);
+});
+
+test('the hover of a local function shows the doc', () => {
+    const doc = document(DOCUMENTED);
+    const hover = requireHover(doc, new stub.Position(11, 8));
+    const text = hover.contents.value;
+    assert.ok(text.includes('pub fn double(x: num)'), text);
+    assert.ok(text.includes('Doubles a number.'), text);
+    assert.ok(text.includes('`x` — the number to double'), text);
+    assert.ok(text.includes('**Returns** twice x'), text);
+});
+
+test('the completion of a local function carries the doc', () => {
+    const doc = document(DOCUMENTED + '\nfn caller() -> d');
+    const items = requireCompletion(doc, new stub.Position(18, 16));
+    const item = items.find((i) => i.label === 'double');
+    assert.ok(item.documentation.value.includes('Doubles a number.'), item.documentation.value);
+});
+
+test('the template has one hole per parameter, and tabstops only when asked', () => {
+    const target = { name: 'brew', params: [{ name: 'input', type: null }, { name: 'fuel', type: 'num' }] };
+    const snippet = docs.template(target, '');
+    assert.ok(snippet.includes('@param input ${2:'), snippet);
+    assert.ok(snippet.includes('@param fuel ${3:a num}'), snippet);
+    assert.ok(snippet.includes('@returns ${4:'), snippet);
+    const plain = docs.template(target, '    ', false);
+    assert.ok(!plain.includes('${'), plain);
+    assert.ok(plain.split('\n').every((line) => line === '' || line.startsWith('    ')), plain);
+});
+
+test('the code action offers to document an undocumented declaration, and only that one', () => {
+    const doc = document(DOCUMENTED);
+    const undocumented = codeactions.provider.provideCodeActions(
+        doc, new stub.Range(16, 0, 16, 0), { diagnostics: [] }
+    );
+    assert.ok(undocumented.some((a) => a.title === "Write the doc comment of 'undocumented'"), 'missing action');
+    const documented = codeactions.provider.provideCodeActions(
+        doc, new stub.Range(11, 0, 11, 0), { diagnostics: [] }
+    );
+    assert.ok(!documented.some((a) => a.title.startsWith('Write the doc comment')), 'offered twice');
+});
+
 console.log(failures ? `\n${failures} tests failed` : '\nall tests passed');
 process.exit(failures ? 1 : 0);

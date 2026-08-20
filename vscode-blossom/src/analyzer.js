@@ -11,6 +11,7 @@
  */
 
 const api = require('./api');
+const docs = require('./docs');
 
 /** uri -> { version, index } */
 const cache = new Map();
@@ -43,6 +44,41 @@ function mask(text) {
         }
     }
     return chars.join('');
+}
+
+const DOC_RE = /^[ \t]*\/\/\//;
+const COMMENT_RE = /^[ \t]*\/\//;
+
+/**
+ * The doc blocks of the file, keyed by the line of the declaration they sit on: a run of `///`
+ * lines belongs to the first line under it that is neither blank nor another comment.
+ *
+ * It reads the original text and not the masked one, because masking is exactly what erases
+ * comments - and here the comment is the content.
+ */
+function docBlocks(text) {
+    const lines = text.split('\n');
+    const blocks = new Map();
+    let run = null;
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        if (DOC_RE.test(line)) {
+            if (!run) run = { lines: [], startLine: i };
+            run.lines.push(line);
+            run.endLine = i;
+            continue;
+        }
+        if (!run) continue;
+        if (line.trim() === '' || COMMENT_RE.test(line)) {
+            // a blank line or an ordinary comment cuts the block off from what follows: a doc
+            // that is not glued to its declaration documents nothing
+            run = null;
+            continue;
+        }
+        blocks.set(i, { doc: docs.parse(run.lines), startLine: run.startLine, endLine: run.endLine });
+        run = null;
+    }
+    return blocks;
 }
 
 /** Table of line start offsets, to convert offset -> (line, column) in O(log n). */
@@ -79,9 +115,13 @@ function analyze(text) {
     const starts = lineStarts(text);
     const at = (offset) => positionAt(starts, offset);
 
+    const blocks = docBlocks(text);
+    const documentation = (position) => blocks.get(position.line) || null;
+
     const index = {
         masked,
         lineStarts: starts,
+        docBlocks: blocks,
         module: null,
         imports: new Map(),
         duplicateAliases: [],
@@ -102,10 +142,14 @@ function analyze(text) {
     if (moduleMatch) {
         preambleEnd = moduleMatch.index + moduleMatch[0].length;
         const offset = moduleMatch.index + moduleMatch[1].length;
+        const modulePosition = at(masked.indexOf(moduleMatch[2], offset));
+        const moduleBlock = documentation(modulePosition);
         index.module = {
             name: moduleMatch[2],
-            start: at(masked.indexOf(moduleMatch[2], offset)),
-            length: moduleMatch[2].length
+            start: modulePosition,
+            length: moduleMatch[2].length,
+            doc: moduleBlock ? moduleBlock.doc : null,
+            docRange: moduleBlock ? { startLine: moduleBlock.startLine, endLine: moduleBlock.endLine } : null
         };
     }
 
@@ -146,12 +190,16 @@ function analyze(text) {
                 const [paramName, type] = raw.split(':').map((part) => part.trim());
                 return { name: paramName.replace(/^\.\.\./, ''), type: type || null, variadic: raw.startsWith('...') };
             });
+        const start = at(nameOffset);
+        const block = documentation(start);
         index.functions.push({
             name,
             params,
             exported: Boolean(match[2]),
-            start: at(nameOffset),
-            length: name.length
+            start,
+            length: name.length,
+            doc: block ? block.doc : null,
+            docRange: block ? { startLine: block.startLine, endLine: block.endLine } : null
         });
         index.defined.add(name);
         for (const param of params) index.defined.add(param.name);
@@ -161,11 +209,17 @@ function analyze(text) {
     while ((match = LET_RE.exec(masked)) !== null) {
         const name = match[3];
         const nameOffset = match.index + match[0].lastIndexOf(name);
+        const bindingStart = at(nameOffset);
+        const bindingBlock = documentation(bindingStart);
         index.bindings.push({
             name,
             mutable: Boolean(match[2]),
-            start: at(nameOffset),
-            length: name.length
+            start: bindingStart,
+            length: name.length,
+            doc: bindingBlock ? bindingBlock.doc : null,
+            docRange: bindingBlock
+                ? { startLine: bindingBlock.startLine, endLine: bindingBlock.endLine }
+                : null
         });
         index.defined.add(name);
     }
@@ -236,4 +290,13 @@ function builtinAliases(index) {
     return aliases;
 }
 
-module.exports = { analyze, indexOf, forget, targetModule, builtinAliases, mask };
+/** The function or binding declared on that line, or the one whose doc block covers it. */
+function declarationAt(index, line) {
+    const covers = (item) => item.start.line === line ||
+        (item.docRange && line >= item.docRange.startLine && line <= item.docRange.endLine);
+    return index.functions.find(covers) || index.bindings.find(covers) || null;
+}
+
+module.exports = {
+    analyze, indexOf, forget, targetModule, builtinAliases, mask, docBlocks, declarationAt
+};

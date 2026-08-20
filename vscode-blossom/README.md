@@ -10,7 +10,8 @@ modules and symbols that do not exist, wrong events, module names that do not ma
 | --- | --- |
 | **Highlighting** | preamble, `fn`/`let`/`pub`, parameter types, `_`/`_i`/`_a`, strings, comments |
 | **Completion** | the modules inside `import "…"`, the symbols after `alias.`, the event names inside `event.on('…')`, the functions and bindings of the file |
-| **Hover** | the full card of every library function: signatures, what it does, every parameter, what it gives back, at least one example, and the module it comes from |
+| **Hover** | the full card of every library function: signatures, what it does, every parameter, what it gives back, at least one example, and the module it comes from — and, for what the file declares, its own `///` doc |
+| **Doc comments** | `///` above a `fn`, a `let` or the `module` line, with `@param`, `@returns`, `@throws`, `@example`, `@see`, `@deprecated`; a command and a lightbulb write the template |
 | **Signature help** | the parameters of the function being written, library or your own, each with its own description |
 | **Go to definition** | on the functions of the file, and across imports inside `src/` |
 | **File outline** | module, functions (`pub` marked), bindings |
@@ -31,13 +32,40 @@ The pages are built from the data bundled with the extension, so reading `core.i
 repo in the workspace. When the workspace *does* contain the repo, **Blossom: open the documentation
 of the module** still prefers the markdown of `docs/api/`, which is the page an author is editing.
 
-Three commands, from the palette:
+### Doc comments
+
+A comment that starts with **three** slashes, glued to the declaration under it, is documentation:
+
+```
+/// The score of a tower.
+///
+/// @param height   how many blocks tall
+/// @param material what it is made of
+/// @returns the score, zero when the tower does not count
+/// @throws value_exception when the material is not in the catalogue
+/// @example score(12, 'stone');
+pub fn score(height: num, material: str) -> ...;
+```
+
+The language sees ordinary comments — nothing to learn, nothing to break. The editor reads them:
+hovering the name shows the prose, completion shows the first line, and signature help shows the
+description of the parameter being typed. **Blossom: write the doc comment of the function** (or the
+lightbulb on the declaration) writes the skeleton with one `@param` per parameter, already named,
+each one a tabstop.
+
+A blank line or a plain `//` comment between the block and the declaration detaches it: a doc that
+is not glued to its declaration documents nothing, and that is on purpose — a floating note is a
+note, not a doc.
+
+Four commands, from the palette:
 
 - **Blossom: browse the API** — asks which module and opens the browser on it
 - **Blossom: open the documentation of the module** — the module under the cursor, scrolled to the
   function under it
 - **Blossom: copy the load command of the app** — puts `/blossom script load <app>` in the
   clipboard, deducing the name from the file tree
+- **Blossom: write the doc comment of the function** — the `///` template of the declaration under
+  the cursor, or of the first one below it
 
 ## The API data is not hand-written
 

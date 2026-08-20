@@ -3,40 +3,102 @@
   "name": "Blossom",
   "scopeName": "source.blossom",
   "patterns": [
-    { "include": "#comment" },
-    { "include": "#preamble" },
-    { "include": "#string" },
-    { "include": "#number" },
-    { "include": "#function-definition" },
-    { "include": "#typed-parameter" },
-    { "include": "#constant" },
-    { "include": "#keyword" },
-    { "include": "#module-member" },
-    { "include": "#call" },
-    { "include": "#implicit-variable" },
-    { "include": "#operator" }
+    {
+      "include": "#comment"
+    },
+    {
+      "include": "#preamble"
+    },
+    {
+      "include": "#string"
+    },
+    {
+      "include": "#number"
+    },
+    {
+      "include": "#function-definition"
+    },
+    {
+      "include": "#typed-parameter"
+    },
+    {
+      "include": "#constant"
+    },
+    {
+      "include": "#keyword"
+    },
+    {
+      "include": "#module-member"
+    },
+    {
+      "include": "#call"
+    },
+    {
+      "include": "#implicit-variable"
+    },
+    {
+      "include": "#operator"
+    }
   ],
   "repository": {
     "comment": {
-      "name": "comment.line.double-slash.blossom",
-      "match": "//.*$"
+      "patterns": [
+        {
+          "name": "comment.line.documentation.blossom",
+          "begin": "///",
+          "end": "$",
+          "patterns": [
+            {
+              "match": "(@param)[ \\t]+([A-Za-z_]\\w*)",
+              "captures": {
+                "1": {
+                  "name": "keyword.other.documentation.blossom"
+                },
+                "2": {
+                  "name": "variable.parameter.documentation.blossom"
+                }
+              }
+            },
+            {
+              "name": "keyword.other.documentation.blossom",
+              "match": "@(returns?|throws?|example|see|deprecated)\\b"
+            }
+          ]
+        },
+        {
+          "name": "comment.line.double-slash.blossom",
+          "match": "//.*$"
+        }
+      ]
     },
     "preamble": {
       "patterns": [
         {
           "match": "^\\s*(module)\\s+([A-Za-z_][\\w.]*)",
           "captures": {
-            "1": { "name": "keyword.control.module.blossom" },
-            "2": { "name": "entity.name.namespace.blossom" }
+            "1": {
+              "name": "keyword.control.module.blossom"
+            },
+            "2": {
+              "name": "entity.name.namespace.blossom"
+            }
           }
         },
         {
           "match": "^\\s*(import)\\s+((\"|')[^\"']*(\\3))\\s+(as)\\s+([A-Za-z_]\\w*)",
           "captures": {
-            "1": { "name": "keyword.control.import.blossom" },
-            "2": { "name": "string.quoted.blossom" },
-            "5": { "name": "keyword.control.import.blossom" },
-            "6": { "name": "entity.name.namespace.alias.blossom" }
+            "1": {
+              "name": "keyword.control.import.blossom"
+            },
+            "2": {
+              "name": "string.quoted.blossom"
+            },
+            "5": {
+              "name": "keyword.control.import.blossom"
+            },
+            "6": {
+              "name": "entity.name.namespace.alias.blossom"
+            }
           }
         }
       ]
@@ -47,7 +109,12 @@
           "name": "string.quoted.single.blossom",
           "begin": "'",
           "end": "'",
-          "patterns": [{ "name": "constant.character.escape.blossom", "match": "\\\\(n|t|\\\\|')" }]
+          "patterns": [
+            {
+              "name": "constant.character.escape.blossom",
+              "match": "\\\\(n|t|\\\\|')"
+            }
+          ]
         },
         {
           "name": "string.quoted.double.blossom",
@@ -58,24 +125,42 @@
     },
     "number": {
       "patterns": [
-        { "name": "constant.numeric.hex.blossom", "match": "\\b0[xX][0-9a-fA-F]+\\b" },
-        { "name": "constant.numeric.blossom", "match": "\\b\\d+(\\.\\d+)?([eE][-+]?\\d+)?\\b" }
+        {
+          "name": "constant.numeric.hex.blossom",
+          "match": "\\b0[xX][0-9a-fA-F]+\\b"
+        },
+        {
+          "name": "constant.numeric.blossom",
+          "match": "\\b\\d+(\\.\\d+)?([eE][-+]?\\d+)?\\b"
+        }
       ]
     },
     "function-definition": {
       "match": "\\b(pub\\s+)?(fn)\\s+([A-Za-z_]\\w*)",
       "captures": {
-        "1": { "name": "storage.modifier.blossom" },
-        "2": { "name": "storage.type.function.blossom" },
-        "3": { "name": "entity.name.function.blossom" }
+        "1": {
+          "name": "storage.modifier.blossom"
+        },
+        "2": {
+          "name": "storage.type.function.blossom"
+        },
+        "3": {
+          "name": "entity.name.function.blossom"
+        }
       }
     },
     "typed-parameter": {
       "match": "([A-Za-z_]\\w*)\\s*(:)\\s*\\b(num|str|bool|list|map|func|null|any|entity|block|text|nbt|screen)\\b",
       "captures": {
-        "1": { "name": "variable.parameter.blossom" },
-        "2": { "name": "punctuation.separator.type.blossom" },
-        "3": { "name": "storage.type.blossom" }
+        "1": {
+          "name": "variable.parameter.blossom"
+        },
+        "2": {
+          "name": "punctuation.separator.type.blossom"
+        },
+        "3": {
+          "name": "storage.type.blossom"
+        }
       }
     },
     "constant": {
@@ -88,18 +173,36 @@
           "name": "keyword.control.blossom",
           "match": "\\b(if|try|throw|return|break|continue|loop|while|for|c_for|exit|outer|call|not)\\b"
         },
-        { "name": "storage.modifier.blossom", "match": "\\b(pub|mut)\\b" },
-        { "name": "storage.type.blossom", "match": "\\b(let|fn)\\b" },
-        { "name": "keyword.control.import.blossom", "match": "\\b(module|import|as)\\b" },
-        { "name": "support.function.builtin.blossom", "match": "\\b(print)\\b" }
+        {
+          "name": "storage.modifier.blossom",
+          "match": "\\b(pub|mut)\\b"
+        },
+        {
+          "name": "storage.type.blossom",
+          "match": "\\b(let|fn)\\b"
+        },
+        {
+          "name": "keyword.control.import.blossom",
+          "match": "\\b(module|import|as)\\b"
+        },
+        {
+          "name": "support.function.builtin.blossom",
+          "match": "\\b(print)\\b"
+        }
       ]
     },
     "module-member": {
       "match": "\\b([A-Za-z_]\\w*)(\\.)([A-Za-z_]\\w*)",
       "captures": {
-        "1": { "name": "variable.other.namespace.blossom" },
-        "2": { "name": "punctuation.accessor.blossom" },
-        "3": { "name": "support.function.blossom" }
+        "1": {
+          "name": "variable.other.namespace.blossom"
+        },
+        "2": {
+          "name": "punctuation.accessor.blossom"
+        },
+        "3": {
+          "name": "support.function.blossom"
+        }
       }
     },
     "call": {
@@ -112,12 +215,30 @@
     },
     "operator": {
       "patterns": [
-        { "name": "keyword.operator.assignment.blossom", "match": "(\\+=|-=|\\*=|/=|%=|<>|=)" },
-        { "name": "keyword.operator.comparison.blossom", "match": "(==|!=|<=|>=|<|>)" },
-        { "name": "keyword.operator.logical.blossom", "match": "(&&|\\|\\||!)" },
-        { "name": "keyword.operator.arithmetic.blossom", "match": "(\\+|-|\\*|/|%|\\^|~)" },
-        { "name": "keyword.operator.accessor.blossom", "match": ":" },
-        { "name": "keyword.operator.spread.blossom", "match": "\\.\\.\\." }
+        {
+          "name": "keyword.operator.assignment.blossom",
+          "match": "(\\+=|-=|\\*=|/=|%=|<>|=)"
+        },
+        {
+          "name": "keyword.operator.comparison.blossom",
+          "match": "(==|!=|<=|>=|<|>)"
+        },
+        {
+          "name": "keyword.operator.logical.blossom",
+          "match": "(&&|\\|\\||!)"
+        },
+        {
+          "name": "keyword.operator.arithmetic.blossom",
+          "match": "(\\+|-|\\*|/|%|\\^|~)"
+        },
+        {
+          "name": "keyword.operator.accessor.blossom",
+          "match": ":"
+        },
+        {
+          "name": "keyword.operator.spread.blossom",
+          "match": "\\.\\.\\."
+        }
       ]
     }
   }

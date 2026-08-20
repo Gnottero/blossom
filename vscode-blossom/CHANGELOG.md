@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.6.0
+
+- **doc comments**: `///` above a `fn`, a `let` or the `module` line, with `@param`, `@returns`,
+  `@throws`, `@example`, `@see` and `@deprecated`. They show up in hover, in completion and in
+  signature help — where each parameter carries its own `@param` line — and they are highlighted,
+  tags and parameter names included. Pressing Enter inside a block continues it
+- **Blossom: write the doc comment of the function**: the template of the declaration under the
+  cursor, one tabstop for the summary and one per parameter. The same template is offered by the
+  lightbulb on an undocumented declaration
+- fixed the indentation of the closing bracket: after `fn f() -> (` and Enter, the `)` was left
+  glued to the cursor instead of going down and out. The rule that handled `-> (` on its own is
+  gone, and the generic bracket rules now do indent *and* outdent
+
 ## 0.5.0
 
 - `core.mc.file` no longer exists: `read_nbt`, `write_nbt` and `create_datapack` moved into

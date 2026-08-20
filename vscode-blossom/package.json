@@ -2,7 +2,7 @@
   "name": "blossom",
   "displayName": "Blossom",
   "description": "Support for the Blossom language: highlighting, completion on the real API, preamble and import errors.",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "publisher": "gnottero",
   "license": "MIT",
   "engines": {
@@ -26,7 +26,8 @@
   "activationEvents": [
     "onLanguage:blossom",
     "onView:blossomApi",
-    "onCommand:blossom.openApiDocs"
+    "onCommand:blossom.openApiDocs",
+    "onCommand:blossom.generateDoc"
   ],
   "contributes": {
     "languages": [
@@ -82,6 +83,10 @@
         "command": "blossom.openApiDocs",
         "title": "Blossom: browse the API",
         "icon": "$(book)"
+      },
+      {
+        "command": "blossom.generateDoc",
+        "title": "Blossom: write the doc comment of the function"
       }
     ],
     "views": {
