@@ -3,6 +3,7 @@ package blossom.interpreter;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.UnaryOperator;
@@ -119,8 +120,11 @@ public final class Interpreter
             importAliases.put(name, unit.importedByAlias());
         }
         Module entry = modules.get(project.entrypoint().value());
-        BlossomHost host = new BlossomHost(entry, new BlossomServer(root), Map.copyOf(modules),
-                Map.copyOf(importAliases), setup);
+        // le mappe restano ordinate: l'ordine di dipendenza e' quello con cui i moduli devono
+        // esistere e girare, e Map.copyOf lo perderebbe
+        BlossomHost host = new BlossomHost(entry, new BlossomServer(root),
+                Collections.unmodifiableMap(new LinkedHashMap<>(modules)),
+                Collections.unmodifiableMap(new LinkedHashMap<>(importAliases)), setup);
         Interpreter interpreter = new Interpreter(host);
         Context context = contextFactory.apply(host);
         // l'ordine conta: la factory è il posto in cui chi incorpora il core installa i propri
@@ -256,8 +260,9 @@ public final class Interpreter
 
         public Interpreter build()
         {
-            return new Interpreter(new BlossomHost(main, new BlossomServer(storageRoot), Map.copyOf(libraries),
-                    Map.copyOf(importAliases), setup));
+            return new Interpreter(new BlossomHost(main, new BlossomServer(storageRoot),
+                    Collections.unmodifiableMap(new LinkedHashMap<>(libraries)),
+                    Collections.unmodifiableMap(new LinkedHashMap<>(importAliases)), setup));
         }
 
         private static Map<String, String> aliasesOf(ModuleSource source)

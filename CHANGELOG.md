@@ -6,6 +6,13 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ### Aggiunto
 
+- I **commenti di documentazione**: `///` attaccato alla dichiarazione, con `@param`, `@returns`,
+  `@throws`, `@example`, `@see` e `@deprecated`. Per l'interprete restano commenti — non c'e' niente
+  di nuovo da imparare e niente che possa rompersi — e a leggerli e' l'editor: l'estensione VS Code
+  li mostra passando sopra al nome, nel completamento e nell'aiuto sui parametri, e sa scrivere lo
+  scheletro di un blocco con un `@param` per parametro. La convenzione e' descritta in
+  `docs/guide/04-funzioni.md`.
+
 - Gli eventi **`app_reloading`** e **`app_reloaded`**, con il nome dell'app come argomento: il primo
   scatta prima che la versione uscente venga smontata — l'ultimo momento in cui i suoi handler
   esistono ancora — il secondo dopo che il codice nuovo ha girato, quindi la versione nuova sente il
@@ -124,6 +131,16 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ### Corretto
 
+- **L'ordine di esecuzione dei moduli di un progetto si perdeva.** `ProjectLoader` costruiva la
+  mappa dei moduli in ordine di dipendenza e poi la consegnava con `Map.copyOf`, che *non* conserva
+  l'ordine di inserimento; `inDependencyOrder()` leggeva quella mappa, e `Interpreter.forProject`
+  ci girava sopra per far partire i corpi. Il risultato: il corpo di un modulo poteva girare prima
+  del corpo di un modulo che importa, e una chiamata `alias.funzione()` nel corpo falliva con
+  `has not finished loading yet` a seconda dell'hash dei nomi. Ora la mappa resta un
+  `LinkedHashMap` non modificabile, qui e nelle due copie che finiscono in `BlossomHost`. Test di
+  regressione: `ModuleSystemTest.runsEveryModuleAfterTheOnesItImports`.
+- `modify(giocatore, 'breaking_progress', n)` andava in `NullPointerException` quando il giocatore
+  non stava rompendo niente: adesso, senza un blocco sotto il dito, non fa nulla.
 - Le nuvole si vedevano **intere** dietro un riempimento traslucido, come se la forma non ci fosse:
   il gioco disegna tutte le fasi traslucide prima delle nuvole, e una faccia traslucida non scrive la
   profondità. Ora il riempimento traslucido è disegnato dopo le nuvole, e le copre in proporzione al

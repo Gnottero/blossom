@@ -41,6 +41,20 @@ Writes an attribute: `pos`, `motion`, `motion_x`/`y`/`z`, `custom_name`, `health
 `gamemode`, `nbt`, `effect`, `nbt_merge`, `persistence`, `jump`, `kill`, `dismount`, `mount`, `tag`,
 `fire`, `silent`, `gravity`, `invulnerable`, `pickup_delay`, `portal_cooldown`, and others.
 
+### `breaking_progress` — le crepe sul blocco
+
+`query(player, 'breaking_progress')` da' a che punto e' la rottura in corso (0-9, `null` se non ne
+ha una); `modify(player, 'breaking_progress', n)` la **disegna**: `n` va da 0 a 9, e `-1` toglie
+l'animazione. Serve a chi calcola la rottura per conto suo — un blocco custom con la sua durezza —
+per far vedere quello che sta succedendo.
+
+Il pacchetto viaggia con l'id del giocatore cambiato di segno, quindi l'animazione scritta da uno
+script e quella che il gioco manda per conto suo non si sovrascrivono a vicenda.
+
+Due limiti, che vengono dal client e non da qui: le crepe si disegnano **sul blocco che il giocatore
+sta rompendo davvero** (quello di `active_block`), e solo se quel blocco ha un modello — su una
+barriera, che e' invisibile, il client non disegna niente.
+
 ### `spawn(type, pos, nbt?)`
 Creates an entity. The NBT is the one the game would use in a `/summon` command.
 

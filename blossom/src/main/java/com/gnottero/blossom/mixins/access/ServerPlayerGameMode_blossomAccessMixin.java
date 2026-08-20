@@ -45,7 +45,13 @@ public class ServerPlayerGameMode_blossomAccessMixin implements Access.GameMode
     @Override
     public void blossom$setBreakingProgress(int progress)
     {
+        if (destroyPos == null)
+        {
+            return; // nessun blocco sotto il dito: non c'e' niente su cui disegnare la crepa
+        }
         lastSentState = Mth.clamp(progress, -1, 10);
+        // l'id e' quello del giocatore cambiato di segno: l'animazione resta separata da quella che
+        // il gioco manda per conto suo, che altrimenti la sovrascriverebbe al tick dopo
         level.destroyBlockProgress(-player.getId(), destroyPos, lastSentState);
     }
 }

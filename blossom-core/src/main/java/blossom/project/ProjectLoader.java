@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -96,7 +97,10 @@ public final class ProjectLoader
 
         Map<ModuleName, ModuleUnit> loaded = new LinkedHashMap<>();
         loadInto(entrypoint, resolver, "", loaded, new ArrayDeque<>(), new LinkedHashSet<>());
-        return new LoadedProject(manifest, entrypoint, Map.copyOf(loaded));
+        // NON Map.copyOf: quella perde l'ordine di inserimento, e l'ordine qui e' il contratto -
+        // un modulo deve girare dopo quelli che importa, altrimenti il suo corpo trova i simboli
+        // dell'altro non ancora registrati
+        return new LoadedProject(manifest, entrypoint, Collections.unmodifiableMap(new LinkedHashMap<>(loaded)));
     }
 
     /**

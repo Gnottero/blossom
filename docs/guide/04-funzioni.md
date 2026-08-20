@@ -162,6 +162,52 @@ nome in una stringa:
 event.on('player_connects', benvenuto);
 ```
 
+## Documentare una funzione
+
+Un commento che comincia con **tre** barre, attaccato alla dichiarazione, e' la documentazione di
+quel simbolo:
+
+```
+/// Il punteggio di una torre.
+///
+/// Conta i blocchi e li pesa per il materiale; una torre piu' bassa di tre blocchi non conta.
+///
+/// @param altezza   quanti blocchi e' alta
+/// @param materiale il blocco di cui e' fatta
+/// @returns il punteggio, zero se la torre non conta
+/// @throws value_exception se il materiale non e' nel catalogo
+/// @example punteggio(12, 'stone');
+/// @see torre.registro
+pub fn punteggio(altezza: num, materiale: str) -> ...;
+```
+
+Per il linguaggio restano commenti: `///` e' `//` con una barra in piu', l'interprete li salta come
+tutti gli altri e non c'e' niente da imparare per farli funzionare. A leggerli e' l'editor —
+l'estensione VS Code mostra il testo passando sopra al nome, nel completamento e nell'aiuto sui
+parametri mentre scrivi la chiamata, e con **Blossom: write the doc comment of the function**
+scrive lo scheletro (`Ctrl+Shift+P`, oppure la lampadina sulla riga della dichiarazione): un
+`@param` per parametro, gia' con i nomi giusti.
+
+Le etichette sono sei:
+
+| Etichetta | A cosa serve |
+| --- | --- |
+| `@param nome testo` | un parametro; il nome deve essere quello nella firma |
+| `@returns testo` | cosa torna |
+| `@throws tipo testo` | un errore che puo' uscire, con il tipo che `try` filtra |
+| `@example codice` | una riga di esempio, mostrata come codice |
+| `@see riferimento` | dove guardare per il resto |
+| `@deprecated motivo` | da non usare piu'; il nome viene mostrato come deprecato |
+
+Il testo prima della prima etichetta e' la descrizione: la **prima riga** e' il sommario — quello
+che si vede nel completamento, dove c'e' spazio per una riga sola — e quello che segue una riga
+vuota e' il resto, che si vede passando sopra al nome. Una riga rientrata sotto un'etichetta la
+continua, quindi una descrizione lunga si puo' andare a capo senza ripetere `@param`.
+
+Il blocco documenta **la dichiarazione subito sotto**: una riga vuota o un commento normale in mezzo
+lo staccano, e a quel punto non documenta piu' niente. Vale per `fn`, per `let` e per `module`, che
+e' il posto dove scrivere a cosa serve il file.
+
 ## Ricorsione e uscita anticipata
 
 ```
