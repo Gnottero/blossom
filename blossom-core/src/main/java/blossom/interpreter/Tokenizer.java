@@ -108,9 +108,129 @@ public class Tokenizer
         List<Token> tokens = new ArrayList<>();
         while (hasNext())
         {
-            tokens.add(next());
+            Token token = next();
+            if (token != null && token.type == Token.TokenType.INTERPOLATION)
+            {
+                expandInterpolation(token, tokens);
+            }
+            else
+            {
+                tokens.add(token);
+            }
         }
         return tokens;
+    }
+
+    /**
+     * Spezza una stringa interpolata nei pezzi che la compongono.
+     *
+     * <p>{@code "n=${a + 1}!"} diventa {@code concat('n=', (a + 1), '!')}. Succede qui, mentre si
+     * legge il sorgente: a runtime non c'e' nessuna stringa da riesaminare e nessun segnaposto da
+     * cercare, solo una concatenazione gia' scritta. Una stringa senza segnaposti resta una
+     * costante e non costa niente piu' di quanto costava prima.
+     */
+    private static void expandInterpolation(Token token, List<Token> out)
+    {
+        String raw = token.surface;
+        // ogni elemento e' un argomento di concat, gia' in token
+        List<List<Token>> arguments = new ArrayList<>();
+        StringBuilder literal = new StringBuilder();
+        int i = 0;
+        while (i < raw.length())
+        {
+            if (raw.charAt(i) == '$' && i + 1 < raw.length() && raw.charAt(i + 1) == '{')
+            {
+                if (!literal.isEmpty())
+                {
+                    arguments.add(List.of(stringPiece(token, literal.toString())));
+                    literal.setLength(0);
+                }
+                int close = endOfPlaceholder(raw, i + 2);
+                arguments.add(placeholderTokens(token, raw.substring(i + 2, close)));
+                i = close + 1;
+                continue;
+            }
+            literal.append(raw.charAt(i));
+            i++;
+        }
+        if (!literal.isEmpty() || arguments.isEmpty())
+        {
+            arguments.add(List.of(stringPiece(token, literal.toString())));
+        }
+
+        if (arguments.size() == 1 && arguments.get(0).size() == 1
+                && arguments.get(0).get(0).type == Token.TokenType.STRINGPARAM)
+        {
+            out.add(arguments.get(0).get(0));
+            return;
+        }
+
+        out.add(token.morphedInto(Token.TokenType.FUNCTION, "concat"));
+        out.add(token.morphedInto(Token.TokenType.OPEN_PAREN, "("));
+        for (int a = 0; a < arguments.size(); a++)
+        {
+            if (a > 0)
+            {
+                out.add(token.morphedInto(Token.TokenType.COMMA, ","));
+            }
+            out.addAll(arguments.get(a));
+        }
+        out.add(token.morphedInto(Token.TokenType.CLOSE_PAREN, ")"));
+    }
+
+    /** L'indice della graffa che chiude un {@code ${...}} aperto a {@code from}. */
+    private static int endOfPlaceholder(String raw, int from)
+    {
+        int depth = 1;
+        boolean inQuote = false;
+        int j = from;
+        while (j < raw.length() && depth > 0)
+        {
+            char c = raw.charAt(j);
+            if (c == '\'')
+            {
+                inQuote = !inQuote;
+            }
+            else if (!inQuote && c == '{')
+            {
+                depth++;
+            }
+            else if (!inQuote && c == '}')
+            {
+                depth--;
+                if (depth == 0)
+                {
+                    return j;
+                }
+            }
+            j++;
+        }
+        return raw.length();
+    }
+
+    /** I token di una sotto-espressione, fra parentesi perche' non si mescoli con i pezzi accanto. */
+    private static List<Token> placeholderTokens(Token token, String source)
+    {
+        List<Token> tokens = new ArrayList<>();
+        tokens.add(token.morphedInto(Token.TokenType.OPEN_PAREN, "("));
+        for (Token sub : Tokenizer.simple(source).parseTokens())
+        {
+            // la posizione resta quella della stringa: e' il punto che chi legge un errore deve
+            // andare a guardare, e la sotto-espressione non ha una riga sua
+            sub.lineno = token.lineno;
+            sub.linepos = token.linepos;
+            sub.pos = token.pos;
+            tokens.add(sub);
+        }
+        tokens.add(token.morphedInto(Token.TokenType.CLOSE_PAREN, ")"));
+        return tokens;
+    }
+
+    private static Token stringPiece(Token token, String text)
+    {
+        Token piece = token.morphedInto(Token.TokenType.STRINGPARAM, text);
+        piece.disguiseAs('\'' + text + '\'', null);
+        return piece;
     }
 
     public boolean hasNext()
@@ -276,6 +396,80 @@ public class Tokenizer
                 ch = pos == input.length() ? 0 : input.charAt(pos);
             }
             token.type = isHex ? Token.TokenType.HEX_LITERAL : Token.TokenType.LITERAL;
+        }
+        else if (ch == '"')
+        {
+            // stringa interpolata: il testo si conserva grezzo, con i suoi ${...} dentro, e viene
+            // spezzato piu' tardi in parseTokens. Le graffe dentro un apice singolo non contano,
+            // altrimenti "${m:'}'}" finirebbe a meta'
+            pos++;
+            linepos++;
+            token.type = Token.TokenType.INTERPOLATION;
+            int depth = 0;
+            boolean inQuote = false;
+            while (true)
+            {
+                if (pos >= input.length())
+                {
+                    if (expression != null && context != null)
+                    {
+                        throw new ExpressionException(context, this.expression, token, "Program truncated");
+                    }
+                    break;
+                }
+                char cur = input.charAt(pos);
+                if (cur == '\\' && pos + 1 < input.length())
+                {
+                    char next = input.charAt(pos + 1);
+                    token.append(switch (next)
+                    {
+                        case 'n' -> '\n';
+                        case 't' -> '\t';
+                        default -> next;
+                    });
+                    pos += 2;
+                    linepos += 2;
+                    continue;
+                }
+                if (cur == '\'' && depth > 0)
+                {
+                    inQuote = !inQuote;
+                }
+                else if (!inQuote)
+                {
+                    if (cur == '$' && pos + 1 < input.length() && input.charAt(pos + 1) == '{')
+                    {
+                        depth++;
+                        token.append(cur);
+                        pos++;
+                        linepos++;
+                        cur = input.charAt(pos);
+                    }
+                    else if (cur == '{' && depth > 0)
+                    {
+                        depth++;
+                    }
+                    else if (cur == '}' && depth > 0)
+                    {
+                        depth--;
+                    }
+                    else if (cur == '"' && depth == 0)
+                    {
+                        pos++;
+                        linepos++;
+                        break;
+                    }
+                }
+                if (cur == '\n')
+                {
+                    lineno++;
+                    linepos = 0;
+                }
+                token.append(cur);
+                pos++;
+                linepos++;
+            }
+            token.disguiseAs('"' + token.surface + '"', null);
         }
         else if (ch == '\'')
         {

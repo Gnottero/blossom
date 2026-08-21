@@ -85,6 +85,24 @@ carattere significa un'altra cosa — il tipo di un parametro (`fn f(a: num)`), 
 Per un indice negativo servono le parentesi: `l:(-1)`, perché `l:-1` non si parsa. Oppure
 `list.get(l, -1)`.
 
+## Stringhe interpolate: `"..."`
+
+Un apice singolo fa una stringa letterale, e non succede niente al suo interno. Un **doppio apice**
+inserisce il valore di quello che sta dentro `${...}`:
+
+```
+nome = 'ada';
+punti = 12;
+
+"ciao ${nome}, hai ${punti} punti";        // 'ciao ada, hai 12 punti'
+"il doppio e' ${punti * 2}";               // 'il doppio e' 24'
+'ciao ${nome}';                           // 'ciao ${nome}' - l'apice singolo non interpola
+```
+
+Dentro le graffe ci sta un'espressione qualunque, chiamate comprese. Lo spezzettamento avviene
+**mentre si legge il codice**: a runtime non c'e' nessuna stringa da riesaminare, solo una
+concatenazione gia' scritta, e una stringa senza segnaposti resta una costante.
+
 ## Ricerca: `~`
 
 Un operatore, tre significati, secondo il tipo di sinistra:

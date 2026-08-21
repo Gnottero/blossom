@@ -73,6 +73,22 @@ public class Sys
             }
         });
 
+        /*
+         * I pezzi di una stringa interpolata, gia' separati dal tokenizer.
+         *
+         * Non si scrive a mano: "a${b}c" e' la sua sola forma. Uno StringBuilder invece di n
+         * concatenazioni binarie, perche' con quattro o cinque segnaposti la differenza si vede.
+         */
+        expression.addFunction("concat", lv ->
+        {
+            StringBuilder text = new StringBuilder();
+            for (Value piece : lv)
+            {
+                text.append(piece.getString());
+            }
+            return StringValue.of(text.toString());
+        });
+
         expression.addFunction("str", lv ->
         {
             if (lv.isEmpty())

@@ -45,8 +45,8 @@ public final class StdLib
             "loop", "while", "for", "c_for", "exit", "call", "outer", "not",
             // 'fn(...)' senza nome: e' la funzione anonima, e come 'call' e' grammatica
             "fn",
-            // costruiti dal tokenizer per [ ... ] e { ... }: non si scrivono a mano
-            "l", "m");
+            // costruiti dal tokenizer per [ ... ], { ... } e "...${...}...": non si scrivono a mano
+            "l", "m", "concat");
 
     static
     {

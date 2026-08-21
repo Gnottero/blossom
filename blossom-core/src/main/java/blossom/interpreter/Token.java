@@ -8,6 +8,8 @@ public class Token implements Comparable<Token> {
         FUNCTION(true, false), OPERATOR(true, false), UNARY_OPERATOR(true, false),
         VARIABLE(false, false), CONSTANT(false, true),
         LITERAL(false, true), HEX_LITERAL(false, true), STRINGPARAM(false, true),
+        /** una stringa fra doppi apici, che il tokenizer espande nei pezzi che la compongono */
+        INTERPOLATION(false, true),
         OPEN_PAREN(false, true), COMMA(false, true), CLOSE_PAREN(false, true), MARKER(false, true);
 
         final boolean functional;
