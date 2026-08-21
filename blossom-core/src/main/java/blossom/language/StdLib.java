@@ -62,31 +62,87 @@ public final class StdLib
                 "bitwise_roll_left", "bitwise_roll_right",
                 "long_to_double_bits", "double_to_long_bits");
 
-        module("core.string",
-                "str", "lower", "upper", "title", "replace", "replace_first", "split", "join",
-                "encode_b64", "decode_b64", "hash_code");
+        module("core.string", java.util.Map.ofEntries(
+                java.util.Map.entry("str", "str"),
+                java.util.Map.entry("lower", "lower"),
+                java.util.Map.entry("upper", "upper"),
+                java.util.Map.entry("title", "title"),
+                java.util.Map.entry("replace", "replace"),
+                java.util.Map.entry("replace_first", "replace_first"),
+                java.util.Map.entry("split", "split"),
+                java.util.Map.entry("encode_base64", "encode_b64"),
+                java.util.Map.entry("decode_base64", "decode_b64"),
+                java.util.Map.entry("hash_code", "hash_code")));
 
-        module("core.list",
-                "range", "map", "filter", "reduce", "sort", "sort_key", "first", "all",
-                "slice", "get", "put", "delete", "has", "length", "join", "split", "reverse");
+        module("core.list", java.util.Map.ofEntries(
+                java.util.Map.entry("range", "range"),
+                java.util.Map.entry("map", "map"),
+                java.util.Map.entry("filter", "filter"),
+                java.util.Map.entry("reduce", "reduce"),
+                java.util.Map.entry("sort", "sort"),
+                java.util.Map.entry("sort_key", "sort_key"),
+                java.util.Map.entry("find", "first"),
+                java.util.Map.entry("all", "all"),
+                java.util.Map.entry("slice", "slice"),
+                java.util.Map.entry("get", "get"),
+                java.util.Map.entry("put", "put"),
+                java.util.Map.entry("remove", "delete"),
+                java.util.Map.entry("has", "has"),
+                java.util.Map.entry("size", "length"),
+                java.util.Map.entry("join", "join"),
+                java.util.Map.entry("reverse", "reverse")));
 
-        module("core.map",
-                "keys", "values", "pairs", "get", "put", "delete", "has", "length");
+        module("core.map", java.util.Map.of(
+                "keys", "keys",
+                "values", "values",
+                "pairs", "pairs",
+                "get", "get",
+                "put", "put",
+                "remove", "delete",
+                "has", "has",
+                "size", "length"));
 
-        module("core.json",
-                "encode_json", "decode_json");
+        module("core.json", java.util.Map.of(
+                "encode", "encode_json",
+                "decode", "decode_json"));
 
-        module("core.task",
-                "task", "task_join", "task_await", "task_completed", "task_count", "task_dock",
-                "task_ready", "task_send", "task_value", "synchronize", "sleep", "yield");
+        // 'task_join' e 'task_await' sembravano due modi di aspettare, e non lo sono: il primo
+        // aspetta che il lavoro finisca e da' il risultato, il secondo prende il prossimo valore
+        // che una coroutine ha prodotto con 'yield'. I nomi nuovi lo dicono, invece di lasciarlo
+        // scoprire a chi sbaglia
+        module("core.task", java.util.Map.ofEntries(
+                java.util.Map.entry("start", "task"),
+                java.util.Map.entry("wait", "task_join"),
+                java.util.Map.entry("next", "task_await"),
+                java.util.Map.entry("has_next", "task_ready"),
+                java.util.Map.entry("done", "task_completed"),
+                java.util.Map.entry("count", "task_count"),
+                java.util.Map.entry("dock", "task_dock"),
+                java.util.Map.entry("send", "task_send"),
+                java.util.Map.entry("value", "task_value"),
+                java.util.Map.entry("synchronize", "synchronize"),
+                java.util.Map.entry("sleep", "sleep"),
+                java.util.Map.entry("yield", "yield")));
 
         module("core.io", Io.MODULE.toArray(String[]::new));
 
         module("core.http", Http.MODULE);
 
-        module("core.system",
-                "time", "unix_time", "convert_date", "profile_expr", "type", "var", "vars",
-                "system_variable_get", "system_variable_set", "undef", "bool", "copy");
+        // 'system_variable_get'/'system_variable_set' non ci sono piu': erano uno spazio globale
+        // condiviso fra tutte le app dello stesso server, cioe' esattamente quello che il §1.1 del
+        // piano toglie dal linguaggio. Chi deve passare dati a un'altra app usa gli eventi fra app;
+        // chi deve conservarli usa core.io
+        module("core.system", java.util.Map.ofEntries(
+                java.util.Map.entry("time", "time"),
+                java.util.Map.entry("unix_time", "unix_time"),
+                java.util.Map.entry("convert_date", "convert_date"),
+                java.util.Map.entry("measure", "profile_expr"),
+                java.util.Map.entry("type", "type"),
+                java.util.Map.entry("var", "var"),
+                java.util.Map.entry("vars", "vars"),
+                java.util.Map.entry("undef", "undef"),
+                java.util.Map.entry("bool", "bool"),
+                java.util.Map.entry("copy", "copy")));
     }
 
     private StdLib()

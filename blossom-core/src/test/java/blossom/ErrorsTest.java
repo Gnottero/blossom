@@ -63,7 +63,7 @@ class ErrorsTest
     @Test
     void indexOutOfBoundsError()
     {
-        assertThrows(IndexOutOfBoundsError.class, () -> Interpreter.standalone().eval("import \"core.list\" as list; l = [1, 2]; list.delete(l, 7)"));
+        assertThrows(IndexOutOfBoundsError.class, () -> Interpreter.standalone().eval("import \"core.list\" as list; l = [1, 2]; list.remove(l, 7)"));
     }
 
     @Test

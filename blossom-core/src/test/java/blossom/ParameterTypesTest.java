@@ -27,7 +27,7 @@ class ParameterTypesTest
     void aDeclaredTypeIsAccepted()
     {
         assertEquals("6", eval("f(a: num, b: num) -> a * b; f(2, 3)"));
-        assertEquals("3", eval("import \"core.list\" as list; f(l: list) -> list.length(l); f([1, 2, 3])"));
+        assertEquals("3", eval("import \"core.list\" as list; f(l: list) -> list.size(l); f([1, 2, 3])"));
         assertEquals("ciao", eval("f(s: str) -> s; f('ciao')"));
     }
 

@@ -60,7 +60,7 @@ Nella forma senza lambda, `_` resta il valore lanciato:
 import "core.json" as json;
 
 fn leggi_configurazione(testo) -> try(
-    json.decode_json(testo),
+    json.decode(testo),
     'json_error', (
         print('configurazione illeggibile: ' + _);
         {}                          // un default, e l'app parte lo stesso

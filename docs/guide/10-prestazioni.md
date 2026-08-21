@@ -35,7 +35,7 @@ cosa sola: **ottimizza gli accessi al mondo, non l'aritmetica**.
 
 ## Misurare invece di indovinare
 
-Per confrontare due implementazioni, `system.profile_expr(espressione)` la esegue ripetutamente per
+Per confrontare due implementazioni, `system.measure(espressione)` la esegue ripetutamente per
 un intervallo fisso e dice quante volte ci è riuscita: numero più alto, implementazione più veloce.
 
 Per la domanda vera — *chi si mangia il tick* — c'è `/blossom profile`:
@@ -95,7 +95,7 @@ modulo sono un affare; su una funzione chiamata in un ciclo stretto, no.
 
 Prima di essere valutato, l'albero passa da un passo di compilazione: costanti piegate, operatori
 associativi appiattiti, sottoalberi puri risolti una volta sola. Vale circa il **32%** su un loop
-aritmetico. Un effetto collaterale visibile: `json.decode_json('{')` con una costante può fallire
+aritmetico. Un effetto collaterale visibile: `json.decode('{')` con una costante può fallire
 già in fase di parsing invece che dentro il tuo `try`.
 
 Gli import sono risolti **una volta al caricamento**: `math.sqrt` non cerca niente per nome a

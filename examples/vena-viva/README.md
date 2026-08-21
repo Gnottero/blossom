@@ -57,7 +57,7 @@ e `main` resta abbastanza sottile da leggersi tutto insieme.
 | --- | --- |
 | `import "geologia" as geologia;` | alias obbligatorio, un modulo per file ([guida §6](../../docs/guide/06-moduli.md)) |
 | `fn estremo(...)` in `geologia` | privata: senza `pub` non esce dal modulo, e usarla da fuori è un errore a caricamento |
-| `task.task('ispeziona', ...)` nell'handler | il lavoro lungo esce dal tick ([guida §9](../../docs/guide/09-concorrenza.md)) |
+| `task.start('ispeziona', ...)` nell'handler | il lavoro lungo esce dal tick ([guida §9](../../docs/guide/09-concorrenza.md)) |
 | due soli `task_dock` | leggi in blocco, pensa fuori, scrivi in blocco |
 | `task.synchronize(LOCK, ...)` in `registro` | una sequenza leggi-modifica-scrivi chiamata da un altro thread |
 | `try(..., 'exception', ...)` attorno al task | un task che esplode non deve sparire in silenzio |

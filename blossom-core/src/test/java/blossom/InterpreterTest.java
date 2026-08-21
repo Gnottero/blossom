@@ -129,7 +129,7 @@ class InterpreterTest
     {
         assertEquals("[1, 2, 3]", eval("[1, 2, 3]"));
         assertEquals("2", eval("l = [1, 2, 3]; l:1"));
-        assertEquals("3", evalWithStdlib("list.length([1, 2, 3])"));
+        assertEquals("3", evalWithStdlib("list.size([1, 2, 3])"));
         assertEquals("[1, 2, 3, 4]", evalWithStdlib("l = [1, 2, 3]; list.put(l, null, 4); l"));
     }
 
@@ -176,7 +176,7 @@ class InterpreterTest
     {
         assertEquals("1", eval("m = {'a' -> 1}; m:'a'"));
         assertEquals("true", evalWithStdlib("m = {'a' -> 1}; map.has(m, 'a')"));
-        assertEquals("false", evalWithStdlib("m = {'a' -> 1}; map.delete(m, 'a'); map.has(m, 'a')"));
+        assertEquals("false", evalWithStdlib("m = {'a' -> 1}; map.remove(m, 'a'); map.has(m, 'a')"));
     }
 
     @Test

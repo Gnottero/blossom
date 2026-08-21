@@ -140,7 +140,7 @@ class WatchdogTest
         Interpreter interpreter = withPolicy(new ExecutionBudget.Policy(100, 64));
         String code = "import \"core.task\" as task;"
                 + "slow() -> c_for(i = 0, i < 300000, i += 1, null);"
-                + "t = task.task('slow'); task.task_join(t)";
+                + "t = task.start('slow'); task.wait(t)";
         assertEquals("300000", interpreter.eval(code).getString());
     }
 

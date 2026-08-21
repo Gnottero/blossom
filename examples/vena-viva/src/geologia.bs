@@ -26,7 +26,7 @@ pub let MINERALI = [
 // blocco si stampa con lo spazio dei nomi, chi scrive uno script usa la forma corta
 pub fn nome_corto(blocco) -> (
     pezzi = string.split(':', blocco + '');
-    pezzi:(list.length(pezzi) - 1)
+    pezzi:(list.size(pezzi) - 1)
 );
 
 // '~' su una lista restituisce l'indice, o null se non c'e': il confronto con null e' obbligatorio,
@@ -46,7 +46,7 @@ pub fn posizioni(letture: list, tipo: str) -> list.map(
 // Gli angoli del parallelepipedo che contiene tutte le posizioni date, o null se la lista e' vuota.
 // Serve a disegnare il riquadro attorno alla vena.
 pub fn riquadro(punti: list) -> (
-    if(list.length(punti) == 0, return(null));
+    if(list.size(punti) == 0, return(null));
     [
         [estremo(punti, 0, false), estremo(punti, 1, false), estremo(punti, 2, false)],
         [estremo(punti, 0, true),  estremo(punti, 1, true),  estremo(punti, 2, true)]
@@ -56,7 +56,7 @@ pub fn riquadro(punti: list) -> (
 // privata: e' un dettaglio di 'riquadro', e nessun altro modulo deve dipenderne
 fn estremo(punti, asse, massimo) -> (
     ordinati = list.sort(list.map(punti, _:asse));
-    if(massimo, ordinati:(list.length(ordinati) - 1), ordinati:0)
+    if(massimo, ordinati:(list.size(ordinati) - 1), ordinati:0)
 );
 
 // Il giudizio sulla vena in una parola: e' quello che il resto dell'app mostra a chi gioca.

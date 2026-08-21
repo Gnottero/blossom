@@ -25,8 +25,18 @@ digits. With a single argument it returns the textual representation of the valu
 only the first one. The pattern is a regular expression.
 
 `split(separator, s)` splits a string; `join(separator, list)` is the inverse operation and lives in
-[`core.list`](core.list.md).
+[`core.list`](core.list.md), because its subject is the list.
 
 ### Encodings
 
-`encode_b64(s)` / `decode_b64(s)` for base64, `hash_code(v)` for a stable hash of any value.
+`encode_base64(s)` / `decode_base64(s)` for base64, `hash_code(v)` for a stable hash of any value.
+
+---
+
+## Coming from the old names
+
+| Before | Now |
+| --- | --- |
+| `encode_b64(s)` | `encode_base64(s)` |
+| `decode_b64(s)` | `decode_base64(s)` |
+| `join(sep, l)` | it lives in [`core.list`](core.list.md) |

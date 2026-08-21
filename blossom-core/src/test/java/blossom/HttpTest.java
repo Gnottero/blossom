@@ -135,7 +135,7 @@ class HttpTest
         assertEquals("1", interpreter.eval(IMPORT + "http.get_json('" + base + "/json'):'a'").getString());
         // il corpo spedito e' json, e la risposta torna gia' decodificata
         assertEquals("POST:{\"a\":1}:null", interpreter.eval(IMPORT + "import \"core.json\" as json; "
-                + "http.post('" + base + "/echo', json.encode_json({'a' -> 1})):'body'").getString());
+                + "http.post('" + base + "/echo', json.encode({'a' -> 1})):'body'").getString());
         assertEquals("1", interpreter.eval(IMPORT + "http.post_json('" + base + "/json', {'a' -> 1}):'a'").getString());
     }
 

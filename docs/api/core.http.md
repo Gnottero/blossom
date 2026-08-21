@@ -12,8 +12,8 @@ fn fetch_motd() -> (
 );
 
 // a request never runs on the server thread: it goes in a task
-handle = task.task(fetch_motd);
-motd = task.task_join(handle);
+handle = task.start(fetch_motd);
+motd = task.wait(handle);
 ```
 
 ## The boundaries

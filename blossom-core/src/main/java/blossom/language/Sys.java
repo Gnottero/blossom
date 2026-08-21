@@ -498,27 +498,6 @@ public class Sys
             return ListValue.wrap(values);
         });
 
-        // lazy cause default expression may not be executed if not needed
-        expression.addLazyFunction("system_variable_get", (c, t, lv) ->
-        {
-            if (lv.isEmpty())
-            {
-                throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "system", "'system_variable_get' expects at least a key to be fetched");
-            }
-            Value key = lv.get(0).evalValue(c);
-            if (lv.size() > 1)
-            {
-                c.host.scriptServer().systemGlobals.computeIfAbsent(key, k -> lv.get(1).evalValue(c));
-            }
-            Value res = c.host.scriptServer().systemGlobals.get(key);
-            return res == null ? LazyValue.NULL : ((cc, tt) -> res);
-        });
-
-        expression.addContextFunction("system_variable_set", 2, (c, t, lv) ->
-        {
-            Value res = c.host.scriptServer().systemGlobals.put(lv.get(0), lv.get(1));
-            return res == null ? Value.NULL : res;
-        });
     }
 
     public static String titleCase(String str) {

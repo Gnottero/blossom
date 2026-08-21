@@ -56,7 +56,7 @@ class MatchTest
         // una lista passa per riferimento, quindi la funzione la vede davvero
         assertEquals("2", eval("import 'core.list' as list; "
                 + "let visite = []; fn conta() -> (list.put(visite, null, 1); 5); "
-                + "match(conta(), 5 -> conta(), else -> 0); list.length(visite)"));
+                + "match(conta(), 5 -> conta(), else -> 0); list.size(visite)"));
     }
 
     @Test

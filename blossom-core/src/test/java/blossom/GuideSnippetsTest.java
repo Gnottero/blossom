@@ -317,8 +317,8 @@ class GuideSnippetsTest
         assertEquals("[0, 1]", eval("list.map([10, 20], _i)"));
         assertEquals("[2, 4]", eval("list.filter([1, 2, 3, 4], _ % 2 == 0)"));
         assertEquals("10", eval("list.reduce([1, 2, 3, 4], _a + _, 0)"));
-        assertEquals("2", eval("list.first([1, 2, 3], _ > 1)"));
-        assertEquals("null", eval("system.type(list.first([1, 2], _ > 5))"));
+        assertEquals("2", eval("list.find([1, 2, 3], _ > 1)"));
+        assertEquals("null", eval("system.type(list.find([1, 2], _ > 5))"));
         assertEquals("true", eval("list.all([], _ > 5)"));
         assertEquals("[1]", eval("list.map([1, 2, 3], if(_ == 2, break()); _)"));
         assertEquals("[3, 2, 1]", eval("list.reverse([1, 2, 3])"));
@@ -333,15 +333,15 @@ class GuideSnippetsTest
         assertEquals("v", eval("try(throw('value_exception', 'v'), 'value_exception', _)"));
         assertEquals("caught: x", eval("fn boom() -> throw('io_exception', 'x'); try(boom(), 'io_exception', 'caught: ' + _)"));
         // la gerarchia: json_error sta sotto io_exception, che sta sotto exception
-        assertEquals("caught", eval("bad = '{'; try(json.decode_json(bad), 'io_exception', 'caught')"));
-        assertEquals("caught", eval("bad = '{'; try(json.decode_json(bad), 'exception', 'caught')"));
+        assertEquals("caught", eval("bad = '{'; try(json.decode(bad), 'io_exception', 'caught')"));
+        assertEquals("caught", eval("bad = '{'; try(json.decode(bad), 'exception', 'caught')"));
     }
 
     @Test
     void laFormaCortaDiTryPrendeSoloLeEccezioniUtente()
     {
         assertEquals("null", eval("system.type(try(throw('boom')))"));
-        assertThrows(Throwable.class, () -> eval("bad = '{'; try(json.decode_json(bad))"));
+        assertThrows(Throwable.class, () -> eval("bad = '{'; try(json.decode(bad))"));
     }
 
     @Test
@@ -368,7 +368,7 @@ class GuideSnippetsTest
     {
         String chiavi = eval("try(throw('x'), list.sort(map.keys(_trace)))");
         assertEquals("[locals, stack, token]", chiavi);
-        assertEquals("1", eval("fn boom() -> throw('x'); try(boom(), list.length(_trace:'stack'))"));
+        assertEquals("1", eval("fn boom() -> throw('x'); try(boom(), list.size(_trace:'stack'))"));
         assertEquals("7", eval("fn boom(v) -> throw('x'); try(boom(7), (_trace:'locals'):'v')"));
     }
 

@@ -104,4 +104,4 @@ event.on('player_connects', su_arrivo);
 event.on('tick', su_tick);
 event.on('server_shuts_down', salva);
 
-print('contapassi pronta, ' + map.length(conteggi) + ' schede in archivio');
+print('contapassi pronta, ' + map.size(conteggi) + ' schede in archivio');

@@ -23,7 +23,7 @@ pub fn carica() -> (
     salvato = if(io.exists('data', FILE), io.read_json('data', FILE), {});
     vene = salvato:'vene' || [];
     totali = salvato:'totali' || {};
-    list.length(vene)
+    list.size(vene)
 );
 
 pub fn salva() -> (
@@ -34,10 +34,10 @@ pub fn salva() -> (
 pub fn annota(tipo: str, pos: list, rimasti: num, chi: str) -> task.synchronize(LOCK, (
     list.put(vene, null, {'tipo' -> tipo, 'pos' -> pos, 'rimasti' -> rimasti, 'chi' -> chi});
     totali:tipo = (totali:tipo || 0) + 1;
-    list.length(vene)
+    list.size(vene)
 ));
 
-pub fn quante() -> list.length(vene);
+pub fn quante() -> list.size(vene);
 
 pub fn tutte() -> vene;
 

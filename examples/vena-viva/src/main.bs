@@ -27,7 +27,7 @@ fn su_rottura(giocatore, blocco) -> (
     nome = entity.query(giocatore, 'name');
 
     // niente task_join qui: l'handler finisce subito, il task continua per conto suo
-    task.task('ispeziona', pos, tipo, giocatore, nome);
+    task.start('ispeziona', pos, tipo, giocatore, nome);
     false                       // false = la rottura va avanti normalmente
 );
 
@@ -36,7 +36,7 @@ fn su_rottura(giocatore, blocco) -> (
 pub fn ispeziona(centro: list, tipo: str, giocatore, nome: str) -> try(
     (
         // 1. leggere il mondo: una sola sosta sul thread del gioco, non una per blocco
-        letture = task.task_dock(cantiere.leggi_intorno(centro, cantiere.RAGGIO));
+        letture = task.dock(cantiere.leggi_intorno(centro, cantiere.RAGGIO));
 
         // 2. pensare: qui siamo su un thread nostro, e possiamo prendercela comoda
         rimasti = geologia.conta(letture, tipo) - 1;        // meno quello che sta per sparire
@@ -47,7 +47,7 @@ pub fn ispeziona(centro: list, tipo: str, giocatore, nome: str) -> try(
         registro.annota(tipo, centro, rimasti, nome);
 
         // 3. scrivere: di nuovo una sosta sola
-        task.task_dock((
+        task.dock((
             cantiere.avvisa(giocatore, tipo, rimasti, parola);
             cantiere.mostra_riquadro(angoli, if(rimasti == 0, 'flame', 'happy_villager'));
             if(rimasti == 0, (
@@ -78,7 +78,7 @@ pub fn riepilogo() -> [
 // /blossom script in vena-viva ultime(5)
 pub fn ultime(quante: num) -> (
     tutte = registro.tutte();
-    da = list.length(tutte) - quante;
+    da = list.size(tutte) - quante;
     list.map(
         list.slice(tutte, if(da < 0, 0, da)),
         _:'chi' + ' - ' + _:'tipo' + ' a ' + _:'pos' + ' (rimasti ' + _:'rimasti' + ')'

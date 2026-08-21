@@ -13,9 +13,9 @@ import "core.task" as task;
 
 fn conta_minerali(centro) -> ...;                   // lavoro lungo
 
-t = task.task('conta_minerali', centro);            // parte subito, non blocca
-task.task_completed(t);                             // ha finito?
-task.task_join(t);                                  // aspetta e prendi il risultato
+t = task.start('conta_minerali', centro);            // parte subito, non blocca
+task.done(t);                             // ha finito?
+task.wait(t);                                  // aspetta e prendi il risultato
 ```
 
 Serve quando: scansioni un volume grosso, generi qualcosa di costoso, aspetti qualcosa. **Non** serve
@@ -41,7 +41,7 @@ fn scansione(centro) -> (
     trovati = 0;
     loop(1000, (
         p = punto(centro, _);
-        if(task.task_dock(block.block(p)) == 'diamond_ore', trovati += 1)
+        if(task.dock(block.block(p)) == 'diamond_ore', trovati += 1)
     ));
     trovati
 );
@@ -51,7 +51,7 @@ Il `task_dock` costa: fa la coda con il tick. La forma giusta è **un dock per b
 uno per ogni singola lettura — leggi tutto quello che ti serve in un dock solo, poi elabora fuori.
 
 ```
-dati = task.task_dock(list.map(posizioni, block.block(_)));      // una sola sosta
+dati = task.dock(list.map(posizioni, block.block(_)));      // una sola sosta
 risultato = elabora(dati);                                       // fuori dal thread del gioco
 ```
 
@@ -101,12 +101,12 @@ Il manifesto può cambiarli:
 Un lavoro lungo che deve finire nel mondo si scrive in tre pezzi:
 
 ```
-fn avvia_lavoro(centro) -> task.task('lavoro', centro);
+fn avvia_lavoro(centro) -> task.start('lavoro', centro);
 
 fn lavoro(centro) -> (
-    dati = task.task_dock(raccogli(centro));         // 1. leggi, in una sosta sola
+    dati = task.dock(raccogli(centro));         // 1. leggi, in una sosta sola
     piano = calcola(dati);                           // 2. pensa, fuori dal tick
-    task.task_dock(applica(piano))                   // 3. scrivi, in una sosta sola
+    task.dock(applica(piano))                   // 3. scrivi, in una sosta sola
 );
 ```
 

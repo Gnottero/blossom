@@ -28,7 +28,7 @@ class StdLibTest
         assertEquals("CIAO", eval("import \"core.string\" as string; string.upper('ciao')"));
         assertEquals("[2, 4, 6]", eval("import \"core.list\" as list; list.map([1, 2, 3], _ * 2)"));
         assertEquals("[a, b]", eval("import \"core.map\" as map; map.keys({'a' -> 1, 'b' -> 2})"));
-        assertEquals("[1, 2]", eval("import \"core.json\" as json; json.decode_json('[1, 2]')"));
+        assertEquals("[1, 2]", eval("import \"core.json\" as json; json.decode('[1, 2]')"));
         assertEquals("list", eval("import \"core.system\" as system; system.type([1])"));
     }
 
@@ -95,5 +95,41 @@ class StdLibTest
         {
             // arieta' sbagliata, tipo sbagliato, valore mancante: tutto normale
         }
+    }
+
+    /**
+     * Nessun simbolo esce da due moduli diversi.
+     *
+     * <p>E' la rete che impedisce a 'join'/'split' o a 'task_join' di tornare a stare in due posti:
+     * chi legge una chiamata deve poter risalire al modulo dal nome dell'alias, e due moduli che
+     * esportano lo stesso nome rendono quella risalita una domanda invece che una lettura.
+     *
+     * <p>Le eccezioni sono dichiarate qui una per una, con il motivo, invece di essere tollerate in
+     * silenzio.
+     */
+    @Test
+    void noSymbolIsExportedByTwoModules()
+    {
+        // 'core.list' e 'core.map' condividono l'accesso indicizzato: la' il primo argomento e'
+        // genuinamente polimorfo, ed e' la stessa identica implementazione
+        java.util.Set<String> shared = java.util.Set.of("get", "put", "has", "remove", "size");
+
+        java.util.Map<String, java.util.List<String>> homes = new java.util.TreeMap<>();
+        for (String module : StdLib.moduleNames())
+        {
+            for (String symbol : StdLib.symbolsOf(module))
+            {
+                homes.computeIfAbsent(symbol, k -> new java.util.ArrayList<>()).add(module);
+            }
+        }
+        java.util.List<String> shouted = new java.util.ArrayList<>();
+        homes.forEach((symbol, modules) ->
+        {
+            if (modules.size() > 1 && !shared.contains(symbol))
+            {
+                shouted.add(symbol + " -> " + modules);
+            }
+        });
+        assertEquals(java.util.List.of(), shouted, "simboli esportati da piu' di un modulo");
     }
 }

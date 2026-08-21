@@ -84,13 +84,13 @@ l:0;                        // 10
 l:4;                        // 20 - gli indici avvolgono, 4 % 3 = 1
 list.get(l, -1);            // 30 - gli indici negativi contano dal fondo
 l:(-1);                     // 30 - le parentesi servono: 'l:-1' non si parsa
-list.length(l);             // 3
+list.size(l);             // 3
 ```
 
 Due proprietà da tenere a mente:
 
 **Gli indici avvolgono.** Leggere fuori dalla lista non è un errore, è un giro. Cancellare invece
-sì: `list.delete(l, 7)` su una lista di tre elementi è un `IndexOutOfBoundsError`.
+sì: `list.remove(l, 7)` su una lista di tre elementi è un `IndexOutOfBoundsError`.
 
 **Una lista è un riferimento.** Assegnarla non la copia:
 
@@ -134,7 +134,7 @@ list.join(',', list.range(0, 10, 3));       // '0,3,6,9'
 list.map(list.range(3), _ * _);             // [0, 1, 4]
 ```
 
-Una lista pigra non conosce la propria lunghezza: **`list.length(list.range(5))` non risponde `5`**
+Una lista pigra non conosce la propria lunghezza: **`list.size(list.range(5))` non risponde `5`**
 — per averla, materializzala prima (`list.slice(list.range(5), 0, 5)`) o conta a mano. È un
 inciampo noto, non un comportamento voluto.
 

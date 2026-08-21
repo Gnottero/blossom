@@ -194,6 +194,6 @@ class IoTest
     void deleteOnCollectionsStillWorks()
     {
         assertEquals("[1, 3]", Interpreter.standalone()
-                .eval("import \"core.list\" as list; l = [1, 2, 3]; list.delete(l, 1); l").getString());
+                .eval("import \"core.list\" as list; l = [1, 2, 3]; list.remove(l, 1); l").getString());
     }
 }
