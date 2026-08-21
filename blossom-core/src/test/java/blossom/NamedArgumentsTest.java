@@ -1,0 +1,73 @@
+package blossom;
+
+import blossom.interpreter.Interpreter;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+/** C.3 - argomenti con nome e valori di riserva. */
+class NamedArgumentsTest
+{
+    private static String eval(String code)
+    {
+        return Interpreter.standalone().eval(code).getString();
+    }
+
+    @Test
+    void unParametroPuoAvereUnValoreDiRiserva()
+    {
+        assertEquals("[1, true]", eval("fn f(a, b = true) -> [a, b]; f(1)"));
+    }
+
+    @Test
+    void ilValoreDiRiservaSiPuoSovrascrivere()
+    {
+        assertEquals("[1, 9]", eval("fn f(a, b = 9) -> [a, b]; f(1, 2); f(1)"));
+    }
+
+    @Test
+    void unArgomentoSiPuoPassarePerNome()
+    {
+        assertEquals("[1, 5]", eval("fn f(a, b = 9) -> [a, b]; f(1, b = 5)"));
+    }
+
+    @Test
+    void gliArgomentiConNomePossonoAndareInOrdineDiverso()
+    {
+        assertEquals("[1, 2, 3]", eval("fn f(a, b, c) -> [a, b, c]; f(1, c = 3, b = 2)"));
+    }
+
+    @Test
+    void ilValoreDiRiservaSiRivalutaAdOgniChiamata()
+    {
+        // se fosse valutato una volta sola, le due liste sarebbero la stessa
+        assertEquals("[9]", eval("fn f(l = []) -> (l += 9; l); f(); f()"));
+    }
+
+    @Test
+    void unNomeCheNonEsisteEUnErroreChiaro()
+    {
+        Exception e = assertThrows(Exception.class, () -> eval("fn f(a) -> a; f(nope = 1)"));
+        assertEquals(true, e.getMessage().contains("no parameter named"));
+    }
+
+    @Test
+    void unArgomentoSenzaNomeDopoUnoConNomeEUnErrore()
+    {
+        Exception e = assertThrows(Exception.class, () -> eval("fn f(a, b) -> a; f(a = 1, 2)"));
+        assertEquals(true, e.getMessage().contains("named ones go last"), e.getMessage());
+    }
+
+    @Test
+    void loStessoParametroDueVolteEUnErrore()
+    {
+        Exception e = assertThrows(Exception.class, () -> eval("fn f(a) -> a; f(1, a = 2)"));
+        assertEquals(true, e.getMessage().contains("given twice"));
+    }
+
+    @Test
+    void funzionaAncheSuUnaLambda()
+    {
+        assertEquals("[1, 7]", eval("f = fn(a, b = 7) -> [a, b]; f(1)"));
+    }
+}

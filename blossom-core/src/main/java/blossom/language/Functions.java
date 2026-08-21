@@ -48,6 +48,7 @@ public class Functions
                 String name = lv.get(0).evalValue(c, Context.NONE).getString();
                 List<String> args = new ArrayList<>();
                 List<String> argumentTypes = new ArrayList<>();
+                List<LazyValue> defaults = new ArrayList<>();
                 List<String> globals = new ArrayList<>();
                 String varArgs = null;
                 for (int i = 1; i < lv.size(); i++)
@@ -72,18 +73,29 @@ public class Functions
                     {
                         args.add(typed.parameter());
                         argumentTypes.add(typed.canonicalType());
+                        defaults.add(null);
                     }
                     else if (v instanceof final blossom.value.VariableReferenceValue reference)
                     {
                         args.add(reference.name());
                         argumentTypes.add(null);
+                        defaults.add(null);
+                    }
+                    else if (v instanceof final blossom.value.NamedArgumentValue named)
+                    {
+                        // 'update = true' dentro una firma: un parametro con un valore di riserva
+                        args.add(named.name());
+                        argumentTypes.add(null);
+                        defaults.add(named.value());
                     }
                     else
                     {
                         throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "function", "Only variables can be used in function signature, not  " + v.getString());
                     }
                 }
-                Value retval = new FunctionSignatureValue(name, args, argumentTypes, varArgs, globals);
+                FunctionSignatureValue signature = new FunctionSignatureValue(name, args, argumentTypes, varArgs, globals);
+                signature.withDefaults(defaults);
+                Value retval = signature;
                 return (cc, tt) -> retval;
             }
 
@@ -130,6 +142,7 @@ public class Functions
                 }
                 List<String> args = new ArrayList<>();
                 List<String> argumentTypes = new ArrayList<>();
+                List<LazyValue> defaults = new ArrayList<>();
                 List<String> globals = new ArrayList<>();
                 String varArgs = null;
                 for (LazyValue parameter : lv)
@@ -154,18 +167,30 @@ public class Functions
                     {
                         args.add(typed.parameter());
                         argumentTypes.add(typed.canonicalType());
+                        defaults.add(null);
                     }
                     else if (v instanceof final blossom.value.VariableReferenceValue reference)
                     {
                         args.add(reference.name());
                         argumentTypes.add(null);
+                        defaults.add(null);
+                    }
+                    else if (v instanceof final blossom.value.NamedArgumentValue named)
+                    {
+                        // 'update = true' dentro una firma: un parametro con un valore di riserva
+                        args.add(named.name());
+                        argumentTypes.add(null);
+                        defaults.add(named.value());
                     }
                     else
                     {
                         throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "function", "Only variables can be used in function signature, not  " + v.getString());
                     }
                 }
-                Value retval = new FunctionSignatureValue(Expression.anonymousName(tok), args, argumentTypes, varArgs, globals);
+                FunctionSignatureValue signature =
+                        new FunctionSignatureValue(Expression.anonymousName(tok), args, argumentTypes, varArgs, globals);
+                signature.withDefaults(defaults);
+                Value retval = signature;
                 return (cc, tt) -> retval;
             }
 
@@ -217,7 +242,7 @@ public class Functions
                 throw new ParseError(SourcePosition.UNKNOWN, "'->' wants a function signature on its left, e.g. name(a, b) -> a + b.");
             }
             Value result = expression.createUserDefinedFunction(c, sign.identifier(), e, t, sign.arguments(),
-                    sign.argumentTypes(), sign.varArgs(), sign.globals(), lv2);
+                    sign.argumentTypes(), sign.defaults(), sign.varArgs(), sign.globals(), lv2);
             return (cc, tt) -> result;
         });
 

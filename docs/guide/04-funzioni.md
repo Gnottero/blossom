@@ -129,6 +129,34 @@ registra('info', 'a', 'b');     // ['info', ['a', 'b']]
 registra('info');               // ['info', []]
 ```
 
+## Valori di riserva e argomenti con nome
+
+Un parametro puo' dichiarare un valore da usare quando chi chiama non lo passa:
+
+```
+fn posiziona(pos, blocco, aggiorna = true) -> ...;
+
+posiziona(p, 'stone');                    // aggiorna vale true
+posiziona(p, 'stone', false);             // per posizione
+posiziona(p, 'stone', aggiorna = false);  // per nome
+```
+
+Il valore di riserva si rivaluta **ad ogni chiamata che lo usa**: `fn f(l = [])` da' una lista nuova
+ogni volta, non sempre la stessa.
+
+Gli argomenti con nome vanno **in fondo**, dopo quelli per posizione, e possono stare in qualunque
+ordine fra loro:
+
+```
+fn f(a, b, c) -> [a, b, c];
+f(1, c = 3, b = 2);         // [1, 2, 3]
+f(a = 1, 2);                // errore, e lo dice al caricamento
+```
+
+I nomi si risolvono sul **confine della funzione**, quindi un nome che non esiste dice quali sono
+quelli veri, e lo stesso parametro passato due volte e' un errore invece che un valore che vince in
+silenzio.
+
 ## Tipi sui parametri
 
 Facoltativi, uno alla volta:

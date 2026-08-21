@@ -40,6 +40,11 @@ public class FunctionValue extends Value implements Callables.ILazyFunction
      * nessuno. Nel caso normale - nessun tipo - il controllo a runtime e' un confronto con null
      */
     private final @Nullable List<String> argumentTypes;
+    /**
+     * il valore di riserva di ogni parametro, {@code null} dove non ce n'e' uno, e la lista intera
+     * {@code null} quando nessun parametro ne ha. Nel caso normale il costo e' un confronto con null
+     */
+    private final @Nullable List<LazyValue> defaults;
     private final String varArgs;
     /**
      * il nome del modulo, memorizzato alla prima richiesta perche' il profiler lo chiede ad ogni
@@ -62,6 +67,7 @@ public class FunctionValue extends Value implements Callables.ILazyFunction
         this.body = body;
         this.args = args;
         this.argumentTypes = argumentTypes;
+        this.defaults = null;
         this.varArgs = varArgs;
         this.outerState = null;
         variant = 0L;
@@ -75,6 +81,14 @@ public class FunctionValue extends Value implements Callables.ILazyFunction
     public FunctionValue(Expression expression, Token token, String name, LazyValue body, List<String> args,
             @Nullable List<String> argumentTypes, String varArgs, Map<String, LazyValue> outerState)
     {
+        this(expression, token, name, body, args, argumentTypes, null, varArgs, outerState);
+    }
+
+    public FunctionValue(Expression expression, Token token, String name, LazyValue body, List<String> args,
+            @Nullable List<String> argumentTypes, @Nullable List<LazyValue> defaults, String varArgs,
+            Map<String, LazyValue> outerState)
+    {
+        this.defaults = defaults;
         this.expression = expression;
         this.token = token;
         this.name = name;
@@ -231,13 +245,121 @@ public class FunctionValue extends Value implements Callables.ILazyFunction
         }
     }
 
+    /**
+     * Gli argomenti nell'ordine dei parametri, con i nomi risolti e i default riempiti.
+     *
+     * <p>Chi non usa ne' l'una ne' l'altra cosa paga un confronto con null e un {@code instanceof}
+     * sull'ultimo argomento: gli argomenti con nome stanno in coda, come in ogni linguaggio che li
+     * ha, quindi guardare l'ultimo basta a sapere se ce ne sono.
+     */
+    private List<Value> resolveArguments(Context c, List<Value> params, Expression e, Token t)
+    {
+        boolean named = !params.isEmpty() && params.get(params.size() - 1) instanceof NamedArgumentValue;
+        if (!named && defaults == null)
+        {
+            return params;
+        }
+        Value[] resolved = new Value[args.size()];
+        List<Value> extra = new ArrayList<>();
+        boolean seenNamed = false;
+        for (Value param : params)
+        {
+            if (param instanceof final NamedArgumentValue argument)
+            {
+                seenNamed = true;
+                int slot = args.indexOf(argument.name());
+                if (slot < 0)
+                {
+                    throw ArityError.at(e, t, "Function " + name + " has no parameter named '"
+                            + argument.name() + "'. It wants " + args + ".");
+                }
+                if (resolved[slot] != null)
+                {
+                    throw ArityError.at(e, t, "Parameter '" + argument.name() + "' of " + name
+                            + " is given twice.");
+                }
+                resolved[slot] = argument.value().evalValue(c, Context.NONE);
+                continue;
+            }
+            if (seenNamed)
+            {
+                throw ArityError.at(e, t, "In a call to " + name + ", an argument without a name "
+                        + "comes after one with a name: the named ones go last.");
+            }
+            int next = firstEmpty(resolved);
+            if (next < 0)
+            {
+                extra.add(param);
+            }
+            else
+            {
+                resolved[next] = param;
+            }
+        }
+        if (defaults != null)
+        {
+            for (int i = 0; i < resolved.length; i++)
+            {
+                if (resolved[i] == null && defaults.get(i) != null)
+                {
+                    resolved[i] = defaults.get(i).evalValue(c, Context.NONE);
+                }
+            }
+        }
+        List<Value> result = new ArrayList<>(resolved.length + extra.size());
+        for (Value value : resolved)
+        {
+            if (value == null)
+            {
+                break;   // manca davvero: lo dice assertArgsOk, con il messaggio che sa gia' dare
+            }
+            result.add(value);
+        }
+        result.addAll(extra);
+        return result;
+    }
+
+    private static int firstEmpty(Value[] slots)
+    {
+        for (int i = 0; i < slots.length; i++)
+        {
+            if (slots[i] == null)
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Quanti argomenti bisogna passare per forza: i parametri, meno quelli che hanno un valore di
+     * riserva.
+     */
+    public int requiredArguments()
+    {
+        if (defaults == null)
+        {
+            return args.size();
+        }
+        int required = args.size();
+        for (LazyValue fallback : defaults)
+        {
+            if (fallback != null)
+            {
+                required--;
+            }
+        }
+        return required;
+    }
+
     public void checkArgs(int candidates)
     {
         int actual = getArguments().size();
+        int required = requiredArguments();
 
-        if (candidates < actual)
+        if (candidates < required)
         {
-            throw new ArityError(SourcePosition.UNKNOWN, "Function " + getPrettyString() + " wants at least " + actual + " arguments, got " + candidates + ".");
+            throw new ArityError(SourcePosition.UNKNOWN, "Function " + getPrettyString() + " wants at least " + required + " arguments, got " + candidates + ".");
         }
         if (candidates > actual && getVarArgs() == null)
         {
@@ -274,18 +396,19 @@ public class FunctionValue extends Value implements Callables.ILazyFunction
 
     public LazyValue execute(Context c, Context.Type type, Expression e, Token t, List<Value> params, @Nullable ThreadValue freshNewCallingThread)
     {
-        assertArgsOk(params, fixedArgs -> {
+        final List<Value> arguments = resolveArguments(c, params, e, t);
+        assertArgsOk(arguments, fixedArgs -> {
             if (fixedArgs)  // wrong number of args for fixed args
             {
                 throw ArityError.at(e, t, "Function " + name + " wants " + args.size()
-                        + " arguments " + args + ", got " + params.size() + ".");
+                        + " arguments " + args + ", got " + arguments.size() + ".");
             }
             // too few args for varargs
 
             List<String> argList = new ArrayList<>(args);
             argList.add("... " + varArgs);
             throw ArityError.at(e, t, "Function " + name + " wants at least " + args.size()
-                    + " arguments " + argList + ", got " + params.size() + ".");
+                    + " arguments " + argList + ", got " + arguments.size() + ".");
         });
         Context newFrame = c.recreate();
         if (freshNewCallingThread != null)
@@ -302,7 +425,7 @@ public class FunctionValue extends Value implements Callables.ILazyFunction
             String arg = args.get(i);
             // nessuna copia: il nome della variabile non vive piu' sul valore, quindi legare un
             // argomento a un parametro non puo' piu' rinominarlo sotto al chiamante. Vedi D-093
-            Value val = params.get(i);
+            Value val = arguments.get(i);
             if (argumentTypes != null)
             {
                 checkParameterType(i, arg, val, e, t);
@@ -312,9 +435,9 @@ public class FunctionValue extends Value implements Callables.ILazyFunction
         if (varArgs != null)
         {
             List<Value> extraParams = new ArrayList<>();
-            for (int i = args.size(), mx = params.size(); i < mx; i++)
+            for (int i = args.size(), mx = arguments.size(); i < mx; i++)
             {
-                extraParams.add(params.get(i));
+                extraParams.add(arguments.get(i));
             }
             newFrame.setVariable(varArgs, ListValue.wrap(extraParams));
         }

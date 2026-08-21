@@ -9,6 +9,7 @@ import blossom.interpreter.ScriptHost;
 import blossom.exception.ArityError;
 import blossom.exception.SourcePosition;
 import blossom.value.FunctionValue;
+import blossom.value.NamedArgumentValue;
 import blossom.value.Value;
 
 import org.jspecify.annotations.Nullable;
@@ -62,16 +63,23 @@ public class FunctionArgument extends Argument
         }
         FunctionValue fun = (FunctionValue) functionValue;
         int argsize = fun.getArguments().size();
-        if (checkArgs)
+        // con argomenti passati per nome il conto qui non dice niente di utile - due argomenti per
+        // un parametro puo' voler dire "lo stesso due volte", non "uno di troppo" - e chi sa dirlo
+        // con precisione e' il confine della funzione, che i nomi li ha
+        boolean named = !params.isEmpty() && params.get(params.size() - 1) instanceof NamedArgumentValue;
+        if (checkArgs && !named)
         {
-            int extraargs = params.size() - argsize - offset - 1;
+            // il minimo sono i parametri senza valore di riserva: quelli che ce l'hanno chi chiama
+            // puo' non passarli, ed e' 'execute' a riempirli
+            int required = fun.requiredArguments();
+            int extraargs = params.size() - required - offset - 1;
             if (extraargs < 0)
             {
-                throw new ArityError(SourcePosition.UNKNOWN, "Function " + fun.getPrettyString() + " wants at least " + fun.getArguments().size() + " arguments.");
+                throw new ArityError(SourcePosition.UNKNOWN, "Function " + fun.getPrettyString() + " wants at least " + required + " arguments.");
             }
-            if (extraargs > 0 && fun.getVarArgs() == null)
+            if (params.size() - offset - 1 > argsize && fun.getVarArgs() == null)
             {
-                throw new ArityError(SourcePosition.UNKNOWN, "Function " + fun.getPrettyString() + " wants " + fun.getArguments().size() + " arguments.");
+                throw new ArityError(SourcePosition.UNKNOWN, "Function " + fun.getPrettyString() + " wants " + argsize + " arguments.");
             }
         }
         List<Value> lvargs = new ArrayList<>();

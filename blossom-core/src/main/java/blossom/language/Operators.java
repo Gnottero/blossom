@@ -231,7 +231,9 @@ public class Operators
             return lv.get(last);
         });
 
-        expression.addBinaryOperator("~", "match", precedence.get("attribute~:"), true, Value::in);
+        // il nome funzionale e' 'contains' e non 'match': '~' e' un test di appartenenza, non un
+        // confronto di forme - e 'match' serve al costrutto omonimo
+        expression.addBinaryOperator("~", "contains", precedence.get("attribute~:"), true, Value::in);
 
         /*
          * a |> f(b)  ==  f(a, b)

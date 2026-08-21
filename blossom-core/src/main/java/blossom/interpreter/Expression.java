@@ -1023,6 +1023,14 @@ public class Expression
     public FunctionValue createUserDefinedFunction(Context context, String name, Expression expr, Token token,
             List<String> arguments, @Nullable List<String> argumentTypes, String varArgs, List<String> outers, LazyValue code)
     {
+        return createUserDefinedFunction(context, name, expr, token, arguments, argumentTypes, null, varArgs, outers, code);
+    }
+
+    /** @param defaults il valore di riserva di ogni parametro, o {@code null} se nessuno ne ha uno */
+    public FunctionValue createUserDefinedFunction(Context context, String name, Expression expr, Token token,
+            List<String> arguments, @Nullable List<String> argumentTypes, @Nullable List<LazyValue> defaults,
+            String varArgs, List<String> outers, LazyValue code)
+    {
         if (functions.containsKey(name))
         {
             throw new ExpressionException(context, expr, token, "Function " + name + " would mask a built-in function");
@@ -1056,7 +1064,7 @@ public class Expression
             contextValues = captured.isEmpty() ? null : captured;
         }
 
-        FunctionValue result = new FunctionValue(expr, token, name, code, arguments, argumentTypes, varArgs, contextValues);
+        FunctionValue result = new FunctionValue(expr, token, name, code, arguments, argumentTypes, defaults, varArgs, contextValues);
         // do not store lambda definitions
         if (!name.equals("_") && !isAnonymousName(name))
         {
@@ -1731,6 +1739,71 @@ public class Expression
         return node;
     }
 
+    /**
+     * Se questo nodo, fra gli argomenti di una chiamata, e' un nome attaccato a un valore.
+     *
+     * <p>{@code f(pos, update = false)}: un {@code =} con un nome semplice a sinistra. Si guarda
+     * solo i token, quindi la risposta e' nota mentre si costruisce l'albero. Il nome dell'operatore
+     * e' due perche' la compattazione riscrive {@code =} nel suo equivalente funzionale.
+     */
+    private static boolean isNamedArgument(Token callee, ExpressionNode node)
+    {
+        // solo dentro una chiamata a una funzione scritta da qualcuno, o dentro una firma. Gli
+        // operatori, che la compattazione trasforma anch'essi in chiamate ('a; b' diventa
+        // then(a, b), '[x]' diventa l(x)), non hanno parametri con un nome, e li' un '=' resta
+        // l'assegnamento che e' sempre stato
+        if (!callee.surface.equals("call") && !callee.surface.equals("fn"))
+        {
+            return false;
+        }
+        return (node.token.surface.equals("=") || node.token.surface.equals("assign"))
+                && node.args != null && node.args.size() == 2
+                && node.args.get(0).token.type == Token.TokenType.VARIABLE
+                && node.args.get(0).args.isEmpty();
+    }
+
+    /**
+     * Il nome staccato dal valore.
+     *
+     * <p>Il valore resta pigro: nella firma di una funzione questo diventa il default di un
+     * parametro, e un default va valutato ad ogni chiamata che lo usa, non una volta sola alla
+     * definizione - altrimenti {@code fn f(x = {})} darebbe a tutti la stessa mappa.
+     */
+    private static LazyValue namedArgument(String name, LazyValue value)
+    {
+        Value named = new blossom.value.NamedArgumentValue(name, value);
+        return (c, t) -> named;
+    }
+
+    /**
+     * Gli argomenti con un nome vanno in fondo, e chi non li mette li' lo sa subito.
+     *
+     * <p>Il controllo si fa qui, sui token, quindi e' un errore di caricamento e non una sorpresa
+     * a runtime. E' anche quello che permette al confine della chiamata di guardare solo l'ultimo
+     * argomento per sapere se ce ne sono con un nome.
+     */
+    private void checkNamedArgumentOrder(Context context, Token callee, List<ExpressionNode> args)
+    {
+        boolean seenNamed = false;
+        for (ExpressionNode arg : args)
+        {
+            if (isNamedArgument(callee, arg))
+            {
+                seenNamed = true;
+            }
+            else if (seenNamed)
+            {
+                throw new ExpressionException(context, this, arg.token,
+                        "An argument without a name comes after one with a name: the named ones go last.");
+            }
+        }
+    }
+
+    private static String argumentName(ExpressionNode node)
+    {
+        return node.args.get(0).token.surface;
+    }
+
     private ExpressionNode binaryNode(Token token, ExpressionNode left, ExpressionNode right)
     {
         LazyValue result = (c, t) -> operators.get(token.surface).lazyEval(c, t, this, token, left.op, right.op).evalValue(c, t);
@@ -1847,7 +1920,10 @@ public class Expression
                     {
                         nodeStack.pop();
                     }
-                    List<LazyValue> params = p.stream().map(n -> n.op).collect(Collectors.toList());
+                    checkNamedArgumentOrder(context, token, p);
+                    List<LazyValue> params = p.stream()
+                            .map(n -> isNamedArgument(token, n) ? namedArgument(argumentName(n), n.args.get(1).op) : n.op)
+                            .collect(Collectors.toList());
                     ExpressionNode newNode = new ExpressionNode(
                             (c, t) -> f.lazyEval(c, t, this, token, params).evalValue(c, t),
                             p, token
@@ -2319,7 +2395,11 @@ public class Expression
             {
                 ILazyFunction f = functions.get(token.surface);
                 Context.Type requestedType = f.staticType(expectedType);
-                List<LazyValue> params = node.args.stream().map(n -> extractOp(ctx, n, requestedType)).collect(Collectors.toList());
+                List<LazyValue> params = node.args.stream()
+                        .map(n -> isNamedArgument(token, n)
+                                ? namedArgument(argumentName(n), extractOp(ctx, n.args.get(1), Context.Type.NONE))
+                                : extractOp(ctx, n, requestedType))
+                        .collect(Collectors.toList());
                 LazyValue built = (c, t) -> f.lazyEval(c, t, this, token, params).evalValue(c, t);
                 return !node.args.isEmpty() && isLambdaNode(token, node.args.get(0).token)
                         ? new LazyValue.Lambda(built) : built;
