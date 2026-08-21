@@ -1,0 +1,45 @@
+{
+  "$alias": "data",
+  "write": {
+    "signatures": [
+      "write(id, value)"
+    ],
+    "summary": "Writes a json resource into the pack's data/ folder.",
+    "description": "The id is the one commands use, `namespace:folder/name`, and the path follows from it. Only while generating: run `/blossom data generate <app>`, which calls the app's `generate()`.",
+    "params": [
+      [
+        "id",
+        "`namespace:folder/name`, as in `my_pack:recipe/sword`"
+      ],
+      [
+        "value",
+        "a map, written out as json"
+      ]
+    ],
+    "returns": "`str` — the relative path written.",
+    "examples": [
+      "data.write('my_pack:recipe/sword', {'type' -> 'minecraft:crafting_shaped', ...});"
+    ]
+  },
+  "write_text": {
+    "signatures": [
+      "write_text(id, lines)"
+    ],
+    "summary": "Writes a resource that is not json — a .mcfunction, say.",
+    "description": "The id carries the extension, because nothing else says what kind of file it is.",
+    "params": [
+      [
+        "id",
+        "`namespace:folder/name.ext`"
+      ],
+      [
+        "lines",
+        "a list of lines, or a single string"
+      ]
+    ],
+    "returns": "`str` — the relative path written.",
+    "examples": [
+      "data.write_text('my_pack:function/hello.mcfunction', ['say hi']);"
+    ]
+  }
+}

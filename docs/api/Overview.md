@@ -41,6 +41,7 @@ import "core.list" as list;
 | [`core.mc.shape`](core.mc.shape.md) | showing what a script is computing |
 | [`core.mc.event`](core.mc.event.md) | reacting to what happens |
 | [`core.mc.system`](core.mc.system.md) | commands, statistics, diagnostics |
+| [`core.mc.data`](core.mc.data.md) | generating the pack's own game content |
 
 ## The prelude
 

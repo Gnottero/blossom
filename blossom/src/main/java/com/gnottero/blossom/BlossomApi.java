@@ -229,6 +229,11 @@ public final class BlossomApi
             "write_nbt", "write_nbt",
             "create_datapack", "create_datapack");
 
+    /** {@code core.mc.data} - scrivere il contenuto di gioco di un pack, generandolo */
+    public static final java.util.Map<String, String> DATA = java.util.Map.of(
+            "write", "data_write",
+            "write_text", "data_write_text");
+
     /** {@code core.mc.system} - il server visto da fuori: comandi, statistiche, diagnostica */
     public static final java.util.Map<String, String> SYSTEM = java.util.Map.of(
             "info", "system_info",
@@ -266,6 +271,7 @@ public final class BlossomApi
         StdLib.registerModule("core.mc.effect", EFFECT);
         StdLib.registerModule("core.mc.event", EVENT);
         StdLib.registerModule("core.mc.system", SYSTEM);
+        StdLib.registerModule("core.mc.data", DATA);
         // non un modulo nuovo: i file si aprono da 'core.io', anche quando l'implementazione
         // ha bisogno di Minecraft
         StdLib.extendModule("core.io", IO);
@@ -302,6 +308,7 @@ public final class BlossomApi
         com.gnottero.blossom.hud.HudApi.apply(expression);
         com.gnottero.blossom.api.Scoreboards.apply(expression);
         com.gnottero.blossom.api.Monitoring.apply(expression);
+        com.gnottero.blossom.api.ContentApi.apply(expression);
         com.gnottero.blossom.api.Auxiliary.apply(expression);
         com.gnottero.blossom.api.ModThreading.apply(expression);
         com.gnottero.blossom.api.EventApi.apply(expression, appName);

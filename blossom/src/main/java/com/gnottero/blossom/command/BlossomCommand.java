@@ -70,6 +70,11 @@ public final class BlossomCommand
                                 .then(Commands.argument("app", StringArgumentType.word())
                                         .suggests(AVAILABLE_APPS)
                                         .executes(BlossomCommand::packUpdate))))
+                .then(Commands.literal("data")
+                        .then(Commands.literal("generate")
+                                .then(Commands.argument("app", StringArgumentType.word())
+                                        .suggests(LOADED_APPS)
+                                        .executes(BlossomCommand::dataGenerate))))
                 .then(Commands.literal("profile")
                         .then(Commands.literal("run")
                                 .then(Commands.argument("code", StringArgumentType.greedyString())
@@ -96,6 +101,45 @@ public final class BlossomCommand
      * {@code ^1.0.0} viene risolto una volta e poi la scelta resta, che è appunto il motivo per cui
      * il lock esiste.
      */
+    /**
+     * Genera il contenuto di gioco di un'app, chiamando la sua {@code generate()}.
+     *
+     * <p>La convenzione al posto di un campo nel manifesto: il generatore e' codice normale
+     * dell'app, e quello che il comando deve sapere e' solo da dove cominciare. Un'app senza
+     * {@code generate()} lo dice, invece di non fare niente in silenzio.
+     */
+    private static int dataGenerate(CommandContext<CommandSourceStack> context)
+    {
+        ScriptRuntime runtime = requireRuntime(context.getSource());
+        String app = StringArgumentType.getString(context, "app");
+        java.nio.file.Path root = runtime.scriptDirectory().resolve(app);
+        if (!java.nio.file.Files.isDirectory(root))
+        {
+            context.getSource().sendFailure(Component.literal(
+                    "'" + app + "' is a single file, and content lives in a pack's data/ folder."));
+            return 0;
+        }
+        try
+        {
+            com.gnottero.blossom.content.Generators.Report report =
+                    com.gnottero.blossom.content.Generators.generate(root,
+                            () -> runtime.runIn(context.getSource(), app, "generate()"));
+            context.getSource().sendSuccess(() -> Component.literal(
+                    report.written() + " resources written in data/"
+                            + (report.removed() > 0 ? ", " + report.removed() + " stale ones removed" : "")
+                            + ". Run /reload to apply them; a new registry entry or worldgen needs a restart."), true);
+            return report.written();
+        }
+        catch (BlossomError e)
+        {
+            return fail(context, e.format());
+        }
+        catch (Exception e)
+        {
+            return fail(context, "Could not generate the content of '" + app + "': " + e.getMessage());
+        }
+    }
+
     private static int packUpdate(CommandContext<CommandSourceStack> context)
     {
         ScriptRuntime runtime = requireRuntime(context.getSource());
