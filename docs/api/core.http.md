@@ -86,7 +86,7 @@ The host patterns this server allows, sorted as they were declared. Empty means 
 closed; a script that wants to be polite can check before failing.
 
 ```
-if (length(http.hosts()) == 0, print('no network on this server'));
+if (size(http.hosts()) == 0, print('no network on this server'));
 ```
 
 ### `get(url)`, `get(url, headers)`

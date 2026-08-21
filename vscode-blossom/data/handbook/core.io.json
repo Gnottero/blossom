@@ -6,10 +6,10 @@
     ],
     "summary": "The names of the roots an administrator has declared in `config/blossomscript.json`.",
     "params": [],
-    "returns": "`list` — the names available; empty when nothing is configured.",
+    "returns": "`list` — the names list; empty when nothing is configured.",
     "examples": [
       "io.roots();   // ['shared', 'log']",
-      "if(!(io.roots() ~ 'shared'), print('this server has no shared folder'));"
+      "if(!(io.roots() ~ 'shared'), send('this server has no shared folder'));"
     ],
     "note": "There are no absolute paths in scripts: every function of this module starts with one of these names, and the rest of the path is relative to it."
   },
@@ -88,7 +88,7 @@
     "returns": "`list` — the names, without the path in front.",
     "examples": [
       "io.list('shared', 'notes');   // ['today.txt', 'yesterday.txt']",
-      "for(io.list('shared', ''), print(_));"
+      "for(io.list('shared', ''), send(_));"
     ],
     "note": "It is **not** recursive, on purpose: a recursion over a big root blocks the tick without the author noticing. Whoever wants to walk down a tree writes it one level at a time — and while writing it, sees it."
   },
@@ -130,7 +130,7 @@
     ],
     "returns": "`list` — one string per line, without the line breaks.",
     "examples": [
-      "for(io.read_lines('log', 'latest.log'),\n    if(_ ~ 'ERROR', print(_))\n);"
+      "for(io.read_lines('log', 'latest.log'),\n    if(_ ~ 'ERROR', send(_))\n);"
     ]
   },
   "read_json": {
@@ -181,7 +181,7 @@
     "signatures": [
       "append_text(root, path, text)"
     ],
-    "summary": "Adds a string at the end of a file, without reading it first.",
+    "summary": "Adds a string at the end of a file, without reading it find.",
     "params": [
       [
         "root",
@@ -258,14 +258,14 @@
       ],
       [
         "path",
-        "what to delete"
+        "what to remove"
       ]
     ],
     "returns": "`bool` — whether something was deleted.",
     "examples": [
       "io.delete_file('shared', 'notes/today.txt');"
     ],
-    "note": "It does not delete trees, on purpose: a recursive deletion behind a short name is the easiest way to lose data to a path that is wrong by one character. It is called `delete_file` and not `delete` because `delete` already removes an element from a list or a map."
+    "note": "It does not remove trees, on purpose: a recursive deletion behind a short name is the easiest way to lose data to a path that is wrong by one character. It is called `delete_file` and not `remove` because `remove` already removes an element from a list or a map."
   },
   "size": {
     "signatures": [
@@ -285,7 +285,7 @@
     "returns": "`num` — the bytes, or `null` when the file is not there.",
     "examples": [
       "io.size('log', 'latest.log');   // 20481",
-      "if((io.size('shared', 'data.json') || 0) > 1000000, print('getting big'));"
+      "if((io.size('shared', 'data.json') || 0) > 1000000, send('getting big'));"
     ]
   },
   "modified": {
@@ -305,7 +305,7 @@
     ],
     "returns": "`num` — milliseconds since the epoch, or `null` when the file is not there.",
     "examples": [
-      "age = system.unix_time() - io.modified('shared', 'state.json');\nif(age > 60000, print('older than a minute'));"
+      "age = system.unix_time() - io.modified('shared', 'state.json');\nif(age > 60000, send('older than a minute'));"
     ]
   },
   "read_nbt": {

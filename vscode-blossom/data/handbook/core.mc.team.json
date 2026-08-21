@@ -1,0 +1,100 @@
+{
+  "list": {
+    "signatures": [
+      "list()",
+      "list(team)"
+    ],
+    "summary": "The teams that exist, or the members of one.",
+    "params": [
+      [
+        "team",
+        "optional: the team to look inside"
+      ]
+    ],
+    "returns": "`list` — the names of the teams, or of the members.",
+    "examples": [
+      "team.list();          // ['red', 'blue']",
+      "team.list('red');     // ['ada', 'bob']"
+    ]
+  },
+  "add": {
+    "signatures": [
+      "add(team)",
+      "add(team, who)"
+    ],
+    "summary": "Creates a team, or puts somebody in it.",
+    "params": [
+      [
+        "team",
+        "the name of the team"
+      ],
+      [
+        "who",
+        "optional: the player or the name to add"
+      ]
+    ],
+    "returns": "`bool` — whether something changed.",
+    "examples": [
+      "team.add('red');",
+      "team.add('red', player);"
+    ]
+  },
+  "remove": {
+    "signatures": [
+      "remove(team)"
+    ],
+    "summary": "Disbands a team.",
+    "params": [
+      [
+        "team",
+        "the team to remove"
+      ]
+    ],
+    "returns": "`bool` — whether it existed.",
+    "examples": [
+      "team.remove('red');"
+    ]
+  },
+  "leave": {
+    "signatures": [
+      "leave(who)"
+    ],
+    "summary": "Takes somebody out of whatever team they are in.",
+    "params": [
+      [
+        "who",
+        "the player or the name"
+      ]
+    ],
+    "returns": "`bool` — whether they were in one.",
+    "examples": [
+      "team.leave(player);"
+    ]
+  },
+  "property": {
+    "signatures": [
+      "property(team, property)",
+      "property(team, property, value)"
+    ],
+    "summary": "Reads or writes a property of a team.",
+    "params": [
+      [
+        "team",
+        "the team"
+      ],
+      [
+        "property",
+        "`'collisionRule'`, `'color'`, `'displayName'`, `'friendlyFire'`, `'nametagVisibility'`, `'deathMessageVisibility'`, `'prefix'`, `'suffix'`, `'seeFriendlyInvisibles'`"
+      ],
+      [
+        "value",
+        "optional: what to write"
+      ]
+    ],
+    "returns": "the value of the property.",
+    "examples": [
+      "team.property('red', 'color', 'red');",
+      "team.property('red', 'friendlyFire', false);"
+    ]
+  }
+}

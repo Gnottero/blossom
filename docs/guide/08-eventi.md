@@ -12,7 +12,7 @@ import "core.mc.event" as event;
 import "core.mc.text" as text;
 
 fn su_rottura(giocatore, blocco) -> (
-    text.print(giocatore, 'hai rotto ' + blocco);
+    text.send(giocatore, 'hai rotto ' + blocco);
     false
 );
 
@@ -48,13 +48,13 @@ event.on('player_breaks_block', niente_ossidiana);
 ```
 
 Da cui l'abitudine di chiudere ogni handler con un `false` esplicito quando **non** deve annullare:
-il valore dell'ultima espressione del corpo diventa il ritorno, e un `text.print` che restituisce il
+il valore dell'ultima espressione del corpo diventa il ritorno, e un `text.send` che restituisce il
 messaggio è un valore vero. Un handler che finisce con un `print` e nessun `false` annulla l'azione
 per sbaglio.
 
 ```
 fn su_campana(pos, direzione, chi) -> (
-    text.print(chi, 'din don');
+    text.send(chi, 'din don');
     false                           // senza questa riga, la campana non suona più
 );
 ```
@@ -139,13 +139,13 @@ Vivono dentro l'entità, la seguono fra i mondi e spariscono con lei:
 ```
 import "core.mc.entity" as entity;
 
-entity.entity_event(mucca, 'on_death', fn_di_morte);
+entity.on(mucca, 'on_death', fn_di_morte);
 ```
 
 Gli eventi disponibili sono `on_tick`, `on_removed`, `on_death`, `on_damage`, `on_move`. Il primo
 argomento passato all'handler è sempre l'entità stessa.
 
-Per reagire alla **comparsa** di entità di certi tipi c'è `entity.entity_load_handler(tipi, f)`, che
+Per reagire alla **comparsa** di entità di certi tipi c'è `entity.on_load(tipi, f)`, che
 filtra per tipo **prima** di chiamarti: ascoltare gli zombie non costa una chiamata per ogni entità
 che compare nel mondo.
 
@@ -155,13 +155,13 @@ Un'app non chiama le funzioni di un'altra: dichiara un evento e lo genera.
 
 ```
 // l'app che ascolta
-event.handle_event('miniera_esaurita', su_esaurimento);
+event.declare('miniera_esaurita', su_esaurimento);
 
 // l'app che avvisa
-conteggio = event.signal_event('miniera_esaurita', null, pos, quanti);
+conteggio = event.emit('miniera_esaurita', null, pos, quanti);
 ```
 
-`handle_event` accetta anche un nome che il gioco non conosce: quello diventa un **evento di
+`declare` accetta anche un nome che il gioco non conosce: quello diventa un **evento di
 applicazione**, dichiarato dalla prima app che lo ascolta. `signal_event` restituisce quante app
 l'hanno sentito, o `null` se quell'evento non esiste — cioè se nessuno ascolta, e allora chi lo
 genera può risparmiarsi il lavoro.

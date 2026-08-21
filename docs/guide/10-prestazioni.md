@@ -71,7 +71,7 @@ scan.volume([x-16, 0, z-16], [x+16, 16, z+16], ...);
 **Leggi una volta, decidi dopo.** Ogni `block.block(p)` è un accesso al mondo: se ti serve lo stesso
 punto tre volte, mettilo in una variabile.
 
-**Filtra prima di chiamare.** `entity.entity_load_handler(['zombie'], f)` filtra per tipo dentro il
+**Filtra prima di chiamare.** `entity.on_load(['zombie'], f)` filtra per tipo dentro il
 mod; l'evento `entity_loads` con un `if` dentro l'handler ti fa pagare una chiamata per ogni entità
 che compare nel mondo.
 

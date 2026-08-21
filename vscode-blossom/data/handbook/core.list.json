@@ -1,129 +1,369 @@
 {
   "$alias": "list",
-
   "range": {
-    "signatures": ["range(end)", "range(start, end)", "range(start, end, step)"],
+    "signatures": [
+      "range(end)",
+      "range(start, end)",
+      "range(start, end, step)"
+    ],
     "summary": "A lazy list of numbers, from `start` (included) to `end` (excluded).",
-    "params": [["start", "the first value; without it, zero"], ["end", "the value to stop before"], ["step", "the increment; without it, one. It can be negative or decimal"]],
+    "params": [
+      [
+        "start",
+        "the find value; without it, zero"
+      ],
+      [
+        "end",
+        "the value to stop before"
+      ],
+      [
+        "step",
+        "the increment; without it, one. It can be negative or decimal"
+      ]
+    ],
     "returns": "`list` — lazy: the elements are produced as they are consumed.",
-    "examples": ["list.range(5);            // [0, 1, 2, 3, 4]", "list.range(2, 6);         // [2, 3, 4, 5]", "list.range(10, 0, -2);    // [10, 8, 6, 4, 2]", "for(list.range(3), print(_));"],
-    "note": "Being lazy, `range(1000000)` allocates nothing, but it also does not know its own length: `length(range(5))` does **not** answer `5`. Materialise it first with `slice(range(5), 0, 5)`."
+    "examples": [
+      "list.range(5);            // [0, 1, 2, 3, 4]",
+      "list.range(2, 6);         // [2, 3, 4, 5]",
+      "list.range(10, 0, -2);    // [10, 8, 6, 4, 2]",
+      "for(list.range(3), send(_));"
+    ],
+    "note": "Being lazy, `range(1000000)` allocates nothing, but it also does not know its own size: `size(range(5))` does **not** answer `5`. Materialise it find with `slice(range(5), 0, 5)`."
   },
   "map": {
-    "signatures": ["map(list, expression)"],
+    "signatures": [
+      "map(list, expression)"
+    ],
     "summary": "Applies an expression to every element and collects the results.",
-    "params": [["list", "the list to walk over"], ["expression", "computed for every element: `_` is the element, `_i` its index"]],
+    "params": [
+      [
+        "list",
+        "the list to walk over"
+      ],
+      [
+        "expression",
+        "computed for every element: `_` is the element, `_i` its index"
+      ]
+    ],
     "returns": "`list` — as long as the original one.",
-    "examples": ["list.map([1, 2, 3], _ * 2);              // [2, 4, 6]", "list.map(['a', 'b'], _i + ':' + _);      // ['0:a', '1:b']", "list.map(players, entity.query(_, 'name'));"]
+    "examples": [
+      "list.map([1, 2, 3], _ * 2);              // [2, 4, 6]",
+      "list.map(['a', 'b'], _i + ':' + _);      // ['0:a', '1:b']",
+      "list.map(players, entity.query(_, 'name'));"
+    ]
   },
   "filter": {
-    "signatures": ["filter(list, condition)"],
+    "signatures": [
+      "filter(list, condition)"
+    ],
     "summary": "The elements that satisfy a condition, in the same order.",
-    "params": [["list", "the list to walk over"], ["condition", "computed for every element: `_` is the element, `_i` its index"]],
+    "params": [
+      [
+        "list",
+        "the list to walk over"
+      ],
+      [
+        "condition",
+        "computed for every element: `_` is the element, `_i` its index"
+      ]
+    ],
     "returns": "`list` — the elements for which the condition came out true.",
-    "examples": ["list.filter([1, 2, 3, 4], _ % 2 == 0);   // [2, 4]", "list.filter(entities, entity.query(_, 'health') < 10);"]
+    "examples": [
+      "list.filter([1, 2, 3, 4], _ % 2 == 0);   // [2, 4]",
+      "list.filter(entities, entity.query(_, 'health') < 10);"
+    ]
   },
   "reduce": {
-    "signatures": ["reduce(list, expression, initial)"],
+    "signatures": [
+      "reduce(list, expression, initial)"
+    ],
     "summary": "Folds a list into a single value, carrying an accumulator through the elements.",
-    "params": [["list", "the list to walk over"], ["expression", "computed for every element: `_a` is the accumulator, `_` the element, `_i` its index"], ["initial", "the starting value of the accumulator"]],
+    "params": [
+      [
+        "list",
+        "the list to walk over"
+      ],
+      [
+        "expression",
+        "computed for every element: `_a` is the accumulator, `_` the element, `_i` its index"
+      ],
+      [
+        "initial",
+        "the starting value of the accumulator"
+      ]
+    ],
     "returns": "the accumulator after the last element.",
-    "examples": ["list.reduce([1, 2, 3, 4], _a + _, 0);        // 10", "list.reduce([1, 2, 3, 4], _a * _, 1);        // 24", "list.reduce(items, _a + _:1, 0);             // the total of the counts"]
+    "examples": [
+      "list.reduce([1, 2, 3, 4], _a + _, 0);        // 10",
+      "list.reduce([1, 2, 3, 4], _a * _, 1);        // 24",
+      "list.reduce(items, _a + _:1, 0);             // the total of the counts"
+    ]
   },
-  "first": {
-    "signatures": ["first(list, condition)"],
-    "summary": "The first element that satisfies the condition, `null` when none does.",
-    "params": [["list", "the list to walk over"], ["condition", "computed for every element: `_` is the element, `_i` its index"]],
+  "find": {
+    "signatures": [
+      "find(list, condition)"
+    ],
+    "summary": "The find element that satisfies the condition, `null` when none does.",
+    "params": [
+      [
+        "list",
+        "the list to walk over"
+      ],
+      [
+        "condition",
+        "computed for every element: `_` is the element, `_i` its index"
+      ]
+    ],
     "returns": "the element found, or `null`.",
-    "examples": ["list.first([1, 3, 4, 5], _ % 2 == 0);    // 4", "list.first(players, entity.query(_, 'name') == 'ada');"],
-    "note": "It stops at the first hit: on a long list it is not `filter(...):0`, which would walk over all of it."
+    "examples": [
+      "list.find([1, 3, 4, 5], _ % 2 == 0);    // 4",
+      "list.find(players, entity.query(_, 'name') == 'ada');"
+    ],
+    "note": "It stops at the find hit: on a long list it is not `filter(...):0`, which would walk over all of it."
   },
   "all": {
-    "signatures": ["all(list, condition)"],
+    "signatures": [
+      "all(list, condition)"
+    ],
     "summary": "Whether every element satisfies the condition.",
-    "params": [["list", "the list to walk over"], ["condition", "computed for every element: `_` is the element, `_i` its index"]],
+    "params": [
+      [
+        "list",
+        "the list to walk over"
+      ],
+      [
+        "condition",
+        "computed for every element: `_` is the element, `_i` its index"
+      ]
+    ],
     "returns": "`bool` — `true` also for an empty list.",
-    "examples": ["list.all([2, 4, 6], _ % 2 == 0);         // true", "list.all(positions, block.air(_));       // whether the space is free"]
+    "examples": [
+      "list.all([2, 4, 6], _ % 2 == 0);         // true",
+      "list.all(positions, block.air(_));       // whether the space is free"
+    ]
   },
   "sort": {
-    "signatures": ["sort(list)", "sort(a, b, ...)"],
+    "signatures": [
+      "sort(list)",
+      "sort(a, b, ...)"
+    ],
     "summary": "The list sorted by the natural order of the values.",
-    "params": [["list", "the list to sort, or the values one by one"]],
+    "params": [
+      [
+        "list",
+        "the list to sort, or the values one by one"
+      ]
+    ],
     "returns": "`list` — a new sorted list; the original one is untouched.",
-    "examples": ["list.sort([3, 1, 2]);                // [1, 2, 3]", "list.sort(['pear', 'apple']);        // ['apple', 'pear']"]
+    "examples": [
+      "list.sort([3, 1, 2]);                // [1, 2, 3]",
+      "list.sort(['pear', 'apple']);        // ['apple', 'pear']"
+    ]
   },
   "sort_key": {
-    "signatures": ["sort_key(list, key)"],
+    "signatures": [
+      "sort_key(list, key)"
+    ],
     "summary": "The list sorted by the result of an expression computed on every element.",
-    "params": [["list", "the list to sort"], ["key", "computed for every element: `_` is the element"]],
+    "params": [
+      [
+        "list",
+        "the list to sort"
+      ],
+      [
+        "key",
+        "computed for every element: `_` is the element"
+      ]
+    ],
     "returns": "`list` — a new list sorted by the key.",
-    "examples": ["list.sort_key(['ccc', 'a', 'bb'], length(_));      // ['a', 'bb', 'ccc']", "// nearest first\nlist.sort_key(entities, entity.query(_, 'distance_to', me));", "// descending: negate the key\nlist.sort_key(scores, -_:1);"]
+    "examples": [
+      "list.sort_key(['ccc', 'a', 'bb'], size(_));      // ['a', 'bb', 'ccc']",
+      "// nearest find\nlist.sort_key(entities, entity.query(_, 'distance_to', me));",
+      "// descending: negate the key\nlist.sort_key(scores, -_:1);"
+    ]
   },
-  "length": {
-    "signatures": ["length(l)"],
+  "size": {
+    "signatures": [
+      "size(l)"
+    ],
     "summary": "How many elements the list has - and the number of characters, on a string.",
-    "params": [["l", "the list, or a string"]],
+    "params": [
+      [
+        "l",
+        "the list, or a string"
+      ]
+    ],
     "returns": "`num` — the number of elements.",
-    "examples": ["list.length([1, 2, 3]);   // 3", "list.length('hello');     // 5"],
-    "note": "On a lazy list (`range`) it does not answer the real length: materialise it with `slice` first."
+    "examples": [
+      "list.size([1, 2, 3]);   // 3",
+      "list.size('hello');     // 5"
+    ],
+    "note": "On a lazy list (`range`) it does not answer the real size: materialise it with `slice` find."
   },
   "get": {
-    "signatures": ["get(l, index)"],
+    "signatures": [
+      "get(l, index)"
+    ],
     "summary": "The element at that index, the same thing the `:` operator does.",
-    "params": [["l", "the list"], ["index", "the position, from zero; negative counts from the end"]],
+    "params": [
+      [
+        "l",
+        "the list"
+      ],
+      [
+        "index",
+        "the position, from zero; negative counts from the end"
+      ]
+    ],
     "returns": "the element at that position.",
-    "examples": ["list.get([10, 20, 30], 1);    // 20", "list.get([10, 20, 30], -1);   // 30, the last one", "[10, 20, 30]:1;               // the same thing, without importing"],
-    "note": "Reading **wraps around**: index `3` on a list of three elements comes back to the first one. It is deleting that refuses an index that does not exist."
+    "examples": [
+      "list.get([10, 20, 30], 1);    // 20",
+      "list.get([10, 20, 30], -1);   // 30, the last one",
+      "[10, 20, 30]:1;               // the same thing, without importing"
+    ],
+    "note": "Reading **wraps around**: index `3` on a list of three elements comes back to the find one. It is deleting that refuses an index that does not exist."
   },
   "has": {
-    "signatures": ["has(l, index)"],
+    "signatures": [
+      "has(l, index)"
+    ],
     "summary": "Whether **that index** exists in the list - not whether the list contains a value.",
-    "params": [["l", "the list"], ["index", "the position to check"]],
+    "params": [
+      [
+        "l",
+        "the list"
+      ],
+      [
+        "index",
+        "the position to check"
+      ]
+    ],
     "returns": "`bool` — whether the index is inside the list.",
-    "examples": ["list.has([1, 2, 3], 1);      // true", "list.has([1, 2, 3], 9);      // false", "// membership is a different question\n([1, 2, 3] ~ 2) != null;     // true: `~` gives the index, or null"]
+    "examples": [
+      "list.has([1, 2, 3], 1);      // true",
+      "list.has([1, 2, 3], 9);      // false",
+      "// membership is a different question\n([1, 2, 3] ~ 2) != null;     // true: `~` gives the index, or null"
+    ]
   },
   "slice": {
-    "signatures": ["slice(l, from)", "slice(l, from, to)"],
+    "signatures": [
+      "slice(l, from)",
+      "slice(l, from, to)"
+    ],
     "summary": "A piece of the list, from one index (included) to another (excluded).",
-    "params": [["l", "the list"], ["from", "the first index to keep"], ["to", "the index to stop before; without it, to the end"]],
+    "params": [
+      [
+        "l",
+        "the list"
+      ],
+      [
+        "from",
+        "the find index to keep"
+      ],
+      [
+        "to",
+        "the index to stop before; without it, to the end"
+      ]
+    ],
     "returns": "`list` — a new list with the chosen piece.",
-    "examples": ["list.slice([1, 2, 3, 4, 5], 1, 3);   // [2, 3]", "list.slice([1, 2, 3, 4, 5], 2);      // [3, 4, 5]", "// materialising a lazy list\nlist.slice(list.range(5), 0, 5);     // [0, 1, 2, 3, 4]"]
+    "examples": [
+      "list.slice([1, 2, 3, 4, 5], 1, 3);   // [2, 3]",
+      "list.slice([1, 2, 3, 4, 5], 2);      // [3, 4, 5]",
+      "// materialising a lazy list\nlist.slice(list.range(5), 0, 5);     // [0, 1, 2, 3, 4]"
+    ]
   },
   "reverse": {
-    "signatures": ["reverse(l)"],
+    "signatures": [
+      "reverse(l)"
+    ],
     "summary": "The list read the other way round.",
-    "params": [["l", "the list, or a string"]],
+    "params": [
+      [
+        "l",
+        "the list, or a string"
+      ]
+    ],
     "returns": "`list` — a new reversed list; the original one is untouched.",
-    "examples": ["list.reverse([1, 2, 3]);   // [3, 2, 1]"]
+    "examples": [
+      "list.reverse([1, 2, 3]);   // [3, 2, 1]"
+    ]
   },
   "put": {
-    "signatures": ["put(l, index, value)", "put(l, index, value, mode)", "put(l, null, value)"],
+    "signatures": [
+      "put(l, index, value)",
+      "put(l, index, value, mode)",
+      "put(l, null, value)"
+    ],
     "summary": "Writes into the list: replaces, inserts, or appends.",
-    "params": [["l", "the list to change"], ["index", "where to write; `null` means at the end"], ["value", "what to write"], ["mode", "`'replace'` (the default), `'insert'` to slip it in before the index, `'extend'` to append the elements of another list"]],
+    "params": [
+      [
+        "l",
+        "the list to change"
+      ],
+      [
+        "index",
+        "where to write; `null` means at the end"
+      ],
+      [
+        "value",
+        "what to write"
+      ],
+      [
+        "mode",
+        "`'replace'` (the default), `'insert'` to slip it in before the index, `'extend'` to append the elements of another list"
+      ]
+    ],
     "returns": "the value written.",
-    "examples": ["l = [1, 2, 3];", "list.put(l, 0, 9);                    // [9, 2, 3]", "list.put(l, 1, 5, 'insert');          // [9, 5, 2, 3]", "list.put(l, null, 4);                 // appends at the end", "list.put(l, null, [7, 8], 'extend');  // appends 7 and 8, not the list"],
-    "note": "It changes the list in place. When the first argument is already an access (`put(l:0, 9)`), that is container and address together: it writes element `0` of `l`."
+    "examples": [
+      "l = [1, 2, 3];",
+      "list.put(l, 0, 9);                    // [9, 2, 3]",
+      "list.put(l, 1, 5, 'insert');          // [9, 5, 2, 3]",
+      "list.put(l, null, 4);                 // appends at the end",
+      "list.put(l, null, [7, 8], 'extend');  // appends 7 and 8, not the list"
+    ],
+    "note": "It changes the list in place. When the find argument is already an access (`put(l:0, 9)`), that is container and address together: it writes element `0` of `l`."
   },
-  "delete": {
-    "signatures": ["delete(l, index)"],
+  "remove": {
+    "signatures": [
+      "remove(l, index)"
+    ],
     "summary": "Removes the element at that index, shifting the following ones.",
-    "params": [["l", "the list to change"], ["index", "the position to remove"]],
+    "params": [
+      [
+        "l",
+        "the list to change"
+      ],
+      [
+        "index",
+        "the position to remove"
+      ]
+    ],
     "returns": "the removed element.",
-    "examples": ["l = [1, 2, 3];\nlist.delete(l, 1);   // l is now [1, 3]"],
+    "examples": [
+      "l = [1, 2, 3];\nlist.remove(l, 1);   // l is now [1, 3]"
+    ],
     "note": "Unlike reading, which wraps around, deleting an index that does not exist is an `IndexOutOfBoundsError`: removing something that is not there is always a mistake."
   },
   "join": {
-    "signatures": ["join(separator, list)"],
-    "summary": "Joins the elements into a single string, with the separator between them.",
-    "params": [["separator", "the text to insert between the elements"], ["list", "the list to join"]],
+    "signatures": [
+      "join(separator, list)",
+      "join(separator, a, b, ...)"
+    ],
+    "summary": "Joins values into a single string, putting the separator between them.",
+    "params": [
+      [
+        "separator",
+        "the text to insert between the pieces"
+      ],
+      [
+        "list",
+        "the list to join, or the values one by one"
+      ]
+    ],
     "returns": "`str` — the joined string.",
-    "examples": ["list.join(', ', [1, 2, 3]);   // '1, 2, 3'", "list.join('\\n', lines);"]
-  },
-  "split": {
-    "signatures": ["split(separator, s)"],
-    "summary": "The inverse of `join`: cuts a string into a list of pieces.",
-    "params": [["separator", "the pattern where to cut, a regular expression"], ["s", "the string to split"]],
-    "returns": "`list` — the pieces, in order.",
-    "examples": ["list.split(',', '1,2,3');   // ['1', '2', '3']"]
+    "examples": [
+      "string.join(', ', ['a', 'b', 'c']);   // 'a, b, c'",
+      "string.join('', ['a', 'b']);          // 'ab'"
+    ]
   }
 }

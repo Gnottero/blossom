@@ -1,0 +1,124 @@
+{
+  "score": {
+    "signatures": [
+      "score()",
+      "score(objective)",
+      "score(objective, who)",
+      "score(objective, who, value)"
+    ],
+    "summary": "Reads the objectives, the scores of one, the score of somebody, or writes it.",
+    "params": [
+      [
+        "objective",
+        "the name of the objective"
+      ],
+      [
+        "who",
+        "a player, an entity, or any name"
+      ],
+      [
+        "value",
+        "optional: the score to write"
+      ]
+    ],
+    "returns": "`list` of objectives, `map` of scores, `num` of a single score, or the previous value when writing.",
+    "examples": [
+      "score.score();                       // the existing objectives",
+      "score.score('points');               // {'ada' -> 10, 'bob' -> 3}",
+      "score.score('points', player);       // 10",
+      "score.score('points', player, 20);   // writes it"
+    ]
+  },
+  "add": {
+    "signatures": [
+      "add(objective)",
+      "add(objective, criterion)"
+    ],
+    "summary": "Creates an objective.",
+    "params": [
+      [
+        "objective",
+        "the name to give it"
+      ],
+      [
+        "criterion",
+        "optional: what feeds it, `'dummy'` by default"
+      ]
+    ],
+    "returns": "`bool` — whether it was created.",
+    "examples": [
+      "score.add('points');",
+      "score.add('deaths', 'deathCount');"
+    ]
+  },
+  "remove": {
+    "signatures": [
+      "remove(objective)",
+      "remove(objective, who)"
+    ],
+    "summary": "Deletes an objective, or removes the score of a single one from it.",
+    "params": [
+      [
+        "objective",
+        "the objective to work on"
+      ],
+      [
+        "who",
+        "optional: only their score goes away"
+      ]
+    ],
+    "returns": "`bool` — whether something was removed.",
+    "examples": [
+      "score.remove('points');            // the whole objective",
+      "score.remove('points', player);    // only that score"
+    ]
+  },
+  "property": {
+    "signatures": [
+      "property(objective, property)",
+      "property(objective, property, value)"
+    ],
+    "summary": "Reads or writes a property of an objective.",
+    "params": [
+      [
+        "objective",
+        "the objective"
+      ],
+      [
+        "property",
+        "`'display_name'`, `'criterion'`, `'render_type'`"
+      ],
+      [
+        "value",
+        "optional: what to write"
+      ]
+    ],
+    "returns": "the value of the property, or the new one when writing.",
+    "examples": [
+      "score.property('points', 'display_name', text.format('gb Points'));",
+      "score.property('points', 'render_type', 'hearts');"
+    ]
+  },
+  "display": {
+    "signatures": [
+      "display(slot)",
+      "display(slot, objective)"
+    ],
+    "summary": "Shows an objective in a display slot, or reads which one is there.",
+    "params": [
+      [
+        "slot",
+        "`'sidebar'`, `'list'`, `'belowName'`, or `'sidebar.team.<colour>'`"
+      ],
+      [
+        "objective",
+        "optional: the objective to show; `null` clears the slot"
+      ]
+    ],
+    "returns": "`str` — the objective in that slot.",
+    "examples": [
+      "score.display('sidebar', 'points');",
+      "score.display('sidebar', null);      // clears it"
+    ]
+  }
+}

@@ -53,7 +53,7 @@ import "core.mc.entity" as entity;
 import "core.mc.event" as event;
 
 fn benvenuto(giocatore) -> (
-    text.print(giocatore, 'benvenuto su questo server');
+    text.send(giocatore, 'benvenuto su questo server');
     false
 );
 
@@ -259,7 +259,7 @@ ExecutionBudgetError[time]
   in torre.sorveglia  (src/torre.bs:12:5)
 
   Execution stopped after 2000 ms: the script is running too long and the server is waiting for
-  it. If it really needs all that time, move it to a task() or raise 'timeout_ms' in the manifest.
+  it. If it really needs all that time, move it to a task.start() or raise 'timeout_ms' in the manifest.
 ```
 
 I limiti di default sono tre, perché le tre situazioni sono diverse:
@@ -268,9 +268,9 @@ I limiti di default sono tre, perché le tre situazioni sono diverse:
 | --- | --- | --- |
 | dentro un evento di gioco | 2 s | 256 |
 | codice lanciato da `/blossom script run` o `load` | 15 s | 256 |
-| dentro un `task()` | nessun limite | 256 |
+| dentro un `task.start()` | nessun limite | 256 |
 
-Un `task()` non ha scadenza apposta: gira su un thread suo, non tiene fermo il tick, ed è la cosa da
+Un `task.start()` non ha scadenza apposta: gira su un thread suo, non tiene fermo il tick, ed è la cosa da
 usare quando un lavoro è davvero lungo.
 
 Un'app può dichiarare i propri limiti nel manifesto, e allora valgono in tutti e tre i casi:

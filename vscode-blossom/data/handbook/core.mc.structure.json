@@ -1,35 +1,228 @@
 {
   "$alias": "structure",
-
-  "structure_save": {
-    "signatures": ["structure_save(name, from, to)", "structure_save(name, from, to, with_entities)"],
+  "save": {
+    "signatures": [
+      "save(name, from, to)",
+      "save(name, from, to, with_entities)"
+    ],
     "summary": "Saves a volume of the world as a structure template.",
-    "params": [["name", "the name of the template, as `'mine:tower'`"], ["from", "one corner, included"], ["to", "the opposite corner, included"], ["with_entities", "optional: whether to save the entities too, `false` by default"]],
+    "params": [
+      [
+        "name",
+        "the name of the template, as `'mine:tower'`"
+      ],
+      [
+        "from",
+        "one corner, included"
+      ],
+      [
+        "to",
+        "the opposite corner, included"
+      ],
+      [
+        "with_entities",
+        "optional: whether to save the entities too, `false` by default"
+      ]
+    ],
     "returns": "`bool` — whether the save succeeded.",
-    "examples": ["structure.structure_save('mine:tower', [0, 64, 0], [8, 80, 8]);", "structure.structure_save('mine:zoo', a, b, true);"],
+    "examples": [
+      "structure.save('mine:tower', [0, 64, 0], [8, 80, 8]);",
+      "structure.save('mine:zoo', a, b, true);"
+    ],
     "note": "They are the **same templates as the vanilla structure block**, in the same place (`<world>/generated/<namespace>/structure/<name>.nbt`): what a script saves opens with a structure block, and the other way round."
   },
-  "structure_load": {
-    "signatures": ["structure_load(name, pos)", "structure_load(name, pos, rotation, mirror, with_entities, integrity, seed)"],
+  "load": {
+    "signatures": [
+      "load(name, pos)",
+      "load(name, pos, rotation, mirror, with_entities, integrity, seed)"
+    ],
     "summary": "Places a structure template in the world.",
-    "params": [["name", "the name of the template"], ["pos", "the minimum corner of the result, whatever the rotation"], ["rotation", "optional: `0`, `90`, `180`, `270`; `0` by default"], ["mirror", "optional: `'none'`, `'left_right'`, `'front_back'`"], ["with_entities", "optional: `true` by default"], ["integrity", "optional: from `0` to `1`; below `1` it drops random blocks, like the structure block"], ["seed", "optional: the seed of that randomness, to make a ruin repeatable"]],
+    "params": [
+      [
+        "name",
+        "the name of the template"
+      ],
+      [
+        "pos",
+        "the minimum corner of the result, whatever the rotation"
+      ],
+      [
+        "rotation",
+        "optional: `0`, `90`, `180`, `270`; `0` by default"
+      ],
+      [
+        "mirror",
+        "optional: `'none'`, `'left_right'`, `'front_back'`"
+      ],
+      [
+        "with_entities",
+        "optional: `true` by default"
+      ],
+      [
+        "integrity",
+        "optional: from `0` to `1`; below `1` it drops random blocks, like the structure block"
+      ],
+      [
+        "seed",
+        "optional: the seed of that randomness, to make a ruin repeatable"
+      ]
+    ],
     "returns": "`bool` — whether it succeeded, `null` when the template does not exist.",
-    "examples": ["structure.structure_load('mine:tower', [100, 64, 100]);", "structure.structure_load('mine:tower', pos, 90);", "// a repeatable ruin\nstructure.structure_load('mine:tower', pos, 0, 'none', true, 0.6, 12345);"],
-    "note": "`pos` is always the minimum corner of the **result**: without this correction the same call with a different rotation would land somewhere else. It is also what makes `structure_load` and `structure_matches` reciprocal."
+    "examples": [
+      "structure.load('mine:tower', [100, 64, 100]);",
+      "structure.load('mine:tower', pos, 90);",
+      "// a repeatable ruin\nstructure.load('mine:tower', pos, 0, 'none', true, 0.6, 12345);"
+    ],
+    "note": "`pos` is always the minimum corner of the **result**: without this correction the same call with a different rotation would land somewhere else. It is also what makes `load` and `matches` reciprocal."
   },
-  "structure_matches": {
-    "signatures": ["structure_matches(name, from, to)", "structure_matches(name, from, to, rotation, mirror)"],
+  "matches": {
+    "signatures": [
+      "matches(name, from, to)",
+      "matches(name, from, to, rotation, mirror)"
+    ],
     "summary": "Whether the region between two corners matches a template.",
-    "params": [["name", "the name of the template"], ["from", "one corner, included"], ["to", "the opposite corner, included"], ["rotation", "optional: the rotation to compare with"], ["mirror", "optional: the mirroring to compare with"]],
+    "params": [
+      [
+        "name",
+        "the name of the template"
+      ],
+      [
+        "from",
+        "one corner, included"
+      ],
+      [
+        "to",
+        "the opposite corner, included"
+      ],
+      [
+        "rotation",
+        "optional: the rotation to compare with"
+      ],
+      [
+        "mirror",
+        "optional: the mirroring to compare with"
+      ]
+    ],
     "returns": "`bool` — whether it matches; `null` when the template does not exist, which is not the same as \"does not match\".",
-    "examples": ["if(structure.structure_matches('mine:tower', a, b), print('built right'));", "structure.structure_matches('mine:tower', a, b, 90);"],
+    "examples": [
+      "if(structure.matches('mine:tower', a, b), send('built right'));",
+      "structure.matches('mine:tower', a, b, 90);"
+    ],
     "note": "A region of a different size is discarded at once, without reading a single block. A template with several palettes matches when at least one of them does, and `structure_void` blocks do not count, as in vanilla."
   },
-  "structure_size": {
-    "signatures": ["structure_size(name)", "structure_size(name, rotation)"],
+  "size": {
+    "signatures": [
+      "size(name)",
+      "size(name, rotation)"
+    ],
     "summary": "The size of a template, taking a rotation into account.",
-    "params": [["name", "the name of the template"], ["rotation", "optional: `0`, `90`, `180`, `270`"]],
+    "params": [
+      [
+        "name",
+        "the name of the template"
+      ],
+      [
+        "rotation",
+        "optional: `0`, `90`, `180`, `270`"
+      ]
+    ],
     "returns": "`list` — `[x, y, z]`, `null` when the template does not exist.",
-    "examples": ["size = structure.structure_size('mine:tower');   // [9, 17, 9]", "// the far corner of a placement\nstructure.structure_size('mine:tower', 90);"]
+    "examples": [
+      "size = structure.size('mine:tower');   // [9, 17, 9]",
+      "// the far corner of a placement\nstructure.size('mine:tower', 90);"
+    ]
+  },
+  "at": {
+    "signatures": [
+      "at(pos)",
+      "at(pos, name)"
+    ],
+    "summary": "The at covering that point.",
+    "params": [
+      [
+        "pos",
+        "the position to check"
+      ],
+      [
+        "name",
+        "optional: only that structure"
+      ]
+    ],
+    "returns": "`map` from name to the box it takes up, or the single box; `null` when there is none.",
+    "examples": [
+      "world.at([0, 64, 0]);                          // {'minecraft:village_plains' -> [...]}",
+      "world.at(pos, 'minecraft:stronghold');"
+    ]
+  },
+  "references": {
+    "signatures": [
+      "references(pos)",
+      "references(pos, name)"
+    ],
+    "summary": "The chunks referring to the at that pass through that point.",
+    "params": [
+      [
+        "pos",
+        "a position inside the chunk"
+      ],
+      [
+        "name",
+        "optional: only that structure"
+      ]
+    ],
+    "returns": "`map` from name to a list of chunk coordinates, or the single list.",
+    "examples": [
+      "world.references([0, 64, 0], 'minecraft:village_plains');"
+    ]
+  },
+  "eligibility": {
+    "signatures": [
+      "eligibility(pos)",
+      "eligibility(pos, type)",
+      "eligibility(pos, type, details)"
+    ],
+    "summary": "Whether a structure *could* be born in that chunk, without generating it.",
+    "params": [
+      [
+        "pos",
+        "a position inside the chunk"
+      ],
+      [
+        "type",
+        "optional: which structure to ask about, `null` for all of them"
+      ],
+      [
+        "details",
+        "optional: with `true` it also returns the pieces of the structure"
+      ]
+    ],
+    "returns": "`map` or `list` of the eligible at, `null` when there are none.",
+    "examples": [
+      "world.eligibility([1000, 64, 1000]);",
+      "world.eligibility(pos, 'minecraft:village_plains', true);"
+    ],
+    "note": "It asks the generator, not the world: it answers on chunks nobody has ever visited, without generating them and without loading anything."
+  },
+  "place": {
+    "signatures": [
+      "place(pos, name)",
+      "place(pos, name, null)"
+    ],
+    "summary": "Generates a structure at that point, or removes its reference.",
+    "params": [
+      [
+        "pos",
+        "a position inside the chunk"
+      ],
+      [
+        "name",
+        "the structure to place"
+      ]
+    ],
+    "returns": "`bool` — whether it succeeded.",
+    "examples": [
+      "world.place([0, 64, 0], 'minecraft:village_plains');",
+      "world.place(pos, 'minecraft:village_plains', null);   // removes the reference"
+    ]
   }
 }

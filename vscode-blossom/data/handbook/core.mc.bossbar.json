@@ -1,0 +1,34 @@
+{
+  "bar": {
+    "signatures": [
+      "bar()",
+      "bar(name)",
+      "bar(name, property)",
+      "bar(name, property, value)"
+    ],
+    "summary": "The boss bars that exist, the creation of one, and its properties.",
+    "params": [
+      [
+        "name",
+        "the id of the bar"
+      ],
+      [
+        "property",
+        "`'name'`, `'color'`, `'style'`, `'value'`, `'max'`, `'visible'`, `'players'`, `'add_player'`, `'remove'`"
+      ],
+      [
+        "value",
+        "optional: what to write"
+      ]
+    ],
+    "returns": "`list` of the bars, the value of the property, or the created bar.",
+    "examples": [
+      "bar.bar('mine:timer');                                // creates it",
+      "bar.bar('mine:timer', 'name', text.format('yb Time'));",
+      "bar.bar('mine:timer', 'max', 300);",
+      "bar.bar('mine:timer', 'value', left);",
+      "bar.bar('mine:timer', 'players', entity.player('all'));",
+      "bar.bar('mine:timer', 'remove');"
+    ]
+  }
+}

@@ -139,14 +139,14 @@ ExecutionBudgetError[time]
   in torre.sorveglia  (src/torre.bs:12:5)
 
   Execution stopped after 2000 ms: the script is running too long and the server is waiting for
-  it. If it really needs all that time, move it to a task() or raise 'timeout_ms' in the manifest.
+  it. If it really needs all that time, move it to a task.start() or raise 'timeout_ms' in the manifest.
 ```
 
 | Quando | Tempo | Profondità di chiamata |
 | --- | --- | --- |
 | dentro un evento di gioco | 2 s | 256 |
 | da `/blossom script run` o al caricamento | 15 s | 256 |
-| dentro un `task()` | nessun limite | 256 |
+| dentro un `task.start()` | nessun limite | 256 |
 
 Si cambiano nel manifesto, e allora valgono in tutti e tre i casi:
 
@@ -182,7 +182,7 @@ fn su_campana(pos, direzione, chi) -> (
         costruisci(pos),
         'exception', (
             motivo = _;         // '_' cambia significato dentro il for: salvalo prima
-            for(entity.player('all'), text.print(_, 'non ci sono riuscito: ' + motivo))
+            for(entity.player('all'), text.send(_, 'non ci sono riuscito: ' + motivo))
         )
     );
     false           // il suono va avanti comunque
@@ -199,7 +199,7 @@ ce l'ha già:
 fn su_campana(pos, direzione, chi) -> (
     try(
         costruisci(pos),
-        'exception', fn(motivo) -> for(entity.player('all'), text.print(_, 'non ci sono riuscito: ' + motivo))
+        'exception', fn(motivo) -> for(entity.player('all'), text.send(_, 'non ci sono riuscito: ' + motivo))
     );
     false
 );

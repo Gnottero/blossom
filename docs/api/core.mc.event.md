@@ -85,7 +85,7 @@ event.on('player_jumps', only_for_her, null, 'ada');
 Removes every handler of this app, or only the ones it registered on that event. Reloading the app
 does this for you.
 
-### `available()`
+### `list()`
 The names of every event in the catalogue, application events included once somebody has declared
 them.
 
@@ -96,14 +96,14 @@ How many handlers are registered on it, across all apps. `0` for an event nobody
 The card of an event: `{'name' -> ..., 'arity' -> ..., 'cancellable' -> ..., 'listeners' -> ...}`.
 Unknown name is a load error, like everywhere else.
 
-### `handle_event(event, function, fixed_arguments...)`
+### `declare(event, function, fixed_arguments...)`
 Like `on`, but it also accepts a name the game does not know: that becomes an **application event**,
 declared by the first app that listens to it, with the arity of the function that declared it. Here
 the fixed arguments are passed loose, not in a list.
 
 Passing `null` as the function removes this app's handlers for that event.
 
-### `signal_event(event, player_or_null, arguments...)`
+### `emit(event, player_or_null, arguments...)`
 Raises an event — an application one, normally. Returns how many handlers were listening, or `null`
 when no such event exists, which is also the cheap way for the sender to skip the work entirely.
 
@@ -112,10 +112,10 @@ caller.
 
 ```
 // the app that listens
-event.handle_event('vein_exhausted', on_exhausted);
+event.declare('vein_exhausted', on_exhausted);
 
 // the app that tells
-heard = event.signal_event('vein_exhausted', null, pos, how_many);
+heard = event.emit('vein_exhausted', null, pos, how_many);
 ```
 
 It is the intended way to couple two apps without either knowing the functions of the other, and
@@ -414,7 +414,7 @@ reach this point, and passing a made-up one would be worse than passing a consta
 
 #### `player_message(player, message)` — cancellable
 A chat message, as plain text, before it is broadcast. Cancelling means nobody sees it — which is how
-a chat filter is written, together with a `text.print` back to the sender explaining why.
+a chat filter is written, together with a `text.send` back to the sender explaining why.
 
 #### `player_command(player, command)`
 A command the player sent from chat, without the leading slash. It fires with the command already
@@ -518,7 +518,7 @@ disappear with it — there is no cleanup to remember.
 ```
 import "core.mc.entity" as entity;
 
-entity.entity_event(cow, 'on_death', on_cow_death);
+entity.on(cow, 'on_death', on_cow_death);
 ```
 
 | Kind | Arguments |
@@ -541,3 +541,19 @@ The first argument is always the entity itself.
   is not cancelled. See the end of chapter 7 of the guide.
 - **registering another handler**: it runs every time the event fires, and you end up with a listener
   per event instead of one.
+
+---
+
+## Coming from the old names
+
+`on` and `declare` stay two functions and not one. `on` listens to an event of the game, and its
+catalogue is closed on purpose: a misspelled name is a load error with a suggestion, instead of a
+handler that never fires. `declare` brings an event of the application into being, which by
+definition has no catalogue, and pairs with `emit`. Merging them would mean losing the check on the
+names, which is the more useful of the two.
+
+| Before | Now |
+| --- | --- |
+| `available()` | `list()` |
+| `handle_event(name, f)` | `declare(name, f)` |
+| `signal_event(name, source, ...)` | `emit(name, source, ...)` |

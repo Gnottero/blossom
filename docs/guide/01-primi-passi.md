@@ -36,7 +36,7 @@ import "core.mc.text" as text;
 import "core.mc.event" as event;
 
 fn benvenuto(giocatore) -> (
-    text.print(giocatore, 'benvenuto');
+    text.send(giocatore, 'benvenuto');
     false
 );
 

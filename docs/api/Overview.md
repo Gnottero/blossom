@@ -25,13 +25,16 @@ import "core.list" as list;
 | Module | What it holds |
 | --- | --- |
 | [`core.mc.block`](core.mc.block.md) | reading and writing blocks |
-| [`core.mc.world`](core.mc.world.md) | time, chunks, biomes, structures, dimensions |
+| [`core.mc.world`](core.mc.world.md) | time, chunks, biomes, dimensions |
 | [`core.mc.scan`](core.mc.scan.md) | walking over volumes of blocks |
 | [`core.mc.entity`](core.mc.entity.md) | finding, creating and modifying entities and players |
-| [`core.mc.item`](core.mc.item.md) | inventories, items, recipes |
-| [`core.mc.structure`](core.mc.structure.md) | saving, placing and comparing structure templates |
+| [`core.mc.item`](core.mc.item.md) | items, recipes, data components |
+| [`core.mc.inventory`](core.mc.inventory.md) | inventories, of whoever carries one and of whatever contains one |
+| [`core.mc.structure`](core.mc.structure.md) | structure templates, and the structures of the generator |
 | [`core.mc.screen`](core.mc.screen.md) | screens opened for a player |
-| [`core.mc.scoreboard`](core.mc.scoreboard.md) | objectives, teams, boss bars |
+| [`core.mc.score`](core.mc.score.md) | objectives and scores |
+| [`core.mc.team`](core.mc.team.md) | teams |
+| [`core.mc.bossbar`](core.mc.bossbar.md) | the bars at the top of the screen |
 | [`core.mc.nbt`](core.mc.nbt.md) | the raw data of the game |
 | [`core.mc.text`](core.mc.text.md) | messages and formatted text |
 | [`core.mc.effect`](core.mc.effect.md) | sounds, particles, post effects |

@@ -1,26 +1,75 @@
 {
   "$alias": "screen",
-
-  "create_screen": {
-    "signatures": ["create_screen(player, type, title)", "create_screen(player, type, title, callback)"],
+  "open": {
+    "signatures": [
+      "open(player, type, title)",
+      "open(player, type, title, callback)"
+    ],
     "summary": "Opens a screen for a player and hands back something that behaves like an inventory.",
-    "params": [["player", "who it opens for"], ["type", "one of the vanilla ones: `'generic_9x1'`..`'generic_9x6'`, `'generic_3x3'`, `'anvil'`, `'beacon'`, `'blast_furnace'`, `'brewing_stand'`, `'crafting'`, `'enchantment'`, `'furnace'`, `'grindstone'`, `'hopper'`, `'lectern'`, `'loom'`, `'merchant'`, `'shulker_box'`, `'smithing'`, `'smoker'`, `'cartography'`, `'stonecutter'`"], ["title", "the text at the top"], ["callback", "optional: called as `(screen, player, action, data)` — the actions are `'slot_click'`, `'button_click'`, `'select_recipe'`, `'close'`"]],
+    "params": [
+      [
+        "player",
+        "who it opens for"
+      ],
+      [
+        "type",
+        "one of the vanilla ones: `'generic_9x1'`..`'generic_9x6'`, `'generic_3x3'`, `'anvil'`, `'beacon'`, `'blast_furnace'`, `'brewing_stand'`, `'crafting'`, `'enchantment'`, `'furnace'`, `'grindstone'`, `'hopper'`, `'lectern'`, `'loom'`, `'merchant'`, `'shulker_box'`, `'smithing'`, `'smoker'`, `'cartography'`, `'stonecutter'`"
+      ],
+      [
+        "title",
+        "the text at the top"
+      ],
+      [
+        "callback",
+        "optional: called as `(screen, player, action, data)` — the actions are `'slot_click'`, `'button_click'`, `'select_recipe'`, `'close'`"
+      ]
+    ],
     "returns": "`screen` — usable as an inventory with the functions of `core.mc.item`.",
-    "examples": ["fn handle(scr, player, action, data) -> (\n    if(action == 'slot_click' && data:'slot' == 0,\n        true    // true = the click does not go through\n    )\n);\n\ns = screen.create_screen(player, 'generic_9x3', 'Shop', handle);\nitem.inventory_set(s, 0, 1, 'diamond');"],
+    "examples": [
+      "fn handle(scr, player, action, data) -> (\n    if(action == 'slot_click' && data:'slot' == 0,\n        true    // true = the click does not go through\n    )\n);\n\ns = screen.open(player, 'generic_9x3', 'Shop', handle);\nitem.set(s, 0, 1, 'diamond');"
+    ],
     "note": "Returning a true value from the callback cancels the action."
   },
-  "close_screen": {
-    "signatures": ["close_screen(screen)"],
+  "close": {
+    "signatures": [
+      "close(screen)"
+    ],
     "summary": "Closes the screen: the player goes back to their own inventory.",
-    "params": [["screen", "the screen returned by `create_screen`"]],
+    "params": [
+      [
+        "screen",
+        "the screen returned by `open`"
+      ]
+    ],
     "returns": "`bool` — whether it was open.",
-    "examples": ["screen.close_screen(s);"]
+    "examples": [
+      "screen.close(s);"
+    ]
   },
-  "screen_property": {
-    "signatures": ["screen_property(screen, property)", "screen_property(screen, property, value)"],
+  "property": {
+    "signatures": [
+      "property(screen, property)",
+      "property(screen, property, value)"
+    ],
     "summary": "Reads or writes a property of the screen: the level of an enchantment, the progress of a furnace, the fuel.",
-    "params": [["screen", "the screen to work on"], ["property", "the name of the property, which depends on the type of screen"], ["value", "optional: the value to write"]],
+    "params": [
+      [
+        "screen",
+        "the screen to work on"
+      ],
+      [
+        "property",
+        "the name of the property, which depends on the type of screen"
+      ],
+      [
+        "value",
+        "optional: the value to write"
+      ]
+    ],
     "returns": "the value of the property, or `bool` when writing.",
-    "examples": ["screen.screen_property(s, 'fuel_progress', 10);", "screen.screen_property(s, 'cook_progress');"]
+    "examples": [
+      "screen.property(s, 'fuel_progress', 10);",
+      "screen.property(s, 'cook_progress');"
+    ]
   }
 }

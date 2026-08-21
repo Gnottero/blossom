@@ -18,12 +18,12 @@
       "entity.player();               // whoever launched the script",
       "entity.player('ada');          // by name",
       "entity.player('all');          // every connected player",
-      "for(entity.player('all'), text.print(_, 'hello'));"
+      "for(entity.player('all'), text.send(_, 'hello'));"
     ]
   },
-  "entity_list": {
+  "list": {
     "signatures": [
-      "entity_list(type)"
+      "list(type)"
     ],
     "summary": "Every entity of a type in the loaded world.",
     "params": [
@@ -34,14 +34,14 @@
     ],
     "returns": "`list` — the entities found.",
     "examples": [
-      "entity.entity_list('zombie');      // every zombie loaded",
-      "length(entity.entity_list('*'));   // how many entities there are"
+      "entity.list('zombie');      // every zombie loaded",
+      "size(entity.list('*'));   // how many entities there are"
     ],
-    "note": "It walks over the whole loaded world: on a busy server this is not free, and `entity_area` is almost always the question you actually meant."
+    "note": "It walks over the whole loaded world: on a busy server this is not free, and `area` is almost always the question you actually meant."
   },
-  "entity_area": {
+  "area": {
     "signatures": [
-      "entity_area(type, centre, radius)"
+      "area(type, centre, radius)"
     ],
     "summary": "The entities of a type inside a box around a point.",
     "params": [
@@ -60,13 +60,13 @@
     ],
     "returns": "`list` — the entities inside the box.",
     "examples": [
-      "entity.entity_area('*', block.pos(player), 10);",
-      "entity.entity_area('item', pos, [5, 2, 5]);"
+      "entity.area('*', block.pos(player), 10);",
+      "entity.area('item', pos, [5, 2, 5]);"
     ]
   },
-  "entity_selector": {
+  "select": {
     "signatures": [
-      "entity_selector(selector)"
+      "select(selector)"
     ],
     "summary": "The entities a vanilla selector would pick.",
     "params": [
@@ -77,14 +77,14 @@
     ],
     "returns": "`list` — the entities matched.",
     "examples": [
-      "entity.entity_selector('@e[type=cow,distance=..10]');",
-      "entity.entity_selector('@a[tag=playing]');"
+      "entity.select('@e[type=cow,distance=..10]');",
+      "entity.select('@a[tag=playing]');"
     ]
   },
-  "entity_id": {
+  "by_id": {
     "signatures": [
-      "entity_id(id)",
-      "entity_id(uuid)"
+      "by_id(id)",
+      "by_id(uuid)"
     ],
     "summary": "An entity from its numeric id or from its uuid.",
     "params": [
@@ -95,15 +95,15 @@
     ],
     "returns": "`entity` — the entity, `null` when it is not loaded.",
     "examples": [
-      "entity.entity_id(1234);",
-      "entity.entity_id('069a79f4-44e9-4726-a5be-fca90e38aaf5');"
+      "entity.by_id(1234);",
+      "entity.by_id('069a79f4-44e9-4726-a5be-fca90e38aaf5');"
     ],
     "note": "The numeric id only lives as long as the entity is loaded; the uuid follows it across restarts."
   },
-  "entity_types": {
+  "types": {
     "signatures": [
-      "entity_types()",
-      "entity_types(type)"
+      "types()",
+      "types(type)"
     ],
     "summary": "The registered entity types, or the ones of a category.",
     "params": [
@@ -114,8 +114,8 @@
     ],
     "returns": "`list` — the names of the types.",
     "examples": [
-      "entity.entity_types();             // every type",
-      "entity.entity_types('monster');    // ['minecraft:zombie', ...]"
+      "entity.types();             // every type",
+      "entity.types('monster');    // ['minecraft:zombie', ...]"
     ]
   },
   "query": {
@@ -200,10 +200,10 @@
       "entity.spawn('armor_stand', pos, '{Invisible:1b, NoGravity:1b}');"
     ]
   },
-  "entity_event": {
+  "on": {
     "signatures": [
-      "entity_event(entity, event, function)",
-      "entity_event(entity, event, function, ...fixed_arguments)"
+      "on(entity, event, function)",
+      "on(entity, event, function, ...fixed_arguments)"
     ],
     "summary": "Attaches a handler to *that* entity alone.",
     "params": [
@@ -226,14 +226,14 @@
     ],
     "returns": "`null`.",
     "examples": [
-      "fn watch(e) -> if(entity.query(e, 'y') < 0, entity.modify(e, 'kill'));\nentity.entity_event(mob, 'on_tick', watch);",
-      "entity.entity_event(mob, 'on_tick', null);   // removed"
+      "fn watch(e) -> if(entity.query(e, 'y') < 0, entity.modify(e, 'kill'));\nentity.on(mob, 'on_tick', watch);",
+      "entity.on(mob, 'on_tick', null);   // removed"
     ],
-    "note": "The handler lives inside the entity: it follows it between worlds and disappears with it. The first argument is always the entity itself, and the number of arguments is checked at once, not at the first event."
+    "note": "The handler lives inside the entity: it follows it between worlds and disappears with it. The find argument is always the entity itself, and the number of arguments is checked at once, not at the find event."
   },
-  "entity_load_handler": {
+  "on_load": {
     "signatures": [
-      "entity_load_handler(types, function)"
+      "on_load(types, function)"
     ],
     "summary": "Calls a function every time an entity of one of those types appears in the world.",
     "params": [
@@ -248,7 +248,7 @@
     ],
     "returns": "`null`.",
     "examples": [
-      "fn on_undead(e) -> entity.modify(e, 'custom_name', 'nope');\nentity.entity_load_handler(['zombie', 'skeleton'], on_undead);"
+      "fn on_undead(e) -> entity.modify(e, 'custom_name', 'nope');\nentity.on_load(['zombie', 'skeleton'], on_undead);"
     ],
     "note": "The filter by type happens **before** the call: listening for a rare type costs nothing for every other entity appearing in the world. The unfiltered version is the `entity_loads` event in `core.mc.event`."
   },
@@ -265,8 +265,8 @@
     ],
     "returns": "`bool` — whether they will see real shapes instead of particles.",
     "examples": [
-      "if(entity.has_client(player),\n    shape.draw_shape('label', 100, {'pos' -> pos, 'text' -> 'here'}),\n    text.print(player, 'here: ' + pos)\n);"
+      "if(entity.has_client(player),\n    shape.draw('label', 100, {'pos' -> pos, 'text' -> 'here'}),\n    text.send(player, 'here: ' + pos)\n);"
     ],
-    "note": "It is not needed to draw: `draw_shape` decides on its own, player by player. It is for offering something different to those who have the client."
+    "note": "It is not needed to draw: `draw` decides on its own, player by player. It is for offering something different to those who have the client."
   }
 }

@@ -23,18 +23,18 @@ per andare più veloce — è concorrenza, non parallelismo automatico, e il coo
 
 | Funzione | Cosa fa |
 | --- | --- |
-| `task(f, ...args)` | avvia e restituisce un handle |
-| `task_join(t)` | aspetta la fine e restituisce il valore |
-| `task_await(t)` | aspetta senza restituire |
-| `task_completed(t)` · `task_value(t)` | se ha finito, e il risultato se c'è |
-| `task_count()` | quanti task sono in volo |
-| `task_send(t, v)` · `yield(v)` · `task_ready(t)` | scambiare valori con un task in corso |
+| `task.start(f, ...args)` | avvia e restituisce un handle |
+| `task.wait(t)` | aspetta la fine e restituisce il valore |
+| `task.next(t)` | aspetta senza restituire |
+| `task.done(t)` · `task.value(t)` | se ha finito, e il risultato se c'è |
+| `task.count()` | quanti task sono in volo |
+| `task.send(t, v)` · `yield(v)` · `task.has_next(t)` | scambiare valori con un task in corso |
 | `sleep(ms)` | sospende |
 
 ## Toccare il mondo da dentro un task
 
 Il mondo non è thread-safe. Da un task, ogni chiamata che legge o scrive blocchi ed entità va
-incapsulata in `task_dock`, che la esegue sul thread principale:
+incapsulata in `task.dock`, che la esegue sul thread principale:
 
 ```
 fn scansione(centro) -> (
@@ -47,7 +47,7 @@ fn scansione(centro) -> (
 );
 ```
 
-Il `task_dock` costa: fa la coda con il tick. La forma giusta è **un dock per blocco di lavoro**, non
+Il `task.dock` costa: fa la coda con il tick. La forma giusta è **un dock per blocco di lavoro**, non
 uno per ogni singola lettura — leggi tutto quello che ti serve in un dock solo, poi elabora fuori.
 
 ```
@@ -82,7 +82,7 @@ Ogni esecuzione ha un budget di tempo e una profondità massima di chiamata:
 | --- | --- | --- |
 | dentro un evento di gioco | 2 s | 256 |
 | da `/blossom script run` o al caricamento | 15 s | 256 |
-| dentro un `task()` | nessun limite | 256 |
+| dentro un `task.start()` | nessun limite | 256 |
 
 Il task non ha scadenza **apposta**: gira su un thread suo, non tiene fermo niente, ed è la cosa da
 usare quando un lavoro è davvero lungo. La profondità invece vale anche lì: una ricorsione infinita

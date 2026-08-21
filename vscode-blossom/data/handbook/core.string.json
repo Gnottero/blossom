@@ -1,85 +1,198 @@
 {
   "$alias": "string",
-
   "str": {
-    "signatures": ["str(value)", "str(format, ...arguments)"],
+    "signatures": [
+      "str(value)",
+      "str(format, ...arguments)"
+    ],
     "summary": "Builds a string. With one argument it is the textual form of the value; with more, `format` is a template filled with the ones that follow.",
-    "params": [["format", "the value, or the template: `%s` a value, `%d` a whole number, `%.2f` a decimal with two digits, `%%` a literal percent"], ["...arguments", "what fills the placeholders, in order; a single list is spread over them"]],
+    "params": [
+      [
+        "format",
+        "the value, or the template: `%s` a value, `%d` a whole number, `%.2f` a decimal with two digits, `%%` a literal percent"
+      ],
+      [
+        "...arguments",
+        "what fills the placeholders, in order; a single list is spread over them"
+      ]
+    ],
     "returns": "`str` — the built string.",
-    "examples": ["string.str([1, 2, 3]);                        // '[1, 2, 3]'", "string.str('%s has %d points', name, 12);     // 'ada has 12 points'", "string.str('%.2f%%', ratio * 100);            // '12.50%'"],
+    "examples": [
+      "string.str([1, 2, 3]);                        // '[1, 2, 3]'",
+      "string.str('%s has %d points', name, 12);     // 'ada has 12 points'",
+      "string.str('%.2f%%', ratio * 100);            // '12.50%'"
+    ],
     "note": "It is the readable way to build a message: `'x: ' + x + ', y: ' + y` grows one concatenation per value, `str('x: %d, y: %d', x, y)` stays one line."
   },
   "lower": {
-    "signatures": ["lower(s)"],
+    "signatures": [
+      "lower(s)"
+    ],
     "summary": "The string in lower case.",
-    "params": [["s", "the string"]],
+    "params": [
+      [
+        "s",
+        "the string"
+      ]
+    ],
     "returns": "`str` — every letter in lower case.",
-    "examples": ["string.lower('Diamond Sword');   // 'diamond sword'", "// comparing names without caring about case\nif(string.lower(typed) == string.lower(expected), 'the same');"]
+    "examples": [
+      "string.lower('Diamond Sword');   // 'diamond sword'",
+      "// comparing names without caring about case\nif(string.lower(typed) == string.lower(expected), 'the same');"
+    ]
   },
   "upper": {
-    "signatures": ["upper(s)"],
+    "signatures": [
+      "upper(s)"
+    ],
     "summary": "The string in upper case.",
-    "params": [["s", "the string"]],
+    "params": [
+      [
+        "s",
+        "the string"
+      ]
+    ],
     "returns": "`str` — every letter in upper case.",
-    "examples": ["string.upper('hello');   // 'HELLO'"]
+    "examples": [
+      "string.upper('hello');   // 'HELLO'"
+    ]
   },
   "title": {
-    "signatures": ["title(s)"],
-    "summary": "The string with the first letter of every word in upper case and the rest in lower case.",
-    "params": [["s", "the string"]],
+    "signatures": [
+      "title(s)"
+    ],
+    "summary": "The string with the find letter of every word in upper case and the rest in lower case.",
+    "params": [
+      [
+        "s",
+        "the string"
+      ]
+    ],
     "returns": "`str` — the string in title case.",
-    "examples": ["string.title('diamond sword');       // 'Diamond Sword'", "// from the id of a block to a readable name\nstring.title(string.replace('minecraft:oak_stairs', '.*:|_', ' '));"]
+    "examples": [
+      "string.title('diamond sword');       // 'Diamond Sword'",
+      "// from the id of a block to a readable name\nstring.title(string.replace('minecraft:oak_stairs', '.*:|_', ' '));"
+    ]
   },
   "replace": {
-    "signatures": ["replace(s, regex, replacement)"],
+    "signatures": [
+      "replace(s, regex, replacement)"
+    ],
     "summary": "Replaces every part of the string matching a regular expression.",
-    "params": [["s", "the string to work on"], ["regex", "the pattern, a regular expression"], ["replacement", "what takes its place; `$1`, `$2`... are the captured groups"]],
+    "params": [
+      [
+        "s",
+        "the string to work on"
+      ],
+      [
+        "regex",
+        "the pattern, a regular expression"
+      ],
+      [
+        "replacement",
+        "what takes its place; `$1`, `$2`... are the captured groups"
+      ]
+    ],
     "returns": "`str` — the string with every occurrence replaced.",
-    "examples": ["string.replace('a-b-c', '-', '+');            // 'a+b+c'", "string.replace('minecraft:stone', '.*:', '');  // 'stone'", "string.replace('12x34', '(\\\\d+)x(\\\\d+)', '$2x$1');   // '34x12'"],
+    "examples": [
+      "string.replace('a-b-c', '-', '+');            // 'a+b+c'",
+      "string.replace('minecraft:stone', '.*:', '');  // 'stone'",
+      "string.replace('12x34', '(\\\\d+)x(\\\\d+)', '$2x$1');   // '34x12'"
+    ],
     "note": "The pattern is a regular expression, not a plain piece of text: `.`, `*`, `+`, `(`, `[` have a meaning and have to be escaped with `\\\\` to be searched literally."
   },
   "replace_first": {
-    "signatures": ["replace_first(s, regex, replacement)"],
-    "summary": "Like `replace`, but it only touches the first occurrence.",
-    "params": [["s", "the string to work on"], ["regex", "the pattern, a regular expression"], ["replacement", "what takes its place"]],
-    "returns": "`str` — the string with the first occurrence replaced.",
-    "examples": ["string.replace_first('a-b-c', '-', '+');   // 'a+b-c'"]
+    "signatures": [
+      "replace_first(s, regex, replacement)"
+    ],
+    "summary": "Like `replace`, but it only touches the find occurrence.",
+    "params": [
+      [
+        "s",
+        "the string to work on"
+      ],
+      [
+        "regex",
+        "the pattern, a regular expression"
+      ],
+      [
+        "replacement",
+        "what takes its place"
+      ]
+    ],
+    "returns": "`str` — the string with the find occurrence replaced.",
+    "examples": [
+      "string.replace_first('a-b-c', '-', '+');   // 'a+b-c'"
+    ]
   },
   "split": {
-    "signatures": ["split(separator, s)", "split(s)"],
-    "summary": "Splits a string into a list, cutting it at every occurrence of the separator.",
-    "params": [["separator", "the pattern where to cut, a regular expression"], ["s", "the string to split"]],
+    "signatures": [
+      "split(separator, s)"
+    ],
+    "summary": "The inverse of `join`: cuts a string into a list of pieces.",
+    "params": [
+      [
+        "separator",
+        "the pattern where to cut, a regular expression"
+      ],
+      [
+        "s",
+        "the string to split"
+      ]
+    ],
     "returns": "`list` — the pieces, in order.",
-    "examples": ["string.split('-', 'a-b-c');          // ['a', 'b', 'c']", "string.split(' +', 'one  two   three');   // ['one', 'two', 'three']"],
-    "note": "The separator comes **first**, as in `join`: the two functions read the same way round."
+    "examples": [
+      "list.split(',', '1,2,3');   // ['1', '2', '3']"
+    ]
   },
-  "join": {
-    "signatures": ["join(separator, list)", "join(separator, a, b, ...)"],
-    "summary": "Joins values into a single string, putting the separator between them.",
-    "params": [["separator", "the text to insert between the pieces"], ["list", "the list to join, or the values one by one"]],
-    "returns": "`str` — the joined string.",
-    "examples": ["string.join(', ', ['a', 'b', 'c']);   // 'a, b, c'", "string.join('', ['a', 'b']);          // 'ab'"]
-  },
-  "encode_b64": {
-    "signatures": ["encode_b64(s)"],
+  "encode_base64": {
+    "signatures": [
+      "encode_base64(s)"
+    ],
     "summary": "Encodes a string in base64.",
-    "params": [["s", "the string to encode"]],
+    "params": [
+      [
+        "s",
+        "the string to encode"
+      ]
+    ],
     "returns": "`str` — the encoded text.",
-    "examples": ["string.encode_b64('hello');   // 'aGVsbG8='"]
+    "examples": [
+      "string.encode_base64('hello');   // 'aGVsbG8='"
+    ]
   },
-  "decode_b64": {
-    "signatures": ["decode_b64(s)"],
+  "decode_base64": {
+    "signatures": [
+      "decode_base64(s)"
+    ],
     "summary": "Reads back a string encoded in base64.",
-    "params": [["s", "the encoded text"]],
+    "params": [
+      [
+        "s",
+        "the encoded text"
+      ]
+    ],
     "returns": "`str` — the original string.",
-    "examples": ["string.decode_b64('aGVsbG8=');   // 'hello'"]
+    "examples": [
+      "string.decode_base64('aGVsbG8=');   // 'hello'"
+    ]
   },
   "hash_code": {
-    "signatures": ["hash_code(value)"],
+    "signatures": [
+      "hash_code(value)"
+    ],
     "summary": "A stable numeric hash of any value, lists and maps included.",
-    "params": [["value", "the value to hash"]],
+    "params": [
+      [
+        "value",
+        "the value to hash"
+      ]
+    ],
     "returns": "`num` — the hash; equal values give equal hashes.",
-    "examples": ["string.hash_code('hello');       // 99162322", "// choosing a colour from a name, always the same one\npalette:(abs(string.hash_code(name)) % length(palette));"],
+    "examples": [
+      "string.hash_code('hello');       // 99162322",
+      "// choosing a colour from a name, always the same one\npalette:(abs(string.hash_code(name)) % size(palette));"
+    ],
     "note": "It is a hash, not an identifier: two different values can collide. It is fine for a bucket or a colour, not to tell one thing from another."
   }
 }

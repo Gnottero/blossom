@@ -7,7 +7,7 @@ import "core.mc.block" as block;
 
 block.block([10, 64, 10]);                             // the block at that point
 block.set([10, 65, 10], 'oak_stairs', 'facing', 'north');
-block.block_state([10, 65, 10]);                       // {'facing' -> 'north', ...}
+block.state([10, 65, 10]);                       // {'facing' -> 'north', ...}
 ```
 
 A position is written as a list `[x, y, z]` or as three loose arguments: the two forms are equivalent
@@ -21,16 +21,16 @@ saved to json without converting it.
 ### `block(pos)`
 The block at that position. Compared with a string it answers on the name.
 
-### `block_state(pos)` · `block_state(pos, property)`
+### `state(pos)` · `state(pos, property)`
 The properties of the block as a map, or the value of a single property.
 
-### `block_data(pos)`
+### `data(pos)`
 The NBT of the block entity, `null` when that block does not have one.
 
-### `block_tags(pos)` · `block_tags(pos, tag)`
+### `tags(pos)` · `tags(pos, tag)`
 The tags the block belongs to, or whether it belongs to the given one.
 
-### `block_list()` · `block_list(tag)`
+### `catalog()` · `catalog(tag)`
 Every registered block, or the ones of a tag.
 
 ## Physical properties
@@ -47,7 +47,7 @@ Whether it stops movement, and whether it suffocates whoever is inside it.
 ### `hardness(pos)` · `blast_resistance(pos)`
 How hard it is to break and how well it resists explosions.
 
-### `block_sound(pos)` · `map_colour(pos)`
+### `sound(pos)` · `map_color(pos)`
 Sound group and colour on the map.
 
 ### `ticks_randomly(pos)` · `power(pos)`
@@ -80,14 +80,14 @@ Breaks the block the way that player would break it, respecting their tool and e
 ### `place_item(item, pos, face?, consider_flags?)`
 Uses an item on a block, the way a player clicking on it would.
 
-### `update(pos)` · `block_tick(pos)` · `random_tick(pos)`
+### `update(pos)` · `tick(pos)` · `random_tick(pos)`
 Forces a block update, a scheduled tick or a random tick.
 
 ### `without_updates(expression)`
 Runs the expression without propagating block updates: useful to build in bulk without setting off
 redstone and falling blocks at every step.
 
-### `create_explosion(pos, power?, type?, fire?, source?, cause?)`
+### `explosion(pos, power?, type?, fire?, source?, cause?)`
 Blows something up at that point.
 
 ## Positions

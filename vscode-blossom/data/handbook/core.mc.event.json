@@ -1,63 +1,175 @@
 {
   "$alias": "event",
-
   "on": {
-    "signatures": ["on(event, function)", "on(event, function, fixed_arguments)", "on(event, function, fixed_arguments, player)"],
+    "signatures": [
+      "on(event, function)",
+      "on(event, function, fixed_arguments)",
+      "on(event, function, fixed_arguments, player)"
+    ],
     "summary": "Registers a handler for an event of the game.",
-    "params": [["event", "the name of the event, from the closed catalogue"], ["function", "the handler, passed **as a value**, not as a name in a string"], ["fixed_arguments", "optional: a list of extra arguments, arriving after the ones of the event"], ["player", "optional: the handler fires only for that player"]],
+    "params": [
+      [
+        "event",
+        "the name of the event, from the closed catalogue"
+      ],
+      [
+        "function",
+        "the handler, passed **as a value**, not as a name in a string"
+      ],
+      [
+        "fixed_arguments",
+        "optional: a list of extra arguments, arriving after the ones of the event"
+      ],
+      [
+        "player",
+        "optional: the handler fires only for that player"
+      ]
+    ],
     "returns": "`null`.",
-    "examples": ["fn on_block_broken(player, block) -> (\n    text.print(player, 'you broke ' + block);\n    false           // true = the breaking is cancelled\n);\n\nevent.on('player_breaks_block', on_block_broken);", "// with fixed arguments\nevent.on('player_jumps', log_it, ['jump']);", "// only for one player\nevent.on('player_jumps', on_jump, [], player);"],
+    "examples": [
+      "fn on_block_broken(player, block) -> (\n    text.send(player, 'you broke ' + block);\n    false           // true = the breaking is cancelled\n);\n\nevent.on('player_breaks_block', on_block_broken);",
+      "// with fixed arguments\nevent.on('player_jumps', log_it, ['jump']);",
+      "// only for one player\nevent.on('player_jumps', on_jump, [], player);"
+    ],
     "note": "The number of arguments is checked at registration: a handler with the wrong signature is a load error, not a line in the log three hours later. A handler returning a true value cancels the action, when the event is cancellable. The handlers of an app go away when the app is reloaded."
   },
   "off": {
-    "signatures": ["off()", "off(event)"],
+    "signatures": [
+      "off()",
+      "off(event)"
+    ],
     "summary": "Removes the handlers of this app: all of them, or only the ones of an event.",
-    "params": [["event", "optional: only the handlers of this event"]],
+    "params": [
+      [
+        "event",
+        "optional: only the handlers of this event"
+      ]
+    ],
     "returns": "`num` — how many were removed.",
-    "examples": ["event.off('player_jumps');", "event.off();   // everything"]
+    "examples": [
+      "event.off('player_jumps');",
+      "event.off();   // everything"
+    ]
   },
-  "available": {
-    "signatures": ["available()"],
+  "list": {
+    "signatures": [
+      "list()"
+    ],
     "summary": "The names of every event the catalogue holds.",
     "params": [],
     "returns": "`list` — the names, as strings.",
-    "examples": ["event.available();   // ['bell_rings', 'block_dispenses', ...]"]
+    "examples": [
+      "event.list();   // ['bell_rings', 'block_dispenses', ...]"
+    ]
   },
   "listeners": {
-    "signatures": ["listeners(event)"],
+    "signatures": [
+      "listeners(event)"
+    ],
     "summary": "How many handlers are listening to an event.",
-    "params": [["event", "the name of the event"]],
+    "params": [
+      [
+        "event",
+        "the name of the event"
+      ]
+    ],
     "returns": "`num` — the number of listeners.",
-    "examples": ["event.listeners('tick');   // 3"]
+    "examples": [
+      "event.listeners('tick');   // 3"
+    ]
   },
   "describe": {
-    "signatures": ["describe(event)"],
+    "signatures": [
+      "describe(event)"
+    ],
     "summary": "The card of an event: how many arguments it takes, whether it can be cancelled, who is listening.",
-    "params": [["event", "the name of the event"]],
+    "params": [
+      [
+        "event",
+        "the name of the event"
+      ]
+    ],
     "returns": "`map` — arity, cancellability and listeners.",
-    "examples": ["event.describe('player_breaks_block');\n// {'arity' -> 2, 'cancellable' -> true, 'listeners' -> 1}"]
+    "examples": [
+      "event.describe('player_breaks_block');\n// {'arity' -> 2, 'cancellable' -> true, 'listeners' -> 1}"
+    ]
   },
-  "handle_event": {
-    "signatures": ["handle_event(event, function)", "handle_event(event, function, ...fixed_arguments)"],
+  "declare": {
+    "signatures": [
+      "declare(event, function)",
+      "declare(event, function, ...fixed_arguments)"
+    ],
     "summary": "Like `on`, but it also takes a name the game does not know: that becomes an **application event**.",
-    "params": [["event", "the name of the event, of the game or invented"], ["function", "the handler, as a value"], ["...fixed_arguments", "extra arguments"]],
+    "params": [
+      [
+        "event",
+        "the name of the event, of the game or invented"
+      ],
+      [
+        "function",
+        "the handler, as a value"
+      ],
+      [
+        "...fixed_arguments",
+        "extra arguments"
+      ]
+    ],
     "returns": "`null`.",
-    "examples": ["// this app declares the event by listening to it\nevent.handle_event('mine:round_over', on_round_over);"],
-    "note": "An application event exists from the moment the first app listens to it. It is the way two apps talk without either knowing the functions of the other."
+    "examples": [
+      "// this app declares the event by listening to it\nevent.declare('mine:round_over', on_round_over);"
+    ],
+    "note": "An application event exists from the moment the find app listens to it. It is the way two apps talk without either knowing the functions of the other."
   },
-  "signal_event": {
-    "signatures": ["signal_event(event, player_or_null)", "signal_event(event, player_or_null, ...arguments)"],
+  "emit": {
+    "signatures": [
+      "emit(event, player_or_null)",
+      "emit(event, player_or_null, ...arguments)"
+    ],
     "summary": "Raises an application event, calling every app listening to it.",
-    "params": [["event", "the name of the event"], ["player_or_null", "the player it concerns, or `null`"], ["...arguments", "what to hand to the handlers"]],
+    "params": [
+      [
+        "event",
+        "the name of the event"
+      ],
+      [
+        "player_or_null",
+        "the player it concerns, or `null`"
+      ],
+      [
+        "...arguments",
+        "what to hand to the handlers"
+      ]
+    ],
     "returns": "`num` — how many apps were listening, `null` when that event does not exist.",
-    "examples": ["event.signal_event('mine:round_over', null, winner, score);"]
+    "examples": [
+      "event.emit('mine:round_over', null, winner, score);"
+    ]
   },
   "schedule": {
-    "signatures": ["schedule(delay, function)", "schedule(delay, function, ...arguments)"],
+    "signatures": [
+      "schedule(delay, function)",
+      "schedule(delay, function, ...arguments)"
+    ],
     "summary": "Calls a function a number of ticks from now.",
-    "params": [["delay", "how many ticks to wait"], ["function", "what to call, as a value"], ["...arguments", "what to call it with"]],
+    "params": [
+      [
+        "delay",
+        "how many ticks to wait"
+      ],
+      [
+        "function",
+        "what to call, as a value"
+      ],
+      [
+        "...arguments",
+        "what to call it with"
+      ]
+    ],
     "returns": "`null`.",
-    "examples": ["event.schedule(20, print, 'one second later');", "// a loop that lets the world go on between rounds\nfn step(n) -> (\n    work(n);\n    if(n < 100, event.schedule(1, step, n + 1))\n);\nstep(0);"],
-    "note": "The times are in ticks and not in milliseconds: a script waiting twenty ticks waits the same amount of *game* time even when the server slows down. It is the way to wait without blocking the tick — `sleep` of `core.task` stops the thread."
+    "examples": [
+      "event.schedule(20, send, 'one second later');",
+      "// a loop that lets the world go on between rounds\nfn step(n) -> (\n    work(n);\n    if(n < 100, event.schedule(1, step, n + 1))\n);\nstep(0);"
+    ],
+    "note": "The times are in ticks and not in milliseconds: a script waiting twenty ticks waits the same amount of *game* time even when the server slows down. It is the way to wait without blocking the tick — `sleep` of `core.start` stops the thread."
   }
 }

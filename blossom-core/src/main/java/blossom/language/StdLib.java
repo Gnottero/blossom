@@ -162,6 +162,24 @@ public final class StdLib
     }
 
     /**
+     * Come sopra, per un modulo i cui nomi pubblici non coincidono con quelli delle implementazioni.
+     *
+     * <p>E' quello che permette di rinominare la superficie del linguaggio senza toccare una sola
+     * delle funzioni registrate: il catalogo dice come si chiama la cosa, la mappa dice dove sta.
+     */
+    public static void registerModule(String name, Map<String, String> symbols)
+    {
+        module(name, symbols);
+    }
+
+    /** Come {@link #extendModule(String, Set)}, con i nomi pubblici staccati dalle implementazioni. */
+    public static void extendModule(String name, Map<String, String> symbols)
+    {
+        extendModule(name, symbols.keySet());
+        symbols.forEach((symbol, implementation) -> IMPLEMENTATION.put(name + '.' + symbol, implementation));
+    }
+
+    /**
      * Aggiunge simboli a un modulo gia' dichiarato, invece di sostituirlo.
      *
      * <p>Serve a un modulo che sta a cavallo dei due strati: {@code core.io} e' del core, ma leggere

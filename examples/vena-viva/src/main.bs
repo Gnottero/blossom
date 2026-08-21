@@ -54,7 +54,7 @@ pub fn ispeziona(centro: list, tipo: str, giocatore, nome: str) -> try(
                 cantiere.suona_esaurita(centro);
                 // le altre app che ascoltano 'vena_esaurita' lo sanno; se non ne ascolta nessuna,
                 // signal_event restituisce null e non e' successo niente
-                event.signal_event('vena_esaurita', giocatore, tipo, centro, nome)
+                event.emit('vena_esaurita', giocatore, tipo, centro, nome)
             ))
         ))
     ),

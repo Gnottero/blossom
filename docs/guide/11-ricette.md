@@ -169,10 +169,10 @@ Con il filtro esplicito: senza, `try` cattura solo le eccezioni utente.
 
 ```
 // app "miniera"
-conteggio = event.signal_event('vena_esaurita', null, pos, quanti);
+conteggio = event.emit('vena_esaurita', null, pos, quanti);
 
 // app "registro"
-event.handle_event('vena_esaurita', su_vena_esaurita);
+event.declare('vena_esaurita', su_vena_esaurita);
 ```
 
 `signal_event` restituisce `null` se nessuno ascolta: puoi saltare il lavoro di preparare i dati.
