@@ -3,7 +3,9 @@ package blossom.interpreter.argument;
 import blossom.exception.SourcePosition;
 import blossom.exception.NullReferenceError;
 import blossom.interpreter.Context;
+import blossom.interpreter.LazyValue;
 import blossom.interpreter.Module;
+import blossom.interpreter.ScriptHost;
 import blossom.exception.ArityError;
 import blossom.exception.SourcePosition;
 import blossom.value.FunctionValue;
@@ -56,8 +58,7 @@ public class FunctionArgument extends Argument
         }
         if (!(functionValue instanceof FunctionValue))
         {
-            String name = functionValue.getString();
-            functionValue = c.host.getAssertFunction(module, name);
+            functionValue = resolveByName(c, module, functionValue.getString());
         }
         FunctionValue fun = (FunctionValue) functionValue;
         int argsize = fun.getArguments().size();
@@ -79,6 +80,38 @@ public class FunctionArgument extends Argument
             lvargs.add(params.get(i));
         }
         return new FunctionArgument(fun, offset + 1 + argsize, lvargs);
+    }
+
+    /**
+     * La funzione che quel nome indica: prima una funzione dichiarata, poi una variabile che ne
+     * contiene una.
+     *
+     * <p>L'ordine conta ed e' quello che tiene il costo dov'era: una chiamata a una funzione
+     * dichiarata - il caso normale - trova al primo colpo e non paga niente in piu'. La lettura
+     * della variabile la paga solo chi chiama davvero un valore-funzione, cioe' chi scrive
+     * {@code f(x)} con {@code f} legata a una lambda.
+     *
+     * <p>Un nome qualificato ({@code vec.add}) salta il secondo passo: una variabile non ha il
+     * punto nel nome, quindi li' non c'e' niente da cercare.
+     */
+    private static FunctionValue resolveByName(Context c, Module module, String name)
+    {
+        if (ScriptHost.isQualified(name))
+        {
+            return c.host.getAssertFunction(module, name);
+        }
+        FunctionValue declared = c.host.getFunction(module, name);
+        if (declared != null)
+        {
+            return declared;
+        }
+        LazyValue bound = c.getVariable(name);
+        if (bound != null && bound.evalValue(c, Context.NONE) instanceof FunctionValue held)
+        {
+            return held;
+        }
+        // niente ne' come funzione ne' come variabile: l'errore giusto lo sa gia' costruire l'host
+        return c.host.getAssertFunction(module, name);
     }
 
     public List<Value> checkedArgs()
