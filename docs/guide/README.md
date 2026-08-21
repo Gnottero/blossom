@@ -41,3 +41,4 @@ dei test: se il linguaggio cambia e la guida non viene aggiornata, la build si a
 | [`torre-guardiana`](../../../examples/torre-guardiana) | più moduli, simboli privati, un evento annullabile, `try` |
 | [`contapassi`](../../../examples/contapassi) | un file solo: HUD, stato persistente, eventi di giocatore |
 | [`vena-viva`](../../../examples/vena-viva) | quattro moduli, `scan`, task in background, evento fra app, comando |
+- [13. Il contenuto di gioco](13-contenuti.md) — ricette, loot table, tag e advancement dentro il pack
