@@ -69,6 +69,28 @@ class LambdaTest
     }
 
     @Test
+    void unCatchPuoDareUnNomeAllErrore()
+    {
+        assertEquals("preso: rotto",
+                eval("try(throw('rotto'), fn(e) -> 'preso: ' + e)"));
+    }
+
+    @Test
+    void unCatchConNomeSopravviveAUnCicloDentro()
+    {
+        // con '_' il valore dell'eccezione sparisce dentro il for: con un nome no
+        assertEquals("[rotto, rotto]",
+                eval("import 'core.list' as list; try(throw('rotto'), fn(e) -> list.map([1,2], e))"));
+    }
+
+    @Test
+    void unCatchConDueParametriRiceveLoStackNelSecondo()
+    {
+        assertEquals("true",
+                eval("try(throw('rotto'), fn(e, tr) -> tr:'token' != null)"));
+    }
+
+    @Test
     void fnSenzaFrecciaEUnErroreChiaro()
     {
         Exception e = assertThrows(Exception.class, () -> eval("fn(a, b)"));

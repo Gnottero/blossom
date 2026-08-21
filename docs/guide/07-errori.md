@@ -43,7 +43,18 @@ try(espressione, 'filtro', ripiego);                // solo quel tipo
 try(espressione, 'f1', r1, 'f2', r2, ..., ripiego); // più filtri in ordine
 ```
 
-Dentro il ramo di ripiego, `_` è il valore lanciato:
+Il ramo di ripiego puo' essere una **lambda**, e allora l'errore ha un nome:
+
+```
+try(lavoro(), 'exception', fn(e) -> print('non ci sono riuscito: ' + e));
+try(lavoro(), 'exception', fn(e, tr) -> log(e, tr:'token'));   // il secondo e' _trace
+```
+
+E' la forma da preferire: `_` e' anche l'elemento corrente di ogni ciclo, quindi un `for` dentro un
+`catch` se lo porta via, e il valore dell'eccezione va salvato a mano prima. Con un nome quel
+problema non esiste.
+
+Nella forma senza lambda, `_` resta il valore lanciato:
 
 ```
 import "core.json" as json;
@@ -179,5 +190,17 @@ fn su_campana(pos, direzione, chi) -> (
 ```
 
 Quel `motivo = _` non è pedanteria: `_` è lo stesso nome che usano `for`, `map` e `filter` per
-l'elemento corrente. Dentro un ciclo, il valore dell'eccezione non c'è più. Copialo in una variabile
-con un nome, appena entri nel `catch`.
+l'elemento corrente. Dentro un ciclo, il valore dell'eccezione non c'è più.
+
+Oggi la risposta migliore è non usare `_` per niente e scrivere il `catch` come lambda, che il nome
+ce l'ha già:
+
+```
+fn su_campana(pos, direzione, chi) -> (
+    try(
+        costruisci(pos),
+        'exception', fn(motivo) -> for(entity.player('all'), text.print(_, 'non ci sono riuscito: ' + motivo))
+    );
+    false
+);
+```

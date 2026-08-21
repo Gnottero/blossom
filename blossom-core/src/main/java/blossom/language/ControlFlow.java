@@ -9,12 +9,15 @@ import blossom.exception.ExitStatement;
 import blossom.exception.ProcessedThrowStatement;
 import blossom.exception.ThrowStatement;
 import blossom.exception.Throwables;
+import blossom.value.FunctionValue;
 import blossom.value.ListValue;
 import blossom.value.MapValue;
 import blossom.value.NumericValue;
 import blossom.value.StringValue;
 import blossom.value.Value;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -132,7 +135,7 @@ public class ControlFlow
                 {
                     if (ret.thrownExceptionType.isUserException())
                     {
-                        val = lv.get(1).evalValue(c, t);
+                        val = catchBranch(c, lv.get(1)).evalValue(c, t);
                     }
                 }
                 else
@@ -142,7 +145,7 @@ public class ControlFlow
                     {
                         if (ret.thrownExceptionType.isRelevantFor(lv.get(pointer).evalValue(c).getString()))
                         {
-                            val = lv.get(pointer + 1).evalValue(c, t);
+                            val = catchBranch(c, lv.get(pointer + 1)).evalValue(c, t);
                             break;
                         }
                         pointer += 2;
@@ -165,6 +168,44 @@ public class ControlFlow
                 return (ct, tt) -> retval;
             }
         });
+    }
+
+    /**
+     * Il ramo di ripiego di un {@code try}, che si scrive in due modi.
+     *
+     * <p>La forma di sempre e' un'espressione, e dentro {@code _} e' il valore lanciato. La forma
+     * nuova e' una lambda, {@code fn(e) -> ...}, che gli da' un nome: e' quella da preferire,
+     * perche' {@code _} e' anche l'elemento corrente di ogni ciclo, e un {@code for} dentro un
+     * {@code catch} se lo porta via. Con un nome quel problema non esiste.
+     *
+     * <p>Con due parametri il secondo e' {@code _trace}.
+     */
+    private static LazyValue catchBranch(Context c, LazyValue branch)
+    {
+        if (!(branch instanceof LazyValue.Lambda))
+        {
+            return branch;
+        }
+        FunctionValue handler = (FunctionValue) branch.evalValue(c, Context.NONE);
+        int arity = handler.getArguments().size();
+        return (cc, tt) ->
+        {
+            List<Value> args = new ArrayList<>(arity);
+            if (arity > 0)
+            {
+                args.add(cc.implicitValue().evalValue(cc, Context.NONE));
+            }
+            if (arity > 1)
+            {
+                LazyValue trace = cc.getVariable("_trace");
+                args.add(trace == null ? Value.NULL : trace.evalValue(cc, Context.NONE));
+            }
+            while (args.size() < arity)
+            {
+                args.add(Value.NULL);
+            }
+            return handler.callInContext(cc, Context.NONE, args).evalValue(cc, Context.NONE);
+        };
     }
 
     /**
