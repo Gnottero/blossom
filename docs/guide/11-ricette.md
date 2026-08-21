@@ -55,7 +55,7 @@ Non serve registrare comandi: le funzioni `pub` di un'app si chiamano già dalla
 
 ```
 pub fn classifica() -> (
-    ordinata = list.sort_key(map.pairs(punteggi), -_:1);
+    ordinata = list.sort(map.pairs(punteggi), -_:1);
     list.map(ordinata, _:0 + ': ' + _:1)
 );
 ```

@@ -76,54 +76,34 @@
   },
   "replace": {
     "signatures": [
-      "replace(s, regex, replacement)"
+      "replace(string, pattern, replacement)",
+      "replace(string, pattern, replacement, count)"
     ],
     "summary": "Replaces every part of the string matching a regular expression.",
     "params": [
       [
-        "s",
-        "the string to work on"
+        "string",
+        "the text to read"
       ],
       [
-        "regex",
-        "the pattern, a regular expression"
+        "pattern",
+        "a regular expression"
       ],
       [
         "replacement",
-        "what takes its place; `$1`, `$2`... are the captured groups"
+        "what to put in its place"
+      ],
+      [
+        "count",
+        "optional: how many occurrences, all of them when absent"
       ]
     ],
     "returns": "`str` — the string with every occurrence replaced.",
     "examples": [
-      "string.replace('a-b-c', '-', '+');            // 'a+b+c'",
-      "string.replace('minecraft:stone', '.*:', '');  // 'stone'",
-      "string.replace('12x34', '(\\\\d+)x(\\\\d+)', '$2x$1');   // '34x12'"
+      "string.replace('a-b-c', '-', '+');      // 'a+b+c'",
+      "string.replace('a-b-c', '-', '+', 1);   // 'a+b-c'"
     ],
     "note": "The pattern is a regular expression, not a plain piece of text: `.`, `*`, `+`, `(`, `[` have a meaning and have to be escaped with `\\\\` to be searched literally."
-  },
-  "replace_first": {
-    "signatures": [
-      "replace_first(s, regex, replacement)"
-    ],
-    "summary": "Like `replace`, but it only touches the find occurrence.",
-    "params": [
-      [
-        "s",
-        "the string to work on"
-      ],
-      [
-        "regex",
-        "the pattern, a regular expression"
-      ],
-      [
-        "replacement",
-        "what takes its place"
-      ]
-    ],
-    "returns": "`str` — the string with the find occurrence replaced.",
-    "examples": [
-      "string.replace_first('a-b-c', '-', '+');   // 'a+b-c'"
-    ]
   },
   "split": {
     "signatures": [

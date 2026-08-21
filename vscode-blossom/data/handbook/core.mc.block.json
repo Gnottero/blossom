@@ -313,83 +313,24 @@
   },
   "light": {
     "signatures": [
-      "light(pos)"
+      "light(pos)",
+      "light(pos, kind)"
     ],
-    "summary": "The total light at that point, whatever it comes from.",
+    "summary": "The light at a point, whole or one layer at a time.",
     "params": [
       [
         "pos",
-        "the position to sample"
+        "the position"
+      ],
+      [
+        "kind",
+        "optional: total, block, sky, effective, emitted, brightness"
       ]
     ],
     "returns": "`num` — from 0 to 15.",
     "examples": [
-      "block.light([0, 64, 0]);   // 15 in the open sun"
-    ]
-  },
-  "block_light": {
-    "signatures": [
-      "block_light(pos)"
-    ],
-    "summary": "The light coming from blocks - torches, lava, glowstone.",
-    "params": [
-      [
-        "pos",
-        "the position to sample"
-      ]
-    ],
-    "returns": "`num` — from 0 to 15.",
-    "examples": [
-      "block.block_light(cave_pos);   // 0 in the dark"
-    ]
-  },
-  "sky_light": {
-    "signatures": [
-      "sky_light(pos)"
-    ],
-    "summary": "The light coming from the sky, before the time of day is taken into account.",
-    "params": [
-      [
-        "pos",
-        "the position to sample"
-      ]
-    ],
-    "returns": "`num` — from 0 to 15.",
-    "examples": [
-      "block.sky_light([0, 100, 0]);   // 15 outdoors, day or night"
-    ]
-  },
-  "effective_light": {
-    "signatures": [
-      "effective_light(pos)"
-    ],
-    "summary": "The light that really counts for spawning: the sky one lowered by the time of day.",
-    "params": [
-      [
-        "pos",
-        "the position to sample"
-      ]
-    ],
-    "returns": "`num` — from 0 to 15.",
-    "examples": [
-      "if(block.effective_light(pos) == 0, send('mobs can spawn here'));"
-    ],
-    "note": "It is this one, not `light`, that answers \"can something spawn here at night\"."
-  },
-  "emitted_light": {
-    "signatures": [
-      "emitted_light(pos)"
-    ],
-    "summary": "The light the block itself gives off.",
-    "params": [
-      [
-        "pos",
-        "the position of the block"
-      ]
-    ],
-    "returns": "`num` — from 0 to 15.",
-    "examples": [
-      "block.emitted_light(torch_pos);   // 14"
+      "block.light([0, 64, 0]);            // the total",
+      "block.light([0, 64, 0], 'sky');     // only what comes from the sky"
     ]
   },
   "see_sky": {
@@ -406,22 +347,6 @@
     "returns": "`bool` — whether it sees the sky.",
     "examples": [
       "if(block.see_sky(pos), send('it rains here'));"
-    ]
-  },
-  "brightness": {
-    "signatures": [
-      "brightness(pos)"
-    ],
-    "summary": "The brightness at that point as a number between zero and one, the way the game renders it.",
-    "params": [
-      [
-        "pos",
-        "the position to sample"
-      ]
-    ],
-    "returns": "`num` — from 0 to 1.",
-    "examples": [
-      "block.brightness([0, 64, 0]);   // 1.0 in full light"
     ]
   },
   "set": {

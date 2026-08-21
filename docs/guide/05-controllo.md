@@ -100,7 +100,7 @@ list.filter([1, 2, 3, 4], _ % 2 == 0);      // [2, 4]
 list.reduce([1, 2, 3, 4], _a + _, 0);       // 10
 list.find([1, 2, 3], _ > 1);               // 2, oppure null se nessuno
 list.all([2, 4], _ % 2 == 0);               // true (su una lista vuota è true)
-list.sort_key(['bbb', 'a'], list.size(_));// ordina secondo la chiave calcolata
+list.sort(['bbb', 'a'], list.size(_));// ordina secondo la chiave calcolata
 ```
 
 `break()` dentro un `map` tronca il risultato: `list.map([1,2,3], if(_ == 2, break()); _)` dà `[1]`.

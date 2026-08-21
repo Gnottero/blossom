@@ -185,43 +185,43 @@ public class Sys
 
         expression.addUnaryFunction("title", v -> new StringValue(titleCase(v.getString())));
 
+        /*
+         * replace(testo, regex, con) - tutte le occorrenze
+         * replace(testo, regex, con, quante) - solo le prime 'quante'
+         *
+         * Erano due funzioni, e la seconda diceva "first" per dire "una". Con un numero in coda si
+         * dice quante, e "una" e' il caso in cui quel numero e' 1.
+         */
         expression.addFunction("replace", lv ->
         {
-            if (lv.size() != 3 && lv.size() != 2)
+            if (lv.size() < 2 || lv.size() > 4)
             {
-                throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "system", "'replace' expects string to read, pattern regex, and optional replacement string");
+                throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "system",
+                        "'replace' expects the string, the pattern, an optional replacement and an optional count");
             }
             String data = lv.get(0).getString();
             String regex = lv.get(1).getString();
-            String replacement = "";
-            if (lv.size() == 3)
-            {
-                replacement = lv.get(2).getString();
-            }
+            String replacement = lv.size() > 2 ? lv.get(2).getString() : "";
+            long limit = lv.size() > 3 ? NumericValue.asNumber(lv.get(3)).getLong() : -1;
             try
             {
-                return new StringValue(data.replaceAll(regex, replacement));
+                if (limit < 0)
+                {
+                    return new StringValue(data.replaceAll(regex, replacement));
+                }
+                java.util.regex.Matcher matcher = java.util.regex.Pattern.compile(regex).matcher(data);
+                StringBuilder out = new StringBuilder();
+                for (long done = 0; done < limit && matcher.find(); done++)
+                {
+                    matcher.appendReplacement(out, replacement);
+                }
+                matcher.appendTail(out);
+                return new StringValue(out.toString());
             }
             catch (PatternSyntaxException pse)
             {
-                throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "system", "Incorrect pattern for 'replace': " + pse.getMessage());
+                throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "system", "Incorrect pattern for replace: " + pse.getMessage());
             }
-        });
-
-        expression.addFunction("replace_first", lv ->
-        {
-            if (lv.size() != 3 && lv.size() != 2)
-            {
-                throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "system", "'replace_first' expects string to read, pattern regex, and optional replacement string");
-            }
-            String data = lv.get(0).getString();
-            String regex = lv.get(1).getString();
-            String replacement = "";
-            if (lv.size() == 3)
-            {
-                replacement = lv.get(2).getString();
-            }
-            return new StringValue(data.replaceFirst(regex, replacement));
         });
 
         expression.addUnaryFunction("type", v -> new StringValue(v.getTypeString()));

@@ -145,26 +145,9 @@
   "sort": {
     "signatures": [
       "sort(list)",
-      "sort(a, b, ...)"
+      "sort(list, key)"
     ],
-    "summary": "The list sorted by the natural order of the values.",
-    "params": [
-      [
-        "list",
-        "the list to sort, or the values one by one"
-      ]
-    ],
-    "returns": "`list` — a new sorted list; the original one is untouched.",
-    "examples": [
-      "list.sort([3, 1, 2]);                // [1, 2, 3]",
-      "list.sort(['pear', 'apple']);        // ['apple', 'pear']"
-    ]
-  },
-  "sort_key": {
-    "signatures": [
-      "sort_key(list, key)"
-    ],
-    "summary": "The list sorted by the result of an expression computed on every element.",
+    "summary": "Sorts a list, by the values or by a key.",
     "params": [
       [
         "list",
@@ -172,14 +155,13 @@
       ],
       [
         "key",
-        "computed for every element: `_` is the element"
+        "optional: an expression with `_`, or a function, computing what to sort by"
       ]
     ],
-    "returns": "`list` — a new list sorted by the key.",
+    "returns": "`list` — a new sorted list; the original one is untouched.",
     "examples": [
-      "list.sort_key(['ccc', 'a', 'bb'], size(_));      // ['a', 'bb', 'ccc']",
-      "// nearest find\nlist.sort_key(entities, entity.query(_, 'distance_to', me));",
-      "// descending: negate the key\nlist.sort_key(scores, -_:1);"
+      "list.sort([3, 1, 2]);                        // [1, 2, 3]",
+      "list.sort(['bbb', 'a'], list.size(_));       // [a, bbb]"
     ]
   },
   "size": {

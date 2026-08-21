@@ -30,8 +30,14 @@ condition)` says whether they all satisfy it.
 
 ### Sorting
 
-`sort(list)` sorts by the natural order of the values; `sort_key(list, key)` by the result of the key
-expression.
+`sort(list)` sorts by the natural order of the values; `sort(list, key)` by the result of the key,
+which is an expression with `_` or a function.
+
+```
+list.sort([3, 1, 2]);                          // [1, 2, 3]
+list.sort(['bbb', 'a', 'cc'], list.size(_));   // [a, cc, bbb]
+list.sort(['bbb', 'a', 'cc'], fn(x) -> list.size(x));
+```
 
 ### Access and modification
 
@@ -60,4 +66,5 @@ you go down one level, `put(l:0:1, 9)`.
 | `length(l)` | `size(l)` |
 | `delete(l, i)` | `remove(l, i)` |
 | `first(l, cond)` | `find(l, cond)` |
+| `sort_key(l, key)` | `sort(l, key)` — and `sort_key(l)` alone used to **shuffle**, which is a different operation with the same name |
 | `split(sep, s)` | it lives in [`core.string`](core.string.md) |

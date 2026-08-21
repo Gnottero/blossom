@@ -48,7 +48,7 @@
     "returns": "`list` — one two element list per entry.",
     "examples": [
       "map.pairs({'a' -> 1});   // [['a', 1]]",
-      "// sorting a map by value\nlist.sort_key(map.pairs(scores), -_:1);"
+      "// sorting a map by value\nlist.sort(map.pairs(scores), -_:1);"
     ]
   },
   "get": {

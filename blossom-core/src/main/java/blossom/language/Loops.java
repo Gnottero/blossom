@@ -78,6 +78,12 @@ public class Loops
         return loopBody(c, expr, false);
     }
 
+    /** Come sopra, per chi sta fuori da questo file: la chiave di {@code sort}, per esempio. */
+    public static LazyValue keyOf(Context c, LazyValue expr)
+    {
+        return loopBody(c, expr, false);
+    }
+
     public static void apply(Expression expression)
     {
         // condition and expression will get a bound '_i'

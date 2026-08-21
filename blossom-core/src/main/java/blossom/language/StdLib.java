@@ -67,8 +67,8 @@ public final class StdLib
                 java.util.Map.entry("lower", "lower"),
                 java.util.Map.entry("upper", "upper"),
                 java.util.Map.entry("title", "title"),
+                // una funzione sola: quante occorrenze si dice con un numero, non con un nome
                 java.util.Map.entry("replace", "replace"),
-                java.util.Map.entry("replace_first", "replace_first"),
                 java.util.Map.entry("split", "split"),
                 java.util.Map.entry("encode_base64", "encode_b64"),
                 java.util.Map.entry("decode_base64", "decode_b64"),
@@ -79,8 +79,9 @@ public final class StdLib
                 java.util.Map.entry("map", "map"),
                 java.util.Map.entry("filter", "filter"),
                 java.util.Map.entry("reduce", "reduce"),
-                java.util.Map.entry("sort", "sort"),
-                java.util.Map.entry("sort_key", "sort_key"),
+                // 'sort(l)' ordina per il valore, 'sort(l, chiave)' per quello che la chiave
+                // calcola: una funzione sola, con il secondo argomento facoltativo
+                java.util.Map.entry("sort", "sort_key"),
                 java.util.Map.entry("find", "first"),
                 java.util.Map.entry("all", "all"),
                 java.util.Map.entry("slice", "slice"),

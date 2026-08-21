@@ -55,9 +55,20 @@ Whether it gets random ticks, and the redstone signal it emits.
 
 ## Light
 
-### `light(pos)` · `block_light(pos)` · `sky_light(pos)` · `effective_light(pos)` · `emitted_light(pos)`
-The various light levels at that point: total, from blocks, from the sky, the one that counts for
-spawning, and the one the block itself emits.
+### `light(pos)` · `light(pos, kind)`
+The light at that point. Without a kind it is the total, the higher of the two layers; with one it is
+that layer alone:
+
+| Kind | What it is |
+| --- | --- |
+| `'total'` | the higher of block and sky — the default |
+| `'block'` | what blocks around emit |
+| `'sky'` | what comes from the sky |
+| `'effective'` | the one that counts for spawning |
+| `'emitted'` | what the block itself emits |
+| `'brightness'` | a number between 0 and 1 |
+
+A kind that does not exist says which ones do.
 
 ### `see_sky(pos)` · `brightness(pos)`
 Whether the point sees the sky, and the brightness as a number between 0 and 1.
@@ -94,3 +105,19 @@ Blows something up at that point.
 
 ### `pos(entity)` · `pos_offset(pos, direction, how_much?)`
 The position of an entity, and a position shifted in a direction.
+
+---
+
+## Coming from the old names
+
+| Before | Now |
+| --- | --- |
+| `block_data(p)` | `data(p)` |
+| `block_state(p, k?)` | `state(p, k?)` |
+| `block_tags(p, t?)` | `tags(p, t?)` |
+| `block_list(t?)` | `catalog(t?)` |
+| `block_tick(p)` | `tick(p)` |
+| `block_sound(p)` | `sound(p)` |
+| `map_colour(p)` | `map_color(p)` |
+| `create_explosion(...)` | `explosion(...)` |
+| `block_light(p)` · `sky_light(p)` · `effective_light(p)` · `emitted_light(p)` · `brightness(p)` | `light(p, kind)` — one question, the layer as an argument |

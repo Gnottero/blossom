@@ -44,7 +44,7 @@ pub fn tutte() -> vene;
 pub fn totale(tipo: str) -> totali:tipo || 0;
 
 pub fn riepilogo() -> list.map(
-    list.sort_key(map.pairs(totali), -(_:1)),
+    list.sort(map.pairs(totali), -(_:1)),
     _:0 + ': ' + _:1
 );
 
