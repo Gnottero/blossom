@@ -41,6 +41,9 @@ public class Operators
         put("equal==!=", 70);
         put("and&&", 50);
         put("or||", 40);
+        // il tubo lega piu' dell'assegnamento, cosi' 'x = a |> f' mette in x il risultato,
+        // e meno di '||', cosi' '(a || b) |> f' e' quello che sembra
+        put("pipe|>", 35);
         put("assign=<>", 30);
         // '->' lega meno dell'assegnamento, perche' il corpo di una funzione e' spesso un
         // assegnamento: 'fn conta() -> contatore += 1' deve leggersi con l'assegnamento dentro.
@@ -229,6 +232,19 @@ public class Operators
         });
 
         expression.addBinaryOperator("~", "match", precedence.get("attribute~:"), true, Value::in);
+
+        /*
+         * a |> f(b)  ==  f(a, b)
+         *
+         * Non arriva mai qui: il nodo sparisce mentre si costruisce l'albero, e quello che resta e'
+         * la chiamata con un argomento in piu' davanti. La registrazione serve perche' ogni
+         * operatore deve avere un nome funzionale, e per il caso in cui uno lo usi come valore.
+         */
+        expression.addBinaryOperator("|>", "pipe", precedence.get("pipe|>"), true, (v1, v2) ->
+        {
+            throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "operator",
+                    "'|>' wants a call on its right, as in list |> list.map(f).");
+        });
 
         expression.addBinaryOperator(">", "decreasing", precedence.get("compare>=><=<"), false, (v1, v2) -> BooleanValue.of(v1.compareTo(v2) > 0), lv -> {
             int size = lv.size();

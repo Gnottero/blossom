@@ -1695,6 +1695,42 @@ public class Expression
                 && left.type == Token.TokenType.FUNCTION && left.surface.equals("fn");
     }
 
+    /**
+     * {@code a |> f(b)}, che vuol dire {@code f(a, b)}.
+     *
+     * <p>La riscrittura avviene qui, mentre si costruisce l'albero: il nodo del tubo sparisce e
+     * quello che resta e' la chiamata, con un argomento in piu' davanti. A runtime non c'e' nessun
+     * operatore da valutare, quindi incatenare tre trasformazioni costa quanto scriverle annidate -
+     * si guadagna solo l'ordine di lettura, che e' il motivo per cui esiste.
+     *
+     * <p>Se a destra non c'e' una chiamata ma un valore - {@code x |> f}, con {@code f} legata a una
+     * funzione - diventa {@code call(f, x)}, che e' la stessa cosa scritta in un altro modo.
+     */
+    private ExpressionNode pipeNode(ExpressionNode left, ExpressionNode right)
+    {
+        Token target = right.token;
+        if (target.type == Token.TokenType.FUNCTION)
+        {
+            List<ExpressionNode> args = new ArrayList<>(right.args);
+            // per un nome che non e' una built-in il parser ha gia' messo il nome come primo
+            // argomento di 'call': il soggetto va dopo di lui, non prima
+            args.add(target.surface.equals("call") ? 1 : 0, left);
+            return functionNode(target, args);
+        }
+        Token call = target.morphedInto(Token.TokenType.FUNCTION, "call");
+        return functionNode(call, List.of(right, left));
+    }
+
+    private ExpressionNode functionNode(Token token, List<ExpressionNode> args)
+    {
+        ILazyFunction f = functions.get(token.surface);
+        List<LazyValue> params = args.stream().map(n -> n.op).collect(Collectors.toList());
+        ExpressionNode node = new ExpressionNode(
+                (c, t) -> f.lazyEval(c, t, this, token, params).evalValue(c, t), args, token);
+        token.node = node;
+        return node;
+    }
+
     private ExpressionNode binaryNode(Token token, ExpressionNode left, ExpressionNode right)
     {
         LazyValue result = (c, t) -> operators.get(token.surface).lazyEval(c, t, this, token, left.op, right.op).evalValue(c, t);
@@ -1754,7 +1790,9 @@ public class Expression
                 case OPERATOR -> {
                     ExpressionNode v1 = nodeStack.pop();
                     ExpressionNode v2 = nodeStack.pop();
-                    nodeStack.push(reassociateLambdaAssignment(token, v2, v1));
+                    nodeStack.push(token.surface.equals("|>")
+                            ? pipeNode(v2, v1)
+                            : reassociateLambdaAssignment(token, v2, v1));
                 }
                 case VARIABLE -> {
                     Value constant = getConstantFor(token.surface);
