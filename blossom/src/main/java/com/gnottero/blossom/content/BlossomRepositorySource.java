@@ -64,6 +64,12 @@ public final class BlossomRepositorySource implements RepositorySource
         {
             candidates.filter(Files::isDirectory).sorted().forEach(directory ->
             {
+                // le cartelle di servizio - la cache delle dipendenze, gli zip esportati - non sono
+                // pack, e non devono diventare contenuto per il fatto di stare li' in mezzo
+                if (directory.getFileName().toString().startsWith("."))
+                {
+                    return;
+                }
                 Path data = directory.resolve(DATA_DIRECTORY);
                 if (!Files.isDirectory(data))
                 {

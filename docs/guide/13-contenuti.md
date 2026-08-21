@@ -81,6 +81,30 @@ mondo.
 incollare un datapack esistente dentro `data/` e generare accanto, o partire a mano e passare al
 generatore un pezzo alla volta.
 
+## Vedere e portare via
+
+`/blossom data list <app>` dice cosa c'e' nella `data/` di un pack, e chi l'ha scritto:
+
+```
+7 files in the data/ of 'prova', 6 of them generated:
+  generated  data/prova/recipe/spada_copper.json
+  by hand    data/prova/tags/block/scritto_a_mano.json
+  generated  pack.mcmeta
+```
+
+La colonna serve a una cosa: sapere a colpo d'occhio cosa riscrive la prossima generazione e cosa
+invece resta com'e'.
+
+`/blossom data export <app>` ne fa uno zip in `<mondo>/blossom/.export/`:
+
+```
+The content of 'prova' is a datapack in blossom/.export/prova.zip: it works on a server without Blossom.
+```
+
+E' un datapack normale — si puo' dare a chi il mod non ce l'ha, o tenerlo per controllare che quello
+che il generatore produce sia quello che ci si aspettava. L'elenco dei generati non ci finisce
+dentro: e' roba nostra, non del datapack.
+
 ## Quando qualcosa e' sbagliato
 
 I json li validano i codec del gioco, come per un datapack qualunque, e i messaggi sono i loro:

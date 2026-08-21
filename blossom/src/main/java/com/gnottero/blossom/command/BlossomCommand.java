@@ -74,7 +74,15 @@ public final class BlossomCommand
                         .then(Commands.literal("generate")
                                 .then(Commands.argument("app", StringArgumentType.word())
                                         .suggests(LOADED_APPS)
-                                        .executes(BlossomCommand::dataGenerate))))
+                                        .executes(BlossomCommand::dataGenerate)))
+                        .then(Commands.literal("list")
+                                .then(Commands.argument("app", StringArgumentType.word())
+                                        .suggests(AVAILABLE_APPS)
+                                        .executes(BlossomCommand::dataList)))
+                        .then(Commands.literal("export")
+                                .then(Commands.argument("app", StringArgumentType.word())
+                                        .suggests(AVAILABLE_APPS)
+                                        .executes(BlossomCommand::dataExport))))
                 .then(Commands.literal("profile")
                         .then(Commands.literal("run")
                                 .then(Commands.argument("code", StringArgumentType.greedyString())
@@ -137,6 +145,62 @@ public final class BlossomCommand
         catch (Exception e)
         {
             return fail(context, "Could not generate the content of '" + app + "': " + e.getMessage());
+        }
+    }
+
+    /** Cosa c'e' nella data/ di un pack, e chi l'ha scritto. */
+    private static int dataList(CommandContext<CommandSourceStack> context)
+    {
+        ScriptRuntime runtime = requireRuntime(context.getSource());
+        String app = StringArgumentType.getString(context, "app");
+        try
+        {
+            java.util.List<com.gnottero.blossom.content.ContentExport.Entry> entries =
+                    com.gnottero.blossom.content.ContentExport.list(runtime.scriptDirectory().resolve(app));
+            if (entries.isEmpty())
+            {
+                context.getSource().sendSuccess(() -> Component.literal(
+                        "'" + app + "' carries no game content: it has no data/ folder."), false);
+                return 0;
+            }
+            long generated = entries.stream().filter(
+                    com.gnottero.blossom.content.ContentExport.Entry::generated).count();
+            context.getSource().sendSuccess(() -> Component.literal(
+                    entries.size() + " files in the data/ of '" + app + "', "
+                            + generated + " of them generated:"), false);
+            for (com.gnottero.blossom.content.ContentExport.Entry entry : entries)
+            {
+                // chi legge deve poter dire a colpo d'occhio cosa gli riscrive la prossima
+                // generazione e cosa invece ha scritto lui
+                context.getSource().sendSuccess(() -> Component.literal(
+                        "  " + (entry.generated() ? "generated  " : "by hand    ") + entry.path()), false);
+            }
+            return entries.size();
+        }
+        catch (Exception e)
+        {
+            return fail(context, "Could not read the content of '" + app + "': " + e.getMessage());
+        }
+    }
+
+    /** Lo zip del contenuto, per chi il mod non ce l'ha. */
+    private static int dataExport(CommandContext<CommandSourceStack> context)
+    {
+        ScriptRuntime runtime = requireRuntime(context.getSource());
+        String app = StringArgumentType.getString(context, "app");
+        try
+        {
+            java.nio.file.Path zip =
+                    com.gnottero.blossom.content.ContentExport.export(runtime.scriptDirectory(), app);
+            java.nio.file.Path shown = runtime.scriptDirectory().getParent().relativize(zip);
+            context.getSource().sendSuccess(() -> Component.literal(
+                    "The content of '" + app + "' is a datapack in " + shown
+                            + ": it works on a server without Blossom."), true);
+            return 1;
+        }
+        catch (Exception e)
+        {
+            return fail(context, e.getMessage());
         }
     }
 

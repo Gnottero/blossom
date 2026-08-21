@@ -7,6 +7,29 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 `api_level` sale a **2.0**: e' una rottura MAJOR, e un'app che non dichiara il proprio `api_level`
 vale 1.0 e non carica piu'. E' voluto: e' meglio di un'app che carica e sbaglia.
 
+### Il contenuto di gioco dentro il pack
+
+Un pack puo' avere una cartella **`data/`** con l'albero di un datapack vero. Viene data al gioco da
+dentro il pack: chi installa copia una cosa sola, e non c'e' niente da mettere in
+`<mondo>/datapacks/`. Ci passano tutte le categorie — ricette, loot table, tag, advancement, e anche
+i registri dinamici e il worldgen, che il gioco fissa all'apertura del mondo — perche' l'aggancio e'
+la sorgente dei pack, non un mixin per categoria.
+
+- **`core.mc.data`**: `write(id, valore)` e `write_text(id, righe)` per **generare** il contenuto
+  invece di ripeterlo.
+- **`/blossom data generate <app>`** chiama la `generate()` dell'app e scrive json veri, piu' il
+  `pack.mcmeta`. Su comando e non all'apertura del mondo, cosi' il generatore e' codice normale con
+  il server acceso.
+- **`/blossom data list <app>`** dice cosa c'e' nella `data/` e cosa di quello e' generato.
+- **`/blossom data export <app>`** ne fa uno zip in `<mondo>/blossom/.export/`: un datapack che gira
+  anche senza Blossom.
+- `data/.blossom-generated` elenca cosa hanno prodotto i generatori, e la rigenerazione riscrive e
+  ripulisce **solo quello**: un json scritto a mano nella stessa cartella non viene mai toccato.
+
+Un pack Blossom sta in fondo alla lista dei datapack e non si puo' spegnere: in fondo perche' un
+datapack vero deve poter correggere una ricetta rotta di un'app di cui non si ha il sorgente, non
+spegnibile perche' il codice dell'app da' per esistente il proprio contenuto.
+
 ### Sintassi
 
 - **Funzioni senza nome**: `fn(a, b) -> a + b`. Catturano il frame in cui nascono, quindi vedono
