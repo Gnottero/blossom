@@ -45,7 +45,7 @@ Without importing anything, only the things that are grammar dressed up as funct
 plus `print`:
 
 `print`, `if`, `try`, `throw`, `return`, `break`, `continue`, `loop`, `while`, `for`, `c_for`,
-`exit`, `call`, `outer`, `not` (the functional name of `!`).
+`exit`, `call`, `fn`, `outer`, `not` (the functional name of `!`).
 
 There are also `l` and `m`, which the tokenizer builds for `[ ... ]` and `{ ... }`: they are not
 written by hand.

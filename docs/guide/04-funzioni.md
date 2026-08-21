@@ -26,6 +26,32 @@ pub fn distanza(a, b) -> ...;       // la vedono tutti
 fn interna(x) -> ...;               // solo questo modulo
 ```
 
+## Funzioni senza nome
+
+`fn(...)` senza nome e' una funzione scritta sul posto:
+
+```
+raddoppia = fn(x) -> x * 2;
+raddoppia(3);                           // 6
+
+list.map([1, 2, 3], fn(x) -> x * 2);    // [2, 4, 6]
+event.on('player_dies', fn(chi, causa) -> (log(chi); false));
+```
+
+Le due forme non si confondono: `fn nome(...)` dichiara, `fn(...)` e' un valore. A deciderlo e' la
+parentesi subito dopo `fn`.
+
+Una lambda **cattura il frame in cui nasce**, quindi vede le variabili che la circondano senza
+doverle dichiarare con `outer`:
+
+```
+base = 10;
+somma = fn(x) -> x + base;
+somma(3);                               // 13
+```
+
+La cattura la paga solo chi scrive una lambda: una funzione con nome non cattura niente, come prima.
+
 ## Chi vede cosa
 
 Dentro una funzione sono visibili: i suoi parametri, le variabili che assegna, e i **binding di

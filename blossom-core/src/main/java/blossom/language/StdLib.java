@@ -43,6 +43,8 @@ public final class StdLib
     public static final Set<String> PRELUDE = Set.of(
             "print", "if", "try", "throw", "return", "break", "continue",
             "loop", "while", "for", "c_for", "exit", "call", "outer", "not",
+            // 'fn(...)' senza nome: e' la funzione anonima, e come 'call' e' grammatica
+            "fn",
             // costruiti dal tokenizer per [ ... ] e { ... }: non si scrivono a mano
             "l", "m");
 

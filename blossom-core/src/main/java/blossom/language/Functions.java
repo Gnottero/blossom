@@ -107,6 +107,88 @@ public class Functions
         });
 
 
+        /*
+         * fn(a, b) -> a + b - una funzione scritta senza nome.
+         *
+         * Il tokenizer non ha bisogno di sapere niente: decide FUNCTION o VARIABLE guardando se
+         * dopo il nome c'e' una parentesi, quindi 'fn(' e' gia' una chiamata mentre 'fn nome(...)'
+         * resta la parola chiave della dichiarazione. Le due forme non possono confondersi.
+         *
+         * Il corpo e' identico a quello di 'call' in Context.SIGNATURE, meno il primo argomento:
+         * li' il nome della funzione e' scritto, qui lo mette il parser.
+         */
+        expression.addCustomFunction("fn", new Callables.AbstractLazyFunction(-1, "fn")
+        {
+            @Override
+            public LazyValue lazyEval(Context c, Context.Type t, Expression expr, Token tok, List<LazyValue> lv)
+            {
+                if (t != Context.SIGNATURE)
+                {
+                    throw new ParseError(SourcePosition.UNKNOWN,
+                            "'fn(...)' is a function without a name and only makes sense before '->', "
+                                    + "as in fn(a, b) -> a + b.");
+                }
+                List<String> args = new ArrayList<>();
+                List<String> argumentTypes = new ArrayList<>();
+                List<String> globals = new ArrayList<>();
+                String varArgs = null;
+                for (LazyValue parameter : lv)
+                {
+                    Value v = parameter.evalValue(c, Context.LOCALIZATION);
+                    if (v instanceof final FunctionAnnotationValue fav)
+                    {
+                        if (fav.type == FunctionAnnotationValue.Type.GLOBAL)
+                        {
+                            globals.add(fav.name());
+                        }
+                        else
+                        {
+                            if (varArgs != null)
+                            {
+                                throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "function", "Variable argument identifier is already defined as " + varArgs + ", trying to overwrite with " + fav.name());
+                            }
+                            varArgs = fav.name();
+                        }
+                    }
+                    else if (v instanceof final blossom.value.TypedParameterValue typed)
+                    {
+                        args.add(typed.parameter());
+                        argumentTypes.add(typed.canonicalType());
+                    }
+                    else if (v instanceof final blossom.value.VariableReferenceValue reference)
+                    {
+                        args.add(reference.name());
+                        argumentTypes.add(null);
+                    }
+                    else
+                    {
+                        throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "function", "Only variables can be used in function signature, not  " + v.getString());
+                    }
+                }
+                Value retval = new FunctionSignatureValue(Expression.anonymousName(tok), args, argumentTypes, varArgs, globals);
+                return (cc, tt) -> retval;
+            }
+
+            @Override
+            public boolean pure()
+            {
+                return false;
+            }
+
+            @Override
+            public boolean transitive()
+            {
+                return false;
+            }
+
+            @Override
+            public Context.Type staticType(Context.Type outerType)
+            {
+                return outerType == Context.SIGNATURE ? Context.LOCALIZATION : Context.NONE;
+            }
+        });
+
+
         // pigra perche' l'argomento le serve come nome, non come valore: addContextFunction valuta
         // i propri argomenti in Context.NONE, dove un identificatore e' gia' stato letto
         expression.addLazyFunction("outer", 1, (c, t, lv) ->

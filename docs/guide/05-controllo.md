@@ -79,11 +79,25 @@ list.sort_key(['bbb', 'a'], list.length(_));// ordina secondo la chiave calcolat
 
 `break()` dentro un `map` tronca il risultato: `list.map([1,2,3], if(_ == 2, break()); _)` dà `[1]`.
 
-Quando serve una funzione vera invece di un'espressione, `call` la infila:
+Le stesse trasformazioni accettano anche una **funzione** al posto dell'espressione, e allora i tre
+nomi impliciti li sostituiscono i parametri:
+
+```
+list.map([1, 2, 3], fn(x) -> x * 2);                    // [2, 4, 6]
+list.map(['a', 'b'], fn(x, i) -> i);                    // [0, 1]  - il secondo e' l'indice
+list.reduce([1, 2, 3], fn(a, x) -> a + x, 0);           // 10      - in reduce il primo e' l'accumulatore
+```
+
+Quale delle due forme sia lo decide la grammatica, non il valore: si vede scritto, e non costa
+niente a runtime. La forma corta con `_` resta la piu' veloce, perche' non crea nessun frame di
+chiamata; la lambda in cambio da' un nome all'elemento, e un nome non puo' collidere con quello del
+ciclo che sta fuori.
+
+Una funzione gia' dichiarata si chiama direttamente:
 
 ```
 fn punteggio(giocatore) -> ...;
-list.map(entity.player('all'), call(punteggio, _));
+list.map(entity.player('all'), fn(g) -> punteggio(g));
 ```
 
 ## Scegliere il ciclo giusto

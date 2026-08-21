@@ -39,6 +39,32 @@ public interface LazyValue
     }
 
 
+    /**
+     * Il valore di una lambda scritta sul posto, {@code fn(x) -> ...}.
+     *
+     * <p>Serve a distinguerla, mentre si costruisce l'albero, da un'espressione con {@code _}: i
+     * cicli e le trasformazioni accettano tutte e due le forme, e devono sapere quale hanno davanti
+     * senza valutare niente - valutare per scoprirlo vorrebbe dire eseguire il corpo una volta di
+     * troppo, e un corpo che stampa lo si vedrebbe.
+     *
+     * <p>La distinzione e' statica: la fa il token, quindi non costa niente a runtime.
+     */
+    final class Lambda implements LazyValue
+    {
+        private final LazyValue delegate;
+
+        public Lambda(LazyValue delegate)
+        {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public Value evalValue(Context c, Context.Type type)
+        {
+            return delegate.evalValue(c, type);
+        }
+    }
+
     class Constant implements ContextFreeLazyValue
     {
         Value result;

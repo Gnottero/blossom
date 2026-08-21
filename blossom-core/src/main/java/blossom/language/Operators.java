@@ -42,6 +42,10 @@ public class Operators
         put("and&&", 50);
         put("or||", 40);
         put("assign=<>", 30);
+        // '->' lega meno dell'assegnamento, perche' il corpo di una funzione e' spesso un
+        // assegnamento: 'fn conta() -> contatore += 1' deve leggersi con l'assegnamento dentro.
+        // Il caso opposto - 'f = fn(a) -> a + 1', dove la lambda va in una variabile - non si
+        // risolve con la precedenza ma nell'albero, vedi RPNToParseTree
         put("def->", 20);
         // pub / fn / let: prendono tutta la definizione che li segue, quindi legano meno di '->'
         put("declaration", 15);
