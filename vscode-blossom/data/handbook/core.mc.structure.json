@@ -150,8 +150,8 @@
     ],
     "returns": "`map` from name to the box it takes up, or the single box; `null` when there is none.",
     "examples": [
-      "world.at([0, 64, 0]);                          // {'minecraft:village_plains' -> [...]}",
-      "world.at(pos, 'minecraft:stronghold');"
+      "structure.at([0, 64, 0]);                          // {'minecraft:village_plains' -> [...]}",
+      "structure.at(pos, 'minecraft:stronghold');"
     ]
   },
   "references": {
@@ -172,7 +172,7 @@
     ],
     "returns": "`map` from name to a list of chunk coordinates, or the single list.",
     "examples": [
-      "world.references([0, 64, 0], 'minecraft:village_plains');"
+      "structure.references([0, 64, 0], 'minecraft:village_plains');"
     ]
   },
   "eligibility": {
@@ -198,8 +198,8 @@
     ],
     "returns": "`map` or `list` of the eligible at, `null` when there are none.",
     "examples": [
-      "world.eligibility([1000, 64, 1000]);",
-      "world.eligibility(pos, 'minecraft:village_plains', true);"
+      "structure.eligibility([1000, 64, 1000]);",
+      "structure.eligibility(pos, 'minecraft:village_plains', true);"
     ],
     "note": "It asks the generator, not the world: it answers on chunks nobody has ever visited, without generating them and without loading anything."
   },
@@ -221,8 +221,8 @@
     ],
     "returns": "`bool` — whether it succeeded.",
     "examples": [
-      "world.place([0, 64, 0], 'minecraft:village_plains');",
-      "world.place(pos, 'minecraft:village_plains', null);   // removes the reference"
+      "structure.place([0, 64, 0], 'minecraft:village_plains');",
+      "structure.place(pos, 'minecraft:village_plains', null);   // removes the reference"
     ]
   }
 }

@@ -80,8 +80,32 @@
     },
     "task": {
         "prefix": "task",
-        "body": "task(_() -> (\n\t$0\n));",
+        "body": "task.start(fn() -> (\n\t$0\n));",
         "description": "Long work on its own thread, outside the budget of the tick"
+    },
+    "lambda": {
+        "prefix": "fn(",
+        "body": "fn(${1:x}) -> ${0:x}",
+        "description": "A function without a name, which captures the frame it is born in"
+    },
+    "match": {
+        "prefix": "match",
+        "body": [
+            "match(${1:subject},",
+            "\t${2:0}    -> ${3:'zero'},",
+            "\telse -> ${0:null})"
+        ],
+        "description": "One subject, evaluated once, and the first arm that fits"
+    },
+    "pipe": {
+        "prefix": "|>",
+        "body": "${1:value}\n\t|> ${2:list.filter}(${3:fn(x) -> x})\n\t|> ${0:list.map}(fn(x) -> x);",
+        "description": "a |> f(b) is f(a, b): the chain read in the order it happens"
+    },
+    "interpolation": {
+        "prefix": "\"${",
+        "body": "\"${1:text} \\${${2:expression}}\"",
+        "description": "An interpolated string (double quotes interpolate, single ones do not)"
     },
     "manifest": {
         "prefix": "blossom.json",
@@ -90,7 +114,7 @@
             "  \"name\": \"${1:name}\",",
             "  \"version\": \"0.1.0\",",
             "  \"entrypoint\": \"src/main.bs\",",
-            "  \"api_level\": \"1.0\"",
+            "  \"api_level\": \"2.0\"",
             "}"
         ],
         "description": "The manifest of a project"

@@ -12,9 +12,9 @@
     ],
     "returns": "`num` — the number of slots, `null` when there is no inventory there.",
     "examples": [
-      "item.size(player);        // 41",
-      "item.size(chest_pos);     // 27",
-      "if(item.size(pos) == null, send('no container here'));"
+      "inventory.size(player);        // 41",
+      "inventory.size(chest_pos);     // 27",
+      "if(inventory.size(pos) == null, send('no container here'));"
     ]
   },
   "get": {
@@ -35,9 +35,9 @@
     ],
     "returns": "`list` — the item as `[name, count, nbt]`, or the list of every slot; `null` when the slot is empty.",
     "examples": [
-      "item.get(player, 0);      // ['minecraft:stone', 64, {}]",
-      "item.get(chest_pos);      // one entry per slot",
-      "// counting what is in a chest\nlist.reduce(item.get(chest_pos), _a + (_ == null ? 0 : _:1), 0);"
+      "inventory.get(player, 0);      // ['minecraft:stone', 64, {}]",
+      "inventory.get(chest_pos);      // one entry per slot",
+      "// counting what is in a chest\nlist.reduce(inventory.get(chest_pos), _a + (_ == null ? 0 : _:1), 0);"
     ]
   },
   "set": {
@@ -71,9 +71,9 @@
     ],
     "returns": "`list` — what was in the slot before.",
     "examples": [
-      "item.set(player, 0, 1, 'diamond');",
-      "item.set(chest_pos, 5, 0);           // empties the slot",
-      "item.set(player, 0, 1, 'diamond_sword', '{Enchantments:[{id:\"sharpness\",lvl:5}]}');"
+      "inventory.set(player, 0, 1, 'diamond');",
+      "inventory.set(chest_pos, 5, 0);           // empties the slot",
+      "inventory.set(player, 0, 1, 'diamond_sword', '{Enchantments:[{id:\"sharpness\",lvl:5}]}');"
     ]
   },
   "find": {
@@ -98,8 +98,8 @@
     ],
     "returns": "`num` — the slot, `null` when there is none.",
     "examples": [
-      "item.find(player, 'diamond');       // 3",
-      "item.find(player, null);            // the find free slot"
+      "inventory.find(player, 'diamond');       // 3",
+      "inventory.find(player, null);            // the find free slot"
     ]
   },
   "remove": {
@@ -124,7 +124,7 @@
     ],
     "returns": "`bool` — `true` when everything asked for was taken out.",
     "examples": [
-      "if(item.remove(player, 'emerald', 5), give_reward());"
+      "if(inventory.remove(player, 'emerald', 5), give_reward());"
     ],
     "note": "It is all or nothing: with fewer than `count` in the inventory it removes nothing and answers `false`."
   },
@@ -146,7 +146,7 @@
     ],
     "returns": "`bool` — whether all of them are there.",
     "examples": [
-      "item.has(player, ['emerald', 5], ['stick', 2]);"
+      "inventory.has(player, ['emerald', 5], ['stick', 2]);"
     ]
   },
   "drop": {
@@ -171,8 +171,8 @@
     ],
     "returns": "`num` — how many were dropped.",
     "examples": [
-      "item.drop(player, 0);        // the whole stack",
-      "item.drop(player, 0, 1);     // one only"
+      "inventory.drop(player, 0);        // the whole stack",
+      "inventory.drop(player, 0, 1);     // one only"
     ]
   }
 }

@@ -38,6 +38,52 @@ function read(file) {
     return fs.readFileSync(file, 'utf8');
 }
 
+/**
+ * A java source without its comments, string literals left alone.
+ *
+ * The scans below read lists of names written as literals, and a comment that quotes one - the line
+ * of `PRELUDE` that explains what the tokenizer builds writes `"...${...}..."` - would otherwise end
+ * up in the api as a symbol nobody can call. Block comments go too, because the prose is
+ * italian and an apostrophe there would read as the start of a literal; the catalogue of the events
+ * needs its javadoc and reads the file with `read`.
+ */
+function readJava(file) {
+    const source = read(file);
+    let out = '';
+    let i = 0;
+    while (i < source.length) {
+        const c = source[i];
+        if (c === '"' || c === "'") {
+            const quote = c;
+            out += c;
+            i++;
+            while (i < source.length) {
+                out += source[i];
+                if (source[i] === '\\') {
+                    out += source[i + 1] || '';
+                    i += 2;
+                    continue;
+                }
+                i++;
+                if (source[i - 1] === quote) break;
+            }
+            continue;
+        }
+        if (c === '/' && source[i + 1] === '/') {
+            while (i < source.length && source[i] !== '\n') i++;
+            continue;
+        }
+        if (c === '/' && source[i + 1] === '*') {
+            const end = source.indexOf('*/', i + 2);
+            i = end === -1 ? source.length : end + 2;
+            continue;
+        }
+        out += c;
+        i++;
+    }
+    return out;
+}
+
 function fail(message) {
     console.error('generate-api: ' + message);
     process.exit(1);
@@ -63,7 +109,7 @@ for (const file of [
     ...walk(path.join(REPO, 'blossom-core', 'src', 'main', 'java')),
     ...walk(path.join(REPO, 'blossom', 'src', 'main', 'java'))
 ]) {
-    const source = read(file);
+    const source = readJava(file);
     const className = path.basename(file, '.java');
     let match;
     while ((match = FIELD_RE.exec(source)) !== null) {
@@ -99,7 +145,7 @@ function resolveSymbols(expression, seen = new Set()) {
 
 // ----------------------------------------------------------- the modules
 
-const stdlib = read(path.join(REPO, 'blossom-core/src/main/java/blossom/language/StdLib.java'));
+const stdlib = readJava(path.join(REPO, 'blossom-core/src/main/java/blossom/language/StdLib.java'));
 
 /** nome modulo → Set di simboli */
 const modules = new Map();
@@ -123,7 +169,7 @@ const prelude = [...resolveSymbols(preludeMatch[1])].filter((name) => name !== '
 
 const apiFile = path.join(REPO, 'blossom/src/main/java/com/gnottero/blossom/BlossomApi.java');
 if (fs.existsSync(apiFile)) {
-    const api = read(apiFile);
+    const api = readJava(apiFile);
     for (const match of api.matchAll(/registerModule\("([^"]+)"\s*,\s*(\w+)\)/g)) {
         const raw = fields.get('BlossomApi.' + match[2]);
         if (!raw) fail('field BlossomApi.' + match[2] + ' not found');
@@ -299,7 +345,7 @@ const data = {
     preludeSymbols,
     constants: ['true', 'false', 'null', 'pi', 'euler'],
     types: ['num', 'str', 'bool', 'list', 'map', 'func', 'null', 'any', 'entity', 'block', 'text', 'nbt', 'screen'],
-    keywords: ['module', 'import', 'as', 'pub', 'fn', 'let', 'mut'],
+    keywords: ['module', 'import', 'as', 'pub', 'fn', 'let', 'mut', 'else'],
     modules: {},
     events
 };

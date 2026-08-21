@@ -139,7 +139,7 @@ const completion = {
         }
 
         // inside the quotes of an event handler  ->  the event names
-        const eventPrefix = /\.\s*(on|off|describe)\s*\(\s*(["'])([^"']*)$/.exec(before);
+        const eventPrefix = /\.\s*(on|off|describe|declare|emit)\s*\(\s*(["'])([^"']*)$/.exec(before);
         if (eventPrefix) {
             for (const event of api.events()) {
                 const item = new vscode.CompletionItem(event.name, vscode.CompletionItemKind.Event);
@@ -292,11 +292,15 @@ function enclosingCall(text, offset) {
         if (c === ')') depth++;
         else if (c === '(') {
             if (depth === 0) {
-                const head = /([A-Za-z_]\w*)(?:\s*\.\s*([A-Za-z_]\w*))?\s*$/.exec(text.slice(0, i));
+                const start = text.slice(0, i);
+                const head = /([A-Za-z_]\w*)(?:\s*\.\s*([A-Za-z_]\w*))?\s*$/.exec(start);
                 if (!head) return null;
+                // `x |> list.map(f)` is `list.map(x, f)`: what is being typed is one argument further
+                const piped = /\|>\s*$/.test(start.slice(0, head.index));
+                const argument = commas + (piped ? 1 : 0);
                 return head[2]
-                    ? { alias: head[1], name: head[2], argument: commas }
-                    : { alias: null, name: head[1], argument: commas };
+                    ? { alias: head[1], name: head[2], argument, piped }
+                    : { alias: null, name: head[1], argument, piped };
             }
             depth--;
         } else if (c === ',' && depth === 0) commas++;

@@ -344,8 +344,8 @@
     ],
     "returns": "`str` — the joined string.",
     "examples": [
-      "string.join(', ', ['a', 'b', 'c']);   // 'a, b, c'",
-      "string.join('', ['a', 'b']);          // 'ab'"
+      "list.join(', ', ['a', 'b', 'c']);   // 'a, b, c'",
+      "list.join('', ['a', 'b']);          // 'ab'"
     ]
   }
 }

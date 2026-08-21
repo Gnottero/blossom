@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.7.0
+
+Blossom 1.0: the syntax of the language and the renamed API.
+
+- **the new syntax is highlighted**: lambdas (`fn(x) -> x * 2`), `match` with its arms and `else`,
+  the pipe `|>`, the definition arrow, and interpolated strings — where what sits inside `${…}` is
+  highlighted as the code it is
+- **the analysis reads `${…}` as code too**: a symbol used only inside a placeholder counts as used,
+  and a module that does not export it is reported there like anywhere else. A single quote goes on
+  interpolating nothing
+- **what a lambda or a `match` arm binds is a declared name**: `fn(size) -> size(1)` is no longer
+  reported as a library function used without importing it
+- **signature help through a pipe**: in `list |> list.map(…)` the parameter highlighted is the one
+  being typed, since the value on the left already fills the first
+- **events**: `signal_event` is gone; the catalogue is checked on `on`, `off`, `describe` and
+  `listeners`, in double quotes as well as single ones, and left alone on `declare` and `emit`,
+  which are the two that take the name of an application event
+- **snippets**: a lambda, a `match`, a pipe chain and an interpolated string; `task` now writes
+  `task.start(fn() -> …)`, and the manifest writes `"api_level": "2.0"`
+- **the handbook follows the renamed API**: the examples of `core.mc.inventory`, `core.mc.structure`,
+  `core.mc.bossbar`, `core.string`, `core.list` and `core.task` call their functions through the
+  alias of the module that actually exports them
+- the generator strips java comments before reading the lists of names: a name quoted in a comment
+  was ending up in the API as a symbol nobody could call
+
 ## 0.6.0
 
 - **doc comments**: `///` above a `fn`, a `let` or the `module` line, with `@param`, `@returns`,

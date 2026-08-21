@@ -377,25 +377,17 @@
     "signatures": [
       "concat(pieces...)"
     ],
-    "summary": "The pieces of an interpolated string, already separated by the tokenizer.",
-    "description": "Not written by hand: `\"a${b}c\"` is its only form.",
+    "summary": "The pieces of an interpolated string, already joined.",
+    "description": "Not written by hand: `\"ciao ${nome}\"` is its only form. A single quote makes a literal string and nothing inside it happens; double quotes insert the value of whatever is inside `${...}`. The splitting happens while the code is read, so at runtime there is no string to look at again, only a concatenation already written.",
     "params": [
       [
         "pieces",
         "the parts to join"
       ]
     ],
-    "returns": "`str` — the pieces one after the other."
-  },
-  "...${...}...": {
-    "signatures": [
-      "\"text ${expression} text\""
-    ],
-    "summary": "An interpolated string.",
-    "description": "A single quote makes a literal string and nothing inside it happens. Double quotes insert the value of whatever is inside `${...}`. The splitting happens while the code is read, so at runtime there is no string to look at again, only a concatenation already written.",
-    "returns": "`str` — the pieces with the values in place.",
+    "returns": "`str` — the pieces one after the other.",
     "examples": [
-      "\"ciao ${nome}, hai ${punti} punti\";"
+      "\"ciao ${nome}, hai ${punti} punti\";   // concat('ciao ', (nome), ', hai ', (punti), ' punti')"
     ]
   }
 }

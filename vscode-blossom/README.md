@@ -8,11 +8,11 @@ modules and symbols that do not exist, wrong events, module names that do not ma
 
 | | |
 | --- | --- |
-| **Highlighting** | preamble, `fn`/`let`/`pub`, parameter types, `_`/`_i`/`_a`, strings, comments |
-| **Completion** | the modules inside `import "…"`, the symbols after `alias.`, the event names inside `event.on('…')`, the functions and bindings of the file |
+| **Highlighting** | preamble, `fn`/`let`/`pub`, lambdas (`fn(x) -> …`), `match` and its arms, the pipe `\|>`, parameter types, `_`/`_i`/`_a`, strings — with the code inside `${…}` highlighted as code — comments |
+| **Completion** | the modules inside `import "…"`, the symbols after `alias.`, the event names inside `event.on('…')` — `declare` and `emit` included, for application events — the functions and bindings of the file |
 | **Hover** | the full card of every library function: signatures, what it does, every parameter, what it gives back, at least one example, and the module it comes from — and, for what the file declares, its own `///` doc |
 | **Doc comments** | `///` above a `fn`, a `let` or the `module` line, with `@param`, `@returns`, `@throws`, `@example`, `@see`, `@deprecated`; a command and a lightbulb write the template |
-| **Signature help** | the parameters of the function being written, library or your own, each with its own description |
+| **Signature help** | the parameters of the function being written, library or your own, each with its own description; through a pipe the highlighted parameter is the one being typed, not the one the value fills |
 | **Go to definition** | on the functions of the file, and across imports inside `src/` |
 | **File outline** | module, functions (`pub` marked), bindings |
 | **Diagnostics** | import without an alias, duplicate alias, unused import, `core.*` module that does not exist, symbol not exported, library function used without importing it, unknown event, module name different from the path |
@@ -101,7 +101,7 @@ functions that need no import:
 The two halves check each other. A key the handbook documents and no module exports any more stops
 the generator, so a renamed function cannot leave its old documentation behind; a symbol without an
 entry is listed at the end of the run. The test suite refuses a symbol with no example, no return
-value, or an example that never calls the function it documents — which is how 302 entries stay
+value, or an example that never calls the function it documents — which is how 303 entries stay
 honest instead of drifting one rename at a time.
 
 ## Performance
@@ -117,7 +117,9 @@ running in the extension process.
 - on the projects in `examples/` the full analysis of a file stays under a millisecond
 
 The diagnostics report only what the extension is sure about: no type checking, no arity checking on
-the functions of the user. On every file in `examples/` it produces no warning.
+the functions of the user. What a lambda and a `match` arm bind counts as declared, so a parameter
+named like a library function is not reported; the name of an application event, which only
+`declare` and `emit` take, is never judged against the catalogue. On every file in `examples/` it produces no warning.
 
 ## Installation
 
@@ -129,7 +131,7 @@ To really install it:
 ```
 cd vscode-blossom
 npx --yes @vscode/vsce package
-code --install-extension blossom-0.2.0.vsix
+code --install-extension blossom-0.7.0.vsix
 ```
 
 ## Tests

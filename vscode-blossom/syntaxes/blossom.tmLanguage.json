@@ -7,6 +7,7 @@
     { "include": "#preamble" },
     { "include": "#string" },
     { "include": "#number" },
+    { "include": "#lambda" },
     { "include": "#function-definition" },
     { "include": "#typed-parameter" },
     { "include": "#constant" },
@@ -71,15 +72,33 @@
         {
           "name": "string.quoted.double.blossom",
           "begin": "\"",
-          "end": "\""
+          "end": "\"",
+          "patterns": [
+            { "include": "#interpolation" },
+            { "name": "constant.character.escape.blossom", "match": "\\\\." }
+          ]
         }
       ]
+    },
+    "interpolation": {
+      "name": "meta.embedded.interpolation.blossom",
+      "begin": "\\$\\{",
+      "end": "\\}",
+      "beginCaptures": { "0": { "name": "punctuation.section.interpolation.begin.blossom" } },
+      "endCaptures": { "0": { "name": "punctuation.section.interpolation.end.blossom" } },
+      "patterns": [{ "include": "$self" }]
     },
     "number": {
       "patterns": [
         { "name": "constant.numeric.hex.blossom", "match": "\\b0[xX][0-9a-fA-F]+\\b" },
         { "name": "constant.numeric.blossom", "match": "\\b\\d+(\\.\\d+)?([eE][-+]?\\d+)?\\b" }
       ]
+    },
+    "lambda": {
+      "match": "\\b(fn)[ \\t]*(?=\\()",
+      "captures": {
+        "1": { "name": "storage.type.function.blossom" }
+      }
     },
     "function-definition": {
       "match": "\\b(pub\\s+)?(fn)\\s+([A-Za-z_]\\w*)",
@@ -105,7 +124,7 @@
       "patterns": [
         {
           "name": "keyword.control.blossom",
-          "match": "\\b(if|try|throw|return|break|continue|loop|while|for|c_for|exit|outer|call|not)\\b"
+          "match": "\\b(if|match|else|try|throw|return|break|continue|loop|while|for|c_for|exit|outer|call|not)\\b"
         },
         { "name": "storage.modifier.blossom", "match": "\\b(pub|mut)\\b" },
         { "name": "storage.type.blossom", "match": "\\b(let|fn)\\b" },
@@ -131,6 +150,8 @@
     },
     "operator": {
       "patterns": [
+        { "name": "keyword.operator.pipe.blossom", "match": "\\|>" },
+        { "name": "keyword.operator.definition.blossom", "match": "->" },
         { "name": "keyword.operator.assignment.blossom", "match": "(\\+=|-=|\\*=|/=|%=|<>|=)" },
         { "name": "keyword.operator.comparison.blossom", "match": "(==|!=|<=|>=|<|>)" },
         { "name": "keyword.operator.logical.blossom", "match": "(&&|\\|\\||!)" },

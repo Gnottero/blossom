@@ -22,9 +22,9 @@
     },
     "api_level": {
       "type": "string",
-      "description": "The Blossom API version required, MAJOR.MINOR. Leaving it out means 1.0.",
+      "description": "The Blossom API version required, MAJOR.MINOR. Leaving it out means 1.0, which this runtime no longer accepts: the current level is 2.0.",
       "pattern": "^\\d+\\.\\d+$",
-      "default": "1.0"
+      "default": "2.0"
     },
     "autoload": {
       "type": "boolean",

@@ -160,22 +160,23 @@ function analyzeDocument(document) {
 
     const eventAlias = [...aliases.entries()].filter(([, name]) => name === 'core.mc.event').map(([a]) => a);
     if (eventAlias.length) {
+        // `declare` and `emit` are left out on purpose: those are the ones that also take the name
+        // of an application event, which no catalogue knows about
         const pattern = new RegExp(
-            `\\b(${eventAlias.join('|')})[ \\t]*\\.[ \\t]*(on|off|describe|signal_event)[ \\t]*\\([ \\t]*'([^']*)'`,
+            `\\b(${eventAlias.join('|')})[ \\t]*\\.[ \\t]*(on|off|describe|listeners)[ \\t]*\\([ \\t]*(['"])([^'"]*)\\3`,
             'g'
         );
         while ((match = pattern.exec(text)) !== null) {
             // the mask blanks comments and strings: if a quote is still there, it is real code
             // match[0] ends with 'name': the opening quote sits two characters before the name
-            const quoteOffset = match.index + match[0].length - match[3].length - 2;
-            if (masked[quoteOffset] !== "'") continue;
-            if (match[2] === 'signal_event') continue; // custom events are not in the catalogue
-            if (api.eventInfo(match[3])) continue;
-            const suggestion = api.suggest(match[3], api.events().map((event) => event.name));
+            const quoteOffset = match.index + match[0].length - match[4].length - 2;
+            if (masked[quoteOffset] !== match[3]) continue;
+            if (api.eventInfo(match[4])) continue;
+            const suggestion = api.suggest(match[4], api.events().map((event) => event.name));
             const start = document.positionAt(quoteOffset + 1);
             diagnostics.push(make(
-                new vscode.Range(start, document.positionAt(quoteOffset + 1 + match[3].length)),
-                `There is no event called '${match[3]}'.` + (suggestion ? ` Did you mean '${suggestion}'?` : ''),
+                new vscode.Range(start, document.positionAt(quoteOffset + 1 + match[4].length)),
+                `There is no event called '${match[4]}'.` + (suggestion ? ` Did you mean '${suggestion}'?` : ''),
                 vscode.DiagnosticSeverity.Warning,
                 'unknown-event'
             ));

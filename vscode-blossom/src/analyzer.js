@@ -31,9 +31,21 @@ function mask(text) {
             const quote = c;
             i++;
             while (i < chars.length && chars[i] !== quote) {
-                if (chars[i] === '\\' && quote === "'") {
+                if (chars[i] === '\\') {
                     chars[i] = ' ';
                     i++;
+                    if (i < chars.length && chars[i] !== '\n') chars[i] = ' ';
+                    i++;
+                    continue;
+                }
+                // "${...}" is code inside a string: the placeholder stays visible, so the symbols
+                // written in it are seen by the scans exactly like the ones outside
+                if (quote === '"' && chars[i] === '$' && chars[i + 1] === '{') {
+                    chars[i] = ' ';
+                    chars[i + 1] = ' ';
+                    i += 2;
+                    i = skipPlaceholder(chars, i);
+                    continue;
                 }
                 if (i < chars.length && chars[i] !== '\n') chars[i] = ' ';
                 i++;
@@ -44,6 +56,30 @@ function mask(text) {
         }
     }
     return chars.join('');
+}
+
+/**
+ * Walks a `${...}` to its closing brace, leaving what is inside alone and blanking the brace itself.
+ * Braces inside a single-quoted string do not count, the way the tokenizer reads them.
+ */
+function skipPlaceholder(chars, from) {
+    let depth = 1;
+    let inQuote = false;
+    let i = from;
+    while (i < chars.length) {
+        const c = chars[i];
+        if (c === "'") inQuote = !inQuote;
+        else if (!inQuote && c === '{') depth++;
+        else if (!inQuote && c === '}') {
+            depth--;
+            if (depth === 0) {
+                chars[i] = ' ';
+                return i + 1;
+            }
+        }
+        i++;
+    }
+    return i;
 }
 
 const DOC_RE = /^[ \t]*\/\/\//;
@@ -105,6 +141,15 @@ const IMPORT_RE = /(^|\n)[ \t]*import[ \t]+(["'])([^"']*)\2[ \t]+as[ \t]+([A-Za-
 const MODULE_RE = /(^|\n)[ \t]*module[ \t]+([A-Za-z_][\w.]*)/;
 const FUNCTION_RE = /(^|[^\w.])(pub[ \t\n]+)?fn[ \t\n]+([A-Za-z_]\w*)[ \t\n]*\(([^)]*)\)/g;
 const LET_RE = /(^|[^\w.])let[ \t\n]+(mut[ \t\n]+)?([A-Za-z_]\w*)/g;
+/* `fn(x, y) -> ...`: a function without a name is a value, and its parameters are names like any other */
+const LAMBDA_RE = /(^|[^\w.])fn[ \t\n]*\(([^)]*)\)/g;
+/*
+ * Every name the arrow binds that no other scan sees: the parameters of `nome(a, b) -> corpo`, which
+ * defines a function without `fn`, and the ones a `match` arm introduces (`d -> ...`, `d: num -> ...`).
+ *
+ * They only ever silence a diagnostic, so catching one name too many is the safe direction.
+ */
+const ARROW_RE = /(^|[^\w.])([A-Za-z_]\w*)[ \t]*(?::[ \t]*[A-Za-z_]\w*)?[ \t\n]*->/g;
 const MEMBER_RE = /\b([A-Za-z_]\w*)[ \t]*\.[ \t]*([A-Za-z_]\w*)/g;
 const BARE_CALL_RE = /(^|[^\w.:'"])([a-z_]\w*)[ \t]*\(/g;
 const IDENTIFIER_RE = /[A-Za-z_]\w*/g;
@@ -204,6 +249,17 @@ function analyze(text) {
         index.defined.add(name);
         for (const param of params) index.defined.add(param.name);
     }
+
+    LAMBDA_RE.lastIndex = 0;
+    while ((match = LAMBDA_RE.exec(masked)) !== null) {
+        for (const raw of match[2].split(',')) {
+            const name = raw.trim().replace(/^\.\.\./, '').split(/[:=]/)[0].trim();
+            if (/^[A-Za-z_]\w*$/.test(name)) index.defined.add(name);
+        }
+    }
+
+    ARROW_RE.lastIndex = 0;
+    while ((match = ARROW_RE.exec(masked)) !== null) index.defined.add(match[2]);
 
     LET_RE.lastIndex = 0;
     while ((match = LET_RE.exec(masked)) !== null) {

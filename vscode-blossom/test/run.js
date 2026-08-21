@@ -85,7 +85,7 @@ test('the core and mc modules are all there', () => {
 test('the symbols are the ones registered in the sources', () => {
     assert.ok(api.symbolsOf('core.math').includes('sqrt'));
     assert.ok(api.symbolsOf('core.mc.block').includes('set'));
-    assert.ok(api.symbolsOf('core.mc.item').includes('item_component'), 'symbols from Components are resolved');
+    assert.ok(api.symbolsOf('core.mc.item').includes('component'), 'symbols from Components are resolved');
     assert.ok(api.symbolsOf('core.mc.text').includes('hud'), 'symbols from HudApi are resolved');
     assert.strictEqual(api.homeModuleOf('sqrt'), 'core.math');
     assert.strictEqual(api.homeModuleOf('really_does_not_exist'), null);
@@ -183,6 +183,29 @@ test('comments and strings produce no symbols', () => {
     assert.deepStrictEqual(index.functions, []);
     assert.deepStrictEqual(index.members, []);
     assert.deepStrictEqual(index.bindings.map((b) => b.name), ['s']);
+});
+
+test('what is inside ${...} is code, and a single quote is not', () => {
+    const index = analyzer.analyze(
+        'module a;\nimport "core.list" as list;\nprint("how many: ${list.size(x)}");\nprint(\'${list.nope(x)}\');\n'
+    );
+    assert.deepStrictEqual(index.members.map((m) => m.alias + '.' + m.symbol), ['list.size']);
+});
+
+test('the parameters of a lambda and the names an arm binds are declared names', () => {
+    const index = analyzer.analyze(
+        'module a;\nlet f = fn(size, other = 1) -> size;\nmatch(v, d: num -> d, else -> 0);\n'
+    );
+    for (const name of ['size', 'other', 'd']) {
+        assert.ok(index.defined.has(name), name + ' is not declared');
+    }
+});
+
+test('a lambda parameter shadowing a library name is not reported', () => {
+    assert.deepStrictEqual(
+        codes('module a;\nlet f = fn(size) -> size(1);\n'),
+        []
+    );
 });
 
 test('the mask keeps lengths and newlines', () => {
@@ -314,11 +337,22 @@ test('event that does not exist, with a suggestion', () => {
     assert.ok(found.some((d) => d.code === 'unknown-event' && /player_connects/.test(d.message)));
 });
 
-test('custom events from signal_event are not checked', () => {
-    const found = codes(
-        "module a;\nimport \"core.mc.event\" as event;\nevent.signal_event('my_event', 1);\n"
+test('application events, declared and raised, are not checked', () => {
+    const declared = codes(
+        "module a;\nimport \"core.mc.event\" as event;\nevent.declare('my_event', handle);\n"
     );
-    assert.ok(!found.includes('unknown-event'));
+    assert.ok(!declared.includes('unknown-event'));
+    const raised = codes(
+        "module a;\nimport \"core.mc.event\" as event;\nevent.emit('my_event', null, 1);\n"
+    );
+    assert.ok(!raised.includes('unknown-event'));
+});
+
+test('an event named with double quotes is checked too', () => {
+    const found = codes(
+        'module a;\nimport "core.mc.event" as event;\nevent.on("player_connect", f);\n'
+    );
+    assert.ok(found.includes('unknown-event'));
 });
 
 test('the module name must match the path under src/', () => {
@@ -380,7 +414,13 @@ test('hovering an event shows the handler to write', () => {
 test('the call containing the cursor is recognised', () => {
     const text = 'module a;\nimport "core.math" as math;\nmath.max(1, 2';
     const call = providers.enclosingCall(analyzer.mask(text), text.length);
-    assert.deepStrictEqual(call, { alias: 'math', name: 'max', argument: 1 });
+    assert.deepStrictEqual(call, { alias: 'math', name: 'max', argument: 1, piped: false });
+});
+
+test('through a pipe the argument being typed is one further along', () => {
+    const text = 'module a;\nimport "core.list" as list;\nnumbers |> list.map(';
+    const call = providers.enclosingCall(analyzer.mask(text), text.length);
+    assert.deepStrictEqual(call, { alias: 'list', name: 'map', argument: 1, piped: true });
 });
 
 test('the api viewer has a page per module, with every function on it', () => {
