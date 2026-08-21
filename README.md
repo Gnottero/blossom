@@ -100,7 +100,7 @@ mio-progetto/
   "name": "mio-progetto",
   "version": "0.1.0",
   "entrypoint": "src/main.bs",
-  "api_level": "1.0",
+  "api_level": "2.0",
   "autoload": true,
   "dependencies": {
     "shared_utils": { "path": "../shared-utils", "version": "^1.2.0" }
@@ -239,7 +239,7 @@ carica lo stesso le app che ha già.
 Un'app gira se il MAJOR combacia e il suo MINOR non supera quello del mod. Le due direzioni
 falliscono per motivi diversi e il messaggio lo dice: MAJOR diverso vuol dire che l'app è scritta
 per un'altra API; MINOR più alto vuol dire che usa qualcosa che questa versione non ha ancora e
-serve aggiornare il mod. Non dichiararlo significa `1.0`, cioè "non uso niente di recente".
+serve aggiornare il mod. Non dichiararlo significa `1.0`, cioè "sono scritta per la prima API": un'app che non lo dice non carica su una 2.x, ed è voluto.
 
 Una cartella così, copiata sotto `<mondo>/blossom/`, è un **pack**: si carica con
 `/blossom script load <nome-cartella>` come una qualunque app, anche a server acceso.

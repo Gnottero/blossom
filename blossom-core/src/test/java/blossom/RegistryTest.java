@@ -69,7 +69,7 @@ class RegistryTest
     {
         Files.createDirectories(root.resolve("src"));
         Files.writeString(root.resolve("blossom.json"), "{\"name\": \"" + name + "\", \"version\": \"" + version
-                + "\", \"entrypoint\": \"src/main.bs\"" + extra + "}");
+                + "\", \"entrypoint\": \"src/main.bs\", \"api_level\": \"2.0\"" + extra + "}");
         Files.writeString(root.resolve("src/main.bs"), "module main;\n" + mainImports);
         Files.writeString(root.resolve("src/v.bs"), "module v;\n\n" + moduleBody);
     }
@@ -201,7 +201,7 @@ class RegistryTest
     void anHttpRegistryDownloadsVerifiesAndCaches(@TempDir Path tmp) throws IOException
     {
         byte[] archive = zipOf(java.util.Map.of(
-                "vector/blossom.json", "{\"name\": \"vector\", \"version\": \"1.4.0\", \"entrypoint\": \"src/main.bs\"}",
+                "vector/blossom.json", "{\"name\": \"vector\", \"version\": \"1.4.0\", \"entrypoint\": \"src/main.bs\", \"api_level\": \"2.0\"}",
                 "vector/src/main.bs", "module main;\n",
                 "vector/src/v.bs", "module v;\n\npub fn value() -> 140;\n"));
         String sha = Integrity.sha256Of(archive);
@@ -243,7 +243,7 @@ class RegistryTest
     void anArchiveWhoseFingerprintDoesNotMatchIsNotUnpacked(@TempDir Path tmp) throws IOException
     {
         byte[] archive = zipOf(java.util.Map.of(
-                "blossom.json", "{\"name\": \"vector\", \"version\": \"1.0.0\", \"entrypoint\": \"src/main.bs\"}",
+                "blossom.json", "{\"name\": \"vector\", \"version\": \"1.0.0\", \"entrypoint\": \"src/main.bs\", \"api_level\": \"2.0\"}",
                 "src/main.bs", "module main;\n"));
 
         HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);

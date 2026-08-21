@@ -380,7 +380,7 @@ class GuideSnippetsTest
         Path src = tmp.resolve("src");
         Files.createDirectories(src);
         Files.writeString(tmp.resolve("blossom.json"), """
-                {"name": "vena-viva-test", "version": "1.0.0", "entrypoint": "src/main.bs"}
+                {"name": "vena-viva-test", "version": "1.0.0", "entrypoint": "src/main.bs", "api_level": "2.0"}
                 """);
         Files.copy(repoRoot().resolve("examples/vena-viva/src/geologia.bs"), src.resolve("geologia.bs"));
         Files.writeString(src.resolve("main.bs"), """

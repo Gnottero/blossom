@@ -23,7 +23,7 @@ public record ApiLevel(int major, int minor) implements Comparable<ApiLevel>
      * <p>Va alzato insieme al cambiamento che lo giustifica, non a fine ciclo: un numero aggiornato
      * dopo, in blocco, non dice più a quale versione risale ogni funzione.
      */
-    public static final ApiLevel CURRENT = new ApiLevel(1, 1);
+    public static final ApiLevel CURRENT = new ApiLevel(2, 0);
 
     /** Quello che si assume per un manifesto che non lo dichiara. */
     public static final ApiLevel DEFAULT = new ApiLevel(1, 0);

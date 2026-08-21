@@ -2,6 +2,75 @@
 
 Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
+## 1.0.0 — non rilasciato
+
+`api_level` sale a **2.0**: e' una rottura MAJOR, e un'app che non dichiara il proprio `api_level`
+vale 1.0 e non carica piu'. E' voluto: e' meglio di un'app che carica e sbaglia.
+
+### Sintassi
+
+- **Funzioni senza nome**: `fn(a, b) -> a + b`. Catturano il frame in cui nascono, quindi vedono
+  quello che le circonda senza dichiararlo con `outer`. `fn nome(...)` dichiara, `fn(...)` e' un
+  valore: a distinguerli e' la parentesi subito dopo `fn`.
+- **Chiamata diretta di un valore-funzione**: `f(x)` con `f` legata a una funzione. `call(f, x)`
+  resta, e serve per chiamare per nome calcolato a runtime.
+- **Stringhe interpolate**: `"ciao ${nome}"`. L'apice singolo resta letterale, il doppio interpola.
+- **`match`**: `match(x, 0 -> 'zero', d: num -> ..., else -> ...)`. Il soggetto si valuta una volta
+  sola, e i corpi dei bracci non presi non si valutano affatto.
+- **L'operatore `|>`**: `lista |> list.filter(f) |> list.map(g)`. Si risolve mentre si legge il
+  codice e non costa niente a runtime.
+- **Valori di riserva e argomenti con nome**: `fn f(a, b = 1)` e `f(1, b = 2)`. Il valore di riserva
+  si rivaluta ad ogni chiamata che lo usa. Gli argomenti con nome vanno in fondo, e l'ordine e' un
+  controllo di caricamento.
+- **Cicli e `catch` accettano una lambda** oltre all'espressione con `_`:
+  `list.map(l, fn(x) -> x * 2)`, `try(x, 'exception', fn(e) -> ...)`. In `reduce` una lambda a due
+  argomenti legge `(accumulatore, elemento)`. La forma corta con `_` resta, ed e' la piu' veloce.
+- Il nome funzionale dell'operatore `~` non e' piu' `match` ma **`contains`**: `~` e' un test di
+  appartenenza, e `match` serve al costrutto omonimo.
+
+### API rinominata (rottura)
+
+Ogni pagina di `docs/api/` ha in fondo la propria tabella `vecchio -> nuovo`. Le regole:
+
+| Regola | Esempio |
+| --- | --- |
+| via lo stutter col nome del modulo | `score.scoreboard_add` -> `score.add` |
+| un verbo solo per operazione | `delete`, `delete_file`, `*_remove` -> `remove` |
+| una parola sola per "quanti" | `length` -> `size` |
+| nessuna abbreviazione opaca | `loaded_ep` -> `loaded_for_entities`, `plop` -> `place_feature` |
+| inglese americano, scelto una volta | `neighbours` -> `neighbors`, `map_colour` -> `map_color` |
+| il simbolo sta nel modulo del suo primo argomento | `split` solo in `core.string`, `join` solo in `core.list` |
+
+Tre moduli si dividono, perche' tenevano insieme cose diverse:
+
+- `core.mc.scoreboard` -> **`core.mc.score`**, **`core.mc.team`**, **`core.mc.bossbar`**;
+- gli inventari escono da `core.mc.item` in **`core.mc.inventory`**;
+- le funzioni `structure*` di `core.mc.world` raggiungono i template in **`core.mc.structure`**.
+
+### Tolto
+
+- **`system.system_variable_get`** e **`system.system_variable_set`**: erano uno spazio globale
+  condiviso da tutte le app dello stesso server, cioe' l'implicito che il linguaggio non vuole.
+  Per parlare a un'altra app ci sono gli eventi fra app, per conservare dati c'e' `core.io`.
+- **`core.mc.system.task_join`**: era lo stesso simbolo di `core.task`, esportato due volte.
+- **`task_thread`**: registrato ma non esportato da nessun modulo, quindi irraggiungibile.
+
+### Corretto
+
+- `modify` ed `entity_types` erano **registrati due volte**, con il corpo copiato identico: la
+  seconda registrazione sovrascriveva la prima.
+- `core.task` documentava `task_await` come "aspetta senza restituire il valore", che non e' quello
+  che fa: prende il prossimo valore prodotto con `yield` da una coroutine. Ora si chiama `next`, e
+  `wait` e' quella che aspetta la fine.
+- `opacity` e `blocks_daylight` erano commentati con un "investigate": i metodi ci sono ancora, con
+  un nome nuovo e senza argomenti. Implementati ed esportati.
+
+### Strumenti
+
+- **`tools/check-old-names.py`**: legge la tabella delle rinomine dai cataloghi stessi e verifica
+  che nessun nome vecchio sopravviva in `docs/`, `examples/` e nei dati dell'editor.
+- Un test verifica che **nessun simbolo esca da due moduli**, con le eccezioni dichiarate una per una.
+
 ## Non rilasciato
 
 ### Aggiunto
