@@ -14,6 +14,11 @@ public class FunctionSignatureValue extends FrameworkValue
      * ricerca per nome
      */
     private final List<String> argumentTypes;
+    /**
+     * il valore di riserva di ogni parametro, {@code null} dove non ce n'e' uno. Stessa lunghezza di
+     * {@link #arguments}, cosi' a runtime e' un indice e non una ricerca per nome
+     */
+    private List<blossom.interpreter.LazyValue> defaults = java.util.Collections.emptyList();
 
     public FunctionSignatureValue(String name, List<String> args, String varArgs, List<String> globals)
     {
@@ -28,6 +33,17 @@ public class FunctionSignatureValue extends FrameworkValue
         this.argumentTypes = argumentTypes;
         this.varArgs = varArgs;
         this.globals = globals;
+    }
+
+    public void withDefaults(List<blossom.interpreter.LazyValue> values)
+    {
+        this.defaults = values;
+    }
+
+    /** @return i default dichiarati, o {@code null} se nessun parametro ne ha uno */
+    public List<blossom.interpreter.LazyValue> defaults()
+    {
+        return defaults.stream().anyMatch(java.util.Objects::nonNull) ? defaults : null;
     }
 
     /** @return i tipi dichiarati, o {@code null} se nessun parametro ne ha uno */

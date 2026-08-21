@@ -24,7 +24,7 @@ A line of particles between two points. It returns how many it sent.
 ### `particle_box(name, corner_a, corner_b, density?, player?)`
 The twelve edges of a box: it is the quick way to show the area a script is working on.
 
-### `post_effect(players, action, effect?)`
+### `post(players, action, effect?)`
 The post-processing shaders of one or more players, that is, what the game calls `/posteffect`.
 
 | Action | What it does | Returns |
@@ -35,9 +35,9 @@ The post-processing shaders of one or more players, that is, what the game calls
 | `'list'` | the list of active effects | a list of ids (a single player) |
 
 ```
-effect.post_effect(player, 'add', 'minecraft:invert');
-effect.post_effect(entity.player('all'), 'clear');
-effect.post_effect(player, 'list');       // ['minecraft:invert']
+effect.post(player, 'add', 'minecraft:invert');
+effect.post(entity.player('all'), 'clear');
+effect.post(player, 'list');       // ['minecraft:invert']
 ```
 
 It goes through the same packet as the vanilla command, so it **works on any client**, even without

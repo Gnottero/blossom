@@ -1,35 +1,109 @@
 {
   "$alias": "text",
-
-  "print": {
-    "signatures": ["print(message)", "print(target, message)"],
+  "send": {
+    "signatures": [
+      "send(message)",
+      "send(target, message)"
+    ],
     "summary": "Writes a message in chat: to whoever launched the script, or to a given target.",
-    "params": [["target", "optional: a player, or a **list** of players"], ["message", "the text, plain or formatted"]],
+    "params": [
+      [
+        "target",
+        "optional: a player, or a **list** of players"
+      ],
+      [
+        "message",
+        "the text, plain or formatted"
+      ]
+    ],
     "returns": "the message, so the call can be slipped in the middle of an expression.",
-    "examples": ["text.print(player, 'hello');", "text.print(entity.player('all'), 'hello everyone');", "text.print(player, text.format('rb watch out', 'w  something went wrong'));"],
+    "examples": [
+      "text.send(player, 'hello');",
+      "text.send(entity.player('all'), 'hello everyone');",
+      "text.send(player, text.format('rb watch out', 'w  something went wrong'));"
+    ],
     "note": "The target takes a list as it is: `entity.player('all')` goes in with no loop around it."
   },
   "format": {
-    "signatures": ["format(...pieces)"],
+    "signatures": [
+      "format(...pieces)"
+    ],
     "summary": "Builds formatted text. Every piece is `'style text'`, where the style is a run of letters.",
-    "params": [["...pieces", "the pieces, in order. Colours: `w` white, `y` yellow, `m` magenta, `r` red, `c` cyan, `l` light green, `t` blue, `f` dark grey, `g` grey, `d` gold, `p` purple, `n` dark red, `q` dark cyan, `e` dark green, `v` dark blue, `k` black, `#rrggbb` exact. Styles: `i` italic, `b` bold, `u` underlined, `s` struck through, `o` obfuscated"]],
+    "params": [
+      [
+        "...pieces",
+        "the pieces, in order. Colours: `w` white, `y` yellow, `m` magenta, `r` red, `c` cyan, `l` light green, `t` blue, `f` dark grey, `g` grey, `d` gold, `p` purple, `n` dark red, `q` dark cyan, `e` dark green, `v` dark blue, `k` black, `#rrggbb` exact. Styles: `i` italic, `b` bold, `u` underlined, `s` struck through, `o` obfuscated"
+      ]
+    ],
     "returns": "`text` — formatted text, usable everywhere a message goes.",
-    "examples": ["text.format('rb Warning', 'w  the area is unstable');", "text.format('#ff8800b Level 2');", "// an action attached to the piece before it\ntext.format('c click here', '!/say hello', '^g runs a command');"],
+    "examples": [
+      "text.format('rb Warning', 'w  the area is unstable');",
+      "text.format('#ff8800b Level 2');",
+      "// an action attached to the piece before it\ntext.format('c click here', '!/say hello', '^g runs a command');"
+    ],
     "note": "A piece starting with a symbol attaches an action to the piece before it: `^` text on hover, `!` runs a command, `?` writes it in chat, `@` opens an address, `&` copies to the clipboard."
   },
-  "display_title": {
-    "signatures": ["display_title(targets, type)", "display_title(targets, type, text)", "display_title(targets, type, text, fade_in, stay, fade_out)"],
+  "title": {
+    "signatures": [
+      "title(targets, type)",
+      "title(targets, type, text)",
+      "title(targets, type, text, fade_in, stay, fade_out)"
+    ],
     "summary": "Writes big on the screen.",
-    "params": [["targets", "a player or a list of players"], ["type", "`'title'`, `'subtitle'`, `'actionbar'`, `'player_list_header'`, `'player_list_footer'`, or `'clear'` / `'reset'` to remove"], ["text", "what to write, plain or formatted"], ["fade_in, stay, fade_out", "optional: the three times, in ticks"]],
+    "params": [
+      [
+        "targets",
+        "a player or a list of players"
+      ],
+      [
+        "type",
+        "`'title'`, `'subtitle'`, `'actionbar'`, `'player_list_header'`, `'player_list_footer'`, or `'clear'` / `'reset'` to remove"
+      ],
+      [
+        "text",
+        "what to write, plain or formatted"
+      ],
+      [
+        "fade_in, stay, fade_out",
+        "optional: the three times, in ticks"
+      ]
+    ],
     "returns": "`num` — how many players it reached.",
-    "examples": ["text.display_title(player, 'title', text.format('gb Level 2'));", "text.display_title(entity.player('all'), 'subtitle', 'get ready', 10, 40, 10);", "text.display_title(player, 'clear');"]
+    "examples": [
+      "text.title(player, 'title', text.format('gb Level 2'));",
+      "text.title(entity.player('all'), 'subtitle', 'get ready', 10, 40, 10);",
+      "text.title(player, 'clear');"
+    ]
   },
   "hud": {
-    "signatures": ["hud(players, text)", "hud(players, text, duration)", "hud(player)"],
+    "signatures": [
+      "hud(players, text)",
+      "hud(players, text, duration)",
+      "hud(player)"
+    ],
     "summary": "A line of text above the hotbar, which stays there.",
-    "params": [["players", "a player or a list of players"], ["text", "what to show; `null` removes the line"], ["duration", "optional, in ticks: **without it the line stays**, there is no hidden default"]],
+    "params": [
+      [
+        "players",
+        "a player or a list of players"
+      ],
+      [
+        "text",
+        "what to show; `null` removes the line"
+      ],
+      [
+        "duration",
+        "optional, in ticks: **without it the line stays**, there is no hidden default"
+      ]
+    ],
     "returns": "`num` — how many players were touched; with one argument, the line they are seeing or `null`.",
-    "examples": ["text.hud(player, 'ores found: ' + found);        // stays until you change it", "text.hud(player, 'unstable area', 60);           // three seconds, then it goes", "text.hud(entity.player('all'), text.format('y watch out'));", "text.hud(player, null);                          // gone now", "text.hud(player);                                // what they are seeing"],
+    "examples": [
+      "text.hud(player, 'ores found: ' + found);        // stays until you change it",
+      "text.hud(player, 'unstable area', 60);           // three seconds, then it goes",
+      "text.hud(entity.player('all'), text.format('y watch out'));",
+      "text.hud(player, null);                          // gone now",
+      "text.hud(player);                                // what they are seeing"
+    ],
     "note": "It works on any client, with nothing installed: it is the action bar, resent before it fades. Three consequences — there is only one line, it shares the space with everything else writing there, and the position is not up for choice. A duration of zero or less is an error, not \"disappears at once\": whoever writes it has almost always miscomputed an interval."
   }
 }

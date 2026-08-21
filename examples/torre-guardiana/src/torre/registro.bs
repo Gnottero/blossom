@@ -8,12 +8,12 @@ let mut torri = [];
 
 pub fn aggiungi(base, altezza) -> (
     list.put(torri, null, [base, altezza]);
-    list.length(torri)
+    list.size(torri)
 );
 
 pub fn tutte() -> torri;
 
-pub fn quante() -> list.length(torri);
+pub fn quante() -> list.size(torri);
 
 pub fn svuota() -> (
     torri = [];

@@ -13,9 +13,9 @@ import "core.task" as task;
 
 fn conta_minerali(centro) -> ...;                   // lavoro lungo
 
-t = task.task('conta_minerali', centro);            // parte subito, non blocca
-task.task_completed(t);                             // ha finito?
-task.task_join(t);                                  // aspetta e prendi il risultato
+t = task.start('conta_minerali', centro);            // parte subito, non blocca
+task.done(t);                             // ha finito?
+task.wait(t);                                  // aspetta e prendi il risultato
 ```
 
 Serve quando: scansioni un volume grosso, generi qualcosa di costoso, aspetti qualcosa. **Non** serve
@@ -23,35 +23,35 @@ per andare più veloce — è concorrenza, non parallelismo automatico, e il coo
 
 | Funzione | Cosa fa |
 | --- | --- |
-| `task(f, ...args)` | avvia e restituisce un handle |
-| `task_join(t)` | aspetta la fine e restituisce il valore |
-| `task_await(t)` | aspetta senza restituire |
-| `task_completed(t)` · `task_value(t)` | se ha finito, e il risultato se c'è |
-| `task_count()` | quanti task sono in volo |
-| `task_send(t, v)` · `yield(v)` · `task_ready(t)` | scambiare valori con un task in corso |
+| `task.start(f, ...args)` | avvia e restituisce un handle |
+| `task.wait(t)` | aspetta la fine e restituisce il valore |
+| `task.next(t)` | aspetta senza restituire |
+| `task.done(t)` · `task.value(t)` | se ha finito, e il risultato se c'è |
+| `task.count()` | quanti task sono in volo |
+| `task.send(t, v)` · `yield(v)` · `task.has_next(t)` | scambiare valori con un task in corso |
 | `sleep(ms)` | sospende |
 
 ## Toccare il mondo da dentro un task
 
 Il mondo non è thread-safe. Da un task, ogni chiamata che legge o scrive blocchi ed entità va
-incapsulata in `task_dock`, che la esegue sul thread principale:
+incapsulata in `task.dock`, che la esegue sul thread principale:
 
 ```
 fn scansione(centro) -> (
     trovati = 0;
     loop(1000, (
         p = punto(centro, _);
-        if(task.task_dock(block.block(p)) == 'diamond_ore', trovati += 1)
+        if(task.dock(block.block(p)) == 'diamond_ore', trovati += 1)
     ));
     trovati
 );
 ```
 
-Il `task_dock` costa: fa la coda con il tick. La forma giusta è **un dock per blocco di lavoro**, non
+Il `task.dock` costa: fa la coda con il tick. La forma giusta è **un dock per blocco di lavoro**, non
 uno per ogni singola lettura — leggi tutto quello che ti serve in un dock solo, poi elabora fuori.
 
 ```
-dati = task.task_dock(list.map(posizioni, block.block(_)));      // una sola sosta
+dati = task.dock(list.map(posizioni, block.block(_)));      // una sola sosta
 risultato = elabora(dati);                                       // fuori dal thread del gioco
 ```
 
@@ -82,7 +82,7 @@ Ogni esecuzione ha un budget di tempo e una profondità massima di chiamata:
 | --- | --- | --- |
 | dentro un evento di gioco | 2 s | 256 |
 | da `/blossom script run` o al caricamento | 15 s | 256 |
-| dentro un `task()` | nessun limite | 256 |
+| dentro un `task.start()` | nessun limite | 256 |
 
 Il task non ha scadenza **apposta**: gira su un thread suo, non tiene fermo niente, ed è la cosa da
 usare quando un lavoro è davvero lungo. La profondità invece vale anche lì: una ricorsione infinita
@@ -101,12 +101,12 @@ Il manifesto può cambiarli:
 Un lavoro lungo che deve finire nel mondo si scrive in tre pezzi:
 
 ```
-fn avvia_lavoro(centro) -> task.task('lavoro', centro);
+fn avvia_lavoro(centro) -> task.start('lavoro', centro);
 
 fn lavoro(centro) -> (
-    dati = task.task_dock(raccogli(centro));         // 1. leggi, in una sosta sola
+    dati = task.dock(raccogli(centro));         // 1. leggi, in una sosta sola
     piano = calcola(dati);                           // 2. pensa, fuori dal tick
-    task.task_dock(applica(piano))                   // 3. scrivi, in una sosta sola
+    task.dock(applica(piano))                   // 3. scrivi, in una sosta sola
 );
 ```
 

@@ -5,13 +5,13 @@ Talking to the people playing.
 ```
 import "core.mc.text" as text;
 
-text.print(player, 'hello');
-text.print(entity.player('all'), 'hello everyone');
-text.print(player, text.format('rb watch out', 'w  something went wrong'));
-text.display_title(player, 'title', text.format('gb Level 2'));
+text.send(player, 'hello');
+text.send(entity.player('all'), 'hello everyone');
+text.send(player, text.format('rb watch out', 'w  something went wrong'));
+text.title(player, 'title', text.format('gb Level 2'));
 ```
 
-### `print(message)` · `print(target, message)`
+### `send(message)` · `send(target, message)`
 Writes a message: to whoever launched the script, or to a given target. The target is a player or a
 **list of players**, so the list `entity.player('all')` returns goes in as it is, with no loop around
 it. It returns the message, so it can be slipped in the middle of an expression without breaking it.
@@ -31,7 +31,7 @@ Formatted text. Every piece is `'style text'`, where the style is made of letter
 A piece starting with a symbol attaches an action to the previous piece: `^` text on hover, `!` runs
 a command, `?` writes it in chat, `@` opens an address, `&` copies to the clipboard.
 
-### `display_title(targets, type, text?, fade_in?, stay?, fade_out?)`
+### `title(targets, type, text?, fade_in?, stay?, fade_out?)`
 Writes big on the screen. The types are `'title'`, `'subtitle'`, `'actionbar'`,
 `'player_list_header'`, `'player_list_footer'`, and `'clear'`/`'reset'` to remove.
 
@@ -68,7 +68,7 @@ Three consequences, stated:
 
 - **there is only one line.** It is the space of the action bar, and that is that.
 - **it shares the space with everything else.** The item name appearing when changing hotbar slot, a
-  `display_title(..., 'actionbar', ...)`, another mod: the HUD line overwrites them within half a
+  `title(..., 'actionbar', ...)`, another mod: the HUD line overwrites them within half a
   second. That is what a HUD needs, but it is worth knowing.
 - **the position is not up for choice.** Above the hotbar, full stop.
 

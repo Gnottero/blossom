@@ -8,6 +8,7 @@ import blossom.interpreter.LazyValue;
 import blossom.exception.BreakStatement;
 import blossom.exception.ContinueStatement;
 import blossom.value.AbstractListValue;
+import blossom.value.FunctionValue;
 import blossom.value.ListValue;
 import blossom.value.NumericValue;
 import blossom.value.Value;
@@ -18,6 +19,71 @@ import java.util.List;
 
 public class Loops
 {
+    /**
+     * Il corpo di un ciclo, che si scrive in due modi.
+     *
+     * <p>La forma corta e' un'espressione con {@code _} legato all'elemento, {@code _i} al suo
+     * indice e {@code _a} all'accumulatore: e' anche la piu' veloce, perche' non crea nessun frame
+     * di chiamata. La forma lunga e' una lambda, {@code fn(x) -> ...}, che ha i suoi nomi al posto
+     * dei tre impliciti - e li' i nomi non possono piu' collidere fra un ciclo e quello che lo
+     * contiene.
+     *
+     * <p>Quale delle due sia lo dice il token, quindi la decisione e' presa mentre si costruisce
+     * l'albero e non ad ogni elemento. Un corpo che non e' una lambda torna indietro com'e'
+     * arrivato, e non paga niente.
+     *
+     * @param accumulatorFirst per {@code reduce}, dove una lambda a due argomenti legge
+     *                         {@code fn(accumulatore, elemento)} e non {@code fn(elemento, indice)}
+     */
+    private static LazyValue loopBody(Context c, LazyValue expr, boolean accumulatorFirst)
+    {
+        if (!(expr instanceof LazyValue.Lambda))
+        {
+            return expr;
+        }
+        FunctionValue function = (FunctionValue) expr.evalValue(c, Context.NONE);
+        int arity = function.getArguments().size();
+        return (cc, tt) ->
+        {
+            List<Value> args = new ArrayList<>(arity);
+            if (accumulatorFirst && arity > 0)
+            {
+                args.add(cc.implicitAccumulator().evalValue(cc, Context.NONE));
+                if (arity > 1)
+                {
+                    args.add(cc.implicitValue().evalValue(cc, Context.NONE));
+                }
+            }
+            else
+            {
+                if (arity > 0)
+                {
+                    args.add(cc.implicitValue().evalValue(cc, Context.NONE));
+                }
+                if (arity > 1)
+                {
+                    args.add(cc.implicitIndex().evalValue(cc, Context.NONE));
+                }
+            }
+            while (args.size() < arity)
+            {
+                args.add(Value.NULL);
+            }
+            return function.callInContext(cc, Context.NONE, args).evalValue(cc, Context.NONE);
+        };
+    }
+
+    private static LazyValue loopBody(Context c, LazyValue expr)
+    {
+        return loopBody(c, expr, false);
+    }
+
+    /** Come sopra, per chi sta fuori da questo file: la chiave di {@code sort}, per esempio. */
+    public static LazyValue keyOf(Context c, LazyValue expr)
+    {
+        return loopBody(c, expr, false);
+    }
+
     public static void apply(Expression expression)
     {
         // condition and expression will get a bound '_i'
@@ -54,7 +120,7 @@ public class Loops
         {
             if (lv.size() == 2) { // lets do nasty way so performance is not affected (might be super unnecessary, but hey)
                 LazyValue condition = lv.get(0);
-                LazyValue expr = lv.get(1);
+                LazyValue expr = loopBody(c, lv.get(1));
                 long i = 0;
                 Value lastOne = Value.NULL;
                 //scoping
@@ -90,7 +156,7 @@ public class Loops
             }
             long limit = NumericValue.asNumber(lv.get(1).evalValue(c)).getLong();
             LazyValue condition = lv.get(0);
-            LazyValue expr = lv.get(2);
+            LazyValue expr = loopBody(c, lv.get(2));
             long i = 0;
             Value lastOne = Value.NULL;
             //scoping
@@ -132,7 +198,7 @@ public class Loops
         {
             long limit = NumericValue.asNumber(lv.get(0).evalValue(c, Context.NONE)).getLong();
             Value lastOne = Value.NULL;
-            LazyValue expr = lv.get(1);
+            LazyValue expr = loopBody(c, lv.get(1));
             //scoping
             LazyValue defaultVal = c.implicitValue;
             // il watchdog letto una volta e tenuto in un locale: dentro il loop piu' stretto del
@@ -179,7 +245,7 @@ public class Loops
                 throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "loop", "First argument of 'map' function should be a list or iterator");
             }
             Iterator<Value> iterator = alv.iterator();
-            LazyValue expr = lv.get(1);
+            LazyValue expr = loopBody(c, lv.get(1));
             //scoping
             LazyValue defaultVal = c.implicitValue;
             LazyValue iterVal = c.implicitIndex;
@@ -235,7 +301,7 @@ public class Loops
                 throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "loop", "First argument of 'filter' function should be a list or iterator");
             }
             Iterator<Value> iterator = alv.iterator();
-            LazyValue expr = lv.get(1);
+            LazyValue expr = loopBody(c, lv.get(1));
             //scoping
             LazyValue defaultVal = c.implicitValue;
             LazyValue iterVal = c.implicitIndex;
@@ -294,7 +360,7 @@ public class Loops
                 throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "loop", "First argument of 'first' function should be a list or iterator");
             }
             Iterator<Value> iterator = alv.iterator();
-            LazyValue expr = lv.get(1);
+            LazyValue expr = loopBody(c, lv.get(1));
             //scoping
             LazyValue defaultVal = c.implicitValue;
             LazyValue iterVal = c.implicitIndex;
@@ -352,7 +418,7 @@ public class Loops
                 throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "loop", "First argument of 'all' function should be a list or iterator");
             }
             Iterator<Value> iterator = alv.iterator();
-            LazyValue expr = lv.get(1);
+            LazyValue expr = loopBody(c, lv.get(1));
             //scoping
             LazyValue defaultVal = c.implicitValue;
             LazyValue iterVal = c.implicitIndex;
@@ -427,7 +493,7 @@ public class Loops
                 throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "loop", "First argument of 'for' function should be a list or iterator");
             }
             Iterator<Value> iterator = alv.iterator();
-            LazyValue expr = lv.get(1);
+            LazyValue expr = loopBody(c, lv.get(1));
             //scoping
             LazyValue defaultVal = c.implicitValue;
             LazyValue iterVal = c.implicitIndex;
@@ -490,7 +556,7 @@ public class Loops
             {
                 throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "loop", "First argument of 'reduce' should be a list or iterator");
             }
-            LazyValue expr = lv.get(1);
+            LazyValue expr = loopBody(c, lv.get(1), true);
             Value acc = lv.get(2).evalValue(c, Context.NONE);
             Iterator<Value> iterator = alv.iterator();
 

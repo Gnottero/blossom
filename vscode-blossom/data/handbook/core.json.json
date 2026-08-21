@@ -1,19 +1,38 @@
 {
   "$alias": "json",
-
-  "encode_json": {
-    "signatures": ["encode_json(value)"],
+  "encode": {
+    "signatures": [
+      "encode(value)"
+    ],
     "summary": "Turns a Blossom value into a json string.",
-    "params": [["value", "maps, lists, numbers, strings, booleans and `null`"]],
+    "params": [
+      [
+        "value",
+        "maps, lists, numbers, strings, booleans and `null`"
+      ]
+    ],
     "returns": "`str` — the json text.",
-    "examples": ["json.encode_json({'name' -> 'blossom', 'version' -> 1});\n// '{\"name\":\"blossom\",\"version\":1}'", "io.write_text('shared', 'state.json', json.encode_json(state));"]
+    "examples": [
+      "json.encode({'name' -> 'blossom', 'version' -> 1});\n// '{\"name\":\"blossom\",\"version\":1}'",
+      "io.write_text('shared', 'state.json', json.encode(state));"
+    ]
   },
-  "decode_json": {
-    "signatures": ["decode_json(text)"],
+  "decode": {
+    "signatures": [
+      "decode(text)"
+    ],
     "summary": "Reads a json string back as ordinary Blossom values.",
-    "params": [["text", "the json to read"]],
+    "params": [
+      [
+        "text",
+        "the json to read"
+      ]
+    ],
     "returns": "the value: a map for an object, a list for an array, and so on.",
-    "examples": ["json.decode_json('{\"a\": [1, 2]}');   // {'a' -> [1, 2]}", "json.decode_json('[1, 2, 3]'):0;     // 1"],
+    "examples": [
+      "json.decode('{\"a\": [1, 2]}');   // {'a' -> [1, 2]}",
+      "json.decode('[1, 2, 3]'):0;     // 1"
+    ],
     "note": "Invalid json is a typed error saying where the problem is, not a `null` to be discovered later. Catch it with `try(..., 'json_error', ...)` when the text comes from outside."
   }
 }

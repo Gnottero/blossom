@@ -4,6 +4,9 @@ Un linguaggio di scripting per Minecraft, e il mod Fabric che lo esegue. È cost
 cose: **moduli veri**, **errori leggibili** e una **API di gioco curata** invece di una superficie
 enorme e piatta.
 
+Un pack contiene **il comportamento e il contenuto**: il codice che reagisce a quello che succede, e
+le ricette, i tag, le loot table e gli advancement che finora volevano un datapack a parte.
+
 Fa una cosa sola, eseguire codice che manipola il mondo: niente rules, niente ottimizzazioni del
 server, niente strumenti di amministrazione.
 
@@ -53,7 +56,7 @@ import "core.mc.entity" as entity;
 import "core.mc.event" as event;
 
 fn benvenuto(giocatore) -> (
-    text.print(giocatore, 'benvenuto su questo server');
+    text.send(giocatore, 'benvenuto su questo server');
     false
 );
 
@@ -78,9 +81,49 @@ In gioco:
 | `/blossom script unload <app>` | scarica un'app e i suoi handler di evento |
 | `/blossom script list` | cosa è caricato e cosa c'è su disco |
 | `/blossom pack update <app>` | ri-risolve le dipendenze e riscrive `blossom.lock` |
+| `/blossom data generate <app>` | chiama la `generate()` dell'app e scrive il contenuto in `data/` |
+| `/blossom data list <app>` | cosa c'è nella `data/`, e cosa di quello è generato |
+| `/blossom data export <app>` | ne fa un datapack zippato, che gira anche senza Blossom |
 | `/blossom profile run <codice>` | misura dove va il tempo, funzione per funzione |
 | `/blossom profile in <app> <codice>` | come sopra, dentro un'app caricata |
 | `/blossom profile start <app>` / `stop <app>` | misura un'app viva, handler di evento compresi |
+
+## Il contenuto di gioco
+
+Un pack può portare anche **contenuto**: ricette, loot table, tag, advancement — quello che finora
+voleva un datapack a parte. Sta in una cartella `data/` accanto a `src/`, con l'albero e i json di un
+datapack vero, e viene dato al gioco da dentro il pack: chi installa copia una cosa sola.
+
+```
+mio-pack/
+├── blossom.json
+├── src/main.bs
+└── data/
+    ├── pack.mcmeta
+    └── mio/recipe/spada.json
+```
+
+I json si scrivono a mano, oppure li **genera** il codice — che è il motivo per cui conviene avere un
+linguaggio invece di quaranta file quasi identici:
+
+```
+pub fn generate() -> list.map(map.keys(METALLI), fn(m) -> data.write("mio:recipe/spada_${m}", {
+    'type' -> 'minecraft:crafting_shaped',
+    'pattern' -> [' # ', ' # ', ' / '],
+    'key' -> {'#' -> "minecraft:${m}_ingot", '/' -> 'minecraft:stick'},
+    'result' -> {'id' -> "minecraft:${METALLI:m}_sword"}
+}));
+```
+
+```
+/blossom data generate mio-pack
+5 resources written in data/. Run /reload to apply them; a new registry entry or worldgen needs a restart.
+```
+
+Quello che ne esce sono json veri, che restano su disco e si guardano con `git diff`. Un file scritto
+a mano nella stessa cartella non viene mai toccato: l'elenco di cosa è generato sta in
+`data/.blossom-generated`. Il dettaglio è in
+[13. Il contenuto di gioco](docs/guide/13-contenuti.md).
 
 ## Un progetto multi-file
 
@@ -100,7 +143,7 @@ mio-progetto/
   "name": "mio-progetto",
   "version": "0.1.0",
   "entrypoint": "src/main.bs",
-  "api_level": "1.0",
+  "api_level": "2.0",
   "autoload": true,
   "dependencies": {
     "shared_utils": { "path": "../shared-utils", "version": "^1.2.0" }
@@ -239,7 +282,7 @@ carica lo stesso le app che ha già.
 Un'app gira se il MAJOR combacia e il suo MINOR non supera quello del mod. Le due direzioni
 falliscono per motivi diversi e il messaggio lo dice: MAJOR diverso vuol dire che l'app è scritta
 per un'altra API; MINOR più alto vuol dire che usa qualcosa che questa versione non ha ancora e
-serve aggiornare il mod. Non dichiararlo significa `1.0`, cioè "non uso niente di recente".
+serve aggiornare il mod. Non dichiararlo significa `1.0`, cioè "sono scritta per la prima API": un'app che non lo dice non carica su una 2.x, ed è voluto.
 
 Una cartella così, copiata sotto `<mondo>/blossom/`, è un **pack**: si carica con
 `/blossom script load <nome-cartella>` come una qualunque app, anche a server acceso.
@@ -259,7 +302,7 @@ ExecutionBudgetError[time]
   in torre.sorveglia  (src/torre.bs:12:5)
 
   Execution stopped after 2000 ms: the script is running too long and the server is waiting for
-  it. If it really needs all that time, move it to a task() or raise 'timeout_ms' in the manifest.
+  it. If it really needs all that time, move it to a task.start() or raise 'timeout_ms' in the manifest.
 ```
 
 I limiti di default sono tre, perché le tre situazioni sono diverse:
@@ -268,9 +311,9 @@ I limiti di default sono tre, perché le tre situazioni sono diverse:
 | --- | --- | --- |
 | dentro un evento di gioco | 2 s | 256 |
 | codice lanciato da `/blossom script run` o `load` | 15 s | 256 |
-| dentro un `task()` | nessun limite | 256 |
+| dentro un `task.start()` | nessun limite | 256 |
 
-Un `task()` non ha scadenza apposta: gira su un thread suo, non tiene fermo il tick, ed è la cosa da
+Un `task.start()` non ha scadenza apposta: gira su un thread suo, non tiene fermo il tick, ed è la cosa da
 usare quando un lavoro è davvero lungo.
 
 Un'app può dichiarare i propri limiti nel manifesto, e allora valgono in tutti e tre i casi:

@@ -55,7 +55,7 @@ Non serve registrare comandi: le funzioni `pub` di un'app si chiamano già dalla
 
 ```
 pub fn classifica() -> (
-    ordinata = list.sort_key(map.pairs(punteggi), -_:1);
+    ordinata = list.sort(map.pairs(punteggi), -_:1);
     list.map(ordinata, _:0 + ': ' + _:1)
 );
 ```
@@ -102,12 +102,12 @@ accumulatori. Dentro il corpo `_x`, `_y`, `_z` sono le coordinate e `_` è il bl
 ```
 import "core.task" as task;
 
-fn avvia(centro) -> task.task('lavoro', centro);
+fn avvia(centro) -> task.start('lavoro', centro);
 
 fn lavoro(centro) -> (
-    dati = task.task_dock(scan.rect(centro, 32));       // leggi in una sosta
+    dati = task.dock(scan.rect(centro, 32));       // leggi in una sosta
     piano = calcola(dati);                              // pensa fuori dal tick
-    task.task_dock(applica(piano))                      // scrivi in una sosta
+    task.dock(applica(piano))                      // scrivi in una sosta
 );
 ```
 
@@ -127,7 +127,7 @@ import "core.list" as list;
 
 (l ~ x) != null;                    // c'è?
 l ~ x;                              // l'indice, null se non c'è
-list.first(l, _:'nome' == 'ada');   // il primo che soddisfa una condizione
+list.find(l, _:'nome' == 'ada');   // il primo che soddisfa una condizione
 list.has(l, 3);                     // esiste l'indice 3? — non "contiene 3"
 ```
 
@@ -155,7 +155,7 @@ fn raggruppa(elementi, chiave) -> (
 import "core.json" as json;
 
 fn leggi(testo) -> try(
-    json.decode_json(testo),
+    json.decode(testo),
     'json_error', (
         print('configurazione illeggibile, uso i valori di default');
         {}
@@ -169,10 +169,10 @@ Con il filtro esplicito: senza, `try` cattura solo le eccezioni utente.
 
 ```
 // app "miniera"
-conteggio = event.signal_event('vena_esaurita', null, pos, quanti);
+conteggio = event.emit('vena_esaurita', null, pos, quanti);
 
 // app "registro"
-event.handle_event('vena_esaurita', su_vena_esaurita);
+event.declare('vena_esaurita', su_vena_esaurita);
 ```
 
 `signal_event` restituisce `null` se nessuno ascolta: puoi saltare il lavoro di preparare i dati.

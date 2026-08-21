@@ -1,49 +1,128 @@
 {
   "$alias": "nbt",
-
   "nbt": {
-    "signatures": ["nbt(value)"],
+    "signatures": [
+      "nbt(value)"
+    ],
     "summary": "Builds an NBT value from a string in command format, from a map or from a list.",
-    "params": [["value", "the text `'{Fire: 20}'`, or a map or list to convert"]],
+    "params": [
+      [
+        "value",
+        "the text `'{Fire: 20}'`, or a map or list to convert"
+      ]
+    ],
     "returns": "`nbt` — indexable like a map or a list, and changeable in place.",
-    "examples": ["tag = nbt.nbt('{Fire: 20, Motion: [0.0d, 0.5d, 0.0d]}');\ntag:'Fire';                     // 20", "nbt.nbt({'Fire' -> 20});"],
+    "examples": [
+      "tag = nbt.nbt('{Fire: 20, Motion: [0.0d, 0.5d, 0.0d]}');\ntag:'Fire';                     // 20",
+      "nbt.nbt({'Fire' -> 20});"
+    ],
     "note": "It is the way to touch what the curated API does not expose yet: everything the game stores goes through here."
   },
-  "parse_nbt": {
-    "signatures": ["parse_nbt(nbt)"],
+  "decode": {
+    "signatures": [
+      "decode(nbt)"
+    ],
     "summary": "The opposite of `nbt`: from NBT to ordinary Blossom values.",
-    "params": [["nbt", "the NBT value, or its textual form"]],
+    "params": [
+      [
+        "nbt",
+        "the NBT value, or its textual form"
+      ]
+    ],
     "returns": "maps, lists, numbers and strings.",
-    "examples": ["data = nbt.parse_nbt(entity.query(player, 'nbt'));\ndata:'Inventory';", "nbt.parse_nbt('{a: 1, b: [1, 2]}');   // {'a' -> 1, 'b' -> [1, 2]}"],
+    "examples": [
+      "data = nbt.decode(entity.query(player, 'nbt'));\ndata:'Inventory';",
+      "nbt.decode('{a: 1, b: [1, 2]}');   // {'a' -> 1, 'b' -> [1, 2]}"
+    ],
     "note": "The result is a plain copy: changing it does not change the entity or the block it came from."
   },
-  "encode_nbt": {
-    "signatures": ["encode_nbt(value)", "encode_nbt(value, force)"],
+  "encode": {
+    "signatures": [
+      "encode(value)",
+      "encode(value, force)"
+    ],
     "summary": "From Blossom values to NBT.",
-    "params": [["value", "what to convert"], ["force", "optional: with `true`, whatever has no NBT shape becomes its string instead of failing"]],
+    "params": [
+      [
+        "value",
+        "what to convert"
+      ],
+      [
+        "force",
+        "optional: with `true`, whatever has no NBT shape becomes its string instead of failing"
+      ]
+    ],
     "returns": "`nbt` — the converted value.",
-    "examples": ["nbt.encode_nbt([1, 2, 3]);", "nbt.encode_nbt({'name' -> 'ada', 'score' -> 12});"]
+    "examples": [
+      "nbt.encode([1, 2, 3]);",
+      "nbt.encode({'name' -> 'ada', 'score' -> 12});"
+    ]
   },
-  "escape_nbt": {
-    "signatures": ["escape_nbt(string)"],
+  "escape": {
+    "signatures": [
+      "escape(string)"
+    ],
     "summary": "Puts a string in the form the game would write it inside a tag, quotes and escapes included.",
-    "params": [["string", "the text to escape"]],
+    "params": [
+      [
+        "string",
+        "the text to escape"
+      ]
+    ],
     "returns": "`str` — the escaped text.",
-    "examples": ["nbt.escape_nbt('say \"hi\"');   // '\"say \\\\\"hi\\\\\"\"'", "// building a tag by hand without breaking it on an apostrophe\nnbt.nbt('{Name: ' + nbt.escape_nbt(name) + '}');"]
+    "examples": [
+      "nbt.escape('say \"hi\"');   // '\"say \\\\\"hi\\\\\"\"'",
+      "// building a tag by hand without breaking it on an apostrophe\nnbt.nbt('{Name: ' + nbt.escape(name) + '}');"
+    ]
   },
-  "tag_matches": {
-    "signatures": ["tag_matches(tag, predicate)", "tag_matches(tag, predicate, respect_lists)"],
+  "matches": {
+    "signatures": [
+      "matches(tag, predicate)",
+      "matches(tag, predicate, respect_lists)"
+    ],
     "summary": "Whether a tag satisfies a partial predicate, with the same rules the vanilla commands use.",
-    "params": [["tag", "the tag to check"], ["predicate", "the partial tag it has to contain"], ["respect_lists", "optional: whether lists have to match exactly rather than by containment"]],
+    "params": [
+      [
+        "tag",
+        "the tag to check"
+      ],
+      [
+        "predicate",
+        "the partial tag it has to contain"
+      ],
+      [
+        "respect_lists",
+        "optional: whether lists have to match exactly rather than by containment"
+      ]
+    ],
     "returns": "`bool` — whether it matches.",
-    "examples": ["nbt.tag_matches(entity.query(e, 'nbt'), '{Fire: 20}');"]
+    "examples": [
+      "nbt.matches(entity.query(e, 'nbt'), '{Fire: 20}');"
+    ]
   },
-  "nbt_storage": {
-    "signatures": ["nbt_storage()", "nbt_storage(key)", "nbt_storage(key, value)"],
+  "storage": {
+    "signatures": [
+      "storage()",
+      "storage(key)",
+      "storage(key, value)"
+    ],
     "summary": "The NBT storage of the world, the one the commands call `data storage`.",
-    "params": [["key", "the namespace of the storage"], ["value", "optional: the content to write"]],
+    "params": [
+      [
+        "key",
+        "the namespace of the storage"
+      ],
+      [
+        "value",
+        "optional: the content to write"
+      ]
+    ],
     "returns": "`list` of the keys, the stored tag, or the written value.",
-    "examples": ["nbt.nbt_storage();                                     // the existing namespaces", "nbt.nbt_storage('mine:state');                         // reads it", "nbt.nbt_storage('mine:state', nbt.nbt('{round: 3}'));  // writes it"],
+    "examples": [
+      "nbt.storage();                                     // the existing namespaces",
+      "nbt.storage('mine:state');                         // reads it",
+      "nbt.storage('mine:state', nbt.nbt('{round: 3}'));  // writes it"
+    ],
     "note": "It is the way to exchange data with functions and datapacks: they read the same storage with `/data get storage`."
   }
 }

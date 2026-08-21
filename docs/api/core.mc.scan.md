@@ -27,5 +27,5 @@ Like `scan`, but the volume is given with two corners instead of centre and radi
 The positions of a box or of an octahedron, as a lazy list: they are consumed as they go, without
 building the whole volume in memory.
 
-### `neighbours(pos)`
+### `neighbors(pos)`
 The six adjacent positions.

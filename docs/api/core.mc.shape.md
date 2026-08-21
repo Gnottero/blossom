@@ -5,9 +5,9 @@ Showing what a script is computing.
 ```
 import "core.mc.shape" as shape;
 
-shape.draw_shape('box', 100, {'from' -> [0, 64, 0], 'to' -> [8, 70, 8], 'color' -> 'red'});
-shape.draw_shape('sphere', 100, {'center' -> [0, 66, 0], 'radius' -> 4, 'color' -> 'cyan'});
-shape.draw_shape('label', 100, {'pos' -> [0, 70, 0], 'text' -> 'here'});
+shape.draw('box', 100, {'from' -> [0, 64, 0], 'to' -> [8, 70, 8], 'color' -> 'red'});
+shape.draw('sphere', 100, {'center' -> [0, 66, 0], 'radius' -> 4, 'color' -> 'cyan'});
+shape.draw('label', 100, {'pos' -> [0, 70, 0], 'text' -> 'here'});
 ```
 
 ## The deal with the client
@@ -21,7 +21,7 @@ working for whoever plays vanilla. Shapes, though, are the one thing a server ca
 | has Blossom on the client too | the real shape, drawn with lines |
 | plays vanilla | the same geometry approximated with **particles** |
 
-Whoever writes the script does not have to know who has what: `draw_shape` decides on its own, player
+Whoever writes the script does not have to know who has what: `draw` decides on its own, player
 by player, and returns how many of them got it as a real shape. If you need to know beforehand there
 is `has_client(player)`, in [`core.mc.entity`](core.mc.entity.md) — it is a question about a player,
 not about the drawing.
@@ -34,7 +34,7 @@ particles cannot be coloured at will), curves become polygons, and a label canno
 whoever has no client gets the text in chat once. A block or an item becomes a particle showing its
 texture at the right point.
 
-### `draw_shape(type, duration, attributes)`
+### `draw(type, duration, attributes)`
 
 `duration` is in ticks. `attributes` is a map; the ones common to every shape:
 
@@ -97,8 +97,8 @@ style.
 to show where a piece of a build will go, an item marking a point.
 
 ```
-shape.draw_shape('block', 100, {'pos' -> [0, 65, 0], 'block' -> 'chest[facing=north]'});
-shape.draw_shape('item', 100, {'pos' -> [0, 67, 0], 'item' -> 'diamond_sword', 'variant' -> 'ground'});
+shape.draw('block', 100, {'pos' -> [0, 65, 0], 'block' -> 'chest[facing=north]'});
+shape.draw('item', 100, {'pos' -> [0, 67, 0], 'item' -> 'diamond_sword', 'variant' -> 'ground'});
 ```
 
 `block` takes the block as it is written (`'chest[facing=north]'`) or a block value taken from the
@@ -123,7 +123,7 @@ There are seven types because they are the things needed to show what a script i
 a volume, a radius, a column, a number, a block, an item. Arbitrary polygonal faces are deliberately
 not among them: that is for making graphics, not for understanding what your own code is doing.
 
-### `clear_shapes()`
+### `clear()`
 Forgets the shapes still waiting to be redrawn as particles. It does not remove the ones already sent
 to a client, which expire on their own.
 

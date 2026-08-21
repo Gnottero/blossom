@@ -11,9 +11,10 @@ public class Context
 {
     public enum Type
     {
-        NONE, VOID, BOOLEAN, NUMBER, STRING, LIST, ITERATOR, SIGNATURE, LOCALIZATION, LVALUE, MAPDEF
+        NONE, VOID, BOOLEAN, NUMBER, STRING, LIST, ITERATOR, SIGNATURE, LOCALIZATION, LVALUE, MAPDEF, MATCH
     }
 
+    public static final Type MATCH = Type.MATCH;
     public static final Type NONE = Type.NONE;
     public static final Type VOID = Type.VOID;
     public static final Type BOOLEAN = Type.BOOLEAN;

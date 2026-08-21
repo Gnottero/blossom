@@ -43,13 +43,24 @@ try(espressione, 'filtro', ripiego);                // solo quel tipo
 try(espressione, 'f1', r1, 'f2', r2, ..., ripiego); // più filtri in ordine
 ```
 
-Dentro il ramo di ripiego, `_` è il valore lanciato:
+Il ramo di ripiego puo' essere una **lambda**, e allora l'errore ha un nome:
+
+```
+try(lavoro(), 'exception', fn(e) -> print('non ci sono riuscito: ' + e));
+try(lavoro(), 'exception', fn(e, tr) -> log(e, tr:'token'));   // il secondo e' _trace
+```
+
+E' la forma da preferire: `_` e' anche l'elemento corrente di ogni ciclo, quindi un `for` dentro un
+`catch` se lo porta via, e il valore dell'eccezione va salvato a mano prima. Con un nome quel
+problema non esiste.
+
+Nella forma senza lambda, `_` resta il valore lanciato:
 
 ```
 import "core.json" as json;
 
 fn leggi_configurazione(testo) -> try(
-    json.decode_json(testo),
+    json.decode(testo),
     'json_error', (
         print('configurazione illeggibile: ' + _);
         {}                          // un default, e l'app parte lo stesso
@@ -128,14 +139,14 @@ ExecutionBudgetError[time]
   in torre.sorveglia  (src/torre.bs:12:5)
 
   Execution stopped after 2000 ms: the script is running too long and the server is waiting for
-  it. If it really needs all that time, move it to a task() or raise 'timeout_ms' in the manifest.
+  it. If it really needs all that time, move it to a task.start() or raise 'timeout_ms' in the manifest.
 ```
 
 | Quando | Tempo | Profondità di chiamata |
 | --- | --- | --- |
 | dentro un evento di gioco | 2 s | 256 |
 | da `/blossom script run` o al caricamento | 15 s | 256 |
-| dentro un `task()` | nessun limite | 256 |
+| dentro un `task.start()` | nessun limite | 256 |
 
 Si cambiano nel manifesto, e allora valgono in tutti e tre i casi:
 
@@ -171,7 +182,7 @@ fn su_campana(pos, direzione, chi) -> (
         costruisci(pos),
         'exception', (
             motivo = _;         // '_' cambia significato dentro il for: salvalo prima
-            for(entity.player('all'), text.print(_, 'non ci sono riuscito: ' + motivo))
+            for(entity.player('all'), text.send(_, 'non ci sono riuscito: ' + motivo))
         )
     );
     false           // il suono va avanti comunque
@@ -179,5 +190,17 @@ fn su_campana(pos, direzione, chi) -> (
 ```
 
 Quel `motivo = _` non è pedanteria: `_` è lo stesso nome che usano `for`, `map` e `filter` per
-l'elemento corrente. Dentro un ciclo, il valore dell'eccezione non c'è più. Copialo in una variabile
-con un nome, appena entri nel `catch`.
+l'elemento corrente. Dentro un ciclo, il valore dell'eccezione non c'è più.
+
+Oggi la risposta migliore è non usare `_` per niente e scrivere il `catch` come lambda, che il nome
+ce l'ha già:
+
+```
+fn su_campana(pos, direzione, chi) -> (
+    try(
+        costruisci(pos),
+        'exception', fn(motivo) -> for(entity.player('all'), text.send(_, 'non ci sono riuscito: ' + motivo))
+    );
+    false
+);
+```

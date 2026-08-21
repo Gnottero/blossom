@@ -6,7 +6,7 @@
     "summary": "The host patterns an administrator has allowed in `config/blossomscript.json`.",
     "params": [],
     "returns": "`list` — the patterns; empty when this server has no network open.",
-    "examples": ["http.hosts();   // ['api.example.com', '*.status.example.org']", "if(length(http.hosts()) == 0, print('no network on this server'));"],
+    "examples": ["http.hosts();   // ['api.example.com', '*.status.example.org']", "if(size(http.hosts()) == 0, send('no network on this server'));"],
     "note": "Nothing is reachable until it is declared. A host is either exact or has one leading wildcard (`*.example.com`, which does not match `example.com` itself)."
   },
   "get": {
@@ -14,8 +14,8 @@
     "summary": "A GET request, giving back the whole response.",
     "params": [["url", "the absolute url, scheme included"], ["headers", "optional map of header name to value"]],
     "returns": "`map` — `status`, `body`, `headers`, `url`.",
-    "examples": ["response = http.get('https://api.example.com/motd');\nif(response:'status' == 200, print(response:'body'));", "http.get('https://api.example.com/me', {'authorization' -> 'Bearer ' + token});"],
-    "note": "A request never runs on the server thread: wrap the call in `task(...)`, or it fails with an error saying so. A status outside 2xx is an answer, not an error."
+    "examples": ["response = http.get('https://api.example.com/motd');\nif(response:'status' == 200, send(response:'body'));", "http.get('https://api.example.com/me', {'authorization' -> 'Bearer ' + token});"],
+    "note": "A request never runs on the server thread: wrap the call in `start(...)`, or it fails with an error saying so. A status outside 2xx is an answer, not an error."
   },
   "post": {
     "signatures": ["post(url, body)", "post(url, body, headers)"],
@@ -29,7 +29,7 @@
     "summary": "Any method: GET, POST, PUT, PATCH, DELETE or HEAD.",
     "params": [["method", "the method, in any case"], ["url", "the absolute url"], ["body", "the body, or `null`"], ["headers", "optional map of header name to value"]],
     "returns": "`map` — `status`, `body`, `headers`, `url`.",
-    "examples": ["http.request('delete', 'https://api.example.com/session/' + id);"]
+    "examples": ["http.request('remove', 'https://api.example.com/session/' + id);"]
   },
   "get_json": {
     "signatures": ["get_json(url)", "get_json(url, headers)"],

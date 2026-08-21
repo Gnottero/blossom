@@ -9,12 +9,21 @@ import blossom.exception.ExitStatement;
 import blossom.exception.ProcessedThrowStatement;
 import blossom.exception.ThrowStatement;
 import blossom.exception.Throwables;
+import blossom.value.FunctionValue;
+import blossom.interpreter.Callables;
+import blossom.interpreter.Token;
 import blossom.value.ListValue;
+import blossom.value.MatchArmValue;
+import blossom.value.TypedParameterValue;
+import blossom.value.ValueTypes;
+import blossom.value.VariableReferenceValue;
 import blossom.value.MapValue;
 import blossom.value.NumericValue;
 import blossom.value.StringValue;
 import blossom.value.Value;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -38,6 +47,88 @@ public class ControlFlow
             return (cc, tt) -> v;
         });
 
+
+        /*
+         * match(soggetto, forma -> corpo, ..., else -> corpo)
+         *
+         * Il soggetto si valuta una volta sola, e ogni braccio dice cosa riconosce invece di
+         * ripetere il confronto. Una forma puo' essere:
+         *
+         *   un valore      0 -> 'illeso'          combacia se e' uguale
+         *   un nome        d -> d * 2             combacia sempre, e lega il soggetto a quel nome
+         *   un nome tipato d: num -> ...          combacia se il soggetto e' di quel tipo
+         *   else           else -> 'ignoto'       il ramo finale
+         *
+         * Senza nessun braccio che combacia il risultato e' null, come per un 'if' senza ramo
+         * finale.
+         */
+        expression.addCustomFunction("match", new Callables.AbstractLazyFunction(-1, "match")
+        {
+            @Override
+            public LazyValue lazyEval(Context c, Context.Type t, Expression expr, Token tok, List<LazyValue> lv)
+            {
+                if (lv.size() < 2)
+                {
+                    throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "control_flow",
+                            "'match' needs a value and at least one arm, as in match(x, 1 -> 'one', else -> 'other')");
+                }
+                Value subject = lv.get(0).evalValue(c, Context.NONE);
+                for (int i = 1; i < lv.size(); i++)
+                {
+                    Value armValue = lv.get(i).evalValue(c, Context.MATCH);
+                    if (!(armValue instanceof final MatchArmValue arm))
+                    {
+                        throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "control_flow",
+                                "Every arm of a 'match' is written 'shape -> result', but one is "
+                                        + armValue.getPrettyString() + ".");
+                    }
+                    Value shape = arm.pattern();
+                    if (shape instanceof final VariableReferenceValue reference)
+                    {
+                        if (!reference.name().equals("else"))
+                        {
+                            c.setVariable(reference.name(), (cc, tt) -> subject);
+                        }
+                        Value taken = arm.body().evalValue(c, t);
+                        return (cc, tt) -> taken;
+                    }
+                    if (shape instanceof final TypedParameterValue typed)
+                    {
+                        if (!ValueTypes.matches(typed.canonicalType(), subject))
+                        {
+                            continue;
+                        }
+                        c.setVariable(typed.parameter(), (cc, tt) -> subject);
+                        Value taken = arm.body().evalValue(c, t);
+                        return (cc, tt) -> taken;
+                    }
+                    if (subject.equals(shape))
+                    {
+                        Value taken = arm.body().evalValue(c, t);
+                        return (cc, tt) -> taken;
+                    }
+                }
+                return LazyValue.NULL;
+            }
+
+            @Override
+            public boolean pure()
+            {
+                return false;
+            }
+
+            @Override
+            public boolean transitive()
+            {
+                return false;
+            }
+
+            @Override
+            public Context.Type staticType(Context.Type outerType)
+            {
+                return Context.MATCH;
+            }
+        });
 
         // obvious lazy due to conditional evaluation of arguments
         expression.addLazyFunction("if", (c, t, lv) ->
@@ -132,7 +223,7 @@ public class ControlFlow
                 {
                     if (ret.thrownExceptionType.isUserException())
                     {
-                        val = lv.get(1).evalValue(c, t);
+                        val = catchBranch(c, lv.get(1)).evalValue(c, t);
                     }
                 }
                 else
@@ -142,7 +233,7 @@ public class ControlFlow
                     {
                         if (ret.thrownExceptionType.isRelevantFor(lv.get(pointer).evalValue(c).getString()))
                         {
-                            val = lv.get(pointer + 1).evalValue(c, t);
+                            val = catchBranch(c, lv.get(pointer + 1)).evalValue(c, t);
                             break;
                         }
                         pointer += 2;
@@ -165,6 +256,44 @@ public class ControlFlow
                 return (ct, tt) -> retval;
             }
         });
+    }
+
+    /**
+     * Il ramo di ripiego di un {@code try}, che si scrive in due modi.
+     *
+     * <p>La forma di sempre e' un'espressione, e dentro {@code _} e' il valore lanciato. La forma
+     * nuova e' una lambda, {@code fn(e) -> ...}, che gli da' un nome: e' quella da preferire,
+     * perche' {@code _} e' anche l'elemento corrente di ogni ciclo, e un {@code for} dentro un
+     * {@code catch} se lo porta via. Con un nome quel problema non esiste.
+     *
+     * <p>Con due parametri il secondo e' {@code _trace}.
+     */
+    private static LazyValue catchBranch(Context c, LazyValue branch)
+    {
+        if (!(branch instanceof LazyValue.Lambda))
+        {
+            return branch;
+        }
+        FunctionValue handler = (FunctionValue) branch.evalValue(c, Context.NONE);
+        int arity = handler.getArguments().size();
+        return (cc, tt) ->
+        {
+            List<Value> args = new ArrayList<>(arity);
+            if (arity > 0)
+            {
+                args.add(cc.implicitValue().evalValue(cc, Context.NONE));
+            }
+            if (arity > 1)
+            {
+                LazyValue trace = cc.getVariable("_trace");
+                args.add(trace == null ? Value.NULL : trace.evalValue(cc, Context.NONE));
+            }
+            while (args.size() < arity)
+            {
+                args.add(Value.NULL);
+            }
+            return handler.callInContext(cc, Context.NONE, args).evalValue(cc, Context.NONE);
+        };
     }
 
     /**

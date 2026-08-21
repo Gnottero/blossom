@@ -26,6 +26,32 @@ pub fn distanza(a, b) -> ...;       // la vedono tutti
 fn interna(x) -> ...;               // solo questo modulo
 ```
 
+## Funzioni senza nome
+
+`fn(...)` senza nome e' una funzione scritta sul posto:
+
+```
+raddoppia = fn(x) -> x * 2;
+raddoppia(3);                           // 6
+
+list.map([1, 2, 3], fn(x) -> x * 2);    // [2, 4, 6]
+event.on('player_dies', fn(chi, causa) -> (log(chi); false));
+```
+
+Le due forme non si confondono: `fn nome(...)` dichiara, `fn(...)` e' un valore. A deciderlo e' la
+parentesi subito dopo `fn`.
+
+Una lambda **cattura il frame in cui nasce**, quindi vede le variabili che la circondano senza
+doverle dichiarare con `outer`:
+
+```
+base = 10;
+somma = fn(x) -> x + base;
+somma(3);                               // 13
+```
+
+La cattura la paga solo chi scrive una lambda: una funzione con nome non cattura niente, come prima.
+
 ## Chi vede cosa
 
 Dentro una funzione sono visibili: i suoi parametri, le variabili che assegna, e i **binding di
@@ -102,6 +128,34 @@ fn registra(livello, ...messaggi) -> [livello, messaggi];
 registra('info', 'a', 'b');     // ['info', ['a', 'b']]
 registra('info');               // ['info', []]
 ```
+
+## Valori di riserva e argomenti con nome
+
+Un parametro puo' dichiarare un valore da usare quando chi chiama non lo passa:
+
+```
+fn posiziona(pos, blocco, aggiorna = true) -> ...;
+
+posiziona(p, 'stone');                    // aggiorna vale true
+posiziona(p, 'stone', false);             // per posizione
+posiziona(p, 'stone', aggiorna = false);  // per nome
+```
+
+Il valore di riserva si rivaluta **ad ogni chiamata che lo usa**: `fn f(l = [])` da' una lista nuova
+ogni volta, non sempre la stessa.
+
+Gli argomenti con nome vanno **in fondo**, dopo quelli per posizione, e possono stare in qualunque
+ordine fra loro:
+
+```
+fn f(a, b, c) -> [a, b, c];
+f(1, c = 3, b = 2);         // [1, 2, 3]
+f(a = 1, 2);                // errore, e lo dice al caricamento
+```
+
+I nomi si risolvono sul **confine della funzione**, quindi un nome che non esiste dice quali sono
+quelli veri, e lo stesso parametro passato due volte e' un errore invece che un valore che vince in
+silenzio.
 
 ## Tipi sui parametri
 

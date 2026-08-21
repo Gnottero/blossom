@@ -1023,6 +1023,14 @@ public class Expression
     public FunctionValue createUserDefinedFunction(Context context, String name, Expression expr, Token token,
             List<String> arguments, @Nullable List<String> argumentTypes, String varArgs, List<String> outers, LazyValue code)
     {
+        return createUserDefinedFunction(context, name, expr, token, arguments, argumentTypes, null, varArgs, outers, code);
+    }
+
+    /** @param defaults il valore di riserva di ogni parametro, o {@code null} se nessuno ne ha uno */
+    public FunctionValue createUserDefinedFunction(Context context, String name, Expression expr, Token token,
+            List<String> arguments, @Nullable List<String> argumentTypes, @Nullable List<LazyValue> defaults,
+            String varArgs, List<String> outers, LazyValue code)
+    {
         if (functions.containsKey(name))
         {
             throw new ExpressionException(context, expr, token, "Function " + name + " would mask a built-in function");
@@ -1045,13 +1053,42 @@ public class Expression
             contextValues = null;
         }
 
-        FunctionValue result = new FunctionValue(expr, token, name, code, arguments, argumentTypes, varArgs, contextValues);
+        if (isAnonymousName(name))
+        {
+            // una lambda anonima cattura il frame in cui nasce: senza cattura non vedrebbe niente
+            // di quello che la circonda, e una lambda che non vede il proprio contesto non serve.
+            // La cattura e' quella di 'outer' applicata a tutto, e la paga solo chi la crea - una
+            // funzione con nome continua a non catturare nulla
+            Map<String, LazyValue> captured = contextValues == null ? new HashMap<>() : contextValues;
+            context.forEachVariable(captured::putIfAbsent);
+            contextValues = captured.isEmpty() ? null : captured;
+        }
+
+        FunctionValue result = new FunctionValue(expr, token, name, code, arguments, argumentTypes, defaults, varArgs, contextValues);
         // do not store lambda definitions
-        if (!name.equals("_"))
+        if (!name.equals("_") && !isAnonymousName(name))
         {
             context.host.addUserDefinedFunction(context, module, name, result);
         }
         return result;
+    }
+
+    /** Il prefisso del nome che il parser da' a una funzione scritta senza nome, {@code fn(a) -> ...}. */
+    public static final String ANONYMOUS_PREFIX = "fn@";
+
+    /**
+     * Il nome di una lambda anonima: non e' un identificatore valido, quindi non puo' collidere con
+     * niente che qualcuno abbia scritto, e porta con se' il punto in cui la lambda e' stata scritta,
+     * che e' quello che serve quando compare in uno stack di errore.
+     */
+    public static String anonymousName(Token token)
+    {
+        return ANONYMOUS_PREFIX + token.lineno + ':' + token.linepos;
+    }
+
+    public static boolean isAnonymousName(String name)
+    {
+        return name.startsWith(ANONYMOUS_PREFIX);
     }
 
     public static final String GLOBAL_VARIABLE_PREFIX = "global_";
@@ -1652,6 +1689,164 @@ public class Expression
         return name;
     }
 
+    /**
+     * Se questo nodo e' una lambda scritta sul posto, {@code fn(x) -> ...}.
+     *
+     * <p>Si guarda solo i token, quindi la risposta e' nota mentre si costruisce l'albero: e' cosi'
+     * che i cicli sanno se hanno davanti una funzione o un'espressione con {@code _} senza dover
+     * valutare il corpo per scoprirlo. Il nome dell'operatore e' due perche' la compattazione
+     * dell'albero riscrive {@code ->} nel suo equivalente funzionale {@code define}.
+     */
+    private static boolean isLambdaNode(Token operator, Token left)
+    {
+        return (operator.surface.equals("->") || operator.surface.equals("define"))
+                && left.type == Token.TokenType.FUNCTION && left.surface.equals("fn");
+    }
+
+    /**
+     * {@code a |> f(b)}, che vuol dire {@code f(a, b)}.
+     *
+     * <p>La riscrittura avviene qui, mentre si costruisce l'albero: il nodo del tubo sparisce e
+     * quello che resta e' la chiamata, con un argomento in piu' davanti. A runtime non c'e' nessun
+     * operatore da valutare, quindi incatenare tre trasformazioni costa quanto scriverle annidate -
+     * si guadagna solo l'ordine di lettura, che e' il motivo per cui esiste.
+     *
+     * <p>Se a destra non c'e' una chiamata ma un valore - {@code x |> f}, con {@code f} legata a una
+     * funzione - diventa {@code call(f, x)}, che e' la stessa cosa scritta in un altro modo.
+     */
+    private ExpressionNode pipeNode(ExpressionNode left, ExpressionNode right)
+    {
+        Token target = right.token;
+        if (target.type == Token.TokenType.FUNCTION)
+        {
+            List<ExpressionNode> args = new ArrayList<>(right.args);
+            // per un nome che non e' una built-in il parser ha gia' messo il nome come primo
+            // argomento di 'call': il soggetto va dopo di lui, non prima
+            args.add(target.surface.equals("call") ? 1 : 0, left);
+            return functionNode(target, args);
+        }
+        Token call = target.morphedInto(Token.TokenType.FUNCTION, "call");
+        return functionNode(call, List.of(right, left));
+    }
+
+    private ExpressionNode functionNode(Token token, List<ExpressionNode> args)
+    {
+        ILazyFunction f = functions.get(token.surface);
+        List<LazyValue> params = args.stream().map(n -> n.op).collect(Collectors.toList());
+        ExpressionNode node = new ExpressionNode(
+                (c, t) -> f.lazyEval(c, t, this, token, params).evalValue(c, t), args, token);
+        token.node = node;
+        return node;
+    }
+
+    /**
+     * Se questo nodo, fra gli argomenti di una chiamata, e' un nome attaccato a un valore.
+     *
+     * <p>{@code f(pos, update = false)}: un {@code =} con un nome semplice a sinistra. Si guarda
+     * solo i token, quindi la risposta e' nota mentre si costruisce l'albero. Il nome dell'operatore
+     * e' due perche' la compattazione riscrive {@code =} nel suo equivalente funzionale.
+     */
+    private static boolean isNamedArgument(Token callee, ExpressionNode node)
+    {
+        // solo dentro una chiamata a una funzione scritta da qualcuno, o dentro una firma. Gli
+        // operatori, che la compattazione trasforma anch'essi in chiamate ('a; b' diventa
+        // then(a, b), '[x]' diventa l(x)), non hanno parametri con un nome, e li' un '=' resta
+        // l'assegnamento che e' sempre stato
+        if (!callee.surface.equals("call") && !callee.surface.equals("fn"))
+        {
+            return false;
+        }
+        return (node.token.surface.equals("=") || node.token.surface.equals("assign"))
+                && node.args != null && node.args.size() == 2
+                && node.args.get(0).token.type == Token.TokenType.VARIABLE
+                && node.args.get(0).args.isEmpty();
+    }
+
+    /**
+     * Il nome staccato dal valore.
+     *
+     * <p>Il valore resta pigro: nella firma di una funzione questo diventa il default di un
+     * parametro, e un default va valutato ad ogni chiamata che lo usa, non una volta sola alla
+     * definizione - altrimenti {@code fn f(x = {})} darebbe a tutti la stessa mappa.
+     */
+    private static LazyValue namedArgument(String name, LazyValue value)
+    {
+        Value named = new blossom.value.NamedArgumentValue(name, value);
+        return (c, t) -> named;
+    }
+
+    /**
+     * Gli argomenti con un nome vanno in fondo, e chi non li mette li' lo sa subito.
+     *
+     * <p>Il controllo si fa qui, sui token, quindi e' un errore di caricamento e non una sorpresa
+     * a runtime. E' anche quello che permette al confine della chiamata di guardare solo l'ultimo
+     * argomento per sapere se ce ne sono con un nome.
+     */
+    private void checkNamedArgumentOrder(Context context, Token callee, List<ExpressionNode> args)
+    {
+        boolean seenNamed = false;
+        for (ExpressionNode arg : args)
+        {
+            if (isNamedArgument(callee, arg))
+            {
+                seenNamed = true;
+            }
+            else if (seenNamed)
+            {
+                throw new ExpressionException(context, this, arg.token,
+                        "An argument without a name comes after one with a name: the named ones go last.");
+            }
+        }
+    }
+
+    private static String argumentName(ExpressionNode node)
+    {
+        return node.args.get(0).token.surface;
+    }
+
+    private ExpressionNode binaryNode(Token token, ExpressionNode left, ExpressionNode right)
+    {
+        LazyValue result = (c, t) -> operators.get(token.surface).lazyEval(c, t, this, token, left.op, right.op).evalValue(c, t);
+        // una lambda si riconosce dai token, qui, una volta sola: i cicli accettano sia una
+        // funzione sia un'espressione con '_', e devono saperlo senza valutare il corpo
+        if (isLambdaNode(token, left.token))
+        {
+            result = new LazyValue.Lambda(result);
+        }
+        ExpressionNode node = new ExpressionNode(result, List.of(left, right), token);
+        token.node = node;
+        return node;
+    }
+
+    /**
+     * Rimette a posto {@code f = fn(a) -> a + 1}, che la precedenza spezza nel punto sbagliato.
+     *
+     * <p>{@code ->} lega meno dell'assegnamento, e deve: il corpo di una funzione e' spesso un
+     * assegnamento, e {@code fn conta() -> contatore += 1} va letto con l'assegnamento dentro il
+     * corpo. Il prezzo e' che mettere una lambda in una variabile si legge al contrario,
+     * {@code (f = fn(a)) -> a + 1}, dove a sinistra della freccia non c'e' nessuna firma.
+     *
+     * <p>Le due forme si distinguono guardando i token, cioe' senza eseguire niente: a sinistra
+     * della freccia c'e' un assegnamento cha ha per destra una {@code fn(...)}. In quel caso, e solo
+     * in quello, l'albero viene rigirato in {@code f = (fn(a) -> a + 1)}. Nessuna precedenza da
+     * cambiare e nessun costo a runtime: succede una volta, mentre si costruisce l'albero.
+     */
+    private ExpressionNode reassociateLambdaAssignment(Token token, ExpressionNode left, ExpressionNode right)
+    {
+        if (token.surface.equals("->")
+                && left.token.type == Token.TokenType.OPERATOR
+                && left.args != null && left.args.size() == 2
+                && operators.get(left.token.surface) != null
+                && Operators.precedence.get("assign=<>").equals(operators.get(left.token.surface).getPrecedence())
+                && left.args.get(1).token.type == Token.TokenType.FUNCTION
+                && left.args.get(1).token.surface.equals("fn"))
+        {
+            ExpressionNode lambda = binaryNode(token, left.args.get(1), right);
+            return binaryNode(left.token, left.args.get(0), lambda);
+        }
+        return binaryNode(token, left, right);
+    }
+
     private ExpressionNode RPNToParseTree(List<Token> tokens, Context context)
     {
         Stack<ExpressionNode> nodeStack = new ObjectArrayList<>();
@@ -1668,10 +1863,9 @@ public class Expression
                 case OPERATOR -> {
                     ExpressionNode v1 = nodeStack.pop();
                     ExpressionNode v2 = nodeStack.pop();
-                    LazyValue result = (c, t) -> operators.get(token.surface).lazyEval(c, t, this, token, v2.op, v1.op).evalValue(c, t);
-                    ExpressionNode newNode = new ExpressionNode(result, List.of(v2, v1), token);
-                    token.node = newNode;
-                    nodeStack.push(newNode);
+                    nodeStack.push(token.surface.equals("|>")
+                            ? pipeNode(v2, v1)
+                            : reassociateLambdaAssignment(token, v2, v1));
                 }
                 case VARIABLE -> {
                     Value constant = getConstantFor(token.surface);
@@ -1726,7 +1920,10 @@ public class Expression
                     {
                         nodeStack.pop();
                     }
-                    List<LazyValue> params = p.stream().map(n -> n.op).collect(Collectors.toList());
+                    checkNamedArgumentOrder(context, token, p);
+                    List<LazyValue> params = p.stream()
+                            .map(n -> isNamedArgument(token, n) ? namedArgument(argumentName(n), n.args.get(1).op) : n.op)
+                            .collect(Collectors.toList());
                     ExpressionNode newNode = new ExpressionNode(
                             (c, t) -> f.lazyEval(c, t, this, token, params).evalValue(c, t),
                             p, token
@@ -2189,7 +2386,8 @@ public class Expression
                 Context.Type requestedType = op.staticType(expectedType);
                 LazyValue arg = extractOp(ctx, node.args.get(0), requestedType);
                 LazyValue arh = extractOp(ctx, node.args.get(1), requestedType);
-                return (c, t) -> op.lazyEval(c, t, this, token, arg, arh).evalValue(c, t);
+                LazyValue built = (c, t) -> op.lazyEval(c, t, this, token, arg, arh).evalValue(c, t);
+                return isLambdaNode(token, node.args.get(0).token) ? new LazyValue.Lambda(built) : built;
             }
             case VARIABLE:
                 return variableNode(token.surface);
@@ -2197,8 +2395,14 @@ public class Expression
             {
                 ILazyFunction f = functions.get(token.surface);
                 Context.Type requestedType = f.staticType(expectedType);
-                List<LazyValue> params = node.args.stream().map(n -> extractOp(ctx, n, requestedType)).collect(Collectors.toList());
-                return (c, t) -> f.lazyEval(c, t, this, token, params).evalValue(c, t);
+                List<LazyValue> params = node.args.stream()
+                        .map(n -> isNamedArgument(token, n)
+                                ? namedArgument(argumentName(n), extractOp(ctx, n.args.get(1), Context.Type.NONE))
+                                : extractOp(ctx, n, requestedType))
+                        .collect(Collectors.toList());
+                LazyValue built = (c, t) -> f.lazyEval(c, t, this, token, params).evalValue(c, t);
+                return !node.args.isEmpty() && isLambdaNode(token, node.args.get(0).token)
+                        ? new LazyValue.Lambda(built) : built;
             }
             case CONSTANT:
                 return node.op;

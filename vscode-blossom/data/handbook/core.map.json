@@ -1,61 +1,160 @@
 {
   "$alias": "map",
-
   "keys": {
-    "signatures": ["keys(m)"],
+    "signatures": [
+      "keys(m)"
+    ],
     "summary": "The keys of the map, as a list.",
-    "params": [["m", "the map"]],
+    "params": [
+      [
+        "m",
+        "the map"
+      ]
+    ],
     "returns": "`list` — the keys.",
-    "examples": ["m = {'a' -> 1, 'b' -> 2};\nmap.keys(m);   // ['a', 'b']", "for(map.keys(scores), print(_ + ': ' + scores:_));"]
+    "examples": [
+      "m = {'a' -> 1, 'b' -> 2};\nmap.keys(m);   // ['a', 'b']",
+      "for(map.keys(scores), send(_ + ': ' + scores:_));"
+    ]
   },
   "values": {
-    "signatures": ["values(m)"],
+    "signatures": [
+      "values(m)"
+    ],
     "summary": "The values of the map, as a list.",
-    "params": [["m", "the map"]],
+    "params": [
+      [
+        "m",
+        "the map"
+      ]
+    ],
     "returns": "`list` — the values.",
-    "examples": ["map.values({'a' -> 1, 'b' -> 2});   // [1, 2]", "list.reduce(map.values(scores), _a + _, 0);   // the total"]
+    "examples": [
+      "map.values({'a' -> 1, 'b' -> 2});   // [1, 2]",
+      "list.reduce(map.values(scores), _a + _, 0);   // the total"
+    ]
   },
   "pairs": {
-    "signatures": ["pairs(m)"],
+    "signatures": [
+      "pairs(m)"
+    ],
     "summary": "The map as a list of `[key, value]` pairs.",
-    "params": [["m", "the map"]],
+    "params": [
+      [
+        "m",
+        "the map"
+      ]
+    ],
     "returns": "`list` — one two element list per entry.",
-    "examples": ["map.pairs({'a' -> 1});   // [['a', 1]]", "// sorting a map by value\nlist.sort_key(map.pairs(scores), -_:1);"]
+    "examples": [
+      "map.pairs({'a' -> 1});   // [['a', 1]]",
+      "// sorting a map by value\nlist.sort(map.pairs(scores), -_:1);"
+    ]
   },
   "get": {
-    "signatures": ["get(m, key)"],
+    "signatures": [
+      "get(m, key)"
+    ],
     "summary": "The value stored under a key, `null` when it is not there - the same thing the `:` operator does.",
-    "params": [["m", "the map"], ["key", "the key to read"]],
+    "params": [
+      [
+        "m",
+        "the map"
+      ],
+      [
+        "key",
+        "the key to read"
+      ]
+    ],
     "returns": "the value, or `null`.",
-    "examples": ["m = {'a' -> 1};", "map.get(m, 'a');       // 1", "map.get(m, 'zzz');     // null", "m:'a';                 // the same thing, without importing"]
+    "examples": [
+      "m = {'a' -> 1};",
+      "map.get(m, 'a');       // 1",
+      "map.get(m, 'zzz');     // null",
+      "m:'a';                 // the same thing, without importing"
+    ]
   },
   "has": {
-    "signatures": ["has(m, key)"],
+    "signatures": [
+      "has(m, key)"
+    ],
     "summary": "Whether the key is in the map.",
-    "params": [["m", "the map"], ["key", "the key to look for"]],
+    "params": [
+      [
+        "m",
+        "the map"
+      ],
+      [
+        "key",
+        "the key to look for"
+      ]
+    ],
     "returns": "`bool` — whether the key exists.",
-    "examples": ["map.has({'a' -> 1}, 'a');      // true", "// it tells apart an absent key from one holding null\nmap.has(m, 'k');   // false, while m:'k' is null in both cases"]
+    "examples": [
+      "map.has({'a' -> 1}, 'a');      // true",
+      "// it tells apart an absent key from one holding null\nmap.has(m, 'k');   // false, while m:'k' is null in both cases"
+    ]
   },
   "put": {
-    "signatures": ["put(m, key, value)"],
+    "signatures": [
+      "put(m, key, value)"
+    ],
     "summary": "Writes a value under a key, replacing what was there.",
-    "params": [["m", "the map to change"], ["key", "the key to write"], ["value", "the value to store"]],
+    "params": [
+      [
+        "m",
+        "the map to change"
+      ],
+      [
+        "key",
+        "the key to write"
+      ],
+      [
+        "value",
+        "the value to store"
+      ]
+    ],
     "returns": "the previous value, `null` when the key was not there.",
-    "examples": ["m = {};\nmap.put(m, 'a', 1);   // m is now {'a' -> 1}", "map.put(counters, name, (counters:name || 0) + 1);"],
-    "note": "It changes the map in place. It is atomic even between tasks; a *sequence* of operations is not — for that there is `synchronize` in `core.task`."
+    "examples": [
+      "m = {};\nmap.put(m, 'a', 1);   // m is now {'a' -> 1}",
+      "map.put(counters, name, (counters:name || 0) + 1);"
+    ],
+    "note": "It changes the map in place. It is atomic even between tasks; a *sequence* of operations is not — for that there is `synchronize` in `core.start`."
   },
-  "delete": {
-    "signatures": ["delete(m, key)"],
+  "remove": {
+    "signatures": [
+      "remove(m, key)"
+    ],
     "summary": "Removes a key from the map.",
-    "params": [["m", "the map to change"], ["key", "the key to remove"]],
+    "params": [
+      [
+        "m",
+        "the map to change"
+      ],
+      [
+        "key",
+        "the key to remove"
+      ]
+    ],
     "returns": "the removed value, `null` when the key was not there.",
-    "examples": ["m = {'a' -> 1, 'b' -> 2};\nmap.delete(m, 'a');   // m is now {'b' -> 2}"]
+    "examples": [
+      "m = {'a' -> 1, 'b' -> 2};\nmap.remove(m, 'a');   // m is now {'b' -> 2}"
+    ]
   },
-  "length": {
-    "signatures": ["length(m)"],
+  "size": {
+    "signatures": [
+      "size(m)"
+    ],
     "summary": "How many entries the map has.",
-    "params": [["m", "the map"]],
+    "params": [
+      [
+        "m",
+        "the map"
+      ]
+    ],
     "returns": "`num` — the number of keys.",
-    "examples": ["map.length({'a' -> 1, 'b' -> 2});   // 2"]
+    "examples": [
+      "map.size({'a' -> 1, 'b' -> 2});   // 2"
+    ]
   }
 }

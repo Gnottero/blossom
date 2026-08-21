@@ -32,8 +32,10 @@ class DependenciesTest
             throws IOException
     {
         Files.createDirectories(root.resolve("src"));
+        // il livello di API va dichiarato: senza, un progetto vale 1.0 e non carica piu'
+        String apiLevel = extraManifest.contains("api_level") ? "" : ", \"api_level\": \"2.0\"";
         Files.writeString(root.resolve("blossom.json"), "{\"name\": \"" + name + "\", \"version\": \"" + version
-                + "\", \"entrypoint\": \"src/main.bs\"" + extraManifest + "}");
+                + "\", \"entrypoint\": \"src/main.bs\"" + apiLevel + extraManifest + "}");
         for (int i = 0; i + 1 < modules.length; i += 2)
         {
             Path file = root.resolve("src").resolve(modules[i]);

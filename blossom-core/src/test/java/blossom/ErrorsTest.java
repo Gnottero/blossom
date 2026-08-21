@@ -63,14 +63,14 @@ class ErrorsTest
     @Test
     void indexOutOfBoundsError()
     {
-        assertThrows(IndexOutOfBoundsError.class, () -> Interpreter.standalone().eval("import \"core.list\" as list; l = [1, 2]; list.delete(l, 7)"));
+        assertThrows(IndexOutOfBoundsError.class, () -> Interpreter.standalone().eval("import \"core.list\" as list; l = [1, 2]; list.remove(l, 7)"));
     }
 
     @Test
     void undefinedSymbolError(@TempDir Path tmp) throws IOException
     {
         Files.createDirectories(tmp.resolve("src"));
-        Files.writeString(tmp.resolve("blossom.json"), "{\"name\": \"t\", \"entrypoint\": \"src/main.bs\"}");
+        Files.writeString(tmp.resolve("blossom.json"), "{\"name\": \"t\", \"entrypoint\": \"src/main.bs\", \"api_level\": \"2.0\"}");
         Files.writeString(tmp.resolve("src/lib.bs"), "module lib;\n\npub fn add(a, b) -> a + b;\n");
         Files.writeString(tmp.resolve("src/main.bs"), "module main;\n\nimport \"lib\" as lib;\n\npub let v = lib.ad(1, 2);\n");
 
@@ -82,7 +82,7 @@ class ErrorsTest
     void importError(@TempDir Path tmp) throws IOException
     {
         Files.createDirectories(tmp.resolve("src"));
-        Files.writeString(tmp.resolve("blossom.json"), "{\"name\": \"t\", \"entrypoint\": \"src/main.bs\"}");
+        Files.writeString(tmp.resolve("blossom.json"), "{\"name\": \"t\", \"entrypoint\": \"src/main.bs\", \"api_level\": \"2.0\"}");
         Files.writeString(tmp.resolve("src/main.bs"), "module main;\n\nimport \"non_esiste\" as x;\n");
 
         ImportError error = assertThrows(ImportError.class, () -> Interpreter.forProject(tmp));

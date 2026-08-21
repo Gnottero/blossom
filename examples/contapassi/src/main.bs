@@ -82,7 +82,7 @@ pub fn classifica(voce: str) -> (
     // '~' restituisce l'indice, o null se non c'e': si confronta con null e non si usa come
     // condizione, perche' l'indice del primo elemento e' 0, che e' falso
     if((VOCI ~ voce) == null, throw('voce sconosciuta: ' + voce + ', prova ' + list.join('/', VOCI)));
-    righe = list.sort_key(map.pairs(conteggi), -((_:1):voce));
+    righe = list.sort(map.pairs(conteggi), -((_:1):voce));
     list.map(righe, _:0 + ': ' + (_:1):voce)
 );
 
@@ -104,4 +104,4 @@ event.on('player_connects', su_arrivo);
 event.on('tick', su_tick);
 event.on('server_shuts_down', salva);
 
-print('contapassi pronta, ' + map.length(conteggi) + ' schede in archivio');
+print('contapassi pronta, ' + map.size(conteggi) + ' schede in archivio');

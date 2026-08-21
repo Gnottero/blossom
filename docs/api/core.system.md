@@ -22,12 +22,9 @@ day_of_year]`, and the same function does the opposite starting from a list.
 lists the ones starting with a prefix — useful for debugging, not for normal logic, where a direct
 access is clearer and faster.
 
-`system_variable_get(key)` and `system_variable_set(key, value)` read and write a space shared by
-every app on the same server.
-
 ### Measurement
 
-`profile_expr(expression)` runs the expression repeatedly for a fixed interval and returns how many
+`measure(expression)` runs the expression repeatedly for a fixed interval and returns how many
 times it managed to: it is the quick way to compare two implementations without setting up a
 benchmark.
 
@@ -49,3 +46,12 @@ stack, and optimising it changes nothing.
 
 `start`/`stop` is the pair that really matters on an event-driven app: `run` only measures what you
 type on the command line, while the problem is usually a handler firing a hundred times a second.
+
+---
+
+## Coming from the old names
+
+| Before | Now |
+| --- | --- |
+| `profile_expr(e)` | `measure(e)` |
+| `system_variable_get(k)` · `system_variable_set(k, v)` | gone — they were a space shared by every app on the server, which is the implicit global the language does without. Talk to another app with an app event, keep data with [`core.io`](core.io.md) |

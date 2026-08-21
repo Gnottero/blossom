@@ -35,7 +35,7 @@ cosa sola: **ottimizza gli accessi al mondo, non l'aritmetica**.
 
 ## Misurare invece di indovinare
 
-Per confrontare due implementazioni, `system.profile_expr(espressione)` la esegue ripetutamente per
+Per confrontare due implementazioni, `system.measure(espressione)` la esegue ripetutamente per
 un intervallo fisso e dice quante volte ci è riuscita: numero più alto, implementazione più veloce.
 
 Per la domanda vera — *chi si mangia il tick* — c'è `/blossom profile`:
@@ -71,7 +71,7 @@ scan.volume([x-16, 0, z-16], [x+16, 16, z+16], ...);
 **Leggi una volta, decidi dopo.** Ogni `block.block(p)` è un accesso al mondo: se ti serve lo stesso
 punto tre volte, mettilo in una variabile.
 
-**Filtra prima di chiamare.** `entity.entity_load_handler(['zombie'], f)` filtra per tipo dentro il
+**Filtra prima di chiamare.** `entity.on_load(['zombie'], f)` filtra per tipo dentro il
 mod; l'evento `entity_loads` con un `if` dentro l'handler ti fa pagare una chiamata per ogni entità
 che compare nel mondo.
 
@@ -95,7 +95,7 @@ modulo sono un affare; su una funzione chiamata in un ciclo stretto, no.
 
 Prima di essere valutato, l'albero passa da un passo di compilazione: costanti piegate, operatori
 associativi appiattiti, sottoalberi puri risolti una volta sola. Vale circa il **32%** su un loop
-aritmetico. Un effetto collaterale visibile: `json.decode_json('{')` con una costante può fallire
+aritmetico. Un effetto collaterale visibile: `json.decode('{')` con una costante può fallire
 già in fase di parsing invece che dentro il tuo `try`.
 
 Gli import sono risolti **una volta al caricamento**: `math.sqrt` non cerca niente per nome a

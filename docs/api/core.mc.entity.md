@@ -16,16 +16,16 @@ entity.modify(e, 'motion', [0, 1, 0]);      // a push upwards
 ### `player()` · `player(name)` · `player('all' | 'survival' | 'creative' | 'spectating' | ...)`
 The player running the script, one by name, or the list of the ones in a category.
 
-### `entity_list(type)`
+### `list(type)`
 Every entity of a type in the world (`'*'` for all of them, `'!player'` for everything but players).
 
-### `entity_area(type, centre, radius)`
+### `area(type, centre, radius)`
 The entities of a type inside an area.
 
-### `entity_selector(selector)`
+### `select(selector)`
 The entities a vanilla selector (`@e[type=cow,distance=..10]`) would pick.
 
-### `entity_id(id | uuid)` · `entity_types(type?)`
+### `by_id(id | uuid)` · `types(type?)`
 An entity from its numeric id or uuid, and the registered entity types.
 
 ## Querying and modifying
@@ -60,7 +60,7 @@ Creates an entity. The NBT is the one the game would use in a `/summon` command.
 
 ## Events of a single entity
 
-### `entity_event(entity, event, function, fixed_arguments...)`
+### `on(entity, event, function, fixed_arguments...)`
 Attaches a handler to *that* entity: `on_tick`, `on_removed`, `on_death`, `on_damage`, `on_move`.
 The handler lives inside the entity, so it follows it between worlds and disappears with it. Passing
 `null` in place of the function removes it.
@@ -68,12 +68,12 @@ The handler lives inside the entity, so it follows it between worlds and disappe
 The first argument passed to the handler is always the entity itself; the number of arguments is
 checked right away, not at the first event.
 
-### `entity_load_handler(types, function)`
+### `on_load(types, function)`
 Calls `function(entity)` every time an entity of one of those types appears. `types` is a type or a
 list of types (`'zombie'`, `['zombie', 'minecraft:husk']`); with `null` you hear about all of them.
 
 ```
-entity.entity_load_handler(['zombie', 'skeleton'], on_undead);
+entity.on_load(['zombie', 'skeleton'], on_undead);
 ```
 
 The filter by type happens **before** calling the handler, so listening for a rare type does not cost

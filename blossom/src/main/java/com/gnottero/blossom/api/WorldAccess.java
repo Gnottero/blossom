@@ -536,26 +536,41 @@ public class WorldAccess
         expression.addContextFunction("transparent", -1, (c, t, lv) ->
                 booleanStateTest(c, "transparent", lv, (s, p) -> !s.isSolid()));
 
-        /*this.expr.addContextFunction("opacity", -1, (c, t, lv) ->
-                genericStateTest(c, "opacity", lv, (s, p, w) -> new NumericValue(s.getOpacity(w, p))));
+        expression.addContextFunction("opacity", -1, (c, t, lv) ->
+                genericStateTest(c, "opacity", lv, (s, p, w) -> new NumericValue(s.getLightDampening())));
 
-        this.expr.addContextFunction("blocks_daylight", -1, (c, t, lv) ->
-                genericStateTest(c, "blocks_daylight", lv, (s, p, w) -> new NumericValue(s.propagatesSkylightDown(w, p))));*/ // investigate
+        // 'blocks_daylight' e' la negazione di 'propagatesSkylightDown': il nome dice cosa il blocco
+        // fa alla luce, non cosa la luce fa a lui - ed e' la domanda che si fa chi scrive uno script
+        expression.addContextFunction("blocks_daylight", -1, (c, t, lv) ->
+                booleanStateTest(c, "blocks_daylight", lv, (s, p) -> !s.propagatesSkylightDown()));
 
-        expression.addContextFunction("emitted_light", -1, (c, t, lv) ->
-                genericStateTest(c, "emitted_light", lv, (s, p, w) -> new NumericValue(s.getLightEmission())));
-
+        /*
+         * light(pos) - la luce che c'e' li'; light(pos, tipo) - una delle sue componenti.
+         *
+         * Erano sei funzioni per la stessa domanda, e la risposta cambiava solo per quale strato si
+         * guarda. Il tipo va in coda, dopo la posizione, e la posizione puo' essere una lista o tre
+         * numeri sciolti come dappertutto: quanti argomenti abbia consumato lo dice il locator,
+         * quindi le due forme non si confondono.
+         */
         expression.addContextFunction("light", -1, (c, t, lv) ->
-                genericStateTest(c, "light", lv, (s, p, w) -> new NumericValue(Math.max(w.getBrightness(LightLayer.BLOCK, p), w.getBrightness(LightLayer.SKY, p)))));
-
-        expression.addContextFunction("block_light", -1, (c, t, lv) ->
-                genericStateTest(c, "block_light", lv, (s, p, w) -> new NumericValue(w.getBrightness(LightLayer.BLOCK, p))));
-
-        expression.addContextFunction("sky_light", -1, (c, t, lv) ->
-                genericStateTest(c, "sky_light", lv, (s, p, w) -> new NumericValue(w.getBrightness(LightLayer.SKY, p))));
-
-        expression.addContextFunction("effective_light", -1, (c, t, lv) ->
-                genericStateTest(c, "effective_light", lv, (s, p, w) -> new NumericValue(w.getMaxLocalRawBrightness(p))));
+        {
+            BlockArgument locator = BlockArgument.findIn((ScriptContext) c, lv, 0);
+            String kind = lv.size() > locator.offset ? lv.get(locator.offset).getString().toLowerCase(Locale.ROOT) : "total";
+            BlockPos pos = locator.block.getPos();
+            Level level = ((ScriptContext) c).level();
+            return switch (kind)
+            {
+                case "total" -> new NumericValue(Math.max(
+                        level.getBrightness(LightLayer.BLOCK, pos), level.getBrightness(LightLayer.SKY, pos)));
+                case "block" -> new NumericValue(level.getBrightness(LightLayer.BLOCK, pos));
+                case "sky" -> new NumericValue(level.getBrightness(LightLayer.SKY, pos));
+                case "effective" -> new NumericValue(level.getMaxLocalRawBrightness(pos));
+                case "emitted" -> new NumericValue(locator.block.getBlockState().getLightEmission());
+                case "brightness" -> new NumericValue(level.getLightLevelDependentMagicValue(pos));
+                default -> throw new InternalExpressionException("Unknown light kind: '" + kind
+                        + "'. They are total, block, sky, effective, emitted, brightness.");
+            };
+        });
 
         expression.addContextFunction("see_sky", -1, (c, t, lv) ->
                 genericStateTest(c, "see_sky", lv, (s, p, w) -> BooleanValue.of(w.canSeeSky(p))));

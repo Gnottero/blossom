@@ -12,8 +12,8 @@ fn fetch_motd() -> (
 );
 
 // a request never runs on the server thread: it goes in a task
-handle = task.task(fetch_motd);
-motd = task.task_join(handle);
+handle = task.start(fetch_motd);
+motd = task.wait(handle);
 ```
 
 ## The boundaries
@@ -86,7 +86,7 @@ The host patterns this server allows, sorted as they were declared. Empty means 
 closed; a script that wants to be polite can check before failing.
 
 ```
-if (length(http.hosts()) == 0, print('no network on this server'));
+if (size(http.hosts()) == 0, print('no network on this server'));
 ```
 
 ### `get(url)`, `get(url, headers)`

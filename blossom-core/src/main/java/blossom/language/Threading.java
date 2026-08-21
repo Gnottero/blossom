@@ -30,20 +30,6 @@ public class Threading
             return thread;
         });
 
-        expression.addFunctionWithDelegation("task_thread", -1, false, false, (c, t, expr, tok, lv) ->
-        {
-            if (lv.size() < 2)
-            {
-                throw new ArityError(SourcePosition.UNKNOWN,"'task' requires at least function to call as a parameter");
-            }
-            Value queue = lv.get(0);
-            FunctionArgument functionArgument = FunctionArgument.findIn(c, expression.module, lv, 1, false, true);
-            ThreadValue thread = new ThreadValue(queue, functionArgument.function, expr, tok, c, functionArgument.checkedArgs());
-            Thread.yield();
-            return thread;
-        });
-
-
         expression.addContextFunction("task_count", -1, (c, t, lv) ->
                 (!lv.isEmpty()) ? new NumericValue(c.host.taskCount(lv.get(0))) : new NumericValue(c.host.taskCount()));
 

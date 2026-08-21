@@ -156,7 +156,7 @@ public final class ExecutionBudget
     {
         return new ExecutionBudgetError(SourcePosition.UNKNOWN, ExecutionBudgetError.Limit.TIME,
                 "Execution stopped after " + policy.timeoutMillis() + " ms: the script is running too long and the"
-                        + " server is waiting for it. If it really needs all that time, move it to a task() or"
+                        + " server is waiting for it. If it really needs all that time, move it to a task.start() or"
                         + " raise 'timeout_ms' in the manifest.");
     }
 }

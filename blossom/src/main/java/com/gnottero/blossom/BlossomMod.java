@@ -72,7 +72,10 @@ public final class BlossomMod
         java.util.List<String> missing = blossom.language.StdLib.moduleNames().stream()
                 .filter(module -> module.startsWith("core.mc."))
                 .flatMap(module -> blossom.language.StdLib.symbolsOf(module).stream()
-                        .filter(symbol -> !registered.contains(symbol))
+                        // il nome pubblico e quello dell'implementazione non coincidono piu': il
+                        // catalogo dice come si chiama la cosa, la mappa dice dove sta
+                        .filter(symbol -> !registered.contains(
+                                blossom.language.StdLib.implementationOf(module, symbol)))
                         .map(symbol -> module + "." + symbol))
                 .sorted()
                 .toList();

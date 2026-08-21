@@ -105,7 +105,15 @@ const stdlib = read(path.join(REPO, 'blossom-core/src/main/java/blossom/language
 const modules = new Map();
 
 for (const match of stdlib.matchAll(/\bmodule\("([^"]+)"\s*,([\s\S]*?)\);/g)) {
-    modules.set(match[1], resolveSymbols(match[2]));
+    const initialiser = match[2];
+    // a module declared with a map has its public names as keys and the builtins as values: one
+    // literal in two is the API, the other is where it is implemented
+    if (/java\.util\.Map\.(ofEntries|of)\(/.test(initialiser)) {
+        const literals = (initialiser.match(/"([^"\\]*)"/g) || []).map((l) => l.slice(1, -1));
+        modules.set(match[1], new Set(literals.filter((_, index) => index % 2 === 0)));
+        continue;
+    }
+    modules.set(match[1], resolveSymbols(initialiser));
 }
 if (modules.size === 0) fail('no core.* module found in StdLib.java');
 

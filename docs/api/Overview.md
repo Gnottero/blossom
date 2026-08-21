@@ -25,27 +25,31 @@ import "core.list" as list;
 | Module | What it holds |
 | --- | --- |
 | [`core.mc.block`](core.mc.block.md) | reading and writing blocks |
-| [`core.mc.world`](core.mc.world.md) | time, chunks, biomes, structures, dimensions |
+| [`core.mc.world`](core.mc.world.md) | time, chunks, biomes, dimensions |
 | [`core.mc.scan`](core.mc.scan.md) | walking over volumes of blocks |
 | [`core.mc.entity`](core.mc.entity.md) | finding, creating and modifying entities and players |
-| [`core.mc.item`](core.mc.item.md) | inventories, items, recipes |
-| [`core.mc.structure`](core.mc.structure.md) | saving, placing and comparing structure templates |
+| [`core.mc.item`](core.mc.item.md) | items, recipes, data components |
+| [`core.mc.inventory`](core.mc.inventory.md) | inventories, of whoever carries one and of whatever contains one |
+| [`core.mc.structure`](core.mc.structure.md) | structure templates, and the structures of the generator |
 | [`core.mc.screen`](core.mc.screen.md) | screens opened for a player |
-| [`core.mc.scoreboard`](core.mc.scoreboard.md) | objectives, teams, boss bars |
+| [`core.mc.score`](core.mc.score.md) | objectives and scores |
+| [`core.mc.team`](core.mc.team.md) | teams |
+| [`core.mc.bossbar`](core.mc.bossbar.md) | the bars at the top of the screen |
 | [`core.mc.nbt`](core.mc.nbt.md) | the raw data of the game |
 | [`core.mc.text`](core.mc.text.md) | messages and formatted text |
 | [`core.mc.effect`](core.mc.effect.md) | sounds, particles, post effects |
 | [`core.mc.shape`](core.mc.shape.md) | showing what a script is computing |
 | [`core.mc.event`](core.mc.event.md) | reacting to what happens |
 | [`core.mc.system`](core.mc.system.md) | commands, statistics, diagnostics |
+| [`core.mc.data`](core.mc.data.md) | generating the pack's own game content |
 
 ## The prelude
 
 Without importing anything, only the things that are grammar dressed up as functions are available,
 plus `print`:
 
-`print`, `if`, `try`, `throw`, `return`, `break`, `continue`, `loop`, `while`, `for`, `c_for`,
-`exit`, `call`, `outer`, `not` (the functional name of `!`).
+`print`, `if`, `match`, `try`, `throw`, `return`, `break`, `continue`, `loop`, `while`, `for`, `c_for`,
+`exit`, `call`, `fn`, `outer`, `not` (the functional name of `!`).
 
 There are also `l` and `m`, which the tokenizer builds for `[ ... ]` and `{ ... }`: they are not
 written by hand.

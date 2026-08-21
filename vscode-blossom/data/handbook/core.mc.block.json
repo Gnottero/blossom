@@ -20,14 +20,14 @@
     "returns": "`block` — printed and compared it is its name, `'minecraft:stone'`.",
     "examples": [
       "block.block([10, 64, 10]);                      // 'minecraft:stone'",
-      "if(block.block(pos) == 'diamond_ore', print('found'));",
+      "if(block.block(pos) == 'diamond_ore', send('found'));",
       "block.block('oak_stairs[facing=north]');        // from a name, with properties"
     ]
   },
-  "block_state": {
+  "state": {
     "signatures": [
-      "block_state(pos)",
-      "block_state(pos, property)"
+      "state(pos)",
+      "state(pos, property)"
     ],
     "summary": "The properties of the block as a map, or the value of one of them.",
     "params": [
@@ -42,13 +42,13 @@
     ],
     "returns": "`map` of name to value, or the single value; `null` when the property is not there.",
     "examples": [
-      "block.block_state([0, 64, 0]);              // {'facing' -> 'north', 'half' -> 'bottom'}",
-      "block.block_state([0, 64, 0], 'facing');    // 'north'"
+      "block.state([0, 64, 0]);              // {'facing' -> 'north', 'half' -> 'bottom'}",
+      "block.state([0, 64, 0], 'facing');    // 'north'"
     ]
   },
-  "block_data": {
+  "data": {
     "signatures": [
-      "block_data(pos)"
+      "data(pos)"
     ],
     "summary": "The NBT of the block entity - the content of a chest, the text of a sign.",
     "params": [
@@ -59,14 +59,14 @@
     ],
     "returns": "`nbt` — the data, `null` when that block has no block entity.",
     "examples": [
-      "block.block_data(chest_pos);                     // {Items: [...]}",
-      "nbt.parse_nbt(block.block_data(sign_pos)):'front_text';"
+      "block.data(chest_pos);                     // {Items: [...]}",
+      "nbt.decode(block.data(sign_pos)):'front_text';"
     ]
   },
-  "block_tags": {
+  "tags": {
     "signatures": [
-      "block_tags(pos)",
-      "block_tags(pos, tag)"
+      "tags(pos)",
+      "tags(pos, tag)"
     ],
     "summary": "The tags the block belongs to, or whether it belongs to one of them.",
     "params": [
@@ -81,14 +81,14 @@
     ],
     "returns": "`list` of tags, or `bool` when a tag is given.",
     "examples": [
-      "block.block_tags([0, 64, 0]);                   // ['minecraft:mineable/pickaxe', ...]",
-      "block.block_tags(pos, 'minecraft:logs');        // true"
+      "block.tags([0, 64, 0]);                   // ['minecraft:mineable/pickaxe', ...]",
+      "block.tags(pos, 'minecraft:logs');        // true"
     ]
   },
-  "block_list": {
+  "catalog": {
     "signatures": [
-      "block_list()",
-      "block_list(tag)"
+      "catalog()",
+      "catalog(tag)"
     ],
     "summary": "Every block the game knows, or the ones carrying a tag.",
     "params": [
@@ -99,8 +99,8 @@
     ],
     "returns": "`list` — the names, as strings.",
     "examples": [
-      "length(block.block_list());                  // how many blocks exist",
-      "block.block_list('minecraft:logs');          // ['minecraft:oak_log', ...]"
+      "size(block.catalog());                  // how many blocks exist",
+      "block.catalog('minecraft:logs');          // ['minecraft:oak_log', ...]"
     ]
   },
   "solid": {
@@ -116,7 +116,7 @@
     ],
     "returns": "`bool` — whether it is solid.",
     "examples": [
-      "if(block.solid([x, y - 1, z]), print('there is ground here'));"
+      "if(block.solid([x, y - 1, z]), send('there is ground here'));"
     ]
   },
   "air": {
@@ -148,7 +148,7 @@
     ],
     "returns": "`bool` — whether it is a liquid.",
     "examples": [
-      "if(block.liquid(pos), print('do not dig here'));"
+      "if(block.liquid(pos), send('do not dig here'));"
     ]
   },
   "flammable": {
@@ -212,7 +212,7 @@
     ],
     "returns": "`bool` — whether it suffocates.",
     "examples": [
-      "if(block.suffocates(destination), print('do not teleport there'));"
+      "if(block.suffocates(destination), send('do not teleport there'));"
     ]
   },
   "hardness": {
@@ -247,9 +247,9 @@
       "block.blast_resistance([0, 64, 0]);   // 6.0 on stone"
     ]
   },
-  "block_sound": {
+  "sound": {
     "signatures": [
-      "block_sound(pos)"
+      "sound(pos)"
     ],
     "summary": "The sound group of the block, the one deciding the noise of steps and breaking.",
     "params": [
@@ -260,12 +260,12 @@
     ],
     "returns": "`str` — the name of the group, as `'stone'` or `'wood'`.",
     "examples": [
-      "block.block_sound([0, 64, 0]);   // 'stone'"
+      "block.sound([0, 64, 0]);   // 'stone'"
     ]
   },
-  "map_colour": {
+  "map_color": {
     "signatures": [
-      "map_colour(pos)"
+      "map_color(pos)"
     ],
     "summary": "The colour the block shows on a map.",
     "params": [
@@ -276,7 +276,7 @@
     ],
     "returns": "`str` — the name of the colour on the map.",
     "examples": [
-      "block.map_colour([0, 64, 0]);   // 'stone_gray'"
+      "block.map_color([0, 64, 0]);   // 'stone_gray'"
     ]
   },
   "ticks_randomly": {
@@ -308,88 +308,29 @@
     ],
     "returns": "`num` — from 0 to 15.",
     "examples": [
-      "if(block.power(lever_pos) > 0, print('it is on'));"
+      "if(block.power(lever_pos) > 0, send('it is on'));"
     ]
   },
   "light": {
     "signatures": [
-      "light(pos)"
+      "light(pos)",
+      "light(pos, kind)"
     ],
-    "summary": "The total light at that point, whatever it comes from.",
+    "summary": "The light at a point, whole or one layer at a time.",
     "params": [
       [
         "pos",
-        "the position to sample"
+        "the position"
+      ],
+      [
+        "kind",
+        "optional: total, block, sky, effective, emitted, brightness"
       ]
     ],
     "returns": "`num` — from 0 to 15.",
     "examples": [
-      "block.light([0, 64, 0]);   // 15 in the open sun"
-    ]
-  },
-  "block_light": {
-    "signatures": [
-      "block_light(pos)"
-    ],
-    "summary": "The light coming from blocks - torches, lava, glowstone.",
-    "params": [
-      [
-        "pos",
-        "the position to sample"
-      ]
-    ],
-    "returns": "`num` — from 0 to 15.",
-    "examples": [
-      "block.block_light(cave_pos);   // 0 in the dark"
-    ]
-  },
-  "sky_light": {
-    "signatures": [
-      "sky_light(pos)"
-    ],
-    "summary": "The light coming from the sky, before the time of day is taken into account.",
-    "params": [
-      [
-        "pos",
-        "the position to sample"
-      ]
-    ],
-    "returns": "`num` — from 0 to 15.",
-    "examples": [
-      "block.sky_light([0, 100, 0]);   // 15 outdoors, day or night"
-    ]
-  },
-  "effective_light": {
-    "signatures": [
-      "effective_light(pos)"
-    ],
-    "summary": "The light that really counts for spawning: the sky one lowered by the time of day.",
-    "params": [
-      [
-        "pos",
-        "the position to sample"
-      ]
-    ],
-    "returns": "`num` — from 0 to 15.",
-    "examples": [
-      "if(block.effective_light(pos) == 0, print('mobs can spawn here'));"
-    ],
-    "note": "It is this one, not `light`, that answers \"can something spawn here at night\"."
-  },
-  "emitted_light": {
-    "signatures": [
-      "emitted_light(pos)"
-    ],
-    "summary": "The light the block itself gives off.",
-    "params": [
-      [
-        "pos",
-        "the position of the block"
-      ]
-    ],
-    "returns": "`num` — from 0 to 15.",
-    "examples": [
-      "block.emitted_light(torch_pos);   // 14"
+      "block.light([0, 64, 0]);            // the total",
+      "block.light([0, 64, 0], 'sky');     // only what comes from the sky"
     ]
   },
   "see_sky": {
@@ -405,23 +346,7 @@
     ],
     "returns": "`bool` — whether it sees the sky.",
     "examples": [
-      "if(block.see_sky(pos), print('it rains here'));"
-    ]
-  },
-  "brightness": {
-    "signatures": [
-      "brightness(pos)"
-    ],
-    "summary": "The brightness at that point as a number between zero and one, the way the game renders it.",
-    "params": [
-      [
-        "pos",
-        "the position to sample"
-      ]
-    ],
-    "returns": "`num` — from 0 to 1.",
-    "examples": [
-      "block.brightness([0, 64, 0]);   // 1.0 in full light"
+      "if(block.see_sky(pos), send('it rains here'));"
     ]
   },
   "set": {
@@ -546,9 +471,9 @@
       "// after a bulk build inside without_updates\nfor(edges, block.update(_));"
     ]
   },
-  "block_tick": {
+  "tick": {
     "signatures": [
-      "block_tick(pos)"
+      "tick(pos)"
     ],
     "summary": "Runs the scheduled tick of the block right away.",
     "params": [
@@ -559,7 +484,7 @@
     ],
     "returns": "`null`.",
     "examples": [
-      "block.block_tick(water_pos);   // makes the water flow one step"
+      "block.tick(water_pos);   // makes the water flow one step"
     ]
   },
   "random_tick": {
@@ -595,10 +520,10 @@
     ],
     "note": "Nothing is updated when it ends either: call `update` on the edges if the build has to settle."
   },
-  "create_explosion": {
+  "explosion": {
     "signatures": [
-      "create_explosion(pos)",
-      "create_explosion(pos, power, type, fire, source, cause)"
+      "explosion(pos)",
+      "explosion(pos, power, type, fire, source, cause)"
     ],
     "summary": "Sets off an explosion at a point.",
     "params": [
@@ -629,8 +554,8 @@
     ],
     "returns": "`null`.",
     "examples": [
-      "block.create_explosion([0, 64, 0]);",
-      "block.create_explosion(pos, 8, 'destroy', true);"
+      "block.explosion([0, 64, 0]);",
+      "block.explosion(pos, 8, 'destroy', true);"
     ]
   },
   "pos": {
@@ -675,6 +600,38 @@
       "block.pos_offset([0, 64, 0], 'up');        // [0, 65, 0]",
       "block.pos_offset(pos, 'north', 5);",
       "// the block a face is pointing at, inside an event\nblock.pos_offset(clicked, face);"
+    ]
+  },
+  "opacity": {
+    "signatures": [
+      "opacity(pos)"
+    ],
+    "summary": "How much light the block absorbs.",
+    "params": [
+      [
+        "pos",
+        "the position"
+      ]
+    ],
+    "returns": "`num` — the dampening this block applies to light going through it.",
+    "examples": [
+      "block.opacity([0, 64, 0]);"
+    ]
+  },
+  "blocks_daylight": {
+    "signatures": [
+      "blocks_daylight(pos)"
+    ],
+    "summary": "Whether the block stops daylight from going further down.",
+    "params": [
+      [
+        "pos",
+        "the position"
+      ]
+    ],
+    "returns": "`bool` — true when skylight does not propagate through it.",
+    "examples": [
+      "block.blocks_daylight([0, 64, 0]);"
     ]
   }
 }

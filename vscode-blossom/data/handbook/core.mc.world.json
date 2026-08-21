@@ -30,10 +30,10 @@
       "// doing something every 20 ticks, from inside a tick event\nif(world.tick_time() % 20 == 0, work());"
     ]
   },
-  "game_tick": {
+  "tick": {
     "signatures": [
-      "game_tick()",
-      "game_tick(max_milliseconds)"
+      "tick()",
+      "tick(max_milliseconds)"
     ],
     "summary": "Forces the server forward by a tick, and with an argument keeps ticking for that long.",
     "params": [
@@ -44,8 +44,8 @@
     ],
     "returns": "`null`.",
     "examples": [
-      "world.game_tick();          // one tick",
-      "world.game_tick(50);        // ticks for 50 ms"
+      "world.tick();          // one tick",
+      "world.tick(50);        // ticks for 50 ms"
     ],
     "note": "It is what makes the world move on from inside a script that is itself running inside a tick: without it, a loop waiting for something in the world waits forever."
   },
@@ -89,7 +89,7 @@
     "signatures": [
       "top(type, pos)"
     ],
-    "summary": "The first free height at that column, according to one of the height maps.",
+    "summary": "The find free height at that column, according to one of the height maps.",
     "params": [
       [
         "type",
@@ -100,7 +100,7 @@
         "the position; only x and z are used"
       ]
     ],
-    "returns": "`num` — the y of the first free block.",
+    "returns": "`num` — the y of the find free block.",
     "examples": [
       "y = world.top('surface', [10, 0, 10]);\nblock.set([10, y, 10], 'torch');"
     ]
@@ -123,7 +123,7 @@
     ],
     "returns": "`list` of names with no arguments, `num` with them.",
     "examples": [
-      "world.sample_noise();                                  // the available names",
+      "world.sample_noise();                                  // the list names",
       "world.sample_noise([0, 64, 0], 'minecraft:continents');"
     ]
   },
@@ -140,12 +140,12 @@
     ],
     "returns": "`bool` — whether the chunk is loaded.",
     "examples": [
-      "if(world.loaded(pos), block.set(pos, 'stone'), print('not loaded'));"
+      "if(world.loaded(pos), block.set(pos, 'stone'), send('not loaded'));"
     ]
   },
-  "loaded_status": {
+  "load_status": {
     "signatures": [
-      "loaded_status(pos)"
+      "load_status(pos)"
     ],
     "summary": "How deeply the chunk is loaded.",
     "params": [
@@ -156,12 +156,12 @@
     ],
     "returns": "`num` — `0` not loaded, growing with the level of loading.",
     "examples": [
-      "world.loaded_status([0, 64, 0]);   // 4"
+      "world.load_status([0, 64, 0]);   // 4"
     ]
   },
-  "loaded_ep": {
+  "loaded_for_entities": {
     "signatures": [
-      "loaded_ep(pos)"
+      "loaded_for_entities(pos)"
     ],
     "summary": "Whether the chunk is loaded deeply enough for entities to be processed in it.",
     "params": [
@@ -172,13 +172,13 @@
     ],
     "returns": "`bool` — whether entities tick there.",
     "examples": [
-      "if(!world.loaded_ep(farm_pos), print('the farm is stopped'));"
+      "if(!world.loaded_for_entities(farm_pos), send('the farm is stopped'));"
     ]
   },
-  "is_chunk_generated": {
+  "chunk_generated": {
     "signatures": [
-      "is_chunk_generated(pos)",
-      "is_chunk_generated(pos, force)"
+      "chunk_generated(pos)",
+      "chunk_generated(pos, force)"
     ],
     "summary": "Whether the chunk already exists on disk, without generating it.",
     "params": [
@@ -193,7 +193,7 @@
     ],
     "returns": "`bool` — whether the chunk was already created.",
     "examples": [
-      "world.is_chunk_generated([10000, 64, 10000]);   // false"
+      "world.chunk_generated([10000, 64, 10000]);   // false"
     ]
   },
   "generation_status": {
@@ -305,7 +305,7 @@
     ],
     "returns": "`bool` — whether it is a slime chunk.",
     "examples": [
-      "if(world.in_slime_chunk(pos), print('good spot for a farm'));"
+      "if(world.in_slime_chunk(pos), send('good spot for a farm'));"
     ]
   },
   "spawn_potential": {
@@ -372,102 +372,9 @@
     ],
     "note": "It changes a whole vertical section of 4x4x4 blocks, not one block: that is the resolution biomes are stored at."
   },
-  "structures": {
+  "place_feature": {
     "signatures": [
-      "structures(pos)",
-      "structures(pos, name)"
-    ],
-    "summary": "The structures covering that point.",
-    "params": [
-      [
-        "pos",
-        "the position to check"
-      ],
-      [
-        "name",
-        "optional: only that structure"
-      ]
-    ],
-    "returns": "`map` from name to the box it takes up, or the single box; `null` when there is none.",
-    "examples": [
-      "world.structures([0, 64, 0]);                          // {'minecraft:village_plains' -> [...]}",
-      "world.structures(pos, 'minecraft:stronghold');"
-    ]
-  },
-  "structure_references": {
-    "signatures": [
-      "structure_references(pos)",
-      "structure_references(pos, name)"
-    ],
-    "summary": "The chunks referring to the structures that pass through that point.",
-    "params": [
-      [
-        "pos",
-        "a position inside the chunk"
-      ],
-      [
-        "name",
-        "optional: only that structure"
-      ]
-    ],
-    "returns": "`map` from name to a list of chunk coordinates, or the single list.",
-    "examples": [
-      "world.structure_references([0, 64, 0], 'minecraft:village_plains');"
-    ]
-  },
-  "structure_eligibility": {
-    "signatures": [
-      "structure_eligibility(pos)",
-      "structure_eligibility(pos, type)",
-      "structure_eligibility(pos, type, details)"
-    ],
-    "summary": "Whether a structure *could* be born in that chunk, without generating it.",
-    "params": [
-      [
-        "pos",
-        "a position inside the chunk"
-      ],
-      [
-        "type",
-        "optional: which structure to ask about, `null` for all of them"
-      ],
-      [
-        "details",
-        "optional: with `true` it also returns the pieces of the structure"
-      ]
-    ],
-    "returns": "`map` or `list` of the eligible structures, `null` when there are none.",
-    "examples": [
-      "world.structure_eligibility([1000, 64, 1000]);",
-      "world.structure_eligibility(pos, 'minecraft:village_plains', true);"
-    ],
-    "note": "It asks the generator, not the world: it answers on chunks nobody has ever visited, without generating them and without loading anything."
-  },
-  "set_structure": {
-    "signatures": [
-      "set_structure(pos, name)",
-      "set_structure(pos, name, null)"
-    ],
-    "summary": "Generates a structure at that point, or removes its reference.",
-    "params": [
-      [
-        "pos",
-        "a position inside the chunk"
-      ],
-      [
-        "name",
-        "the structure to place"
-      ]
-    ],
-    "returns": "`bool` — whether it succeeded.",
-    "examples": [
-      "world.set_structure([0, 64, 0], 'minecraft:village_plains');",
-      "world.set_structure(pos, 'minecraft:village_plains', null);   // removes the reference"
-    ]
-  },
-  "plop": {
-    "signatures": [
-      "plop(pos, what)"
+      "place_feature(pos, what)"
     ],
     "summary": "Places a feature or a structure of the generator at that point: trees, geysers, villages.",
     "params": [
@@ -482,8 +389,8 @@
     ],
     "returns": "`bool` — whether something was placed.",
     "examples": [
-      "world.plop([0, 64, 0], 'oak_bees');",
-      "world.plop(pos, 'village_plains');"
+      "world.place_feature([0, 64, 0], 'oak_bees');",
+      "world.place_feature(pos, 'village_plains');"
     ]
   },
   "poi": {
@@ -504,7 +411,7 @@
       ],
       [
         "sort",
-        "optional: with `true` the nearest come first"
+        "optional: with `true` the nearest come find"
       ],
       [
         "type",
@@ -512,13 +419,13 @@
       ],
       [
         "state",
-        "optional: `'any'`, `'occupied'`, `'available'`"
+        "optional: `'any'`, `'occupied'`, `'list'`"
       ]
     ],
     "returns": "`map` of the single point, or `list` of the points found.",
     "examples": [
       "world.poi([0, 64, 0], 32);",
-      "world.poi(pos, 64, true, 'minecraft:home', 'available');"
+      "world.poi(pos, 64, true, 'minecraft:home', 'list');"
     ]
   },
   "set_poi": {

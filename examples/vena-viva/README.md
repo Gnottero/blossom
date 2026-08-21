@@ -30,7 +30,7 @@ Il registro sta in `<mondo>/blossom/data/vena-viva/registro.json`.
 Per sentire l'evento da un'altra app:
 
 ```
-event.handle_event('vena_esaurita', fn_tua);        // fn_tua(giocatore, tipo, pos, nome)
+event.declare('vena_esaurita', fn_tua);        // fn_tua(giocatore, tipo, pos, nome)
 ```
 
 ## Come è divisa
@@ -57,12 +57,12 @@ e `main` resta abbastanza sottile da leggersi tutto insieme.
 | --- | --- |
 | `import "geologia" as geologia;` | alias obbligatorio, un modulo per file ([guida §6](../../docs/guide/06-moduli.md)) |
 | `fn estremo(...)` in `geologia` | privata: senza `pub` non esce dal modulo, e usarla da fuori è un errore a caricamento |
-| `task.task('ispeziona', ...)` nell'handler | il lavoro lungo esce dal tick ([guida §9](../../docs/guide/09-concorrenza.md)) |
+| `task.start('ispeziona', ...)` nell'handler | il lavoro lungo esce dal tick ([guida §9](../../docs/guide/09-concorrenza.md)) |
 | due soli `task_dock` | leggi in blocco, pensa fuori, scrivi in blocco |
 | `task.synchronize(LOCK, ...)` in `registro` | una sequenza leggi-modifica-scrivi chiamata da un altro thread |
 | `try(..., 'exception', ...)` attorno al task | un task che esplode non deve sparire in silenzio |
 | `motivo = _;` dentro il `catch` | `_` cambia significato dentro un `for`: si copia subito |
-| `event.signal_event('vena_esaurita', ...)` | due app che si parlano senza conoscersi ([guida §8](../../docs/guide/08-eventi.md)) |
+| `event.emit('vena_esaurita', ...)` | due app che si parlano senza conoscersi ([guida §8](../../docs/guide/08-eventi.md)) |
 | `return(false)` in cima all'handler | uscita anticipata quando il blocco non ci interessa |
 | `pub fn conta(letture: list, tipo: str)` | tipi sull'interfaccia pubblica, non nel ciclo stretto |
 | `"watchdog"` nel manifesto | limiti dichiarati dall'app ([guida §7](../../docs/guide/07-errori.md)) |

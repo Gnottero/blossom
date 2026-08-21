@@ -2,6 +2,6 @@
   "name": "vena-viva",
   "version": "1.0.0",
   "entrypoint": "src/main.bs",
-  "api_level": "1.0",
+  "api_level": "2.0",
   "watchdog": { "timeout_ms": 3000, "max_depth": 256 }
 }

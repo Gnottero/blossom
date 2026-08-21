@@ -7,7 +7,7 @@ import "core.mc.block" as block;
 
 block.block([10, 64, 10]);                             // the block at that point
 block.set([10, 65, 10], 'oak_stairs', 'facing', 'north');
-block.block_state([10, 65, 10]);                       // {'facing' -> 'north', ...}
+block.state([10, 65, 10]);                       // {'facing' -> 'north', ...}
 ```
 
 A position is written as a list `[x, y, z]` or as three loose arguments: the two forms are equivalent
@@ -21,16 +21,16 @@ saved to json without converting it.
 ### `block(pos)`
 The block at that position. Compared with a string it answers on the name.
 
-### `block_state(pos)` · `block_state(pos, property)`
+### `state(pos)` · `state(pos, property)`
 The properties of the block as a map, or the value of a single property.
 
-### `block_data(pos)`
+### `data(pos)`
 The NBT of the block entity, `null` when that block does not have one.
 
-### `block_tags(pos)` · `block_tags(pos, tag)`
+### `tags(pos)` · `tags(pos, tag)`
 The tags the block belongs to, or whether it belongs to the given one.
 
-### `block_list()` · `block_list(tag)`
+### `catalog()` · `catalog(tag)`
 Every registered block, or the ones of a tag.
 
 ## Physical properties
@@ -47,7 +47,7 @@ Whether it stops movement, and whether it suffocates whoever is inside it.
 ### `hardness(pos)` · `blast_resistance(pos)`
 How hard it is to break and how well it resists explosions.
 
-### `block_sound(pos)` · `map_colour(pos)`
+### `sound(pos)` · `map_color(pos)`
 Sound group and colour on the map.
 
 ### `ticks_randomly(pos)` · `power(pos)`
@@ -55,12 +55,26 @@ Whether it gets random ticks, and the redstone signal it emits.
 
 ## Light
 
-### `light(pos)` · `block_light(pos)` · `sky_light(pos)` · `effective_light(pos)` · `emitted_light(pos)`
-The various light levels at that point: total, from blocks, from the sky, the one that counts for
-spawning, and the one the block itself emits.
+### `light(pos)` · `light(pos, kind)`
+The light at that point. Without a kind it is the total, the higher of the two layers; with one it is
+that layer alone:
+
+| Kind | What it is |
+| --- | --- |
+| `'total'` | the higher of block and sky — the default |
+| `'block'` | what blocks around emit |
+| `'sky'` | what comes from the sky |
+| `'effective'` | the one that counts for spawning |
+| `'emitted'` | what the block itself emits |
+| `'brightness'` | a number between 0 and 1 |
+
+A kind that does not exist says which ones do.
 
 ### `see_sky(pos)` · `brightness(pos)`
 Whether the point sees the sky, and the brightness as a number between 0 and 1.
+
+### `opacity(pos)` · `blocks_daylight(pos)`
+How much light the block absorbs, and whether it stops daylight from going further down.
 
 ## Writing
 
@@ -77,17 +91,33 @@ Breaks the block the way that player would break it, respecting their tool and e
 ### `place_item(item, pos, face?, consider_flags?)`
 Uses an item on a block, the way a player clicking on it would.
 
-### `update(pos)` · `block_tick(pos)` · `random_tick(pos)`
+### `update(pos)` · `tick(pos)` · `random_tick(pos)`
 Forces a block update, a scheduled tick or a random tick.
 
 ### `without_updates(expression)`
 Runs the expression without propagating block updates: useful to build in bulk without setting off
 redstone and falling blocks at every step.
 
-### `create_explosion(pos, power?, type?, fire?, source?, cause?)`
+### `explosion(pos, power?, type?, fire?, source?, cause?)`
 Blows something up at that point.
 
 ## Positions
 
 ### `pos(entity)` · `pos_offset(pos, direction, how_much?)`
 The position of an entity, and a position shifted in a direction.
+
+---
+
+## Coming from the old names
+
+| Before | Now |
+| --- | --- |
+| `block_data(p)` | `data(p)` |
+| `block_state(p, k?)` | `state(p, k?)` |
+| `block_tags(p, t?)` | `tags(p, t?)` |
+| `block_list(t?)` | `catalog(t?)` |
+| `block_tick(p)` | `tick(p)` |
+| `block_sound(p)` | `sound(p)` |
+| `map_colour(p)` | `map_color(p)` |
+| `create_explosion(...)` | `explosion(...)` |
+| `block_light(p)` · `sky_light(p)` · `effective_light(p)` · `emitted_light(p)` · `brightness(p)` | `light(p, kind)` — one question, the layer as an argument |

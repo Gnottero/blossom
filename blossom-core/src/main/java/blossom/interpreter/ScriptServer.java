@@ -1,10 +1,7 @@
 package blossom.interpreter;
 
 import java.nio.file.Path;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
-import blossom.value.Value;
 
 /**
  * L'ambiente che ospita gli interpreti: dove stanno i file, e i confini che valgono per tutti.
@@ -15,8 +12,6 @@ import blossom.value.Value;
  */
 public abstract class ScriptServer
 {
-    public final Map<Value, Value> systemGlobals = new ConcurrentHashMap<>();
-
     public abstract Path resolveResource(String suffix);
 
     /**

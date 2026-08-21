@@ -113,7 +113,7 @@ class WatchdogTest
     {
         Files.createDirectories(tmp.resolve("src"));
         Files.writeString(tmp.resolve("blossom.json"),
-                "{\"name\": \"t\", \"entrypoint\": \"src/main.bs\", \"watchdog\": {\"timeout_ms\": 200}}");
+                "{\"name\": \"t\", \"entrypoint\": \"src/main.bs\", \"api_level\": \"2.0\", \"watchdog\": {\"timeout_ms\": 200}}");
         Files.writeString(tmp.resolve("src/main.bs"), "module main;\n\nwhile(true, 100000000, null);\n");
 
         assertThrows(ExecutionBudgetError.class, () -> Interpreter.forProject(tmp));
@@ -124,7 +124,7 @@ class WatchdogTest
     {
         Files.createDirectories(tmp.resolve("src"));
         Files.writeString(tmp.resolve("blossom.json"),
-                "{\"name\": \"t\", \"entrypoint\": \"src/main.bs\", \"watchdog\": false}");
+                "{\"name\": \"t\", \"entrypoint\": \"src/main.bs\", \"api_level\": \"2.0\", \"watchdog\": false}");
         Files.writeString(tmp.resolve("src/main.bs"), "module main;\n\npub let v = 1;\n");
 
         Interpreter interpreter = Interpreter.forProject(tmp);
@@ -140,7 +140,7 @@ class WatchdogTest
         Interpreter interpreter = withPolicy(new ExecutionBudget.Policy(100, 64));
         String code = "import \"core.task\" as task;"
                 + "slow() -> c_for(i = 0, i < 300000, i += 1, null);"
-                + "t = task.task('slow'); task.task_join(t)";
+                + "t = task.start('slow'); task.wait(t)";
         assertEquals("300000", interpreter.eval(code).getString());
     }
 

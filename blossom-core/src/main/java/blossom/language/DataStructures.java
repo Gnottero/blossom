@@ -137,37 +137,34 @@ public class DataStructures
             return ListValue.wrap(items);
         });
 
-        expression.addFunction("sort", lv ->
-        {
-            List<Value> toSort = lv;
-            if (lv.size() == 1 && lv.get(0) instanceof final ListValue llv)
-            {
-                toSort = new ArrayList<>(llv.getItems());
-            }
-            Collections.sort(toSort);
-            return ListValue.wrap(toSort);
-        });
-
-        // needs lazy cause sort function is reused
-        expression.addLazyFunction("sort_key", (c, t, lv) ->  //get working with iterators
+        /*
+         * sort(lista) - per il valore; sort(lista, chiave) - per quello che la chiave calcola.
+         *
+         * Erano due funzioni, 'sort' e 'sort_key'. E 'sort_key' con un argomento solo non ordinava
+         * niente: mescolava la lista, che e' un'altra operazione con lo stesso nome. Ora un
+         * argomento vuol dire l'ordine naturale, che e' quello che il nome promette.
+         *
+         * Pigra perche' la chiave e' un'espressione con '_', o una lambda.
+         */
+        expression.addLazyFunction("sort_key", (c, t, lv) ->
         {
             if (lv.isEmpty())
             {
-                throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "collection", "First argument for 'sort_key' should be a List");
+                throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "collection", "First argument for 'sort' should be a List");
             }
             Value v = lv.get(0).evalValue(c);
             if (!(v instanceof final ListValue list))
             {
-                throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "collection", "First argument for 'sort_key' should be a List");
+                throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "collection", "First argument for 'sort' should be a List");
             }
             List<Value> toSort = new ArrayList<>(list.getItems());
             if (lv.size() == 1)
             {
-                Collections.shuffle(toSort);
+                Collections.sort(toSort);
                 Value ret = ListValue.wrap(toSort);
                 return (ct, tt) -> ret;
             }
-            LazyValue sortKey = lv.get(1);
+            LazyValue sortKey = Loops.keyOf(c, lv.get(1));
             //scoping
             LazyValue defaultVal = c.implicitValue;
             toSort.sort((v1, v2) -> {

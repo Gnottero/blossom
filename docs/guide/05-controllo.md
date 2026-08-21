@@ -18,6 +18,32 @@ if(false, 'a');             // null: senza ramo finale, se nessuna condizione è
 
 I rami non presi **non vengono valutati**: `if(x != 0, 100 / x, 0)` è sicuro.
 
+## `match`
+
+Quando le condizioni sono tutte confronti sullo **stesso** valore, `match` lo dice una volta sola:
+
+```
+match(danno,
+    0            -> 'illeso',
+    d: num       -> if(d > 20, 'grave', 'ferito'),
+    else         -> 'ignoto');
+```
+
+Una forma a sinistra della freccia puo' essere:
+
+| Forma | Combacia |
+| --- | --- |
+| un valore (`0`, `'ciao'`) | se il soggetto e' uguale |
+| un nome (`d`) | sempre, e lega il soggetto a quel nome |
+| un nome con tipo (`d: num`) | se il soggetto e' di quel tipo, e lo lega |
+| `else` | il ramo finale |
+
+Il soggetto si valuta **una volta sola**, e i corpi dei bracci non presi non si valutano affatto.
+Senza nessun braccio che combacia il risultato e' `null`, come per un `if` senza ramo finale.
+
+Non ci sono guardie (`d if d > 20 -> ...`): richiederebbero un `if` infisso, cioe' grammatica nuova,
+e un `if` dentro il corpo del braccio dice la stessa cosa.
+
 ## Cicli
 
 | | Firma | Restituisce |
@@ -72,18 +98,32 @@ list.map([1, 2, 3], _ * 2);                 // [2, 4, 6]
 list.map([10, 20], _i);                     // [0, 1]
 list.filter([1, 2, 3, 4], _ % 2 == 0);      // [2, 4]
 list.reduce([1, 2, 3, 4], _a + _, 0);       // 10
-list.first([1, 2, 3], _ > 1);               // 2, oppure null se nessuno
+list.find([1, 2, 3], _ > 1);               // 2, oppure null se nessuno
 list.all([2, 4], _ % 2 == 0);               // true (su una lista vuota è true)
-list.sort_key(['bbb', 'a'], list.length(_));// ordina secondo la chiave calcolata
+list.sort(['bbb', 'a'], list.size(_));// ordina secondo la chiave calcolata
 ```
 
 `break()` dentro un `map` tronca il risultato: `list.map([1,2,3], if(_ == 2, break()); _)` dà `[1]`.
 
-Quando serve una funzione vera invece di un'espressione, `call` la infila:
+Le stesse trasformazioni accettano anche una **funzione** al posto dell'espressione, e allora i tre
+nomi impliciti li sostituiscono i parametri:
+
+```
+list.map([1, 2, 3], fn(x) -> x * 2);                    // [2, 4, 6]
+list.map(['a', 'b'], fn(x, i) -> i);                    // [0, 1]  - il secondo e' l'indice
+list.reduce([1, 2, 3], fn(a, x) -> a + x, 0);           // 10      - in reduce il primo e' l'accumulatore
+```
+
+Quale delle due forme sia lo decide la grammatica, non il valore: si vede scritto, e non costa
+niente a runtime. La forma corta con `_` resta la piu' veloce, perche' non crea nessun frame di
+chiamata; la lambda in cambio da' un nome all'elemento, e un nome non puo' collidere con quello del
+ciclo che sta fuori.
+
+Una funzione gia' dichiarata si chiama direttamente:
 
 ```
 fn punteggio(giocatore) -> ...;
-list.map(entity.player('all'), call(punteggio, _));
+list.map(entity.player('all'), fn(g) -> punteggio(g));
 ```
 
 ## Scegliere il ciclo giusto
