@@ -10,7 +10,13 @@ import blossom.exception.ProcessedThrowStatement;
 import blossom.exception.ThrowStatement;
 import blossom.exception.Throwables;
 import blossom.value.FunctionValue;
+import blossom.interpreter.Callables;
+import blossom.interpreter.Token;
 import blossom.value.ListValue;
+import blossom.value.MatchArmValue;
+import blossom.value.TypedParameterValue;
+import blossom.value.ValueTypes;
+import blossom.value.VariableReferenceValue;
 import blossom.value.MapValue;
 import blossom.value.NumericValue;
 import blossom.value.StringValue;
@@ -41,6 +47,88 @@ public class ControlFlow
             return (cc, tt) -> v;
         });
 
+
+        /*
+         * match(soggetto, forma -> corpo, ..., else -> corpo)
+         *
+         * Il soggetto si valuta una volta sola, e ogni braccio dice cosa riconosce invece di
+         * ripetere il confronto. Una forma puo' essere:
+         *
+         *   un valore      0 -> 'illeso'          combacia se e' uguale
+         *   un nome        d -> d * 2             combacia sempre, e lega il soggetto a quel nome
+         *   un nome tipato d: num -> ...          combacia se il soggetto e' di quel tipo
+         *   else           else -> 'ignoto'       il ramo finale
+         *
+         * Senza nessun braccio che combacia il risultato e' null, come per un 'if' senza ramo
+         * finale.
+         */
+        expression.addCustomFunction("match", new Callables.AbstractLazyFunction(-1, "match")
+        {
+            @Override
+            public LazyValue lazyEval(Context c, Context.Type t, Expression expr, Token tok, List<LazyValue> lv)
+            {
+                if (lv.size() < 2)
+                {
+                    throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "control_flow",
+                            "'match' needs a value and at least one arm, as in match(x, 1 -> 'one', else -> 'other')");
+                }
+                Value subject = lv.get(0).evalValue(c, Context.NONE);
+                for (int i = 1; i < lv.size(); i++)
+                {
+                    Value armValue = lv.get(i).evalValue(c, Context.MATCH);
+                    if (!(armValue instanceof final MatchArmValue arm))
+                    {
+                        throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "control_flow",
+                                "Every arm of a 'match' is written 'shape -> result', but one is "
+                                        + armValue.getPrettyString() + ".");
+                    }
+                    Value shape = arm.pattern();
+                    if (shape instanceof final VariableReferenceValue reference)
+                    {
+                        if (!reference.name().equals("else"))
+                        {
+                            c.setVariable(reference.name(), (cc, tt) -> subject);
+                        }
+                        Value taken = arm.body().evalValue(c, t);
+                        return (cc, tt) -> taken;
+                    }
+                    if (shape instanceof final TypedParameterValue typed)
+                    {
+                        if (!ValueTypes.matches(typed.canonicalType(), subject))
+                        {
+                            continue;
+                        }
+                        c.setVariable(typed.parameter(), (cc, tt) -> subject);
+                        Value taken = arm.body().evalValue(c, t);
+                        return (cc, tt) -> taken;
+                    }
+                    if (subject.equals(shape))
+                    {
+                        Value taken = arm.body().evalValue(c, t);
+                        return (cc, tt) -> taken;
+                    }
+                }
+                return LazyValue.NULL;
+            }
+
+            @Override
+            public boolean pure()
+            {
+                return false;
+            }
+
+            @Override
+            public boolean transitive()
+            {
+                return false;
+            }
+
+            @Override
+            public Context.Type staticType(Context.Type outerType)
+            {
+                return Context.MATCH;
+            }
+        });
 
         // obvious lazy due to conditional evaluation of arguments
         expression.addLazyFunction("if", (c, t, lv) ->

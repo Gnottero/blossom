@@ -236,6 +236,13 @@ public class Functions
                 Value result = ListValue.of(lv1.evalValue(c), lv2.evalValue(c));
                 return (cc, tt) -> result;
             }
+            if (type == Context.MATCH)
+            {
+                // dentro un match la freccia lega una forma a un corpo, e il corpo non si valuta
+                // qui: di dieci bracci ne viene eseguito uno
+                Value arm = new blossom.value.MatchArmValue(lv1.evalValue(c, Context.LOCALIZATION), lv2);
+                return (cc, tt) -> arm;
+            }
             Value v1 = lv1.evalValue(c, Context.SIGNATURE);
             if (!(v1 instanceof final FunctionSignatureValue sign))
             {

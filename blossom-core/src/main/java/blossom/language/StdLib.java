@@ -41,7 +41,7 @@ public final class StdLib
      * travestita da funzione, e le poche cose davvero universali.
      */
     public static final Set<String> PRELUDE = Set.of(
-            "print", "if", "try", "throw", "return", "break", "continue",
+            "print", "if", "match", "try", "throw", "return", "break", "continue",
             "loop", "while", "for", "c_for", "exit", "call", "outer", "not",
             // 'fn(...)' senza nome: e' la funzione anonima, e come 'call' e' grammatica
             "fn",

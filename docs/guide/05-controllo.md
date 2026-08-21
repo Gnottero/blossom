@@ -18,6 +18,32 @@ if(false, 'a');             // null: senza ramo finale, se nessuna condizione è
 
 I rami non presi **non vengono valutati**: `if(x != 0, 100 / x, 0)` è sicuro.
 
+## `match`
+
+Quando le condizioni sono tutte confronti sullo **stesso** valore, `match` lo dice una volta sola:
+
+```
+match(danno,
+    0            -> 'illeso',
+    d: num       -> if(d > 20, 'grave', 'ferito'),
+    else         -> 'ignoto');
+```
+
+Una forma a sinistra della freccia puo' essere:
+
+| Forma | Combacia |
+| --- | --- |
+| un valore (`0`, `'ciao'`) | se il soggetto e' uguale |
+| un nome (`d`) | sempre, e lega il soggetto a quel nome |
+| un nome con tipo (`d: num`) | se il soggetto e' di quel tipo, e lo lega |
+| `else` | il ramo finale |
+
+Il soggetto si valuta **una volta sola**, e i corpi dei bracci non presi non si valutano affatto.
+Senza nessun braccio che combacia il risultato e' `null`, come per un `if` senza ramo finale.
+
+Non ci sono guardie (`d if d > 20 -> ...`): richiederebbero un `if` infisso, cioe' grammatica nuova,
+e un `if` dentro il corpo del braccio dice la stessa cosa.
+
 ## Cicli
 
 | | Firma | Restituisce |
