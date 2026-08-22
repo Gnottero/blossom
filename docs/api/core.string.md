@@ -36,6 +36,10 @@ When the second argument is a single list, its elements are used as the argument
 `string.str('%s-%s', ['a', 'b'])` and `string.str('%s-%s', 'a', 'b')` are the same call. A malformed
 format is an error rather than a mangled string.
 
+The numeric specifiers want a number: given anything else they say so, instead of writing a `0`
+nobody asked for. A string that is written like a number still passes, the same way the arithmetic
+operators accept it. Arguments left over at the end are an error too, rather than being dropped.
+
 ```
 string.str(42);                             // '42'
 string.str('%s has %d apples', 'ada', 3);   // 'ada has 3 apples'

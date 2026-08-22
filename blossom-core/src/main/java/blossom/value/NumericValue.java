@@ -304,7 +304,21 @@ public class NumericValue extends Value
         {
             return new JsonPrimitive(longValue);
         }
-        return isInteger() ? new JsonPrimitive(getLong()) : new JsonPrimitive(getDouble());
+        if (isInteger())
+        {
+            return new JsonPrimitive(getLong());
+        }
+        double d = getDouble();
+        if (Double.isNaN(d) || Double.isInfinite(d))
+        {
+            // json non ha ne' NaN ne' infinito, e gson li scriverebbe lo stesso, senza apici: ne
+            // uscirebbe un testo che nessun lettore serio rilegge. Meglio dirlo qui, dove si sa
+            // ancora quale numero era
+            throw new blossom.exception.ThrowStatement(
+                    "json has no way to write " + getString() + ": only finite numbers can be encoded",
+                    blossom.exception.Throwables.JSON_ERROR);
+        }
+        return new JsonPrimitive(d);
     }
 
     public NumericValue opposite()

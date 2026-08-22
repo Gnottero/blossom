@@ -257,6 +257,26 @@ public final class StdLib
         return HOME_MODULE.get(symbol);
     }
 
+    /**
+     * I nomi del prelude che il tokenizer costruisce da solo per {@code [...]}, {@code {...}} e le
+     * stringhe interpolate. Nessuno li scrive come chiamata, e {@code l} e {@code m} sono nomi
+     * naturali per una lista e una mappa, quindi restano liberi come nomi di variabile.
+     */
+    private static final Set<String> TOKENIZER_BUILT = Set.of("l", "m", "concat");
+
+    /**
+     * {@code true} se {@code symbol} e' un nome del linguaggio che non puo' diventare una variabile
+     * o un parametro.
+     *
+     * <p>Non e' lo stesso insieme di {@link #PRELUDE}: {@code l}, {@code m} e {@code concat} sono
+     * nomi interni al tokenizer, non parole che qualcuno scrive, e vietarli toglierebbe due dei
+     * nomi piu' comodi che ci siano senza guadagnare niente.
+     */
+    public static boolean isReservedAsAName(String symbol)
+    {
+        return PRELUDE.contains(symbol) && !TOKENIZER_BUILT.contains(symbol);
+    }
+
     public static boolean isInPrelude(String symbol)
     {
         return PRELUDE.contains(symbol);

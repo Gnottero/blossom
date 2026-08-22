@@ -47,6 +47,11 @@ Adding two lists does **not** concatenate them. For that there is
 `<` `<=` `>` `>=` order numbers and strings (uppercase before lowercase: sorting `['b','A','a']`
 gives `[A, a, b]`). `==` and `!=` compare contents, deeply on lists and maps.
 
+The comparison is forgiving across types — `'1' == 1` is true, and so is `true == 1` — and what it
+calls equal is one and the same key in a map: `{1 -> 'a'}` is found by `'1'` as well. Being
+forgiving, it is not transitive (`'1' == true` is false), so where the type matters, compare
+`system.type(value)` too.
+
 Do not chain comparisons: `1 < 2 < 3` evaluates left to right as `(1 < 2) < 3`, that is `true < 3`,
 and the result does not mean what it looks like. Write `1 < 2 && 2 < 3`.
 
@@ -147,7 +152,12 @@ transformations costs exactly what writing them nested would.
 
 It binds tighter than assignment and looser than `||`, so `x = a |> f()` puts the result in `x`, and
 `(a || b) |> f()` is what it looks like. If the right-hand side is a value rather than a call
-(`x |> f`, with `f` bound to a function) it is called all the same.
+(`x |> f`, with `f` bound to a function) it is called all the same, and a lambda written on the spot
+is read as one thing even without parentheses:
+
+```
+5 |> fn(x) -> x * 2;                    // 10
+```
 
 ## Assignment
 

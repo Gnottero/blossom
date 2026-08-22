@@ -120,6 +120,10 @@ source, and it costs nothing at run time. The short form with `_` stays the fast
 creates no call frame; the lambda in exchange gives the element a name, and a name cannot collide
 with the one belonging to an enclosing loop.
 
+The two forms do not mix: inside a `fn(...)` the three implicit names have no value, because that
+function names its own parameters. Writing `list.map([1, 2, 3], fn() -> _ * 2)` is an error saying
+so, and the same goes for reading `_` where no loop has bound it.
+
 An already declared function is called directly:
 
 ```

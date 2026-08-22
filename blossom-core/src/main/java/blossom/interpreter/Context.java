@@ -93,11 +93,31 @@ public class Context
      * names are diverted here by {@link #getVariable}, {@link #setVariable} and
      * {@link #delVariable}: that's the cold path, and it can afford the comparison.
      */
-    public LazyValue implicitValue = IMPLICIT_DEFAULT;
-    public LazyValue implicitIndex = IMPLICIT_DEFAULT;
-    public LazyValue implicitAccumulator = IMPLICIT_DEFAULT;
+    public LazyValue implicitValue = unbound(IMPLICIT_VALUE);
+    public LazyValue implicitIndex = unbound(IMPLICIT_INDEX);
+    public LazyValue implicitAccumulator = unbound(IMPLICIT_ACCUMULATOR);
 
-    private static final LazyValue IMPLICIT_DEFAULT = (c, t) -> Value.ZERO;
+    /**
+     * Il valore di {@code _}, {@code _i} e {@code _a} dove nessun ciclo li ha legati.
+     *
+     * <p>Prima era zero, il che rendeva {@code list.map(l, fn() -> _ * 2)} una lista di zeri invece
+     * che un errore: dentro una lambda gli impliciti non arrivano, perche' una lambda i suoi
+     * parametri se li chiama per nome. Un numero sbagliato in silenzio e' il modo peggiore di
+     * fallire, quindi qui si dice cos'e' storto e dove.
+     */
+    private static LazyValue unbound(String name)
+    {
+        return (c, t) ->
+        {
+            throw new blossom.exception.UndefinedSymbolError(
+                    blossom.exception.SourcePosition.UNKNOWN,
+                    "'" + name + "' has no value here: it only exists inside the body of a loop or"
+                            + " of a second-order function, written as an expression.",
+                    "a function written with 'fn' names its own parameters, so write"
+                            + " fn(element, index) -> ... and use those names instead of "
+                            + name + ".");
+        };
+    }
 
     // Reads go through a method rather than the field directly, so the compilation context can
     // reject them the way it rejects any other access to execution state
@@ -173,7 +193,7 @@ public class Context
     {
         if (isImplicitName(variable))
         {
-            setVariable(variable, IMPLICIT_DEFAULT);
+            setVariable(variable, unbound(variable));
             return;
         }
         variables.remove(variable);

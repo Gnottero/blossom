@@ -82,6 +82,34 @@ Tre moduli si dividono, perche' tenevano insieme cose diverse:
 
 ### Corretto
 
+- **Una chiamata scritta dopo un valore ora e' una chiamata.** Le parentesi dopo `)` erano un
+  raggruppamento: `f()()` rispondeva la funzione interna invece del suo risultato, in silenzio, e
+  `f(1)(2)` dava un `ParseError` che parlava dello stato del validatore ("Too many numbers or
+  variables"). Ne seguiva che una funzione che restituisce una funzione non era chiamabile.
+  `(fn(x) -> x * 2)(21)`, `add(1)(2)` e `f()()` valgono ora quello che sembrano (vedi D-097).
+- **`x |> fn(a) -> ...` si legge come una cosa sola.** Il tubo lega piu' stretto di `->`, quindi il
+  soggetto finiva fra i parametri della firma e l'errore diceva "Only variables can be used in
+  function signature, not 5". Le parentesi non servono piu'.
+- **`_`, `_i` e `_a` non valgono zero fuori da un ciclo.** `list.map(l, fn() -> _ * 2)` rispondeva
+  una lista di zeri: dentro una lambda gli impliciti non arrivano. Ora lo dice, e dice quale forma
+  usare (vedi D-098).
+- **`json.encode` scrive solo json.** `NaN` e infinito finivano nel testo cosi' com'erano, senza
+  apici: un risultato che nessun lettore serio rilegge. Ora e' un `json_error`, filtrabile come
+  quello di `decode`.
+- **Un segnaposto numerico di `string.str` vuole un numero.** `string.str('%d', 'x')` rispondeva
+  `'0'`. Ora dice cosa gli e' arrivato; un testo scritto come un numero passa ancora. Gli argomenti
+  che avanzano sono un errore invece di sparire.
+- **Un nome del linguaggio non diventa una variabile.** `fn print(a) -> a` era gia' un errore, ma
+  `print = 1` passava, e lo stesso nome voleva dire due cose. Vale anche per i parametri. `l`, `m` e
+  `concat`, che il tokenizer costruisce da solo per `[...]`, `{...}` e le stringhe interpolate,
+  restano nomi liberi.
+- **Gli spostamenti di bit contano i bit.** Java maschera l'ampiezza sui 6 bit bassi, e si vedeva
+  attraverso: `bitwise_shift_left(1, 64)` valeva `1` e `(1, 200)` valeva `256`. Oltre i 64 bit ora
+  non resta niente, e un'ampiezza negativa e' un errore. Le rotazioni restano definite modulo la
+  larghezza, che e' quello che una rotazione e'.
+- **Quello che `==` chiama uguale e' la stessa chiave.** `'1' == 1` era vero ma `{1 -> 'a'}` non si
+  trovava con `'1'`, perche' il codice hash era quello del tipo: il contratto di `HashMap` rotto.
+  Ora l'hash segue l'uguaglianza (vedi D-099).
 - **I nomi delle funzioni dell'utente non sono piu' quelli delle built-in.** `fn sum(...)`,
   `fn get(...)`, `fn map(...)`, `fn size(...)` fallivano alla definizione: il controllo guardava
   l'elenco piatto delle implementazioni, 160 nomi, di cui 56 senza un modulo da suggerire ("'sum'

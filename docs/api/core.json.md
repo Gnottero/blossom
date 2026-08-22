@@ -23,6 +23,9 @@ Produces the json representation of a value, as a string. The mapping is the obv
 | `list` | array |
 | `map` | object, with every key converted to a string |
 
+`NaN` and infinity have no way of being written in json, so encoding one raises a `json_error`
+instead of producing a text no reader would accept back.
+
 Values of the game types (`entity`, `block`, `nbt`, …) encode as their textual representation rather
 than as a structure; to serialise game data, go through [`core.mc.nbt`](core.mc.nbt.md) instead.
 

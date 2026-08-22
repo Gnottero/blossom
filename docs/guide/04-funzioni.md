@@ -29,7 +29,9 @@ The name is yours. `fn map(...)`, `fn size(...)`, `fn get(...)` are ordinary nam
 reached through an alias (`list.map`), so nothing of yours can shadow it. The only reserved names
 are the ones you write without importing anything — `break`, `c_for`, `call`, `continue`, `exit`,
 `fn`, `for`, `if`, `loop`, `match`, `not`, `outer`, `print`, `return`, `throw`, `try`, `while` —
-which are grammar rather than library.
+which are grammar rather than library. They are reserved as names of anything: a function, a
+variable, a parameter. (`l`, `m` and `concat` are built by the tokenizer for `[...]`, `{...}` and
+interpolated strings; nobody writes them as a call, so they stay free as names.)
 
 ## Anonymous functions
 
@@ -41,6 +43,15 @@ double(3);                              // 6
 
 list.map([1, 2, 3], fn(x) -> x * 2);    // [2, 4, 6]
 event.on('player_dies', fn(who, cause) -> (log(who); false));
+```
+
+A call can be written straight after whatever produced the function, not only after a name, so a
+function that returns a function is called twice in a row:
+
+```
+(fn(x) -> x * 2)(21);                   // 42
+fn add(a) -> fn(b) -> a + b;
+add(1)(2);                              // 3
 ```
 
 The two forms cannot be confused: `fn name(...)` declares, `fn(...)` is a value. What decides is the

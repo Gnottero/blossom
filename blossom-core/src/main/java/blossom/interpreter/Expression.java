@@ -1411,6 +1411,16 @@ public class Expression
                     {
                         outputQueue.add(token);
                     }
+                    else if (previousToken != null && previousToken.type == Token.TokenType.CLOSE_PAREN)
+                    {
+                        // una chiamata scritta dopo un valore: 'f()(2)', '(fn(x) -> x)(2)'. Il
+                        // valore che sta prima e' la funzione, e diventa il primo argomento di
+                        // 'call'; le parentesi che seguono portano gli altri
+                        Token apply = token.morphedInto(Token.TokenType.FUNCTION, "call");
+                        apply.postfixCall = true;
+                        outputQueue.add(token);
+                        stack.push(apply);
+                    }
                     stack.push(token);
                     break;
                 case CLOSE_PAREN:
@@ -1848,18 +1858,104 @@ public class Expression
                     "'" + left.token.surface + "' is part of the language and cannot be the name of a function."
                             + " The reserved names are " + String.join(", ", new java.util.TreeSet<>(StdLib.PRELUDE)) + ".");
         }
-        if (token.surface.equals("->")
-                && left.token.type == Token.TokenType.OPERATOR
-                && left.args != null && left.args.size() == 2
-                && operators.get(left.token.surface) != null
-                && Operators.precedence.get("assign=<>").equals(operators.get(left.token.surface).getPrecedence())
-                && left.args.get(1).token.type == Token.TokenType.FUNCTION
-                && left.args.get(1).token.surface.equals("fn"))
+        // 'f = fn(a) -> ...', 'x |> fn(a) -> ...', e i due insieme: il '->' lega piu' lento sia
+        // dell'assegnamento che del tubo, quindi la lambda finisce spezzata in due e la sua firma
+        // resta appesa a destra di quello che la precede. Si rimette insieme qui
+        // 'print = 1': un nome del linguaggio non puo' diventare una variabile. 'fn print(a) -> a'
+        // lo diceva gia'; questo e' la stessa regola dall'altro lato, perche' altrimenti lo stesso
+        // nome vorrebbe dire due cose - la variabile quando lo si legge, la built-in quando lo si
+        // chiama - e nessuna delle due sarebbe quella che chi legge il codice si aspetta
+        if (operators.get(token.surface) != null
+                && Operators.precedence.get("assign=<>").equals(operators.get(token.surface).getPrecedence())
+                && left.token.type == Token.TokenType.VARIABLE
+                && left.args.isEmpty()
+                && StdLib.isReservedAsAName(left.token.surface))
         {
-            ExpressionNode lambda = binaryNode(token, left.args.get(1), right);
-            return binaryNode(left.token, left.args.get(0), lambda);
+            throw new ParseError(BlossomError.positionOf(this, left.token),
+                    "'" + left.token.surface + "' is part of the language and cannot be the name of a variable.");
+        }
+        if (token.surface.equals("->") && left.token.type == Token.TokenType.OPERATOR)
+        {
+            ExpressionNode spliced = spliceLambdaBody(token, left, right);
+            if (spliced != null)
+            {
+                return spliced;
+            }
         }
         return binaryNode(token, left, right);
+    }
+
+    /**
+     * {@code <valore>(a, b)}: la chiamata scritta dopo qualcosa che non e' un nome.
+     *
+     * <p>Serve a {@code f()(2)} e a {@code (fn(x) -> x)(2)}: la funzione non e' un nome che il
+     * parser possa riconoscere, e' il valore che sta gia' sullo stack. Lo si ripesca da sotto la
+     * lista dei parametri e lo si mette davanti agli altri, che e' la forma che {@code call} vuole.
+     */
+    private ExpressionNode postfixCallNode(Context context, Token token, Stack<ExpressionNode> nodeStack)
+    {
+        ILazyFunction call = functions.get("call");
+        ArrayList<ExpressionNode> p = new ArrayList<>();
+        while (!nodeStack.isEmpty() && nodeStack.top() != ExpressionNode.PARAMS_START)
+        {
+            p.add(nodeStack.pop());
+        }
+        if (nodeStack.isEmpty())
+        {
+            throw ParseError.at(this, token, "Mismatched parentheses");
+        }
+        nodeStack.pop();
+        if (nodeStack.isEmpty() || nodeStack.top() == ExpressionNode.PARAMS_START)
+        {
+            throw ParseError.at(this, token, "There is nothing to call before '('.");
+        }
+        Collections.reverse(p);
+        // il soggetto della chiamata va davanti: 'call' vuole la funzione come primo argomento
+        p.add(0, nodeStack.pop());
+        checkNamedArgumentOrder(context, token, p);
+        List<LazyValue> params = p.stream()
+                .map(n -> isNamedArgument(token, n) ? namedArgument(argumentName(n), n.args.get(1).op) : n.op)
+                .collect(Collectors.toList());
+        ExpressionNode node = new ExpressionNode(
+                (c, t) -> call.lazyEval(c, t, this, token, params).evalValue(c, t), p, token);
+        token.node = node;
+        return node;
+    }
+
+    /**
+     * Riattacca il corpo alla firma di una lambda rimasta in fondo a un assegnamento o a un tubo.
+     *
+     * <p>Scende lungo il lato destro finche' non trova {@code fn(...)}, ricostruendo al ritorno i
+     * nodi che ha attraversato: cosi' {@code x = 5 |> fn(v) -> v + 1} si legge come uno si aspetta,
+     * e non come {@code (x = 5 |> fn(v)) -> v + 1}. {@code null} se in fondo non c'e' una firma,
+     * cioe' se non c'era niente da rimettere insieme.
+     */
+    private @Nullable ExpressionNode spliceLambdaBody(Token arrow, ExpressionNode left, ExpressionNode body)
+    {
+        if (left.token.type == Token.TokenType.FUNCTION && left.token.surface.equals("fn"))
+        {
+            return binaryNode(arrow, left, body);
+        }
+        if (left.token.type != Token.TokenType.OPERATOR || left.args == null || left.args.size() != 2)
+        {
+            return null;
+        }
+        ILazyOperator operator = operators.get(left.token.surface);
+        boolean assignment = operator != null
+                && Operators.precedence.get("assign=<>").equals(operator.getPrecedence());
+        boolean pipe = left.token.surface.equals("|>");
+        if (!assignment && !pipe)
+        {
+            return null;
+        }
+        ExpressionNode rebuilt = spliceLambdaBody(arrow, left.args.get(1), body);
+        if (rebuilt == null)
+        {
+            return null;
+        }
+        return assignment
+                ? binaryNode(left.token, left.args.get(0), rebuilt)
+                : pipeNode(left.args.get(0), rebuilt);
     }
 
     private ExpressionNode RPNToParseTree(List<Token> tokens, Context context)
@@ -1878,7 +1974,12 @@ public class Expression
                 case OPERATOR -> {
                     ExpressionNode v1 = nodeStack.pop();
                     ExpressionNode v2 = nodeStack.pop();
-                    nodeStack.push(token.surface.equals("|>")
+                    // 'x |> fn(a) -> ...': il tubo lega piu' stretto del '->', quindi qui a destra
+                    // c'e' ancora la sola firma della lambda. Riscriverlo adesso infilerebbe il
+                    // soggetto fra i parametri; si lascia un nodo '|>' e ci pensa il '->' che segue
+                    boolean pipeIntoLambdaSignature = token.surface.equals("|>")
+                            && v1.token.type == Token.TokenType.FUNCTION && v1.token.surface.equals("fn");
+                    nodeStack.push(token.surface.equals("|>") && !pipeIntoLambdaSignature
                             ? pipeNode(v2, v1)
                             : reassociateLambdaAssignment(token, v2, v1));
                 }
@@ -1899,54 +2000,61 @@ public class Expression
                     }
                 }
                 case FUNCTION -> {
-                    String resolved = resolveBuiltinName(context, token);
-                    String name = resolved == null ? token.surface : resolved;
-                    ILazyFunction f;
-                    ArrayList<ExpressionNode> p;
-                    // globals will be evaluated lazily, not at compile time via .
-                    boolean isKnown = resolved != null && functions.containsKey(resolved);
-                    if (isKnown)
+                    if (token.postfixCall)
                     {
-                        f = functions.get(name);
-                        p = new ArrayList<>(!f.numParamsVaries() ? f.getNumParams() : 0);
-                    }
-                    else // potentially unknown function or just unknown function
-                    {
-                        f = functions.get("call");
-                        p = new ArrayList<>();
-                    }
-                    // pop parameters off the stack until we hit the start of
-                    // this function's parameter list
-                    while (!nodeStack.isEmpty() && nodeStack.top() != ExpressionNode.PARAMS_START)
-                    {
-                        p.add(nodeStack.pop());
-                    }
-                    if (!isKnown)
-                    {
-                        p.add(ExpressionNode.ofConstant(new StringValue(name), token.morphedInto(Token.TokenType.STRINGPARAM, token.surface)));
-                        token.morph(Token.TokenType.FUNCTION, "call");
+                        nodeStack.push(postfixCallNode(context, token, nodeStack));
                     }
                     else
                     {
-                        // il token porta il nome risolto: cosi' 'math.sqrt' diventa 'sqrt' una volta
-                        // sola, qui, e non ad ogni chiamata
-                        token.surface = name;
+                        String resolved = resolveBuiltinName(context, token);
+                        String name = resolved == null ? token.surface : resolved;
+                        ILazyFunction f;
+                        ArrayList<ExpressionNode> p;
+                        // globals will be evaluated lazily, not at compile time via .
+                        boolean isKnown = resolved != null && functions.containsKey(resolved);
+                        if (isKnown)
+                        {
+                            f = functions.get(name);
+                            p = new ArrayList<>(!f.numParamsVaries() ? f.getNumParams() : 0);
+                        }
+                        else // potentially unknown function or just unknown function
+                        {
+                            f = functions.get("call");
+                            p = new ArrayList<>();
+                        }
+                        // pop parameters off the stack until we hit the start of
+                        // this function's parameter list
+                        while (!nodeStack.isEmpty() && nodeStack.top() != ExpressionNode.PARAMS_START)
+                        {
+                            p.add(nodeStack.pop());
+                        }
+                        if (!isKnown)
+                        {
+                            p.add(ExpressionNode.ofConstant(new StringValue(name), token.morphedInto(Token.TokenType.STRINGPARAM, token.surface)));
+                            token.morph(Token.TokenType.FUNCTION, "call");
+                        }
+                        else
+                        {
+                            // il token porta il nome risolto: cosi' 'math.sqrt' diventa 'sqrt' una volta
+                            // sola, qui, e non ad ogni chiamata
+                            token.surface = name;
+                        }
+                        Collections.reverse(p);
+                        if (nodeStack.top() == ExpressionNode.PARAMS_START)
+                        {
+                            nodeStack.pop();
+                        }
+                        checkNamedArgumentOrder(context, token, p);
+                        List<LazyValue> params = p.stream()
+                                .map(n -> isNamedArgument(token, n) ? namedArgument(argumentName(n), n.args.get(1).op) : n.op)
+                                .collect(Collectors.toList());
+                        ExpressionNode newNode = new ExpressionNode(
+                                (c, t) -> f.lazyEval(c, t, this, token, params).evalValue(c, t),
+                                p, token
+                        );
+                        token.node = newNode;
+                        nodeStack.push(newNode);
                     }
-                    Collections.reverse(p);
-                    if (nodeStack.top() == ExpressionNode.PARAMS_START)
-                    {
-                        nodeStack.pop();
-                    }
-                    checkNamedArgumentOrder(context, token, p);
-                    List<LazyValue> params = p.stream()
-                            .map(n -> isNamedArgument(token, n) ? namedArgument(argumentName(n), n.args.get(1).op) : n.op)
-                            .collect(Collectors.toList());
-                    ExpressionNode newNode = new ExpressionNode(
-                            (c, t) -> f.lazyEval(c, t, this, token, params).evalValue(c, t),
-                            p, token
-                    );
-                    token.node = newNode;
-                    nodeStack.push(newNode);
                 }
                 case OPEN_PAREN -> {
                     token.node = ExpressionNode.PARAMS_START;
@@ -2484,6 +2592,15 @@ public class Expression
                     if (stack.size() <= 0)
                     {
                         throw ParseError.at(this, token, "Too many function calls, maximum scope exceeded");
+                    }
+                    if (token.postfixCall)
+                    {
+                        // consuma anche il valore che sta prima delle parentesi: e' la funzione
+                        if (stack.topInt() < 1)
+                        {
+                            throw ParseError.at(this, token, "There is nothing to call before '('.");
+                        }
+                        stack.set(stack.size() - 1, stack.topInt() - 1);
                     }
                     // push the result of the function
                     stack.set(stack.size() - 1, stack.topInt() + 1);

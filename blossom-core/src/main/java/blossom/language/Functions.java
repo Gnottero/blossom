@@ -290,6 +290,11 @@ public class Functions
         Set<String> seen = new HashSet<>();
         for (String parameter : args)
         {
+            if (StdLib.isReservedAsAName(parameter))
+            {
+                throw new ParseError(SourcePosition.UNKNOWN, "'" + parameter + "' is part of the language"
+                        + " and cannot be the name of a parameter of " + name + ".");
+            }
             if (!seen.add(parameter))
             {
                 throw new ParseError(SourcePosition.UNKNOWN,

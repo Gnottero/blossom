@@ -152,9 +152,14 @@ class InterpreterTest
         assertEquals("[0, 1, 2]", evalWithStdlib("list.map(['a', 'b', 'c'], _i)"));
         // a loop inside another: the inner one must not steal '_' from the outer one
         assertEquals("[3, 6, 9]", evalWithStdlib("list.map([1, 2, 3], (outer_ = _; list.reduce([1, 1, 1], _a + outer_, 0)))"));
-        // once the loop is over, '_' goes back to its starting value instead of staying the last element
-        assertEquals("0", evalWithStdlib("list.map([1, 2], _ * 2); _"));
-        assertEquals("0", evalWithStdlib("for([1, 2, 3], _i); _i"));
+        // once the loop is over '_' has no value again, instead of staying the last element: it is
+        // the loop that binds it, so outside one reading it is a mistake and says so
+        BlossomError leaked = assertThrows(BlossomError.class,
+                () -> evalWithStdlib("list.map([1, 2], _ * 2); _"));
+        assertTrue(leaked.getMessage().contains("'_' has no value here"), leaked.getMessage());
+        BlossomError leakedIndex = assertThrows(BlossomError.class,
+                () -> evalWithStdlib("for([1, 2, 3], _i); _i"));
+        assertTrue(leakedIndex.getMessage().contains("'_i' has no value here"), leakedIndex.getMessage());
         // and they're also reachable by name, wherever the loop put them
         assertEquals("[2, 3]", eval("""
                 import "core.list" as list;

@@ -2,6 +2,7 @@ package blossom.interpreter.argument;
 
 import blossom.exception.SourcePosition;
 import blossom.exception.NullReferenceError;
+import blossom.exception.TypeMismatchError;
 import blossom.interpreter.Context;
 import blossom.interpreter.LazyValue;
 import blossom.interpreter.Module;
@@ -59,6 +60,14 @@ public class FunctionArgument extends Argument
         }
         if (!(functionValue instanceof FunctionValue))
         {
+            // solo un nome puo' essere cercato fra le funzioni: un numero o una lista non lo sono
+            // mai stati, e cercarli comunque faceva dire "Function '5' is not defined yet", che
+            // manda a cercare una definizione mancante invece del valore che non era una funzione
+            if (!(functionValue instanceof blossom.value.StringValue))
+            {
+                throw new TypeMismatchError(SourcePosition.UNKNOWN, functionValue.getTypeString()
+                        + " (" + functionValue.getString() + ") is not a function and cannot be called.");
+            }
             functionValue = resolveByName(c, module, functionValue.getString());
         }
         FunctionValue fun = (FunctionValue) functionValue;

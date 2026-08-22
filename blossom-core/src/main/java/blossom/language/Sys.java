@@ -37,6 +37,35 @@ public class Sys
     /** %[argument_index$][flags][width][.precision][t]conversion */
     private static final Pattern formatPattern = Pattern.compile("%(\\d+\\$)?([-#+ 0,(<]*)?(\\d+)?(\\.\\d+)?([tT])?([a-zA-Z%])");
 
+    /**
+     * Il numero che un segnaposto numerico vuole, o l'errore che dice cosa e' arrivato al suo posto.
+     *
+     * <p>Prima si passava per {@code readInteger}, che su qualunque cosa non fosse un numero
+     * rispondeva zero: {@code str('%d', 'x')} dava {@code '0'}, un risultato sbagliato senza una
+     * riga di avviso. Una stringa che e' scritta come un numero continua a passare, perche' e' la
+     * stessa indulgenza che hanno gli operatori aritmetici.
+     */
+    private static Number numberFor(Value value, String specifier)
+    {
+        if (value instanceof final blossom.value.NumericValue nv)
+        {
+            return nv.getDouble();
+        }
+        if (value instanceof blossom.value.StringValue)
+        {
+            try
+            {
+                return Double.parseDouble(value.getString().trim());
+            }
+            catch (NumberFormatException ignored)
+            {
+                // cade nell'errore qui sotto, con il testo che non era un numero
+            }
+        }
+        throw new TypeMismatchError(SourcePosition.UNKNOWN, "'" + specifier + "' wants a number, but it was given "
+                + value.getTypeString() + (value.isNull() ? "" : " (" + value.getString() + ")") + ".");
+    }
+
     public static void apply(Expression expression)
     {
         expression.addUnaryFunction("hash_code", v -> new NumericValue(v.hashCode()));
@@ -137,7 +166,7 @@ public class Sys
                         {
                             throw new ArityError(SourcePosition.UNKNOWN,"Not enough arguments for " + m.group(0));
                         }
-                        args.add(lv.get(argIndex).readInteger());
+                        args.add(numberFor(lv.get(argIndex), m.group(0)).longValue());
                         argIndex++;
                     }
                     else if (fmt == 'a' || fmt == 'e' || fmt == 'f' || fmt == 'g')
@@ -146,7 +175,7 @@ public class Sys
                         {
                             throw new ArityError(SourcePosition.UNKNOWN,"Not enough arguments for " + m.group(0));
                         }
-                        args.add(lv.get(argIndex).readDoubleNumber());
+                        args.add(numberFor(lv.get(argIndex), m.group(0)).doubleValue());
                         argIndex++;
                     }
                     else if (fmt == 'b')
@@ -172,6 +201,12 @@ public class Sys
                     // we skip it and let the String.format fail
                     break;
                 }
+            }
+            if (argIndex < lv.size())
+            {
+                throw new ArityError(SourcePosition.UNKNOWN, "'str' was given " + (lv.size() - argIndex)
+                        + " argument(s) more than the format uses: '" + format + "' asks for "
+                        + args.size() + ".");
             }
             try
             {

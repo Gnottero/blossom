@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import blossom.exception.ArityError;
+import blossom.exception.BlossomError;
 import blossom.exception.BlossomRuntimeError;
 import blossom.exception.ParseError;
 import blossom.exception.TypeMismatchError;
@@ -221,5 +222,158 @@ class RegressionsTest
                 """);
         Files.writeString(tmp.resolve("src/main.bs"), "module main;\n1 + 1;\n");
         assertEquals("4", Interpreter.forProject(tmp).eval("2 + 2").getString());
+    }
+
+    // --- una chiamata scritta dopo un valore e' una chiamata, non una parentesi qualunque ---
+
+    @Test
+    void aCallWrittenAfterAValueIsACall()
+    {
+        // le parentesi dopo ')' erano un raggruppamento: la seconda chiamata spariva in silenzio
+        assertEquals("5", eval("f = fn() -> fn() -> 5; f()()"));
+        assertEquals("42", eval("(fn(x) -> x * 2)(21)"));
+        assertEquals("7", eval("(fn() -> 7)()"));
+    }
+
+    @Test
+    void aFunctionMayReturnAFunctionThatTakesParameters()
+    {
+        assertEquals("3", eval("add = fn(a) -> fn(b) -> a + b; add(1)(2)"));
+        assertEquals("15", eval("fn add(a) -> fn(b) -> a + b; add(10)(5)"));
+        assertEquals("6", eval("f = fn(a) -> fn(b) -> fn(c) -> a + b + c; f(1)(2)(3)"));
+    }
+
+    @Test
+    void aCallOnSomethingThatIsNotAFunctionSaysSo()
+    {
+        BlossomError error = assertThrows(BlossomError.class, () -> eval("f = fn() -> 5; f()()"));
+        assertTrue(error.getMessage().contains("5"), error.getMessage());
+    }
+
+    @Test
+    void groupingParenthesesStillGroup()
+    {
+        assertEquals("9", eval("(1 + 2) * 3"));
+        assertEquals("21", eval("(1 + 2) * (3 + 4)"));
+    }
+
+    // --- gli impliciti non valgono zero dove nessuno li ha legati ---
+
+    @Test
+    void anImplicitWithNoLoopAroundItIsAnError()
+    {
+        // 'fn() -> _ * 2' dava una lista di zeri: la lambda i parametri se li chiama per nome, e
+        // gli impliciti li' non arrivano
+        UndefinedSymbolError error = assertThrows(UndefinedSymbolError.class,
+                () -> eval("import \"core.list\" as list; list.map([1, 2, 3], fn() -> _ * 2)"));
+        assertTrue(error.getMessage().contains("'_' has no value here"), error.getMessage());
+        assertThrows(UndefinedSymbolError.class, () -> eval("_i"));
+        assertThrows(UndefinedSymbolError.class, () -> eval("_a"));
+    }
+
+    @Test
+    void theImplicitsStillWorkWhereTheyAreBound()
+    {
+        String stdlib = "import \"core.list\" as list; ";
+        assertEquals("[2, 4, 6]", eval(stdlib + "list.map([1, 2, 3], _ * 2)"));
+        assertEquals("[0, 1]", eval(stdlib + "list.map([10, 20], _i)"));
+        assertEquals("6", eval(stdlib + "list.reduce([1, 2, 3], _a + _, 0)"));
+        assertEquals("[2, 4, 6]", eval(stdlib + "list.map([1, 2, 3], fn(x) -> x * 2)"));
+        assertEquals("[0, 1]", eval(stdlib + "list.map([10, 20], fn(x, i) -> i)"));
+    }
+
+    // --- json scrive solo json ---
+
+    @Test
+    void jsonRefusesTheNumbersItCannotWrite()
+    {
+        String json = "import \"core.json\" as json; ";
+        assertEquals("caught", eval(json + "try(json.encode(0/0), 'json_error', fn(e) -> 'caught')"));
+        assertEquals("caught", eval(json + "try(json.encode(1/0), 'json_error', fn(e) -> 'caught')"));
+        assertEquals("caught", eval(json + "try(json.encode([1, 0/0]), 'json_error', fn(e) -> 'caught')"));
+        assertEquals("{\"a\":1,\"b\":2.5}", eval(json + "json.encode({'a' -> 1, 'b' -> 2.5})"));
+    }
+
+    // --- un segnaposto numerico vuole un numero ---
+
+    @Test
+    void aNumericPlaceholderSaysWhatItWasGiven()
+    {
+        String string = "import \"core.string\" as string; ";
+        // 'str(\'%d\', \'x\')' rispondeva '0'
+        TypeMismatchError error = assertThrows(TypeMismatchError.class,
+                () -> eval(string + "string.str('%d', 'x')"));
+        assertTrue(error.getMessage().contains("wants a number"), error.getMessage());
+        assertThrows(TypeMismatchError.class, () -> eval(string + "string.str('%.2f', 'abc')"));
+        // gli argomenti che avanzano non si buttano via in silenzio
+        assertThrows(ArityError.class, () -> eval(string + "string.str('%d', 1, 2)"));
+        // un testo scritto come un numero passa, come per gli operatori aritmetici
+        assertEquals("5", eval(string + "string.str('%d', '5')"));
+        assertEquals("3 apples", eval(string + "string.str('%d apples', 3)"));
+    }
+
+    // --- il tubo e la lambda scritta subito dopo ---
+
+    @Test
+    void aPipeIntoALambdaWrittenOnTheSpot()
+    {
+        // '|>' lega piu' stretto di '->': il soggetto finiva fra i parametri della firma
+        assertEquals("10", eval("5 |> fn(x) -> x * 2"));
+        assertEquals("6", eval("x = 5 |> fn(v) -> v + 1; x"));
+        assertEquals("10", eval("5 |> (fn(x) -> x * 2)"));
+        assertEquals("[3, 2, 1]", eval(
+                "import \"core.list\" as list; [3, 1, 2] |> list.sort() |> list.reverse()"));
+    }
+
+    // --- un nome del linguaggio non diventa una variabile ---
+
+    @Test
+    void aLanguageNameCannotBeAVariable()
+    {
+        ParseError error = assertThrows(ParseError.class, () -> eval("print = 1; print"));
+        assertTrue(error.getMessage().contains("cannot be the name of a variable"), error.getMessage());
+        assertThrows(ParseError.class, () -> eval("if = 1"));
+        assertThrows(ParseError.class, () -> eval("for += 1"));
+        assertThrows(ParseError.class, () -> eval("fn f(if) -> if"));
+        // 'l' e 'm' li costruisce il tokenizer, non li scrive nessuno: restano nomi liberi
+        assertEquals("[1, 2]", eval("l = [1, 2]; l"));
+        assertEquals("{a: 1}", eval("m = {'a' -> 1}; m"));
+    }
+
+    // --- gli spostamenti di bit contano i bit, non quelli che la JVM tiene ---
+
+    @Test
+    void aShiftBeyondTheWidthEmptiesTheNumber()
+    {
+        String math = "import \"core.math\" as math; ";
+        // Java maschera l'ampiezza sui 6 bit bassi: '1 << 64' rispondeva 1, '1 << 200' rispondeva 256
+        assertEquals("0", eval(math + "math.bitwise_shift_left(1, 64)"));
+        assertEquals("0", eval(math + "math.bitwise_shift_left(1, 200)"));
+        assertEquals("0", eval(math + "math.bitwise_shift_right(8, 64)"));
+        assertEquals("-1", eval(math + "math.bitwise_arithmetic_shift_right(-8, 64)"));
+        assertEquals("0", eval(math + "math.bitwise_arithmetic_shift_right(8, 64)"));
+        assertThrows(BlossomRuntimeError.class, () -> eval(math + "math.bitwise_shift_left(1, -1)"));
+        // dentro i 64 bit non cambia niente
+        assertEquals("256", eval(math + "math.bitwise_shift_left(1, 8)"));
+        assertEquals("2", eval(math + "math.bitwise_shift_right(8, 2)"));
+        // una rotazione e' definita modulo la larghezza: quella resta com'era
+        assertEquals("2", eval(math + "math.bitwise_roll_left(1, 65)"));
+    }
+
+    // --- quello che '==' chiama uguale e' la stessa chiave ---
+
+    @Test
+    void whatEqualityCallsEqualIsTheSameKey()
+    {
+        String map = "import \"core.map\" as map; ";
+        assertEquals("true", eval("'1' == 1"));
+        assertEquals("[true, a]", eval(map + "m = {1 -> 'a'}; [map.has(m, '1'), map.get(m, '1')]"));
+        assertEquals("[true, a]", eval(map + "m = {'1' -> 'a'}; [map.has(m, 1), map.get(m, 1)]"));
+        assertEquals("true", eval("true == 1"));
+        assertEquals("[true, a]", eval(map + "m = {true -> 'a'}; [map.has(m, 1), map.get(m, 1)]"));
+        assertEquals("1", eval(map + "m = {}; map.put(m, 1, 'a'); map.put(m, '1', 'b'); map.size(m)"));
+        // e quello che uguale non e' resta una chiave diversa
+        assertEquals("false", eval("'1.0' == 1"));
+        assertEquals("2", eval(map + "m = {}; map.put(m, 1, 'a'); map.put(m, 'x', 'b'); map.size(m)"));
     }
 }

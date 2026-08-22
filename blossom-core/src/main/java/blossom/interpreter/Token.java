@@ -40,6 +40,15 @@ public class Token implements Comparable<Token> {
 
     public Expression.@Nullable ExpressionNode node = null;
 
+    /**
+     * Se questa e' la chiamata scritta dopo un valore, {@code f()(2)} o {@code (fn(x) -> x)(2)}.
+     *
+     * <p>Il token e' un {@code call} sintetico, ma i suoi argomenti non sono tutti scritti fra le
+     * parentesi: il primo - la funzione da chiamare - e' il valore che sta prima, e va ripescato
+     * dallo stack invece che dalla lista dei parametri.
+     */
+    public boolean postfixCall = false;
+
     public static final Token NONE = new Token();
 
     public Token morphedInto(TokenType newType, String newSurface) {

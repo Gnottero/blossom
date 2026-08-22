@@ -56,6 +56,23 @@ public class Operators
         put("nextop;", 10);
     }};
 
+    /**
+     * Lo spostamento di un bitwise_shift_*, se e' un numero di bit che ha senso.
+     *
+     * <p>Restituisce l'ampiezza cosi' com'e' - il chiamante decide cosa farne quando supera i 64
+     * bit - e si ferma solo su un numero negativo, che non e' uno spostamento piu' corto ma la
+     * direzione opposta scritta male.
+     */
+    private static long shiftAmount(String function, long amount)
+    {
+        if (amount < 0)
+        {
+            throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "number", "'" + function + "' cannot shift by "
+                    + amount + " bits: to shift the other way there is the function that does that.");
+        }
+        return amount;
+    }
+
     public static void apply(Expression expression)
     {
         expression.addBinaryOperator("+", "sum", precedence.get("addition+-"), true, Value::add, lv -> {
@@ -322,9 +339,17 @@ public class Operators
             return Value.TRUE;
         });
 
-        expression.addMathematicalBinaryIntFunction("bitwise_shift_left", (num, amount) -> num << amount);
-        expression.addMathematicalBinaryIntFunction("bitwise_shift_right", (num, amount) -> num >>> amount);
-        expression.addMathematicalBinaryIntFunction("bitwise_arithmetic_shift_right", (num, amount) -> num >> amount);
+        // Java maschera lo spostamento sui 6 bit bassi, quindi '1 << 64' vale 1 e '1 << 200' vale
+        // 256: e' il comportamento della JVM che si vede attraverso, non quello che dice il nome
+        // della funzione. Qui uno spostamento oltre i 64 bit svuota il numero, come ci si aspetta,
+        // e uno spostamento negativo e' un errore invece di diventare uno spostamento enorme
+        expression.addMathematicalBinaryIntFunction("bitwise_shift_left",
+                (num, amount) -> shiftAmount("bitwise_shift_left", amount) >= Long.SIZE ? 0L : num << amount);
+        expression.addMathematicalBinaryIntFunction("bitwise_shift_right",
+                (num, amount) -> shiftAmount("bitwise_shift_right", amount) >= Long.SIZE ? 0L : num >>> amount);
+        expression.addMathematicalBinaryIntFunction("bitwise_arithmetic_shift_right",
+                (num, amount) -> shiftAmount("bitwise_arithmetic_shift_right", amount) >= Long.SIZE
+                        ? (num < 0 ? -1L : 0L) : num >> amount);
         expression.addMathematicalBinaryIntFunction("bitwise_roll_left", (num, amount) -> Long.rotateLeft(num, (int)amount));
         expression.addMathematicalBinaryIntFunction("bitwise_roll_right", (num, amount) -> Long.rotateRight(num, (int)amount));
         expression.addMathematicalUnaryIntFunction("bitwise_not", d -> {

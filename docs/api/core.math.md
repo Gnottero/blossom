@@ -252,6 +252,12 @@ Shifts left.
 Shifts right **logically**: the vacated bits are filled with zeros, so the result of shifting a
 negative number is a large positive one.
 
+All three shifts count bits, and a number is 64 of them: shifting by 64 or more leaves nothing
+behind (`0`, or `-1` for the arithmetic shift of a negative number), it does not start over.
+A negative amount is an error rather than a shift the other way — there is a function for that.
+`math.bitwise_roll_left` and `math.bitwise_roll_right` are the exception, because a rotation is
+defined modulo the width: rolling by 65 is rolling by 1.
+
 ### `math.bitwise_arithmetic_shift_right(n, amount)`
 Shifts right **arithmetically**: the sign bit is preserved, so `-8 >> 1` is `-4`.
 
