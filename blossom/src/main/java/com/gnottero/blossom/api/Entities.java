@@ -274,15 +274,15 @@ public class Entities
         });
 
         /*
-         * entity_load_handler(tipi, funzione) - chiamata ogni volta che compare un'entita' di uno
-         * di quei tipi.
+         * entity_load_handler(types, function) - called every time an entity of one of those
+         * types appears.
          *
-         * L'evento e' uno solo ('entity_loads') invece di uno generato per ogni tipo di entita':
-         * un catalogo di 100+ nomi non lo legge nessuno. Il filtro per tipo viene fatto in java prima
-         * di chiamare l'handler, quindi ascoltare un tipo raro non costa una chiamata per ogni
-         * entita' che compare.
+         * There's a single event ('entity_loads') instead of one generated per entity type: a
+         * catalog of 100+ names is not something anyone would read. The type filter is done in
+         * Java before calling the handler, so listening for a rare type doesn't cost a call for
+         * every entity that appears.
          *
-         * 'tipi' e' un tipo o una lista di tipi; con null si ascoltano tutte le entita'.
+         * 'types' is a type or a list of types; with null all entities are listened for.
          */
         expression.addContextFunction("entity_load_handler", -1, (c, t, lv) ->
         {
@@ -334,12 +334,13 @@ public class Entities
         });
 
         /**
-         * has_client(giocatore) - se quel giocatore ha Blossom anche sul client.
+         * has_client(player) - whether that player has Blossom on the client too.
          *
-         * <p>Sta qui e non fra le forme: e' una domanda su un giocatore, come tutte quelle di questo
-         * modulo, e la risposta non serve a disegnare - {@code draw_shape} decide da solo chi vede la
-         * forma vera e chi le particelle. Serve a chi vuole offrire qualcosa di diverso a chi ha il
-         * client, e non doverlo indovinare.
+         * <p>This lives here and not among the shape functions: it's a question about a player,
+         * like everything else in this module, and the answer isn't needed for drawing
+         * ({@code draw_shape} decides on its own who sees the real shape and who sees particles).
+         * It's for anyone who wants to offer something different to players with the client,
+         * without having to guess.
          */
         expression.addContextFunction("has_client", 1, (c, t, lv) ->
         {
@@ -350,9 +351,9 @@ public class Entities
     }
 
     /**
-     * I tipi che un {@code entity_load_handler} vuole sentire, o {@code null} per tutti.
+     * The types an {@code entity_load_handler} wants to hear about, or {@code null} for all.
      *
-     * <p>I nomi vengono normalizzati adesso, una volta, e non ad ogni entita' che compare.
+     * <p>Names are normalized now, once, rather than for every entity that appears.
      */
     private static java.util.@org.jspecify.annotations.Nullable Set<String> entityTypeFilter(Value declared)
     {
@@ -369,7 +370,7 @@ public class Entities
         return types;
     }
 
-    /** Se l'entita' passata all'evento e' di uno dei tipi ascoltati. */
+    /** Whether the entity passed to the event is one of the listened-for types. */
     private static boolean matchesType(List<Value> arguments, java.util.Set<String> types)
     {
         if (arguments.isEmpty() || !(arguments.get(0) instanceof final EntityValue entity))

@@ -4,29 +4,30 @@ import java.nio.file.Path;
 import java.util.List;
 
 /**
- * Da dove si prendono i pack che non stanno gia' su disco.
+ * Where to fetch packs that aren't already on disk.
  *
- * <p>Un'interfaccia perche' il core non deve sapere se dall'altra parte c'e' una cartella, un server
- * http o niente: e' l'unico punto del sistema che puo' toccare la rete, ed e' anche l'unico che si
- * puo' spegnere del tutto ({@link PackEnvironment#registry()} puo' essere {@code null}).
+ * <p>This is an interface because the core doesn't need to know whether a directory, an http
+ * server, or nothing at all is on the other side: it's the only part of the system that may touch
+ * the network, and also the only one that can be switched off entirely
+ * ({@link PackEnvironment#registry()} can be {@code null}).
  *
- * <p>Un'implementazione deve garantire tre cose: {@link #availableVersions} non lancia se il pack non
- * esiste ma restituisce una lista vuota; {@link #fetch} restituisce una cartella gia' completa, che
- * chi la riceve legge come un progetto qualunque; e quello che scarica va verificato prima, perche'
- * un archivio scompattato senza controllo e' codice arbitrario su un server.
+ * <p>An implementation must guarantee three things: {@link #availableVersions} does not throw if
+ * the pack doesn't exist, but returns an empty list; {@link #fetch} returns an already-complete
+ * directory, which the caller reads like any other project; and whatever is downloaded must be
+ * verified first, because an archive unpacked without checking is arbitrary code on a server.
  */
 public interface PackRegistry
 {
-    /** Le versioni pubblicate di {@code name}, in ordine qualunque; vuota se il pack non esiste. */
+    /** The published versions of {@code name}, in no particular order; empty if the pack doesn't exist. */
     List<Version> availableVersions(String name);
 
     /**
-     * La cartella locale che contiene il pack a quella versione, scaricandolo se serve.
+     * The local directory holding the pack at that version, downloading it if needed.
      *
-     * @throws java.io.IOException se non si riesce a ottenerlo o se l'integrità non torna
+     * @throws java.io.IOException if it cannot be obtained or its integrity check fails
      */
     Path fetch(String name, Version version) throws java.io.IOException;
 
-    /** Come si nomina questo registry in un messaggio di errore. */
+    /** How to name this registry in an error message. */
     String describe();
 }

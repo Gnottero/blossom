@@ -5,18 +5,17 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Il nome puntato di un modulo, es. {@code math.vector}.
+ * A module's dotted name, e.g. {@code math.vector}.
  *
- * <p>È anche la sola fonte di verità sulla corrispondenza fra nome e percorso: il nome di un modulo
- * è il suo percorso relativo a {@code src/} con i separatori sostituiti da punti, e la
- * dichiarazione {@code module ...;} in testa al file deve combaciare. Il controllo sta qui e non
- * sparso nel loader.
+ * <p>This is also the single source of truth for how a name maps to a path: a module's name is its
+ * path relative to {@code src/} with separators replaced by dots, and the {@code module ...;}
+ * declaration at the top of the file must match it. The check lives here, not scattered in the loader.
  */
 public record ModuleName(String value)
 {
-    /** l'estensione dei sorgenti Blossom, come da PIANO_LINGUAGGIO.md §7 */
+    /** the extension of Blossom sources, as per PIANO_LINGUAGGIO.md §7 */
     public static final String EXTENSION = ".bs";
-    /** l'estensione delle librerie: un modulo che non ha un entrypoint suo */
+    /** the extension of libraries: a module with no entrypoint of its own */
     public static final String LIBRARY_EXTENSION = ".bsl";
 
     public ModuleName
@@ -45,9 +44,9 @@ public record ModuleName(String value)
     }
 
     /**
-     * Il nome che compete al file {@code file} dentro la cartella sorgenti {@code sourceRoot}.
+     * The name that belongs to file {@code file} inside the source directory {@code sourceRoot}.
      *
-     * @throws IllegalArgumentException se il file è fuori da {@code sourceRoot} o non è un sorgente
+     * @throws IllegalArgumentException if the file is outside {@code sourceRoot} or is not a source file
      */
     public static ModuleName ofPath(Path sourceRoot, Path file)
     {
@@ -60,7 +59,7 @@ public record ModuleName(String value)
         return new ModuleName(name.substring(0, name.length() - EXTENSION.length()).toLowerCase(Locale.ROOT));
     }
 
-    /** Il file che dovrebbe contenere questo modulo, dentro {@code sourceRoot}. */
+    /** The file that should contain this module, inside {@code sourceRoot}. */
     public Path toPath(Path sourceRoot)
     {
         Path path = sourceRoot;
@@ -73,8 +72,8 @@ public record ModuleName(String value)
     }
 
     /**
-     * Il nome scritto in un import, che usa le barre come un percorso ({@code "math/vector"}) oppure
-     * i punti ({@code "core.math"}), normalizzato a nome puntato.
+     * The name as written in an import, which uses slashes like a path ({@code "math/vector"}) or
+     * dots ({@code "core.math"}), normalized to a dotted name.
      */
     public static ModuleName ofImportTarget(String target)
     {

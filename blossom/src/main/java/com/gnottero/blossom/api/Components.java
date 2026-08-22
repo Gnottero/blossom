@@ -30,21 +30,21 @@ import blossom.value.StringValue;
 import blossom.value.Value;
 
 /**
- * I data component di un oggetto (voci SC-1 e SC-2 dell'inventario).
+ * An item's data components (inventory entries SC-1 and SC-2).
  *
- * <p>Dalla 1.20.5 un oggetto e' un id piu' una mappa di componenti tipizzati, ognuno col proprio
- * codec. Leggerli dal NBT grezzo funziona per quello che nel NBT c'e', ma non dice quali componenti
- * esistono, non distingue un valore assente da uno uguale al default, e non valida niente in
- * scrittura. Qui il codec c'e': un valore che non ha senso per quel componente viene rifiutato
- * invece di produrre un oggetto rotto.
+ * <p>Since 1.20.5 an item is an id plus a map of typed components, each with its own codec. Reading
+ * them from raw NBT works for whatever is in the NBT, but it doesn't say which components exist,
+ * doesn't distinguish an absent value from one equal to the default, and doesn't validate anything
+ * on write. Here the codec is available: a value that doesn't make sense for that component is
+ * rejected instead of producing a broken item.
  *
- * <p>Di ogni componente si distingue il valore che l'oggetto ha "di suo" - il danno massimo di
- * un'ascia - da quello che porta quella pila: senza, non c'e' modo di sapere se un incantesimo e'
- * davvero su quell'ascia o su tutte.
+ * <p>For each component, the value the item has "of its own" (the max damage of an axe) is kept
+ * distinct from the one carried by that particular stack: without that, there is no way to tell
+ * whether an enchantment is really on that axe or on all of them.
  */
 public final class Components
 {
-    /** i simboli aggiunti a {@code core.mc.item} */
+    /** The symbols added to {@code core.mc.item} */
     public static final java.util.Set<String> MODULE = java.util.Set.of(
             "item_components", "item_component", "set_item_component", "component_list");
 
@@ -54,17 +54,17 @@ public final class Components
 
     public static void apply(Expression expression)
     {
-        /** component_list() - gli id di tutti i componenti che questo gioco conosce. */
+        /** component_list() - the ids of every component this game knows about. */
         expression.addContextFunction("component_list", 0, (c, t, lv) ->
                 blossom.value.ListValue.wrap(registry((ScriptContext) c).listElements()
                         .map(reference -> StringValue.of(reference.key().identifier().toString()))));
 
         /*
-         * item_components(oggetto, default?) - tutti i componenti, id -> valore.
+         * item_components(item, default?) - all components, id -> value.
          *
-         * Con 'default' a vero si leggono quelli dell'oggetto in quanto tale invece che di questa
-         * pila: e' il confronto che dice se un valore e' stato messo apposta o se e' quello che
-         * quell'oggetto ha sempre.
+         * With 'default' true, the components read are those of the item as such rather than of this
+         * particular stack: that's the comparison that tells whether a value was set on purpose or is
+         * just what that item always has.
          */
         expression.addContextFunction("item_components", -1, (c, t, lv) ->
         {
@@ -87,7 +87,7 @@ public final class Components
                 Identifier id = registry.getKey(component.type());
                 if (id == null)
                 {
-                    continue; // un componente non registrato non ha un nome da dare a chi legge
+                    continue; // an unregistered component has no name to give the caller
                 }
                 Tag encoded = encode(cc, component.type(), component.value(), id, false);
                 if (encoded != null)
@@ -98,7 +98,7 @@ public final class Components
             return MapValue.wrap(result);
         });
 
-        /** item_component(oggetto, nome, default?) - un componente solo, o null se non c'e'. */
+        /** item_component(item, name, default?) - a single component, or null if it's not there. */
         expression.addContextFunction("item_component", -1, (c, t, lv) ->
         {
             if (lv.size() < 2)
@@ -123,12 +123,11 @@ public final class Components
         });
 
         /*
-         * set_item_component(oggetto, nome, valore) - restituisce l'oggetto con il componente
-         * cambiato; con 'valore' null lo toglie.
+         * set_item_component(item, name, value) - returns the item with the component changed;
+         * with 'value' null it removes it.
          *
-         * Restituisce una copia e non modifica l'originale: un oggetto letto da un inventario e'
-         * gia' una copia, e far finta che scriverci dentro cambi il mondo sarebbe la bugia peggiore
-         * di tutte.
+         * Returns a copy and does not modify the original: an item read from an inventory is already
+         * a copy, and pretending that writing into it changes the world would be the worst lie of all.
          */
         expression.addContextFunction("set_item_component", 3, (c, t, lv) ->
         {
@@ -152,11 +151,11 @@ public final class Components
     }
 
     /**
-     * Scrive il valore nel componente.
+     * Writes the value into the component.
      *
-     * <p>Il cast crudo e' inevitabile: il tipo del componente si conosce solo a runtime, ma il codec
-     * ha appena verificato che il valore sia quello giusto per lui, quindi la scrittura e' sicura
-     * anche se il compilatore non lo puo' sapere.
+     * <p>The raw cast is unavoidable: the component's type is only known at runtime, but the codec
+     * has just verified that the value is the right one for it, so the write is safe even though the
+     * compiler cannot know that.
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
     private static void set(ItemStack stack, DataComponentType<?> type, Object value)
@@ -191,11 +190,11 @@ public final class Components
     }
 
     /**
-     * Codifica il valore di un componente in NBT tramite il suo codec.
+     * Encodes a component's value into NBT through its codec.
      *
-     * @param strict se fallire quando il componente non è serializzabile. Su un componente solo si
-     *               fallisce - chi l'ha chiesto vuole quello - mentre elencandoli tutti si salta:
-     *               un componente interno senza codec non deve rendere illeggibili gli altri
+     * @param strict whether to fail when the component isn't serializable. For a single component it
+     *               fails (that's what the caller asked for), while listing them all it is skipped:
+     *               an internal component without a codec must not make the others unreadable
      */
     private static Tag encode(ScriptContext cc, DataComponentType<?> type, Object value, Identifier id, boolean strict)
     {
@@ -228,14 +227,14 @@ public final class Components
         }
         catch (RuntimeException e)
         {
-            // e' qui che i componenti tipizzati valgono la pena: un valore che non ha senso viene
-            // rifiutato adesso, invece di produrre un oggetto rotto che si scopre molto dopo
+            // this is where typed components pay off: a value that doesn't make sense is
+            // rejected now, instead of producing a broken item discovered much later
             throw new TypeMismatchError(SourcePosition.UNKNOWN,
                     "The given value is not valid for component '" + name + "': " + e.getMessage());
         }
     }
 
-    /** @return i nomi dei componenti noti, per suggerirne uno a chi lo sbaglia */
+    /** @return the names of known components, to suggest one to whoever gets it wrong */
     public static List<String> knownNames(RegistryAccess access)
     {
         return access.lookupOrThrow(Registries.DATA_COMPONENT_TYPE).listElements()

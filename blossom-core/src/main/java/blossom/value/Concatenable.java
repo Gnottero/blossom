@@ -1,19 +1,19 @@
 package blossom.value;
 
 /**
- * Valore che sa combinarsi con quello che lo precede in una somma.
+ * A value that knows how to combine with the one preceding it in a sum.
  *
- * <p>Serve per la doppia dispatch di {@code a + b}: il core sa concatenare due stringhe, ma tipi
- * definiti dal layer di integrazione - il testo formattato di Minecraft, per esempio - devono poter
- * decidere loro il risultato anche quando stanno a destra dell'operatore. Prima quel caso era una
- * {@code instanceof FormattedTextValue} dentro {@link Value#add}, che legava il core a un tipo che
- * non gli appartiene.
+ * <p>Used for the double dispatch of {@code a + b}: the core knows how to concatenate two
+ * strings, but types defined by the integration layer (Minecraft's formatted text, for example)
+ * need to be able to decide the result themselves even when they sit on the right of the
+ * operator. This case used to be an {@code instanceof FormattedTextValue} check inside
+ * {@link Value#add}, which tied the core to a type it has no business knowing about.
  */
 public interface Concatenable
 {
     /**
-     * @param left il valore alla sinistra dell'operatore
-     * @return il risultato di {@code left + this}
+     * @param left the value to the left of the operator
+     * @return the result of {@code left + this}
      */
     Value concatenatedWith(Value left);
 }

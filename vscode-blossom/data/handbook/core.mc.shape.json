@@ -16,7 +16,7 @@
       ],
       [
         "attributes",
-        "a map: the geometry of that type plus the common ones — `player`, `color`, `fill`, `line`, `follow`, `snap`, `debug`"
+        "a map: the geometry of that type plus the common ones: `player`, `color`, `fill`, `line`, `follow`, `snap`, `debug`"
       ]
     ],
     "returns": "`num` — how many players got it as a real shape rather than as particles.",
@@ -27,7 +27,7 @@
       "// a ghost block, to show where a piece will go\nshape.draw('block', 100, {'pos' -> pos, 'block' -> 'chest[facing=north]'});",
       "// following a player\nshape.draw('line', 40, {'from' -> [0, 0, 0], 'to' -> [0, 3, 0], 'follow' -> player, 'snap' -> 'xz'});"
     ],
-    "note": "Whoever has Blossom on the client sees the real shape; whoever plays vanilla sees the same geometry approximated with particles. You do not have to know which is which. A name the shape does not have is an error with the right one suggested, not a silent default — and a colour hand-written in hexadecimal with the alpha at zero is invisible, which is the mistake people make most."
+    "note": "Whoever has Blossom on the client sees the real shape; whoever plays vanilla sees the same geometry approximated with particles. You do not have to know which is which. A name the shape does not have is an error with the right one suggested, not a silent default, and a colour hand-written in hexadecimal with the alpha at zero is invisible, which is the mistake people make most."
   },
   "clear": {
     "signatures": [
@@ -47,7 +47,7 @@
     ],
     "summary": "The names of the shapes `draw` accepts.",
     "params": [],
-    "returns": "`list` — the types list.",
+    "returns": "`list` — the names of the shape types, in the order `draw` documents them.",
     "examples": [
       "shape.types();   // ['line', 'box', 'sphere', 'cylinder', 'label', 'block', 'item']"
     ]

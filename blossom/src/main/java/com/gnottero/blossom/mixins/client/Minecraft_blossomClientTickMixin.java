@@ -11,11 +11,12 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import com.gnottero.blossom.client.BlossomClient;
 
 /**
- * Fa scorrere il tempo delle forme sul client, e le butta quando si cambia mondo.
+ * Advances the shapes' clock on the client, and discards them when the world changes.
  *
- * <p>Il tempo si conta qui e non sul server: dalla rete arriva una durata, non un istante, quindi
- * l'unico orologio che conta è questo. Uscendo da un mondo si azzera tutto — le forme appartengono
- * alla partita in cui sono state disegnate, e tenerle vorrebbe dire vederle riapparire altrove.
+ * <p>Time is tracked here rather than on the server: what arrives over the network is a duration,
+ * not an instant, so this is the only clock that matters. Leaving a world clears everything, shapes
+ * belong to the session in which they were drawn, and keeping them would mean seeing them reappear
+ * elsewhere.
  */
 @Mixin(Minecraft.class)
 public abstract class Minecraft_blossomClientTickMixin

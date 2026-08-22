@@ -20,29 +20,29 @@ import blossom.value.StringValue;
 import blossom.value.Value;
 
 /**
- * {@code core.io}: il disco, dentro confini dichiarati.
+ * {@code core.io}: the disk, inside declared boundaries.
  *
- * <p>Ogni funzione comincia con il nome di una radice, e il resto del percorso è sempre relativo a
- * quella: {@code io.read_text('shared', 'note/oggi.txt')}. Le radici le dichiara un amministratore
- * (vedi {@link IoRoots}); il layer di gioco ne aggiunge due che ci sono sempre, {@code data} e
- * {@code shared}, ed è lì che un'app tiene i propri dati.
+ * <p>Every function starts with the name of a root, and the rest of the path is always relative
+ * to it: {@code io.read_text('shared', 'note/today.txt')}. Roots are declared by an administrator
+ * (see {@link IoRoots}); the game layer adds two that always exist, {@code data} and
+ * {@code shared}, and that is where an app keeps its own data.
  *
- * <p>È l'unica API di file del linguaggio: qui c'è tutto quello che si può aprire, senza eccezioni.
- * Tre funzioni - {@code read_nbt}, {@code write_nbt}, {@code create_datapack} - sono implementate nel
- * layer di gioco, perché NBT è un formato binario di Minecraft e un datapack è un concetto del gioco,
- * ma si importano da qui come tutte le altre (vedi {@code StdLib.extendModule}). C'era anche un
- * {@code core.mc.file} che leggeva e scriveva dentro una cartella per app,
- * {@code <mondo>/blossom/<app>.data/}: due modi di aprire un file sono una domanda in più ad ogni
- * chiamata, e chi vuole tenere i propri dati per sé usa una sottocartella con il proprio nome.
+ * <p>This is the language's only file API: everything that can be opened is here, no exceptions.
+ * Three functions ({@code read_nbt}, {@code write_nbt}, {@code create_datapack}) are implemented
+ * in the game layer, because NBT is a binary Minecraft format and a datapack is a game concept,
+ * but they are imported from here like all the others (see {@code StdLib.extendModule}). There
+ * used to also be a {@code core.mc.file} that read and wrote inside a per-app folder,
+ * {@code <world>/blossom/<app>.data/}: two ways of opening a file is one extra question on every
+ * call, and whoever wants to keep their own data private uses a subfolder with their own name.
  *
- * <p>Gli errori di io sono lanciati come {@code io_exception}, quindi si catturano con
- * {@code try(..., 'io_exception', ...)}: un file che non c'è o un disco pieno sono cose che uno
- * script può ragionevolmente voler gestire, al contrario di una violazione dei confini - quella è un
- * errore del programma e non si cattura.
+ * <p>IO errors are thrown as {@code io_exception}, so they are caught with
+ * {@code try(..., 'io_exception', ...)}: a missing file or a full disk are things a script can
+ * reasonably want to handle, unlike a boundary violation, which is a programming error and is not
+ * caught.
  */
 public final class Io
 {
-    /** i simboli esportati da {@code core.io}, dichiarati al catalogo della libreria */
+    /** The symbols exported by {@code core.io}, declared in the library catalog. */
     public static final java.util.Set<String> MODULE = java.util.Set.of(
             "roots", "writable", "exists", "is_directory", "list",
             "read_text", "read_lines", "read_json",
@@ -55,8 +55,8 @@ public final class Io
 
     public static void apply(Expression expression)
     {
-        // quali radici esistono, e quali si possono scrivere: uno script che vuole essere gentile
-        // puo' dirlo prima di fallire
+        // which roots exist, and which are writable: a script that wants to be polite can check
+        // this before failing
         expression.addContextFunction("roots", 0, (c, t, lv) ->
                 ListValue.wrap(roots(c).names().stream().map(StringValue::of)));
 
@@ -70,9 +70,9 @@ public final class Io
                 BooleanValue.of(Files.isDirectory(path(c, lv, false))));
 
         /*
-         * L'elenco è di una cartella sola e non ricorsivo: una ricorsione su una radice grande
-         * bloccherebbe il tick senza che chi l'ha scritta se ne accorga, e chi vuole scendere lo fa
-         * con una chiamata per livello - visibile, e interrompibile dal watchdog.
+         * The listing covers a single folder and is not recursive: recursing into a large root
+         * would block the tick without whoever wrote it noticing, and anyone who wants to descend
+         * does it with one call per level, visible, and interruptible by the watchdog.
          */
         expression.addContextFunction("list", 2, (c, t, lv) ->
         {
@@ -162,15 +162,15 @@ public final class Io
         });
 
         /*
-         * Cancella un file o una cartella vuota, mai un albero. Una cancellazione ricorsiva dietro
-         * un nome corto è il modo più facile di perdere dati per un percorso sbagliato di un
-         * carattere: chi la vuole la scrive, un livello alla volta, e mentre lo fa la vede.
+         * Deletes a file or an empty directory, never a tree. A recursive deletion behind a short
+         * name is the easiest way to lose data over a single wrong character in a path: whoever
+         * wants that writes it, one level at a time, seeing it happen as they go.
          *
-         * <p>Si chiama {@code delete_file} e non {@code delete} perché le implementazioni delle
-         * built-in vivono in una mappa piatta - è la visibilità a passare per i moduli, non le
-         * chiamate - e {@code delete} è già quello che toglie un elemento da una lista o da una
-         * mappa. Due implementazioni sotto lo stesso nome vorrebbe dire che l'ultima registrata
-         * vince, silenziosamente.
+         * <p>It is called {@code delete_file} rather than {@code delete} because built-in
+         * implementations live in a flat map (visibility is what goes through modules, not the
+         * calls themselves), and {@code delete} is already the name for removing an element from
+         * a list or a map. Two implementations under the same name would mean the last one
+         * registered wins, silently.
          */
         expression.addContextFunction("delete_file", 2, (c, t, lv) ->
         {
@@ -247,14 +247,14 @@ public final class Io
     }
 
     /**
-     * La stessa risoluzione che usano le funzioni di questo modulo, per chi ne aggiunge una fuori.
+     * The same path resolution used by the functions in this module, for anyone adding one outside it.
      *
-     * <p>Serve al layer di gioco: {@code core.mc.file} legge e scrive NBT, che e' un formato di
-     * Minecraft e qui non puo' stare, ma deve rispettare gli stessi confini - stesse radici, stesso
-     * permesso di scrittura, stesso controllo sui link simbolici. Passare da qui e' il modo di non
-     * riscriverli, e quindi di non sbagliarli.
+     * <p>Used by the game layer: {@code core.mc.file} reads and writes NBT, which is a Minecraft
+     * format and cannot live here, but it must respect the same boundaries (same roots, same
+     * write permission, same symbolic link checks). Going through here means not rewriting them,
+     * and therefore not getting them wrong.
      *
-     * @param forWriting se l'operazione modifica qualcosa: una radice di sola lettura fallisce qui
+     * @param forWriting whether the operation modifies something: a read-only root fails here
      */
     public static Path resolve(Context c, String root, String relative, boolean forWriting)
     {

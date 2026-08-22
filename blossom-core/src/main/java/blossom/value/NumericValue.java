@@ -20,12 +20,12 @@ public class NumericValue extends Value
 {
     private final double value;
     /**
-     * Il valore intero, quando il numero è intero.
+     * The integer value, when the number is an integer.
      *
-     * <p>Due campi e non un {@code Long}: con un {@code Long} ogni numero intero fuori dalla cache
-     * della JVM (-128..127) costava <em>due</em> allocazioni invece di una, la seconda solo per
-     * poter dire "sono un intero". In un interprete che crea un numero per ogni operazione
-     * aritmetica, quella seconda allocazione è pura pressione sul garbage collector.
+     * <p>Two fields rather than a single {@code Long}: with a {@code Long}, every integer outside
+     * the JVM's cache (-128..127) cost <em>two</em> allocations instead of one, the second just to
+     * be able to say "I'm an integer". In an interpreter that creates a number for every arithmetic
+     * operation, that second allocation is pure pressure on the garbage collector.
      */
     private long longValue;
     private boolean isLong;
@@ -51,14 +51,14 @@ public class NumericValue extends Value
     }
 
     /**
-     * Il numero intero {@code value}.
+     * The integer number {@code value}.
      *
-     * <p>Qui c'è stata una cache di istanze condivise per gli interi piccoli, tolta perché allora i
-     * valori portavano un campo mutabile con il nome della variabile a cui erano legati, e istanze
-     * condivise l'avrebbero fatto riscrivere da più thread (vedi DECISIONI.md D-071). Quel campo
-     * adesso non c'è più - il nome ce l'ha il nodo che legge la variabile, vedi {@link
-     * VariableReferenceValue} e D-093 - quindi l'ostacolo è caduto e la cache si può rivalutare
-     * sui numeri, non più su un problema di correttezza.
+     * <p>There used to be a cache of shared instances for small integers here, removed because
+     * values then carried a mutable field with the name of the variable they were bound to, and
+     * shared instances would have let multiple threads overwrite it (see DECISIONI.md D-071). That
+     * field is gone now, the name lives on the node that reads the variable instead, see {@link
+     * VariableReferenceValue} and D-093, so the obstacle is gone and the cache can be reconsidered
+     * on its own merits, no longer as a correctness issue.
      */
     public static NumericValue of(long value)
     {
@@ -102,9 +102,9 @@ public class NumericValue extends Value
             }
             if (abs(value) < epsilon)
             {
-                return (signum(value) < 0) ? "-0" : "0"; //zero rounding fails with big decimals
+                return (signum(value) < 0) ? "-0" : "0"; // zero rounding fails with big decimals
             }
-            // dobules have 16 point precision, 12 is plenty to display
+            // doubles have 16 digit precision, 12 is plenty to display
             return BigDecimal.valueOf(value).round(displayRounding).stripTrailingZeros().toPlainString();
         }
         catch (NumberFormatException exc)

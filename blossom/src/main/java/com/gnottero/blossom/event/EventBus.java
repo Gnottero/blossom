@@ -9,10 +9,10 @@ import blossom.exception.Suggestions;
 import blossom.exception.UndefinedSymbolError;
 
 /**
- * Il registro degli handler di evento.
+ * The registry of event handlers.
  *
- * <p>La logica di generazione sta in {@link Event}, che tiene la propria lista di handler: qui c'e'
- * solo quello che serve a chi registra e a chi scarica un'app.
+ * <p>The firing logic lives in {@link Event}, which keeps its own list of handlers: here there is
+ * only what is needed by whoever registers, and by whoever unloads an app.
  */
 public final class EventBus
 {
@@ -21,10 +21,10 @@ public final class EventBus
     }
 
     /**
-     * Registra {@code handler} sull'evento {@code name}.
+     * Registers {@code handler} on the {@code name} event.
      *
-     * @throws UndefinedSymbolError se il nome non e' nel catalogo, con il nome piu' vicino come
-     *         suggerimento
+     * @throws UndefinedSymbolError if the name is not in the catalog, with the closest name as a
+     *         suggestion
      */
     public static void register(String name, Event.Handler handler)
     {
@@ -48,7 +48,7 @@ public final class EventBus
         return Event.byName(name);
     }
 
-    /** Toglie tutti gli handler di un'app: si chiama quando l'app viene ricaricata o scaricata. */
+    /** Removes all handlers of an app: called when the app is reloaded or unloaded. */
     public static void unregisterApp(String app)
     {
         Event.unregisterApp(app);
@@ -59,7 +59,7 @@ public final class EventBus
         Event.clearAll();
     }
 
-    /** @return se qualcuno ascolta {@code name} */
+    /** @return whether someone is listening to {@code name} */
     public static boolean isListened(String name)
     {
         Event event = Event.byName(name);

@@ -19,13 +19,12 @@ import org.jspecify.annotations.Nullable;
 public abstract class Value implements Comparable<Value>, Cloneable, blossom.interpreter.LazyValue
 {
     /**
-     * Un valore è anche il nodo che lo produce: valutarlo restituisce sé stesso.
+     * A value is also the node that produces it: evaluating it returns itself.
      *
-     * <p>Serve a togliere un'allocazione dai punti più caldi dell'interprete. Ogni funzione - built-in
-     * o definita da chi scrive - restituiva il proprio risultato avvolto in una lambda
-     * {@code (c, t) -> risultato} che il chiamante apriva subito dopo, e ogni argomento veniva messo
-     * nel frame nello stesso modo. Un valore che sa già rispondere a {@code evalValue} rende quelle
-     * lambda inutili.
+     * <p>This removes an allocation from the interpreter's hottest paths. Every function, built-in
+     * or user-defined, used to return its result wrapped in a lambda {@code (c, t) -> result} that
+     * the caller unwrapped right after, and every argument was placed in the frame the same way. A
+     * value that already knows how to answer {@code evalValue} makes those lambdas unnecessary.
      */
     @Override
     public Value evalValue(blossom.interpreter.Context c, blossom.interpreter.Context.Type type)

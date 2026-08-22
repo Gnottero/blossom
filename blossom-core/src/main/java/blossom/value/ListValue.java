@@ -600,8 +600,8 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
             }
             if (index >= size || index < -size)
             {
-                // gli indici di lettura si avvolgono, ma cancellare qualcosa che non c'e' e' un
-                // errore vero: chi scrive si aspetta che dopo la delete quell'elemento non ci sia piu'
+                // read indexes wrap around, but deleting something that isn't there is a real
+                // error: the caller expects that element to be gone after the delete
                 throw new IndexOutOfBoundsError(SourcePosition.UNKNOWN,
                         "Index " + index + " is outside the list, which has " + size + " elements.");
             }

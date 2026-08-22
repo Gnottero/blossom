@@ -49,8 +49,8 @@ public class ThreadValue extends LazyListValue
         }
         else
         {
-            // il task ha il proprio budget: non tiene fermo il tick, quindi non deve morire per il
-            // cronometro di chi lo ha lanciato (vedi ExecutionBudget.Policy.asBackground)
+            // the task has its own budget: it doesn't hold up the tick, so it must not die from
+            // the caller's watchdog clock (see ExecutionBudget.Policy.asBackground)
             Context taskContext = ctx.recreate();
             taskContext.beginExecution(ctx.host.watchdog().asBackground());
             return CompletableFuture.supplyAsync(() -> {
@@ -65,8 +65,11 @@ public class ThreadValue extends LazyListValue
                 }
                 catch (ExpressionException exc)
                 {
+                    // the log is for the task nobody waits for: it would otherwise fail in silence.
+                    // Rethrowing is for the one somebody does wait for - 'wait' has to hand the
+                    // exception on, or a 'try' around it would never see anything (core.task.md)
                     ctx.host.handleExpressionException("Thread failed\n", exc);
-                    return Value.NULL;
+                    throw exc;
                 }
             }, ctx.host.getExecutor(pool));
         }
@@ -75,18 +78,22 @@ public class ThreadValue extends LazyListValue
     @Override
     public String getString()
     {
-        return taskFuture.getNow(Value.NULL).getString();
+        return getValue().getString();
     }
 
+    /**
+     * The value produced so far, without waiting. A task that failed has no value: only whoever
+     * waits for it gets the exception, and 'value' stays the way to look without being stopped.
+     */
     public Value getValue()
     {
-        return taskFuture.getNow(Value.NULL);
+        return taskFuture.isCompletedExceptionally() ? Value.NULL : taskFuture.getNow(Value.NULL);
     }
 
     @Override
     public boolean getBoolean()
     {
-        return taskFuture.getNow(Value.NULL).getBoolean();
+        return getValue().getBoolean();
     }
 
     public Value join()
@@ -100,8 +107,19 @@ public class ThreadValue extends LazyListValue
             taskFuture.complete(exit.retval);
             return exit.retval;
         }
-        catch (InterruptedException | ExecutionException e)
+        catch (ExecutionException e)
         {
+            // the task died: its error belongs to whoever is waiting, in one piece, so that a 'try'
+            // around the wait can filter it like any other
+            if (e.getCause() instanceof RuntimeException cause)
+            {
+                throw cause;
+            }
+            return Value.NULL;
+        }
+        catch (InterruptedException e)
+        {
+            Thread.currentThread().interrupt();
             return Value.NULL;
         }
     }

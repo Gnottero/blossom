@@ -11,6 +11,7 @@ import blossom.value.BooleanValue;
 import blossom.value.ContainerValueInterface;
 import blossom.value.FunctionAnnotationValue;
 import blossom.value.FunctionUnpackedArgumentsValue;
+import blossom.value.FrameworkValue;
 import blossom.value.Guardable;
 import blossom.value.LContainerValue;
 import blossom.value.ListValue;
@@ -30,8 +31,8 @@ public class Operators
 {
     public static final Map<String, Integer> precedence = new HashMap<>()
     {{
-        // valori a passi di dieci, per lasciare spazio a livelli intermedi senza
-        // dover rinumerare tutto ogni volta che il linguaggio cresce
+        // values in steps of ten, to leave room for intermediate levels without
+        // having to renumber everything every time the language grows
         put("attribute~:", 800);
         put("unary+-!...", 600);
         put("exponent^", 400);
@@ -41,16 +42,16 @@ public class Operators
         put("equal==!=", 70);
         put("and&&", 50);
         put("or||", 40);
-        // il tubo lega piu' dell'assegnamento, cosi' 'x = a |> f' mette in x il risultato,
-        // e meno di '||', cosi' '(a || b) |> f' e' quello che sembra
+        // the pipe binds tighter than assignment, so 'x = a |> f' puts the result into x,
+        // and looser than '||', so '(a || b) |> f' is what it looks like
         put("pipe|>", 35);
         put("assign=<>", 30);
-        // '->' lega meno dell'assegnamento, perche' il corpo di una funzione e' spesso un
-        // assegnamento: 'fn conta() -> contatore += 1' deve leggersi con l'assegnamento dentro.
-        // Il caso opposto - 'f = fn(a) -> a + 1', dove la lambda va in una variabile - non si
-        // risolve con la precedenza ma nell'albero, vedi RPNToParseTree
+        // '->' binds looser than assignment, because the body of a function is often an
+        // assignment: 'fn count() -> counter += 1' must be read with the assignment inside it.
+        // The opposite case, 'f = fn(a) -> a + 1', where the lambda goes into a variable, is not
+        // solved through precedence but in the tree, see RPNToParseTree
         put("def->", 20);
-        // pub / fn / let: prendono tutta la definizione che li segue, quindi legano meno di '->'
+        // pub / fn / let: take the entire definition that follows them, so they bind looser than '->'
         put("declaration", 15);
         put("nextop;", 10);
     }};
@@ -231,16 +232,17 @@ public class Operators
             return lv.get(last);
         });
 
-        // il nome funzionale e' 'contains' e non 'match': '~' e' un test di appartenenza, non un
-        // confronto di forme - e 'match' serve al costrutto omonimo
+        // the functional name is 'contains', not 'match': '~' is a membership test, not a shape
+        // comparison, and 'match' is already used by the construct of the same name
         expression.addBinaryOperator("~", "contains", precedence.get("attribute~:"), true, Value::in);
 
         /*
          * a |> f(b)  ==  f(a, b)
          *
-         * Non arriva mai qui: il nodo sparisce mentre si costruisce l'albero, e quello che resta e'
-         * la chiamata con un argomento in piu' davanti. La registrazione serve perche' ogni
-         * operatore deve avere un nome funzionale, e per il caso in cui uno lo usi come valore.
+         * Execution never reaches here: the node disappears while the tree is being built, and
+         * what remains is the call with one extra argument in front. The registration exists
+         * because every operator must have a functional name, and for the case where it is used
+         * as a value.
          */
         expression.addBinaryOperator("|>", "pipe", precedence.get("pipe|>"), true, (v1, v2) ->
         {
@@ -374,13 +376,14 @@ public class Operators
         // lazy cause of assignment which is non-trivial
         expression.addLazyBinaryOperator("=", "assign", precedence.get("assign=<>"), false, false, t -> Context.Type.LVALUE, (c, t, lv1, lv2) ->
         {
-            // il caso normale: a sinistra c'e' il nome di una variabile, e il nodo che lo legge lo
-            // sa dal parsing. Niente da valutare a sinistra, e niente da copiare a destra
+            // the normal case: on the left there is a variable name, and the node that reads it
+            // already knows it from parsing. Nothing to evaluate on the left, and nothing to copy
+            // on the right
             if (lv1 instanceof final VariableRead target)
             {
                 Value v2 = lv2.evalValue(c);
                 expression.setAnyVariable(c, target.variableName(), v2);
-                // dentro una dichiarazione ('let x = 0') chi sta sopra ha bisogno del nome
+                // inside a declaration ('let x = 0') whatever sits above needs the name
                 return t == Context.LVALUE ? new VariableReferenceValue(target.variableName(), v2) : v2;
             }
             Value v1 = lv1.evalValue(c, Context.LVALUE);
@@ -479,9 +482,9 @@ public class Operators
             return appendToVariable(expression, c, assignableName(v1), v2);
         });
 
-        // pigro come gli altri assegnamenti: i nomi delle due variabili li sanno i nodi a sinistra e
-        // a destra, e chiederglieli e' l'unico modo di scambiarle senza farsi dire da un valore come
-        // si chiama la variabile in cui sta
+        // lazy like the other assignments: the names of the two variables are known by the nodes
+        // on the left and right, and asking them is the only way to swap the variables without
+        // having a value tell us what variable it lives in
         expression.addLazyBinaryOperator("<>", "swap", precedence.get("assign=<>"), false, false, t -> Context.Type.LVALUE, (c, t, lv1, lv2) ->
         {
             if (lv1 instanceof final VariableRead left && lv2 instanceof final VariableRead right)
@@ -523,8 +526,8 @@ public class Operators
         ); // might need context boolean
 
         // lazy because of typed evaluation of the argument
-        // dentro una firma '...rest' dichiara un nome: il contesto di localizzazione deve arrivare
-        // all'operando, che li' si valuta al proprio riferimento invece che al proprio valore
+        // inside a signature '...rest' declares a name: the localization context must reach the
+        // operand, which there evaluates to its own reference instead of its own value
         expression.addLazyUnaryOperator("...", "unpack", Operators.precedence.get("unary+-!..."), false, true, t -> t, (c, t, lv) ->
         {
             if (t == Context.LOCALIZATION)
@@ -543,10 +546,10 @@ public class Operators
     }
 
     /**
-     * Il nome della variabile che {@code value} rappresenta.
+     * The name of the variable that {@code value} represents.
      *
-     * <p>Ci arriva quello che ha prodotto la parte sinistra di un assegnamento valutata come
-     * l-value: o è il riferimento a una variabile, o non c'è niente a cui assegnare.
+     * <p>What arrives here is whatever the left side of an assignment produced when evaluated as
+     * an l-value: it is either a reference to a variable, or there is nothing to assign to.
      */
     private static String assignableName(Value value)
     {
@@ -554,14 +557,27 @@ public class Operators
         {
             return reference.name();
         }
+        if (value instanceof LContainerValue)
+        {
+            // 'l:0 <> l:1': the access produced a slot inside a container, not a variable. Asking it
+            // for its own text would throw the interpreter's internal error, which says nothing to
+            // whoever wrote the line
+            throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "value",
+                    "'<>' swaps two variables, not two positions inside a list or a map."
+                            + " Read the two values, then write them back the other way round.");
+        }
+        if (value instanceof FrameworkValue)
+        {
+            throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "value", "This is not a variable");
+        }
         throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "value", value.getPrettyString() + " is not a variable");
     }
 
     /**
-     * {@code variable += value}: legge, combina e riscrive in un passo solo.
+     * {@code variable += value}: reads, combines and writes back in a single step.
      *
-     * <p>Su un global quel passo avviene sotto il monitor della variabile, così due task che
-     * accodano allo stesso global non si perdono un aggiornamento a vicenda.
+     * <p>On a global, that step happens under the variable's monitor, so two tasks appending to
+     * the same global don't lose an update to each other.
      */
     private static Value appendToVariable(Expression expression, Context c, String name, Value value)
     {
@@ -576,7 +592,7 @@ public class Operators
         }).evalValue(c, Context.NONE);
     }
 
-    /** {@code a <> b}: scambia il contenuto di due variabili, e vale il nuovo contenuto di {@code a}. */
+    /** {@code a <> b}: swaps the contents of two variables, and evaluates to the new content of {@code a}. */
     private static Value swap(Expression expression, Context c, String left, String right)
     {
         Value leftValue = expression.getOrSetAnyVariable(c, left).evalValue(c, Context.NONE);

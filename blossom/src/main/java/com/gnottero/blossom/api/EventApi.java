@@ -19,14 +19,14 @@ import blossom.value.StringValue;
 import blossom.value.Value;
 
 /**
- * {@code core.mc.event}: reagire a quello che succede nel mondo.
+ * {@code core.mc.event}: reacting to what happens in the world.
  *
- * <p>Un handler si registra passando la funzione come valore, non il suo nome: cosi' resta legata al
- * modulo che l'ha definita e continua a risolversi anche quando viene chiamata dal mod, che di quel
- * modulo non sa nulla.
+ * <p>A handler is registered by passing the function as a value, not its name: that way it stays
+ * bound to the module that defined it and keeps resolving correctly even when called by the mod,
+ * which knows nothing about that module.
  *
- * <p>Il numero di argomenti della funzione viene controllato adesso, non al primo evento: un handler
- * con la firma sbagliata e' un errore di caricamento, non una riga nel log tre ore dopo.
+ * <p>The function's argument count is checked now, not on the first event: a handler with the wrong
+ * signature is a load-time error, not a line in the log three hours later.
  */
 public final class EventApi
 {
@@ -39,8 +39,8 @@ public final class EventApi
 
     public static void apply(Expression expression, String appName)
     {
-        // on(nome, funzione) oppure on(nome, funzione, [argomenti fissi]) oppure
-        // on(nome, funzione, [argomenti fissi], giocatore)
+        // on(name, function) or on(name, function, [fixed arguments]) or
+        // on(name, function, [fixed arguments], player)
         expression.addContextFunction("on", -1, (c, t, lv) ->
         {
             if (lv.size() < 2)
@@ -83,7 +83,7 @@ public final class EventApi
             return StringValue.of(event.name());
         });
 
-        // off() toglie tutti gli handler dell'app, off(evento) solo quelli di un evento
+        // off() removes all of the app's handlers, off(event) only those of one event
         expression.addContextFunction("off", -1, (c, t, lv) ->
         {
             if (lv.isEmpty())
@@ -104,7 +104,7 @@ public final class EventApi
             return new NumericValue(handlers == null ? 0 : handlers.size());
         });
 
-        // describe(evento): quanti argomenti passa e se si puo' annullare, senza aprire la doc
+        // describe(event): how many arguments it passes and whether it can be cancelled, without opening the docs
         expression.addContextFunction("describe", 1, (c, t, lv) ->
         {
             Event event = EventBus.eventOrThrow(lv.get(0).getString());

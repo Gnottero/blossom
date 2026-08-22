@@ -16,12 +16,12 @@ import blossom.exception.TypeMismatchError;
 import blossom.interpreter.Interpreter;
 
 /**
- * I frammenti di {@code docs/guide/} che non hanno bisogno di Minecraft, eseguiti.
+ * The snippets from {@code docs/guide/} that don't need Minecraft, actually run.
  *
- * <p>Una guida che mente è peggio di una guida che manca: qui ogni riga che il testo presenta come
- * "questo dà quello" viene verificata, così se il linguaggio cambia senza che la guida venga
- * aggiornata la build se ne accorge. I capitoli che parlano di eventi, blocchi e task sul mondo non
- * sono coperti: quelli richiedono un server, e la verifica è manuale.
+ * <p>A guide that lies is worse than a guide that's missing: every line the text presents as
+ * "this gives that" is checked here, so if the language changes without the guide being updated
+ * the build notices. Chapters about events, blocks, and tasks on the world are not covered: those
+ * require a server, and verification for them is manual.
  */
 class GuideSnippetsTest
 {
@@ -34,7 +34,7 @@ class GuideSnippetsTest
             import "core.json" as json;
             """;
 
-    /** la radice del repo: i test girano nella cartella del modulo, gli esempi stanno sopra */
+    /** The repo root: tests run from the module's directory, and the examples live above it. */
     private static Path repoRoot()
     {
         Path candidate = Path.of("").toAbsolutePath();
@@ -54,7 +54,7 @@ class GuideSnippetsTest
         return Interpreter.standalone().eval(IMPORTS + code).getString();
     }
 
-    // --- capitolo 2: valori ---
+    // --- chapter 2: values ---
 
     @Test
     void iTipiSiChiamanoComeScrittoNellaTabella()
@@ -75,8 +75,8 @@ class GuideSnippetsTest
         assertEquals("2", eval("6 / 3"));
         assertEquals("2", eval("-7 % 3"));
         assertEquals("1024", eval("2 ^ 10"));
-        assertEquals("4", eval("-2 ^ 2"));       // l'unario lega piu' della potenza
-        assertEquals("256", eval("2 ^ 2 ^ 3"));  // '^' e' associativo a destra
+        assertEquals("4", eval("-2 ^ 2"));       // unary minus binds tighter than power
+        assertEquals("256", eval("2 ^ 2 ^ 3"));  // '^' is right-associative
     }
 
     @Test
@@ -85,18 +85,18 @@ class GuideSnippetsTest
         assertEquals("a'b", eval("'a\\'b'"));
         assertEquals("ababab", eval("'ab' * 3"));
         assertEquals("n=3", eval("'n=' + 3"));
-        assertEquals("null", eval("system.type('abc':0)"));   // una stringa non si indicizza
-        assertEquals("ada ha 3 mele", eval("string.str('%s ha %d mele', 'ada', 3)"));
+        assertEquals("null", eval("system.type('abc':0)"));   // a string can't be indexed
+        assertEquals("ada has 3 apples", eval("string.str('%s has %d apples', 'ada', 3)"));
     }
 
     @Test
     void liste()
     {
         assertEquals("10", eval("l = [10, 20, 30]; l:0"));
-        assertEquals("20", eval("l = [10, 20, 30]; l:4"));            // gli indici avvolgono
+        assertEquals("20", eval("l = [10, 20, 30]; l:4"));            // indices wrap around
         assertEquals("30", eval("l = [10, 20, 30]; list.get(l, -1)"));
         assertEquals("30", eval("l = [10, 20, 30]; l:(-1)"));
-        assertEquals("[9, 2]", eval("a = [1, 2]; b = a; list.put(b, 0, 9); a"));   // riferimento
+        assertEquals("[9, 2]", eval("a = [1, 2]; b = a; list.put(b, 0, 9); a"));   // by reference
         assertEquals("[1, 2]", eval("a = [1, 2]; b = system.copy(a); list.put(b, 0, 9); a"));
     }
 
@@ -131,12 +131,12 @@ class GuideSnippetsTest
     @Test
     void verita()
     {
-        assertEquals("vero", eval("if('0', 'vero', 'falso')"));
-        assertEquals("falso", eval("if([], 'vero', 'falso')"));
-        assertEquals("falso", eval("if({}, 'vero', 'falso')"));
-        assertEquals("falso", eval("if(0, 'vero', 'falso')"));
-        assertEquals("falso", eval("if('', 'vero', 'falso')"));
-        assertEquals("falso", eval("if(null, 'vero', 'falso')"));
+        assertEquals("true", eval("if('0', 'true', 'false')"));
+        assertEquals("false", eval("if([], 'true', 'false')"));
+        assertEquals("false", eval("if({}, 'true', 'false')"));
+        assertEquals("false", eval("if(0, 'true', 'false')"));
+        assertEquals("false", eval("if('', 'true', 'false')"));
+        assertEquals("false", eval("if(null, 'true', 'false')"));
     }
 
     @Test
@@ -154,7 +154,7 @@ class GuideSnippetsTest
         assertEquals("1", eval("mai_vista + 1"));
     }
 
-    // --- capitolo 3: operatori ---
+    // --- chapter 3: operators ---
 
     @Test
     void sommaSecondoGliOperandi()
@@ -189,10 +189,10 @@ class GuideSnippetsTest
     {
         assertEquals("true", eval("l = ['a', 'b']; (l ~ 'a') != null"));
         assertEquals("false", eval("l = ['a', 'b']; (l ~ 'z') != null"));
-        // 'has' su una lista chiede se esiste l'indice, non se il valore c'e' dentro
+        // 'has' on a list asks whether the index exists, not whether the value is inside
         assertEquals("true", eval("list.has([10, 20], 1)"));
         assertEquals("false", eval("list.has([10, 20], 5)"));
-        // su una mappa invece e' quello che sembra
+        // on a map, instead, it is what it looks like
         assertEquals("true", eval("map.has({'a' -> 1}, 'a')"));
     }
 
@@ -210,17 +210,17 @@ class GuideSnippetsTest
     {
         assertEquals("3", eval("f(a, b) -> a + b; call('f', ...[1, 2])"));
         assertEquals("[0, 1, 2]", eval("l = [1, 2]; [0, ...l]"));
-        assertEquals("[1, [2, 3]]", eval("fn quanti(primo, ...resto) -> [primo, resto]; quanti(1, 2, 3)"));
-        assertEquals("[1, []]", eval("fn quanti(primo, ...resto) -> [primo, resto]; quanti(1)"));
+        assertEquals("[1, [2, 3]]", eval("fn how_many(first, ...rest) -> [first, rest]; how_many(1, 2, 3)"));
+        assertEquals("[1, []]", eval("fn how_many(first, ...rest) -> [first, rest]; how_many(1)"));
     }
 
-    // --- capitolo 4: funzioni ---
+    // --- chapter 4: functions ---
 
     @Test
     void bindingDiModuloEVariabiliDelCorpo()
     {
         assertEquals("2", eval("let mut contatore = 0; fn bump() -> contatore += 1; bump(); bump(); contatore"));
-        // senza 'let' non e' un binding di modulo: la funzione scrive su un'altra cosa
+        // without 'let' it's not a module binding: the function writes to something else
         assertEquals("0", eval("contatore = 0; fn bump() -> contatore += 1; bump(); contatore"));
     }
 
@@ -272,22 +272,22 @@ class GuideSnippetsTest
     void ricorsioneEUscitaAnticipata()
     {
         assertEquals("55", eval("fn fib(n) -> if(n < 2, n, fib(n - 1) + fib(n - 2)); fib(10)"));
-        assertEquals("negativo", eval("""
-                fn classifica(x) -> (
-                    if(x < 0, return('negativo'));
+        assertEquals("negative", eval("""
+                fn classify(x) -> (
+                    if(x < 0, return('negative'));
                     if(x == 0, return('zero'));
-                    'positivo'
+                    'positive'
                 );
-                classifica(-1)
+                classify(-1)
                 """));
     }
 
-    // --- capitolo 5: controllo di flusso ---
+    // --- chapter 5: control flow ---
 
     @Test
     void ifACatena()
     {
-        assertEquals("ferito", eval("vita = 10; if(vita < 5, 'critico', vita < 15, 'ferito', 'sano')"));
+        assertEquals("hurt", eval("health = 10; if(health < 5, 'critical', health < 15, 'hurt', 'healthy')"));
         assertEquals("null", eval("system.type(if(false, 'a'))"));
     }
 
@@ -296,9 +296,9 @@ class GuideSnippetsTest
     {
         assertEquals("10", eval("somma = 0; loop(5, somma += _); somma"));
         assertEquals("6", eval("somma = 0; for([1, 2, 3], somma += _); somma"));
-        assertEquals("2", eval("for([1, 2, 3], _ > 1)"));      // 'for' conta i veri
+        assertEquals("2", eval("for([1, 2, 3], _ > 1)"));      // 'for' counts the truthy ones
         assertEquals("3", eval("i = 0; while(i < 3, 1000, i += 1); i"));
-        assertEquals("5", eval("i = 0; while(true, 5, i += 1); i"));   // il tetto ferma il ciclo
+        assertEquals("5", eval("i = 0; while(true, 5, i += 1); i"));   // the cap stops the loop
         assertEquals("20", eval("somma = 0; c_for(i = 0, i < 10, i += 2, somma += i); somma"));
     }
 
@@ -324,7 +324,7 @@ class GuideSnippetsTest
         assertEquals("[3, 2, 1]", eval("list.reverse([1, 2, 3])"));
     }
 
-    // --- capitolo 7: errori ---
+    // --- chapter 7: errors ---
 
     @Test
     void tryCatturaLeEccezioniLanciate()
@@ -332,7 +332,7 @@ class GuideSnippetsTest
         assertEquals("caught: boom", eval("try(throw('boom'), 'caught: ' + _)"));
         assertEquals("v", eval("try(throw('value_exception', 'v'), 'value_exception', _)"));
         assertEquals("caught: x", eval("fn boom() -> throw('io_exception', 'x'); try(boom(), 'io_exception', 'caught: ' + _)"));
-        // la gerarchia: json_error sta sotto io_exception, che sta sotto exception
+        // the hierarchy: json_error sits under io_exception, which sits under exception
         assertEquals("caught", eval("bad = '{'; try(json.decode(bad), 'io_exception', 'caught')"));
         assertEquals("caught", eval("bad = '{'; try(json.decode(bad), 'exception', 'caught')"));
     }
@@ -354,12 +354,12 @@ class GuideSnippetsTest
     @Test
     void ilValoreLanciatoPuoEssereQualunqueCosa()
     {
-        assertEquals("mancano 40", eval("""
-                fn preleva(saldo, quanto) -> (
-                    if(quanto > saldo, throw({'errore' -> 'fondi', 'mancano' -> quanto - saldo}));
-                    saldo - quanto
+        assertEquals("short by 40", eval("""
+                fn withdraw(balance, amount) -> (
+                    if(amount > balance, throw({'error' -> 'funds', 'short_by' -> amount - balance}));
+                    balance - amount
                 );
-                try(preleva(60, 100), 'mancano ' + _:'mancano')
+                try(withdraw(60, 100), 'short by ' + _:'short_by')
                 """));
     }
 
@@ -372,7 +372,7 @@ class GuideSnippetsTest
         assertEquals("7", eval("fn boom(v) -> throw('x'); try(boom(7), (_trace:'locals'):'v')"));
     }
 
-    // --- gli esempi: il modulo di logica pura di vena-viva gira davvero ---
+    // --- the examples: the pure-logic module of vena-viva actually runs ---
 
     @Test
     void ilModuloGeologiaDellEsempioVenaVivaFunziona(@TempDir Path tmp) throws IOException

@@ -28,8 +28,8 @@ public class Context
     public static final Type MAPDEF = Type.MAPDEF;
 
     /**
-     * Le variabili locali di questo frame. Vedi {@link VariableFrame} per come sono tenute e
-     * perché non è una mappa a hash.
+     * This frame's local variables. See {@link VariableFrame} for how they're kept and why it's
+     * not a hash map.
      */
     VariableFrame variables = new VariableFrame();
 
@@ -38,18 +38,18 @@ public class Context
     private ThreadValue threadContext = null;
 
     /**
-     * Il watchdog di questa esecuzione (PIANO_LINGUAGGIO.md §9).
+     * This execution's watchdog (PIANO_LINGUAGGIO.md §9).
      *
-     * <p>Pubblico e non finale perché è la cosa che viene letta più spesso di tutte - una volta per
-     * iterazione di ogni loop - e perché un frame figlio deve poterlo ereditare senza passare da un
-     * costruttore che ogni sottoclasse dovrebbe reimplementare. Non è mai {@code null}: senza
-     * limiti configurati è il singleton che non misura niente.
+     * <p>Public and non-final because it's the field read most often of all (once per loop
+     * iteration), and because a child frame must be able to inherit it without going through a
+     * constructor that every subclass would have to reimplement. Never {@code null}: with no
+     * limits configured it's the singleton that measures nothing.
      */
     public ExecutionBudget budget = ExecutionBudget.UNLIMITED_BUDGET;
 
     /**
-     * Il profiler di questa esecuzione, o {@link Profiler#OFF} quando non si sta misurando (il caso
-     * normale). Vive qui accanto al budget e per gli stessi motivi.
+     * This execution's profiler, or {@link Profiler#OFF} when nothing is being measured (the
+     * normal case). Lives here next to the budget, for the same reasons.
      */
     public Profiler profiler = Profiler.OFF;
 
@@ -59,39 +59,39 @@ public class Context
     }
 
     /**
-     * Fa partire un budget nuovo su questo contesto, con la politica dell'app.
+     * Starts a new budget on this context, using the app's policy.
      *
-     * <p>Da chiamare dove comincia un'esecuzione - un comando, un evento, il corpo di un modulo - e
-     * mai più in mezzo: un budget che riparte a metà è un budget che non ferma niente.
+     * <p>Call this where an execution begins (a command, an event, a module's body) and never
+     * again in the middle: a budget that restarts halfway through is a budget that stops nothing.
      */
     public Context beginExecution()
     {
         return beginExecution(host == null ? ExecutionBudget.Policy.UNLIMITED : host.watchdog());
     }
 
-    /** Come {@link #beginExecution()}, ma con una politica decisa dal chiamante. */
+    /** Like {@link #beginExecution()}, but with a policy decided by the caller. */
     public Context beginExecution(ExecutionBudget.Policy policy)
     {
         this.budget = policy.start();
-        // il profiler si prende dall'host e non dal chiamante: accenderlo deve valere per tutto
-        // quello che l'app fa, eventi compresi, e quelli nascono da contesti che nessuno passa
+        // The profiler comes from the host, not the caller: turning it on must apply to
+        // everything the app does, events included, and those arise from contexts nobody passes.
         this.profiler = host == null ? Profiler.OFF : host.profiler();
         return this;
     }
 
     /**
-     * Le tre variabili implicite delle funzioni di secondo ordine: l'elemento corrente, il suo
-     * indice e l'accumulatore.
+     * The three implicit variables of second-order functions: the current element, its index, and
+     * the accumulator.
      *
-     * <p>Campi e non voci della mappa delle variabili perché sono le più scritte e le più lette di
-     * tutte: un {@code for} le riassegna ad ogni iterazione, e ogni {@code _} nel corpo le rilegge.
-     * Nella mappa, ogni iterazione costava un hash e un inserimento; qui costa un'assegnazione di
-     * campo, e il nodo compilato per {@code _} legge il campo senza passare da nessun nome (vedi
-     * {@code Expression.variableNode}).
+     * <p>Fields rather than entries in the variable map because they're the most written and most
+     * read of all: a {@code for} reassigns them on every iteration, and every {@code _} in the
+     * body reads them back. In the map, every iteration cost a hash and an insertion; here it
+     * costs a field assignment, and the compiled node for {@code _} reads the field without going
+     * through any name lookup (see {@code Expression.variableNode}).
      *
-     * <p>Restano raggiungibili per nome - {@code var('_')}, {@code vars('_')} - perché i tre nomi
-     * sono deviati qui da {@link #getVariable}, {@link #setVariable} e {@link #delVariable}: quella
-     * è la strada fredda, e può permettersi il confronto.
+     * <p>They remain reachable by name ({@code var('_')}, {@code vars('_')}) because the three
+     * names are diverted here by {@link #getVariable}, {@link #setVariable} and
+     * {@link #delVariable}: that's the cold path, and it can afford the comparison.
      */
     public LazyValue implicitValue = IMPLICIT_DEFAULT;
     public LazyValue implicitIndex = IMPLICIT_DEFAULT;
@@ -99,8 +99,8 @@ public class Context
 
     private static final LazyValue IMPLICIT_DEFAULT = (c, t) -> Value.ZERO;
 
-    // le letture passano da un metodo e non dal campo, così il contesto della compilazione può
-    // rifiutarle come rifiuta ogni altro accesso allo stato di esecuzione
+    // Reads go through a method rather than the field directly, so the compilation context can
+    // reject them the way it rejects any other access to execution state
     public LazyValue implicitValue()
     {
         return implicitValue;
@@ -116,12 +116,12 @@ public class Context
         return implicitAccumulator;
     }
 
-    /** I nomi delle tre variabili implicite, per chi le cerca per nome. */
+    /** The names of the three implicit variables, for whoever looks them up by name. */
     public static final String IMPLICIT_VALUE = "_";
     public static final String IMPLICIT_INDEX = "_i";
     public static final String IMPLICIT_ACCUMULATOR = "_a";
 
-    /** {@code true} se {@code name} è una delle tre variabili implicite. */
+    /** {@code true} if {@code name} is one of the three implicit variables. */
     public static boolean isImplicitName(String name)
     {
         return name.length() <= 2 && !name.isEmpty() && name.charAt(0) == '_'
@@ -142,13 +142,13 @@ public class Context
         return variables.get(name);
     }
 
-    /** Fa condividere a due contesti le stesse variabili locali, invece di copiarle. */
+    /** Makes two contexts share the same local variables instead of copying them. */
     public void shareVariablesWith(Context other)
     {
         this.variables = other.variables;
     }
 
-    /** Percorre le variabili locali del frame, le tre implicite escluse. */
+    /** Iterates over the frame's local variables, excluding the three implicit ones. */
     public void forEachVariable(java.util.function.BiConsumer<String, LazyValue> action)
     {
         variables.forEach(action);
@@ -204,8 +204,8 @@ public class Context
     {
         Context ctx = duplicate();
         ctx.threadContext = threadContext;
-        // il budget si eredita: se ogni frame di chiamata ne avesse uno nuovo, spezzare un ciclo
-        // infinito in due funzioni basterebbe ad aggirare il watchdog
+        // The budget is inherited: if every call frame got a new one, splitting an infinite loop
+        // across two functions would be enough to dodge the watchdog
         ctx.budget = budget;
         ctx.profiler = profiler;
         ctx.initialize();
@@ -224,7 +224,7 @@ public class Context
 
     protected void initialize()
     {
-        // le variabili implicite sono campi con un default: un frame nuovo non deve scriverle
+        // The implicit variables are fields with a default: a new frame doesn't need to write them
     }
 
     public Context duplicate()
@@ -243,8 +243,8 @@ public class Context
     }
 
     /**
-     * immutable context only for reason on reporting access violations in evaluating expressions in optimizization
-     * mode detecting any potential violations that may happen on the way
+     * Immutable context used only to report access violations when evaluating expressions in
+     * optimization mode, detecting any potential violations that may happen along the way.
      */
     public static class ContextForErrorReporting extends Context
     {

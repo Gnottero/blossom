@@ -3,11 +3,10 @@ package blossom.value;
 import blossom.interpreter.LazyValue;
 
 /**
- * Un braccio di {@code match}: la forma da riconoscere e il codice da eseguire se combacia.
+ * One arm of a {@code match}: the pattern to recognize and the code to run when it matches.
  *
- * <p>Il corpo resta pigro, che è tutto il punto: in un {@code match} di dieci bracci ne viene
- * eseguito uno, e valutare gli altri nove per costruire la lista sarebbe sbagliato oltre che
- * inutile.
+ * <p>The body stays lazy, which is the whole point: a {@code match} with ten arms only runs one of
+ * them, and evaluating the other nine just to build the list would be both wrong and wasteful.
  */
 public final class MatchArmValue extends FrameworkValue
 {

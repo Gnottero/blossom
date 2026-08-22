@@ -9,7 +9,7 @@ import net.minecraft.world.level.PotentialCalculator;
 
 import com.gnottero.blossom.access.Access;
 
-/** Il potenziale di spawn calcolato nel tick corrente, per {@code world.spawn_potential}. */
+/** The spawn potential calculated in the current tick, for {@code world.spawn_potential}. */
 @Mixin(NaturalSpawner.SpawnState.class)
 public class SpawnState_blossomAccessMixin implements Access.SpawnState
 {

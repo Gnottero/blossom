@@ -1,129 +1,137 @@
-# 3. Operatori
+# 3. Operators
 
-## La tabella delle precedenze
+## The precedence table
 
-Dall'alto (lega di più) verso il basso:
+From the top (binds tightest) downwards:
 
-| Livello | Operatori | |
+| Level | Operators | |
 | --- | --- | --- |
-| accesso | `:` `~` | `l:0`, `'testo' ~ 'regex'` |
-| unari | `-` `!` `...` | `-x`, `!vero`, `...lista` |
-| potenza | `^` | associativo a destra: `2^2^3` è `2^8` |
-| moltiplicazione | `*` `/` `%` | |
-| addizione | `+` `-` | |
-| confronto | `<` `<=` `>` `>=` | |
-| uguaglianza | `==` `!=` | |
-| congiunzione | `&&` | valutazione pigra |
-| disgiunzione | `\|\|` | valutazione pigra |
-| tubo | `\|>` | `lista \|> list.map(f)` |
-| assegnamento | `=` `+=` `<>` | |
-| definizione | `->` | |
-| dichiarazione | `fn` `let` `let mut` `pub` | prendono tutta la definizione che segue |
-| sequenza | `;` | |
+| access | `:` `~` | `l:0`, `'text' ~ 'regex'` |
+| unary | `-` `!` `...` | `-x`, `!flag`, `...list` |
+| power | `^` | right-associative: `2^2^3` is `2^8` |
+| multiplication | `*` `/` `%` | |
+| addition | `+` `-` | |
+| comparison | `<` `<=` `>` `>=` | |
+| equality | `==` `!=` | |
+| conjunction | `&&` | lazily evaluated |
+| disjunction | `\|\|` | lazily evaluated |
+| pipe | `\|>` | `list \|> list.map(f)` |
+| assignment | `=` `+=` `<>` | |
+| definition | `->` | |
+| declaration | `fn` `let` `let mut` `pub` | they take the whole definition that follows |
+| sequence | `;` | |
 
-L'unario lega **più** della potenza: `-2 ^ 2` fa `4`, non `-4`.
+Unary minus binds **tighter** than the power operator: `-2 ^ 2` is `4`, not `-4`.
 
-## Aritmetica
+## Arithmetic
 
 ```
 1 + 2;          3 - 1;          2 * 3;          7 / 2;          7 % 3;          2 ^ 10;
 ```
 
-`+` fa cose diverse a seconda degli operandi, e sono tutte prevedibili:
+`+` does different things depending on its operands, and all of them are predictable:
 
 ```
-'n=' + 3;                   // 'n=3'      concatena, convertendo
-[1, 2] + [10, 20];          // [11, 22]   somma elemento per elemento
-[1, 2] + 1;                 // [2, 3]     somma lo scalare a ognuno
-[1, 2] + [1, 2, 3];         // TypeMismatchError: liste di lunghezza diversa
+'n=' + 3;                   // 'n=3'      concatenates, converting
+[1, 2] + [10, 20];          // [11, 22]   adds element by element
+[1, 2] + 1;                 // [2, 3]     adds the scalar to each element
+[1, 2] + [1, 2, 3];         // TypeMismatchError: lists of different lengths
 'ab' * 3;                   // 'ababab'
 ```
 
-Sommare due liste **non** le concatena. Per quello c'è `list.put(l, null, altra, 'extend')`.
+Adding two lists does **not** concatenate them. For that there is
+`list.put(l, null, other, 'extend')`.
 
-## Confronto e uguaglianza
+## Comparison and equality
 
-`<` `<=` `>` `>=` ordinano numeri e stringhe (maiuscole prima delle minuscole: `['b','A','a']`
-ordinata dà `[A, a, b]`). `==` e `!=` confrontano il contenuto, in profondità su liste e mappe.
+`<` `<=` `>` `>=` order numbers and strings (uppercase before lowercase: sorting `['b','A','a']`
+gives `[A, a, b]`). `==` and `!=` compare contents, deeply on lists and maps.
 
-Non incatenare i confronti: `1 < 2 < 3` si valuta da sinistra come `(1 < 2) < 3`, cioè `true < 3`, e
-il risultato non vuol dire quello che sembra. Scrivi `1 < 2 && 2 < 3`.
+Do not chain comparisons: `1 < 2 < 3` evaluates left to right as `(1 < 2) < 3`, that is `true < 3`,
+and the result does not mean what it looks like. Write `1 < 2 && 2 < 3`.
 
-## Logica
+## Logic
 
-`&&` e `||` sono pigri e **restituiscono un valore**, non un booleano:
-
-```
-0 && 5;             // 0    - si è fermato al primo falso
-3 && 5;             // 5    - l'ultimo valutato
-0 || 5;             // 5    - il primo vero
-false && (1/0);     // false, e la divisione per zero non viene mai eseguita
-```
-
-Da cui l'idioma per un valore di riserva:
+`&&` and `||` are lazy and **return a value**, not a boolean:
 
 ```
-nome = configurazione:'nome' || 'senza nome';
+0 && 5;             // 0    - it stopped at the first falsy operand
+3 && 5;             // 5    - the last one evaluated
+0 || 5;             // 5    - the first truthy one
+false && (1/0);     // false, and the division by zero is never executed
 ```
 
-`!` nega secondo le regole di verità del [capitolo 2](02-valori.md): `!0`, `!''`, `!null` e `![]`
-sono tutti `true`.
-
-## Accesso: `:`
+Hence the idiom for a fallback value:
 
 ```
-l:0;                    // elemento di lista
-m:'chiave';             // valore di mappa
-m:'a':'b';              // in catena
-l:0 = 9;                // anche in scrittura
-m:'nuova' = 1;          // crea la chiave
+name = configuration:'name' || 'unnamed';
 ```
 
-`:` è sintassi, non una funzione: non richiede nessun import. Dentro una firma di funzione lo stesso
-carattere significa un'altra cosa — il tipo di un parametro (`fn f(a: num)`), vedi
-[capitolo 4](04-funzioni.md).
+`!` negates according to the truthiness rules of [chapter 2](02-valori.md): `!0`, `!''`, `!null` and
+`![]` are all `true`.
 
-Per un indice negativo servono le parentesi: `l:(-1)`, perché `l:-1` non si parsa. Oppure
+## Access: `:`
+
+```
+l:0;                    // list element
+m:'key';                // map value
+m:'a':'b';              // chained
+l:0 = 9;                // in write position too
+m:'new' = 1;            // creates the key
+```
+
+`:` is syntax, not a function: it needs no import. Inside a function signature the same character
+means something else: the type of a parameter (`fn f(a: num)`), see [chapter 4](04-funzioni.md).
+
+A negative index needs parentheses: `l:(-1)`, because `l:-1` does not parse. Alternatively,
 `list.get(l, -1)`.
 
-## Stringhe interpolate: `"..."`
+## Interpolated strings: `"..."`
 
-Un apice singolo fa una stringa letterale, e non succede niente al suo interno. Un **doppio apice**
-inserisce il valore di quello che sta dentro `${...}`:
-
-```
-nome = 'ada';
-punti = 12;
-
-"ciao ${nome}, hai ${punti} punti";        // 'ciao ada, hai 12 punti'
-"il doppio e' ${punti * 2}";               // 'il doppio e' 24'
-'ciao ${nome}';                           // 'ciao ${nome}' - l'apice singolo non interpola
-```
-
-Dentro le graffe ci sta un'espressione qualunque, chiamate comprese. Lo spezzettamento avviene
-**mentre si legge il codice**: a runtime non c'e' nessuna stringa da riesaminare, solo una
-concatenazione gia' scritta, e una stringa senza segnaposti resta una costante.
-
-## Ricerca: `~`
-
-Un operatore, tre significati, secondo il tipo di sinistra:
+A single quote makes a literal string, and nothing inside it is interpreted. A **double quote**
+substitutes the value of whatever sits inside `${...}`:
 
 ```
-'hello world' ~ 'o w';              // 'o w'    - regex: la porzione trovata, null se non c'è
-'v1.2' ~ '([0-9])\.([0-9])';        // ['1', '2'] - con gruppi: la lista dei gruppi
-['a', 'b', 'c'] ~ 'c';              // 2        - l'indice, null se non c'è
-{'a' -> 1} ~ 'a';                   // 'a'      - la chiave se c'è, null se no
+name = 'ada';
+points = 12;
+
+"hello ${name}, you have ${points} points";     // 'hello ada, you have 12 points'
+"twice that is ${points * 2}";                  // 'twice that is 24'
+'hello ${name}';                                // 'hello ${name}' - single quotes do not interpolate
 ```
 
-Su una lista restituisce **l'indice**, che per il primo elemento è `0`: in una condizione, `0` è
-falso. Se cerchi "c'è dentro?", scrivi `(l ~ x) != null`. Non `list.has(l, x)`: su una lista, `has`
-chiede se esiste quell'**indice** (su una mappa invece chiede della chiave, come ci si aspetta).
+Any expression fits inside the braces, calls included — a map literal too, since the braces are
+counted. To write a literal `${`, escape it:
 
-## Tubo: `|>`
+```
+"esc \${name}";                                 // 'esc ${name}' - no substitution
+```
 
-`a |> f(b)` vuol dire `f(a, b)`: il valore a sinistra diventa il **primo argomento** della chiamata a
-destra. Serve a leggere una catena di trasformazioni nell'ordine in cui succedono, invece che dal di
-dentro verso il di fuori.
+The splitting happens **while the code is being read**: at run time there is no string left to
+re-examine, only a concatenation that has already been written out, and a string with no
+placeholders stays a constant.
+
+## Search: `~`
+
+One operator, three meanings, according to the type on the left:
+
+```
+'hello world' ~ 'o w';              // 'o w'      - regex: the matched portion, null if absent
+'v1.2' ~ '([0-9])\.([0-9])';        // ['1', '2'] - with groups: the list of groups
+['a', 'b', 'c'] ~ 'c';              // 2          - the index, null if absent
+{'a' -> 1} ~ 'a';                   // 'a'        - the key if present, null otherwise
+```
+
+On a list it returns **the index**, which for the first element is `0`, and `0` is false in a
+condition. If what you mean is "does it contain this?", write `(l ~ x) != null`. Not
+`list.has(l, x)`: on a list, `has` asks whether that **index** exists (on a map it asks about the
+key, as you would expect).
+
+## Pipe: `|>`
+
+`a |> f(b)` means `f(a, b)`: the value on the left becomes the **first argument** of the call on the
+right. It exists so that a chain of transformations reads in the order in which it happens, instead
+of from the inside out.
 
 ```
 import "core.list" as list;
@@ -133,38 +141,37 @@ import "core.list" as list;
     |> list.map(fn(x) -> x * 2);            // [4, 8]
 ```
 
-La riscrittura avviene **mentre si legge il codice**: il tubo sparisce e resta la chiamata con un
-argomento in piu' davanti. A runtime non costa niente, e incatenare tre trasformazioni costa quanto
-scriverle annidate.
+The rewrite happens **while the code is being read**: the pipe disappears and what remains is the
+call with one extra argument in front. At run time it costs nothing, and chaining three
+transformations costs exactly what writing them nested would.
 
-Lega piu' dell'assegnamento e meno di `||`, quindi `x = a |> f()` mette in `x` il risultato, e
-`(a || b) |> f()` e' quello che sembra. Se a destra c'e' un valore invece di una chiamata
-(`x |> f`, con `f` legata a una funzione) viene chiamato lo stesso.
+It binds tighter than assignment and looser than `||`, so `x = a |> f()` puts the result in `x`, and
+`(a || b) |> f()` is what it looks like. If the right-hand side is a value rather than a call
+(`x |> f`, with `f` bound to a function) it is called all the same.
 
-## Assegnamento
+## Assignment
 
 ```
-a = 1;              // assegna, e restituisce il valore assegnato
-a += 2;             // somma
-l += 3;             // su una lista: accoda
-s += 'coda';        // su una stringa: concatena
-a <> b;             // scambia due variabili
+a = 1;              // assigns, and returns the assigned value
+a += 2;             // adds
+l += 3;             // on a list: appends
+s += 'tail';        // on a string: concatenates
+a <> b;             // swaps two variables
 ```
 
-`<>` scambia **variabili**, non posizioni dentro un contenitore: `l:0 <> l:1` è un errore.
+`<>` swaps **variables**, not positions inside a container: `l:0 <> l:1` is an error.
 
-Un assegnamento restituisce il valore, quindi `a = (b = 3)` mette `3` in tutte e due — comodo di
-rado, ma non è un errore.
+An assignment returns the value, so `a = (b = 3)` puts `3` in both: rarely handy, but not an error.
 
-## Sequenza: `;`
+## Sequence: `;`
 
-`;` separa espressioni e vale l'**ultima**:
+`;` separates expressions and evaluates to the **last** one:
 
 ```
 (1; 2; 3);          // 3
 ```
 
-Un `;` finale è ammesso. Il corpo di una funzione è tipicamente una sequenza fra parentesi:
+A trailing `;` is allowed. The body of a function is typically a parenthesised sequence:
 
 ```
 fn area(w, h) -> (
@@ -173,11 +180,11 @@ fn area(w, h) -> (
 );
 ```
 
-Il risultato è l'ultima riga: niente `return` obbligatorio (ma `return(v)` esiste, per uscire prima).
+The result is the last line: no mandatory `return` (though `return(v)` exists, to leave early).
 
-## Spacchettare: `...`
+## Spreading: `...`
 
-Come argomento di chiamata, srotola una lista:
+As a call argument, it unrolls a list:
 
 ```
 f(a, b) -> a + b;
@@ -185,19 +192,19 @@ call('f', ...[1, 2]);       // 3
 [0, ...[1, 2]];             // [0, 1, 2]
 ```
 
-Come ultimo parametro di una firma, raccoglie il resto (vedi [capitolo 4](04-funzioni.md)):
+As the last parameter of a signature, it collects the rest (see [chapter 4](04-funzioni.md)):
 
 ```
-fn quanti(primo, ...resto) -> [primo, resto];
-quanti(1, 2, 3);            // [1, [2, 3]]
-quanti(1);                  // [1, []]
+fn how_many(first, ...rest) -> [first, rest];
+how_many(1, 2, 3);          // [1, [2, 3]]
+how_many(1);                // [1, []]
 ```
 
-## Definizione: `->`
+## Definition: `->`
 
-`->` ha due significati, che il contesto separa senza ambiguità:
+`->` has two meanings, which context separates without ambiguity:
 
 ```
-fn somma(a, b) -> a + b;        // definizione di funzione
-m = {'a' -> 1, 'b' -> 2};       // coppia chiave/valore, dentro un letterale mappa
+fn sum(a, b) -> a + b;          // function definition
+m = {'a' -> 1, 'b' -> 2};       // key/value pair, inside a map literal
 ```

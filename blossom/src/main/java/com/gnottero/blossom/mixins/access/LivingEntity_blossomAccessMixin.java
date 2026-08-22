@@ -7,7 +7,7 @@ import net.minecraft.world.entity.LivingEntity;
 
 import com.gnottero.blossom.access.Access;
 
-/** Far saltare un'entita' e sapere se sta saltando. */
+/** Making an entity jump, and knowing whether it's jumping. */
 @Mixin(LivingEntity.class)
 public abstract class LivingEntity_blossomAccessMixin implements Access.Jumping
 {

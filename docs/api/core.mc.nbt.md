@@ -13,22 +13,22 @@ nbt.encode([1, 2, 3]);           // from a Blossom value to NBT
 An NBT value is indexed like a map or a list, and can be modified in place: it is the way to touch
 what the curated API does not expose yet.
 
-### `nbt(value)`
+### `nbt.nbt(value)`
 Builds an NBT value from a string in command format, from a map or from a list.
 
-### `decode(nbt)`
+### `nbt.decode(nbt)`
 The opposite: from NBT to ordinary Blossom values (maps, lists, numbers, strings).
 
-### `encode(value, force?)`
+### `nbt.encode(value, force?)`
 From Blossom values to NBT. With `force` true, what has no NBT shape becomes its string instead of
 failing the conversion.
 
-### `escape(string)`
+### `nbt.escape(string)`
 Puts a string in the form the game would write it inside a tag.
 
-### `matches(tag, predicate, respect_lists?)`
+### `nbt.matches(tag, predicate, respect_lists?)`
 Whether a tag satisfies a partial predicate, with the same semantics as the vanilla commands.
 
-### `storage()` · `storage(key)` · `storage(key, value)`
+### `nbt.storage()` · `nbt.storage(key)` · `nbt.storage(key, value)`
 The NBT storage of the world, the one the commands call `data storage`: it is the way to exchange
 data with functions and datapacks.

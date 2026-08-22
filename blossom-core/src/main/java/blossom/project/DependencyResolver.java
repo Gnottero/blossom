@@ -18,35 +18,34 @@ import blossom.exception.SourcePosition;
 import blossom.exception.Suggestions;
 
 /**
- * Da dipendenza dichiarata a cartella su disco, con la versione verificata.
+ * From a declared dependency to a directory on disk, with the version checked.
  *
- * <p>Per ogni dipendenza, in quest'ordine: <b>trovarla</b> (una cartella indicata, un pack installato
- * nello stesso mondo, o il registry), <b>leggerne il manifesto</b> - che dice quale versione e'
- * davvero e quali dipendenze ha lei - e <b>verificare il vincolo</b>, fermandosi se non e'
- * soddisfatto.
+ * <p>For each dependency, in this order: <b>find it</b> (a given directory, a pack installed in the
+ * same world, or the registry), <b>read its manifest</b> (which says what version it really is and
+ * what dependencies it has), and <b>check the constraint</b>, stopping if it is not satisfied.
  *
- * <p>Il terzo punto e' il motivo per cui la classe esiste: senza, "dipendo da utils ^1.2" e' un
- * commento, e il primo segnale che la cartella accanto e' passata alla 2.0 arriva da una funzione
- * che ha cambiato firma, tre schermate piu' in la'.
+ * <p>The third step is the reason this class exists: without it, "depends on utils ^1.2" is just a
+ * comment, and the first sign that the directory next door moved to 2.0 arrives as a function whose
+ * signature changed, three screens further along.
  *
- * <p>La risoluzione e' <b>transitiva</b>, dentro lo spazio dei nomi di ogni dipendenza; un ciclo fra
- * progetti e' un errore, come lo e' fra moduli.
+ * <p>Resolution is <b>transitive</b>, within each dependency's own namespace; a cycle between
+ * projects is an error, just as it is between modules.
  */
 public final class DependencyResolver
 {
-    /** Una dipendenza risolta: dove sta e cosa è risultata essere. */
+    /** A resolved dependency: where it lives and what it turned out to be. */
     public record Resolved(Dependency declared, Path root, @Nullable Version version, ModuleResolver modules)
     {
     }
 
     private final PackEnvironment environment;
-    /** i progetti in corso di risoluzione, per riconoscere un ciclo fra pack */
+    /** the projects currently being resolved, to detect a cycle between packs */
     private final Deque<Path> onPath = new ArrayDeque<>();
-    /** quello che il lock diceva la volta scorsa; vuoto se non c'era o se si sta aggiornando */
+    /** what the lock said last time; empty if there was none or a refresh is in progress */
     private LockFile lock = LockFile.EMPTY;
-    /** quello che il lock dirà la prossima volta */
+    /** what the lock will say next time */
     private final Map<String, LockFile.Entry> recorded = new LinkedHashMap<>();
-    /** {@code true} quando si vuole ri-risolvere ignorando quello che il lock aveva scelto */
+    /** {@code true} when re-resolving while ignoring what the lock had chosen */
     private final boolean refreshing;
 
     public DependencyResolver(PackEnvironment environment)
@@ -61,14 +60,13 @@ public final class DependencyResolver
     }
 
     /**
-     * Risolve le dipendenze del progetto radice, tenendo conto del suo {@code blossom.lock} e
-     * riscrivendolo se è cambiato.
+     * Resolves the root project's dependencies, taking its {@code blossom.lock} into account and
+     * rewriting it if it changed.
      *
-     * <p>Solo la radice ha un lock. Una dipendenza è, per definizione, roba di qualcun altro: scrivere
-     * un file dentro la sua cartella - che può stare nella cache del registry o essere di sola
-     * lettura - sarebbe scorretto due volte. Le scelte fatte per le sue dipendenze finiscono comunque
-     * nel lock della radice, sotto la catena di alias che porta fino a loro, quindi la
-     * riproducibilità è completa lo stesso.
+     * <p>Only the root has a lock. A dependency is, by definition, someone else's stuff: writing a
+     * file inside its directory (which might live in the registry cache, or be read-only) would be
+     * wrong twice over. The choices made for its dependencies still end up in the root's lock, under
+     * the chain of aliases that leads down to them, so reproducibility is complete all the same.
      */
     public ModuleResolver resolveRoot(Path root, ProjectManifest manifest) throws IOException
     {
@@ -79,8 +77,7 @@ public final class DependencyResolver
     }
 
     /**
-     * Risolve tutte le dipendenze del progetto in {@code root} e costruisce il suo resolver di
-     * moduli.
+     * Resolves all of the project's dependencies in {@code root} and builds its module resolver.
      */
     public ModuleResolver resolveFor(Path root, ProjectManifest manifest)
     {
@@ -113,7 +110,7 @@ public final class DependencyResolver
         }
     }
 
-    /** L'alias come lo scrive un import: minuscolo, con i trattini diventati underscore. */
+    /** The alias as an import writes it: lowercase, with hyphens turned into underscores. */
     static String normalizeAlias(String alias)
     {
         return alias.toLowerCase(java.util.Locale.ROOT).replace('-', '_');
@@ -133,8 +130,8 @@ public final class DependencyResolver
         checkVersion(declared, found, root, manifest == null);
         record(lockKey, declared, root, found);
 
-        // una dipendenza senza manifesto è solo una cartella di sorgenti: non ha dipendenze sue, e
-        // non c'è niente da risolvere sotto
+        // a dependency without a manifest is just a source directory: it has no dependencies of
+        // its own, and there is nothing to resolve underneath it
         ModuleResolver modules = manifest == null
                 ? ModuleResolver.ofSourceRoot(root)
                 : resolveFor(root, manifest, lockKey + '.');
@@ -142,10 +139,10 @@ public final class DependencyResolver
     }
 
     /**
-     * Annota nel lock cosa è stato scelto, e verifica l'impronta di quello che viene da fuori.
+     * Records in the lock what was chosen, and checks the fingerprint of what comes from outside.
      *
-     * <p>Una dipendenza a percorso non entra nel lock: è la cartella accanto, che si sta modificando
-     * adesso, e bloccarla vorrebbe dire far fallire il progetto ad ogni salvataggio.
+     * <p>A path dependency does not enter the lock: it is the directory next door, being edited
+     * right now, and locking it would mean making the project fail on every save.
      */
     private void record(String lockKey, Dependency declared, Path root, @Nullable Version found)
     {
@@ -166,9 +163,8 @@ public final class DependencyResolver
                         "Cannot compute the fingerprint of '" + declared.alias() + "' in " + root + ": " + e.getMessage());
             }
             LockFile.Entry locked = lock.of(lockKey);
-            // solo a parità di versione: se la versione è cambiata - perché il vincolo è stato
-            // riscritto, o perché il lock è stato aggiornato - un'impronta diversa è la normalità,
-            // non una manomissione
+            // only when the version matches: if the version changed (because the constraint was
+            // rewritten, or because the lock was refreshed), a different fingerprint is normal, not tampering
             if (locked != null && locked.sha256() != null && locked.version().equals(found)
                     && !locked.sha256().equals(fingerprint))
             {
@@ -242,11 +238,11 @@ public final class DependencyResolver
     }
 
     /**
-     * La versione da prendere: quella che il lock aveva scelto, se c'è ancora e soddisfa ancora il
-     * vincolo; altrimenti la più alta compatibile.
+     * The version to take: the one the lock had chosen, if it still exists and still satisfies the
+     * constraint; otherwise the highest compatible one.
      *
-     * <p>Un lock che punta a una versione che il manifesto non accetta più non è un errore: vuol dire
-     * che il vincolo è stato cambiato apposta, e la scelta va rifatta.
+     * <p>A lock pointing at a version the manifest no longer accepts is not an error: it means the
+     * constraint was changed on purpose, and the choice must be redone.
      */
     private @Nullable Version pinned(Dependency declared, LockFile.@Nullable Entry locked, List<Version> available)
     {
@@ -265,7 +261,7 @@ public final class DependencyResolver
         }
         catch (IOException e)
         {
-            return null; // niente manifesto: è una cartella di sorgenti e basta
+            return null; // no manifest: it's just a plain source directory
         }
     }
 

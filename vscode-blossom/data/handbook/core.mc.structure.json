@@ -137,7 +137,7 @@
       "at(pos)",
       "at(pos, name)"
     ],
-    "summary": "The at covering that point.",
+    "summary": "The generated structures whose start is recorded in that chunk.",
     "params": [
       [
         "pos",
@@ -148,18 +148,19 @@
         "optional: only that structure"
       ]
     ],
-    "returns": "`map` from name to the box it takes up, or the single box; `null` when there is none.",
+    "returns": "`map` from structure name to its bounding box `[[min_x, min_y, min_z], [max_x, max_y, max_z]]`; with a name, that single box or `null`.",
     "examples": [
       "structure.at([0, 64, 0]);                          // {'minecraft:village_plains' -> [...]}",
       "structure.at(pos, 'minecraft:stronghold');"
-    ]
+    ],
+    "note": "It answers about the structures that **start** in the chunk holding `pos`: a village whose start is in the chunk next door does not appear here even when part of it covers that point. For those, `structure.references`."
   },
   "references": {
     "signatures": [
       "references(pos)",
       "references(pos, name)"
     ],
-    "summary": "The chunks referring to the at that pass through that point.",
+    "summary": "The structures that reach into that chunk, and where they start.",
     "params": [
       [
         "pos",
@@ -170,10 +171,12 @@
         "optional: only that structure"
       ]
     ],
-    "returns": "`map` from name to a list of chunk coordinates, or the single list.",
+    "returns": "`list` of structure names; with a name, the `[x, z]` chunk positions where that structure starts, empty when it does not reach here, `null` when the name is unknown.",
     "examples": [
-      "structure.references([0, 64, 0], 'minecraft:village_plains');"
-    ]
+      "structure.references([0, 64, 0]);                            // ['minecraft:village_plains']",
+      "structure.references([0, 64, 0], 'minecraft:village_plains'); // [[0, -1]]"
+    ],
+    "note": "It is how you walk from a piece of a village back to the chunk that owns it: `at` says what starts here, this says what merely passes through."
   },
   "eligibility": {
     "signatures": [
@@ -196,7 +199,7 @@
         "optional: with `true` it also returns the pieces of the structure"
       ]
     ],
-    "returns": "`map` or `list` of the eligible at, `null` when there are none.",
+    "returns": "with a structure name, `true` or `null`; otherwise a `map` of every structure that could start there. With `details`, the box and the pieces take the place of `true`.",
     "examples": [
       "structure.eligibility([1000, 64, 1000]);",
       "structure.eligibility(pos, 'minecraft:village_plains', true);"
@@ -208,7 +211,7 @@
       "place(pos, name)",
       "place(pos, name, null)"
     ],
-    "summary": "Generates a structure at that point, or removes its reference.",
+    "summary": "Generates a structure at that point, or forgets one that is there.",
     "params": [
       [
         "pos",
@@ -219,10 +222,11 @@
         "the structure to place"
       ]
     ],
-    "returns": "`bool` — whether it succeeded.",
+    "returns": "`bool` — whether it succeeded, or whether there was a record to remove.",
     "examples": [
       "structure.place([0, 64, 0], 'minecraft:village_plains');",
-      "structure.place(pos, 'minecraft:village_plains', null);   // removes the reference"
-    ]
+      "structure.place(pos, 'minecraft:village_plains', null);   // forgets it is there"
+    ],
+    "note": "With two arguments it generates, laid out on the generator's grid as the world itself would place it. With `null` as the third it removes the **record** (the start and every reference to it) and not the blocks: the buildings stay standing while the game stops considering them a structure. An unknown name throws `unknown_structure`."
   }
 }

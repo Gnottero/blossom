@@ -118,7 +118,7 @@
     "examples": [
       "// this app declares the event by listening to it\nevent.declare('mine:round_over', on_round_over);"
     ],
-    "note": "An application event exists from the moment the find app listens to it. It is the way two apps talk without either knowing the functions of the other."
+    "note": "An application event exists from the moment the first app listens to it. It is the way two apps talk without either knowing the functions of the other."
   },
   "emit": {
     "signatures": [

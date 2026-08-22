@@ -21,7 +21,7 @@
       ],
       [
         "callback",
-        "optional: called as `(screen, player, action, data)` — the actions are `'slot_click'`, `'button_click'`, `'select_recipe'`, `'close'`"
+        "optional: called as `(screen, player, action, data)`: the actions are `'slot_click'`, `'button_click'`, `'select_recipe'`, `'close'`"
       ]
     ],
     "returns": "`screen` — usable as an inventory with the functions of `core.mc.item`.",

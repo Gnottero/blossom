@@ -15,23 +15,23 @@ import blossom.exception.SourcePosition;
 import blossom.exception.Suggestions;
 
 /**
- * Le cartelle a cui {@code core.io} può arrivare, e con che permessi.
+ * The folders {@code core.io} can reach, and with what permissions.
  *
- * <p>Negli script non esistono percorsi assoluti: un amministratore dichiara delle <em>radici</em>
- * con un nome e le chiamate partono da quello - {@code io.read_text('condiviso', 'note/oggi.txt')}.
- * Ne seguono tre proprietà volute: senza dichiarazioni non si apre niente, la radice si vede nel
- * punto della chiamata, e la scrittura è un permesso a parte da concedere radice per radice.
+ * <p>Scripts have no absolute paths: an administrator declares named <em>roots</em>, and calls
+ * start from there, e.g. {@code io.read_text('shared', 'note/today.txt')}. Three properties
+ * follow from this on purpose: without any declarations nothing is opened, the root is visible at
+ * the call site, and write access is a separate permission granted root by root.
  *
- * <p>Il percorso viene normalizzato e poi risolto davvero prima del confronto, perché {@code ..} non
- * è l'unico modo di uscire da una cartella: un link simbolico dentro la radice punta fuori senza che
- * nessun controllo testuale se ne accorga. Un {@link #contains confine} esterno facoltativo - sul
- * mod, la cartella del mondo - limita anche dove le radici stesse possono stare.
+ * <p>The path is normalized and then actually resolved before the comparison, because {@code ..}
+ * is not the only way to escape a folder: a symbolic link inside the root can point outside
+ * without any textual check noticing. An optional external {@link #contains boundary} (on the
+ * mod, the world folder) also limits where the roots themselves can live.
  *
- * @see Io il modulo che le usa
+ * @see Io the module that uses them
  */
 public final class IoRoots
 {
-    /** Nessuna radice: {@code core.io} c'è ma non arriva da nessuna parte. */
+    /** No roots: {@code core.io} exists but reaches nowhere. */
     public static final IoRoots NONE = new IoRoots(Map.of(), Set.of());
 
     private final Map<String, Path> roots;
@@ -44,9 +44,9 @@ public final class IoRoots
     }
 
     /**
-     * @param confinement la cartella oltre la quale nessuna radice può portare, o {@code null} se non
-     *     c'è un limite esterno. Sul mod è la cartella del mondo: le radici si dichiarano dentro
-     *     quella e il resto del disco del server non è raggiungibile per nessuna configurazione.
+     * @param confinement the folder beyond which no root may lead, or {@code null} if there is no
+     *     external limit. On the mod this is the world folder: roots are declared inside it, and
+     *     the rest of the server's disk is unreachable no matter the configuration.
      */
     public IoRoots(Map<String, Path> roots, Set<String> writable, @Nullable Path confinement)
     {
@@ -57,19 +57,19 @@ public final class IoRoots
         this.confinement = confinement == null ? null : confinement.toAbsolutePath().normalize();
     }
 
-    /** @return se {@code directory} sta dentro il confine, o se non c'è nessun confine da rispettare */
+    /** @return whether {@code directory} is inside the boundary, or whether there is no boundary to respect */
     public boolean contains(Path directory)
     {
         return confinement == null || directory.toAbsolutePath().normalize().startsWith(confinement);
     }
 
-    /** Le radici per nome, gia' normalizzate: serve a chi ne compone un insieme piu' grande. */
+    /** The roots by name, already normalized: used by whoever composes a larger set out of them. */
     public Map<String, Path> paths()
     {
         return roots;
     }
 
-    /** I nomi delle radici scrivibili. */
+    /** The names of the writable roots. */
     public Set<String> writableNames()
     {
         return writable;
@@ -86,10 +86,10 @@ public final class IoRoots
     }
 
     /**
-     * Il file indicato da {@code relative} dentro la radice {@code name}.
+     * The file indicated by {@code relative} inside root {@code name}.
      *
-     * @param forWriting se l'operazione modifica qualcosa: una radice di sola lettura fallisce qui
-     * @throws BlossomRuntimeError se la radice non esiste, non è scrivibile, o il percorso esce
+     * @param forWriting whether the operation modifies something: a read-only root fails here
+     * @throws BlossomRuntimeError if the root does not exist, is not writable, or the path escapes
      */
     public Path resolve(String name, String relative, boolean forWriting)
     {
@@ -119,11 +119,11 @@ public final class IoRoots
     }
 
     /**
-     * Ricontrolla dopo aver seguito i link simbolici.
+     * Re-checks after following symbolic links.
      *
-     * <p>Il confronto sul percorso normalizzato ferma i {@code ..}, non un link piazzato dentro la
-     * radice che punta fuori. Se il file non esiste ancora - il caso di una scrittura - si controlla
-     * la cartella che lo conterrà, che invece esiste.
+     * <p>The comparison on the normalized path stops {@code ..}, not a link placed inside the
+     * root that points outward. If the file does not exist yet (the case of a write), the folder
+     * that will contain it, which does exist, is checked instead.
      */
     private Path checkReal(Path root, Path candidate, String name, String relative)
     {

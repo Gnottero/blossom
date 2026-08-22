@@ -15,34 +15,34 @@ import com.gnottero.blossom.net.ServerNetwork;
 import com.gnottero.blossom.util.Particles;
 
 /**
- * Manda le forme a chi deve vederle, in un modo o nell'altro.
+ * Sends shapes to whoever needs to see them, one way or another.
  *
- * <p>La regola è una sola e sta tutta qui: chi ha il client Blossom riceve la forma e la disegna;
- * chi non ce l'ha riceve delle particelle disposte lungo la stessa geometria. Nessuna delle due
- * strade è un ripiego dell'altra — la prima è precisa, la seconda funziona ovunque - e chi scrive lo
- * script non deve sapere quale delle due è toccata a chi.
+ * <p>There is a single rule and it lives entirely here: whoever has the Blossom client receives
+ * the shape and draws it; whoever doesn't receives particles arranged along the same geometry.
+ * Neither path is a fallback for the other, the first is precise, the second works everywhere,
+ * and the script author doesn't need to know which one any given viewer got.
  *
- * <h2>Perché le particelle vanno ripetute</h2>
+ * <h2>Why particles need to be repeated</h2>
  *
- * <p>Una particella vive qualche istante e poi sparisce, mentre una forma dura quanto le è stato
- * detto. Le forme ancora vive vengono quindi ridisegnate ogni {@link #PARTICLE_PERIOD_TICKS} tick,
- * ma solo per i giocatori senza client e solo finché ce n'è almeno uno: su un server dove tutti
- * hanno il client questo elenco resta vuoto e non costa niente.
+ * <p>A particle lives for a moment and then disappears, while a shape lasts as long as it was
+ * told to. Shapes still alive are therefore redrawn every {@link #PARTICLE_PERIOD_TICKS} ticks,
+ * but only for players without the client and only as long as there is at least one: on a server
+ * where everyone has the client, this list stays empty and costs nothing.
  */
 public final class ShapeDispatcher
 {
     /**
-     * Ogni quanti tick si ridisegnano le particelle.
+     * How often, in ticks, particles get redrawn.
      *
-     * <p>Mezzo secondo: abbastanza fitto perché il disegno non lampeggi, abbastanza raro da non
-     * riempire la rete di pacchetti di particelle per una cosa che è un aiuto visivo.
+     * <p>Half a second: frequent enough that the drawing doesn't flicker, rare enough not to
+     * flood the network with particle packets for something that is just a visual aid.
      */
     private static final int PARTICLE_PERIOD_TICKS = 10;
 
-    /** quante particelle per blocco lungo un segmento */
+    /** How many particles per block along a segment. */
     private static final double PARTICLE_DENSITY = 2.0;
 
-    /** una forma viva, con chi la deve vedere a particelle */
+    /** A live shape, with who needs to see it as particles. */
     private record Pending(Shape shape, ServerLevel level, List<ServerPlayer> audience)
     {
     }
@@ -51,9 +51,9 @@ public final class ShapeDispatcher
     private long tick = 0;
 
     /**
-     * Disegna {@code shape} per {@code audience}.
+     * Draws {@code shape} for {@code audience}.
      *
-     * @return quanti giocatori l'hanno ricevuta come forma vera (gli altri l'hanno avuta a particelle)
+     * @return how many players received it as a real shape (the rest got it as particles)
      */
     public int draw(Shape shape, ServerLevel level, List<ServerPlayer> audience)
     {
@@ -69,15 +69,15 @@ public final class ShapeDispatcher
             drawWithParticles(shape, level, withoutClient);
             if (shape.isAliveAt(tick + PARTICLE_PERIOD_TICKS))
             {
-                // solo se durera' abbastanza da dover essere ridisegnata: una forma di un tick
-                // non deve nemmeno entrare nell'elenco
+                // only if it will last long enough to need redrawing: a one-tick shape
+                // shouldn't even enter the list
                 alive.add(new Pending(shape, level, List.copyOf(withoutClient)));
             }
         }
         return withClient.size();
     }
 
-    /** Da chiamare a ogni tick del server. */
+    /** To be called on every server tick. */
     public void onTick()
     {
         tick++;
@@ -96,7 +96,7 @@ public final class ShapeDispatcher
         }
     }
 
-    /** Toglie tutte le forme in attesa: lo fa lo spegnimento, e {@code clear_shapes}. */
+    /** Removes all pending shapes: used by shutdown and by {@code clear_shapes}. */
     public void clear()
     {
         alive.clear();
@@ -117,32 +117,32 @@ public final class ShapeDispatcher
     }
 
     /**
-     * L'approssimazione a particelle.
+     * The particle approximation.
      *
-     * <p>Il colore della forma diventa la scelta della particella: le particelle vanilla non si
-     * colorano a piacere, quindi si sceglie quella che somiglia di più. È il limite onesto di questa
-     * strada, e la ragione per cui il client esiste.
+     * <p>The shape's color drives the particle choice: vanilla particles can't be colored at
+     * will, so the closest match is picked. This is the honest limit of this approach, and the
+     * reason the client exists.
      */
     private static void drawWithParticles(Shape shape, ServerLevel level, List<ServerPlayer> audience)
     {
-        // se la forma segue un'entita', il punto si ricalcola ad ogni ridisegno: e' la meta' del
-        // senso di 'follow', e l'entita' nel frattempo si e' mossa
+        // if the shape follows an entity, the point is recomputed on every redraw: that's half
+        // the point of 'follow', and the entity has moved in the meantime
         if (!shape.hasLines() && !shape.hasFill())
         {
-            return; // una forma invisibile da entrambe le parti: non c'e' niente da approssimare
+            return; // a shape invisible on both sides: there is nothing to approximate
         }
         net.minecraft.world.phys.Vec3 followPos = followPositionOf(shape, level);
         if (shape instanceof final Shape.Label label)
         {
-            // un testo non e' fatto di segmenti: si segna il punto, il testo l'ha gia' avuto in chat
+            // text isn't made of segments: mark the point, the text was already sent in chat
             net.minecraft.world.phys.Vec3 pos = shape.anchored(label.pos(), followPos);
             Particles.drawParticleLine(audience, particleFor(shape, level), pos, pos, 1.0);
             return;
         }
         if (shape instanceof final Shape.Sprite sprite)
         {
-            // un blocco o un item non si approssimano con delle linee: si segna il punto con la
-            // particella che almeno dice di che blocco si tratta
+            // a block or an item can't be approximated with lines: mark the point with the
+            // particle that at least says which block it is
             net.minecraft.world.phys.Vec3 pos = shape.anchored(sprite.pos(), followPos);
             Particles.drawParticleLine(audience, spriteParticle(sprite, level), pos, pos, 1.0);
             return;
@@ -156,7 +156,7 @@ public final class ShapeDispatcher
         }
     }
 
-    /** Dov'e' adesso l'entita' seguita, o {@code null} se non c'e' - o non c'e' piu'. */
+    /** Where the followed entity is now, or {@code null} if it doesn't exist, or no longer does. */
     private static net.minecraft.world.phys.@org.jspecify.annotations.Nullable Vec3 followPositionOf(
             Shape shape, ServerLevel level)
     {
@@ -169,16 +169,16 @@ public final class ShapeDispatcher
     }
 
     /**
-     * La particella che segna dov'è un blocco o un item disegnato a mezz'aria.
+     * The particle that marks where a block or item drawn in mid-air is.
      *
-     * <p>{@code block_marker} mostra la texture del blocco, quindi chi non ha il client vede almeno
-     * <em>quale</em> blocco è; per un item si usa {@code item}, che mostra il suo sprite. Se il nome
-     * non si lascia usare così — un item senza sprite, un blocco sparito da un aggiornamento — si
-     * ripiega su una particella qualunque: meglio un punto luminoso che niente.
+     * <p>{@code block_marker} shows the block's texture, so whoever lacks the client at least
+     * sees <em>which</em> block it is; for an item, {@code item} is used, showing its sprite. If
+     * the name can't be used this way (an item with no sprite, a block removed by an update), it
+     * falls back to a generic particle: a glowing point is better than nothing.
      */
     private static ParticleOptions spriteParticle(Shape.Sprite sprite, ServerLevel level)
     {
-        // il nome di un blocco arriva con i suoi stati fra parentesi: alla particella non servono
+        // a block's name arrives with its states in brackets: the particle doesn't need them
         String name = sprite.name();
         int properties = name.indexOf('[');
         if (properties >= 0)
@@ -197,10 +197,11 @@ public final class ShapeDispatcher
     }
 
     /**
-     * La particella che somiglia di più al colore chiesto.
+     * The particle that most closely matches the requested color.
      *
-     * <p>Se il reticolo è spento si guarda il riempimento: le particelle disegnano comunque la
-     * sagoma - è l'unica cosa che sanno fare - e tanto vale che ne prendano il colore giusto.
+     * <p>If the outline is off, the fill is used instead: particles draw the shape's silhouette
+     * regardless (it's the only thing they know how to do), so they might as well have the right
+     * color.
      */
     private static ParticleOptions particleFor(Shape shape, ServerLevel level)
     {

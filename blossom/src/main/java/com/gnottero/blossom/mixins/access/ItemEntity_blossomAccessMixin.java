@@ -7,7 +7,7 @@ import net.minecraft.world.entity.item.ItemEntity;
 
 import com.gnottero.blossom.access.Access;
 
-/** Il ritardo prima che un item per terra possa essere raccolto. */
+/** The delay before a dropped item can be picked up. */
 @Mixin(ItemEntity.class)
 public abstract class ItemEntity_blossomAccessMixin implements Access.ItemEntityDelay
 {

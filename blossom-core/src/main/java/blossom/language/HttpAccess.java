@@ -14,30 +14,30 @@ import blossom.exception.SourcePosition;
 import blossom.exception.Suggestions;
 
 /**
- * Gli host a cui {@code core.http} può parlare, e con che limiti.
+ * The hosts {@code core.http} is allowed to talk to, and under what limits.
  *
- * <p>Stessa forma dei confini di {@link IoRoots}: niente è raggiungibile finché un amministratore non
- * lo dichiara in {@code config/blossomscript.json}. Un permesso di rete concesso per default
- * trasformerebbe ogni app installata in un canale di uscita dei dati del server.
+ * <p>Same shape as the boundaries in {@link IoRoots}: nothing is reachable until an administrator
+ * declares it in {@code config/blossomscript.json}. A network permission granted by default would
+ * turn every installed app into an exfiltration channel for the server's data.
  *
- * <p>Un host si dichiara esatto ({@code api.example.com}) o con un solo carattere jolly iniziale
- * ({@code *.example.com}, che vale per i sotto-domini e non per {@code example.com} stesso). Non
- * esistono pattern più liberi: {@code *} da solo è l'unico modo di aprire tutto, e chi lo scrive lo
- * sta facendo apposta.
+ * <p>A host is declared exactly ({@code api.example.com}) or with a single leading wildcard
+ * ({@code *.example.com}, which covers subdomains but not {@code example.com} itself). No looser
+ * patterns exist: {@code *} alone is the only way to open everything up, and whoever writes it is
+ * doing so on purpose.
  *
- * @param hosts i pattern consentiti, vuoto = niente rete
- * @param schemes gli schemi ammessi, in minuscolo (di norma solo {@code https})
- * @param timeoutMillis quanto si aspetta una risposta prima di dichiarare fallita la richiesta
- * @param maxResponseBytes oltre questa dimensione il corpo viene rifiutato invece di essere letto
- * @param followRedirects se seguire i 3xx, ricontrollando l'host di destinazione
+ * @param hosts the allowed patterns, empty = no network access
+ * @param schemes the allowed schemes, lowercase (usually just {@code https})
+ * @param timeoutMillis how long to wait for a response before declaring the request failed
+ * @param maxResponseBytes beyond this size the body is rejected instead of being read
+ * @param followRedirects whether to follow 3xx responses, re-checking the destination host
  */
 public record HttpAccess(List<String> hosts, Set<String> schemes, int timeoutMillis,
                          long maxResponseBytes, boolean followRedirects)
 {
-    /** Nessun host: {@code core.http} c'è ma non raggiunge niente. */
+    /** No hosts: {@code core.http} exists but cannot reach anything. */
     public static final HttpAccess NONE = new HttpAccess(List.of(), Set.of("https"), 5_000, 1L << 20, false);
 
-    /** i metodi che una richiesta può usare: quelli con una semantica HTTP definita e un corpo noto */
+    /** The methods a request can use: those with a defined HTTP semantics and a known body. */
     public static final Set<String> METHODS = Set.of("GET", "POST", "PUT", "PATCH", "DELETE", "HEAD");
 
     public HttpAccess
@@ -50,11 +50,11 @@ public record HttpAccess(List<String> hosts, Set<String> schemes, int timeoutMil
     }
 
     /**
-     * Controlla un URL prima che venga aperto.
+     * Checks a URL before it is opened.
      *
-     * @param method il metodo HTTP, già in maiuscolo
-     * @return l'URL analizzato, pronto per la richiesta
-     * @throws BlossomRuntimeError se l'URL è malformato, o se schema/host/metodo non sono consentiti
+     * @param method the HTTP method, already uppercase
+     * @return the parsed URL, ready for the request
+     * @throws BlossomRuntimeError if the URL is malformed, or if scheme/host/method is not allowed
      */
     public URI check(String url, String method)
     {
@@ -93,7 +93,7 @@ public record HttpAccess(List<String> hosts, Set<String> schemes, int timeoutMil
         return uri;
     }
 
-    /** @return se {@code host} corrisponde a uno dei pattern dichiarati */
+    /** @return whether {@code host} matches one of the declared patterns */
     public boolean allows(String host)
     {
         String candidate = host.toLowerCase(Locale.ROOT);
@@ -114,9 +114,9 @@ public record HttpAccess(List<String> hosts, Set<String> schemes, int timeoutMil
     }
 
     /**
-     * Un confine violato è un errore del programma, non una condizione di rete: viene lanciato come
-     * errore e non come {@code http_exception}, così un {@code try} messo lì per gestire un server
-     * lento non finisce per nascondere una configurazione mancante.
+     * A violated boundary is a programming error, not a network condition: it is thrown as an
+     * error rather than as {@code http_exception}, so a {@code try} placed there to handle a slow
+     * server doesn't end up hiding a missing configuration.
      */
     private static BlossomRuntimeError refuse(String message, @Nullable String suggestion)
     {

@@ -59,10 +59,10 @@ import blossom.value.StringValue;
 import blossom.value.Value;
 
 /**
- * La facciata sopra {@link Access}: un metodo per ogni cosa che il gioco non espone.
+ * The facade above {@link Access}: one method for every piece of state the game does not expose.
  *
- * <p>Esiste per un motivo solo: tenere i cast ai mixin in un posto solo. Se una versione di
- * Minecraft sposta un campo, si aggiusta qui e nel mixin, non in venti punti dell'API.
+ * <p>It exists for a single reason: keeping the casts to mixins in one place. If a Minecraft
+ * version moves a field, the fix happens here and in the mixin, not in twenty spots across the API.
  */
 public final class Vanilla
 {
@@ -87,7 +87,7 @@ public final class Vanilla
         return FabricLoader.getInstance().isDevelopmentEnvironment();
     }
 
-    /** I mod caricati, nome → versione: e' quello che {@code system_info} chiama 'server_mods'. */
+    /** The loaded mods, name to version: this is what {@code system_info} calls 'server_mods'. */
     public static MapValue getServerMods(MinecraftServer server)
     {
         Map<Value, Value> mods = new HashMap<>();
@@ -99,7 +99,7 @@ public final class Vanilla
         return MapValue.wrap(mods);
     }
 
-    // --- mondo ---
+    // --- world ---
 
     public static PotentialCalculator SpawnState_getPotentialCalculator(NaturalSpawner.SpawnState state)
     {
@@ -137,9 +137,9 @@ public final class Vanilla
     }
 
     /**
-     * In Carpet questo era un interruttore globale per generare strutture senza i controlli di
-     * vanilla. Qui non c'e' nessuna regola di mod a comandarlo: resta spento, e chi genera struttura
-     * passa comunque dai controlli.
+     * In Carpet this was a global switch for generating structures without vanilla's checks.
+     * Here there is no mod rule driving it: it stays off, and structure generation always goes
+     * through the checks.
      */
     public static ThreadLocal<Boolean> skipGenerationChecks(ServerLevel level)
     {
@@ -149,22 +149,22 @@ public final class Vanilla
     private static final ThreadLocal<Boolean> SKIP_GENERATION_CHECKS = ThreadLocal.withInitial(() -> false);
 
     /**
-     * Il numero con cui vanilla scala il tetto di mob per chunk (17*17, l'area attorno a un
-     * giocatore che conta per lo spawn).
+     * The number vanilla uses to scale the mob cap per chunk (17*17, the area around a player
+     * that counts for spawning).
      */
     public static int NaturalSpawner_MAGIC_NUMBER()
     {
         return 17 * 17;
     }
 
-    /** I ticket di caricamento chunk di un mondo. */
+    /** A world's chunk-loading tickets. */
     public static Long2ObjectOpenHashMap<List<Ticket>> ChunkTicketManager_getTicketsByPosition(
             net.minecraft.server.level.DistanceManager manager)
     {
         return ((Access.Tickets) (Object) manager).blossom$ticketsByPosition();
     }
 
-    // --- punteggi ---
+    // --- scoreboard ---
 
     public static void Objective_setCriterion(Objective objective, ObjectiveCriteria criterion)
     {
@@ -176,7 +176,7 @@ public final class Vanilla
         return ((Scoreboard_blossomAccessMixin) scoreboard).blossom$objectivesByCriterion();
     }
 
-    // --- entita' ---
+    // --- entities ---
 
     public static EntityEvents Entity_getEventContainer(Entity entity)
     {
@@ -264,15 +264,15 @@ public final class Vanilla
     }
 
     /**
-     * In Carpet questo distingueva i giocatori finti da quelli veri. Blossom non ha giocatori finti:
-     * un riferimento a un giocatore e' valido finche' il giocatore e' nel gioco.
+     * In Carpet this distinguished fake players from real ones. Blossom has no fake players: a
+     * player reference is valid for as long as the player is in the game.
      */
     public static boolean ServerPlayer_isInvalidEntityObject(ServerPlayer player)
     {
         return player.isRemoved();
     }
 
-    // --- giocatore che rompe blocchi ---
+    // --- player breaking blocks ---
 
     public static BlockPos ServerPlayerGameMode_getCurrentBlockPosition(ServerPlayerGameMode gameMode)
     {
@@ -289,21 +289,21 @@ public final class Vanilla
         ((Access.GameMode) gameMode).blossom$setBreakingProgress(progress);
     }
 
-    // --- inventari e schermate ---
+    // --- inventories and screens ---
 
     public static DataSlot AbstractContainerMenu_getDataSlot(AbstractContainerMenu menu, int index)
     {
         return ((Access.Menu) menu).blossom$dataSlot(index);
     }
 
-    /** Il permesso con cui gira il codice degli script: quello di un operatore di gioco. */
+    /** The permission level script code runs with: that of a game operator. */
     public static net.minecraft.server.permissions.PermissionSet MinecraftServer_getRunPermissionLevel(
             MinecraftServer server)
     {
         return net.minecraft.server.permissions.LevelBasedPermissionSet.GAMEMASTER;
     }
 
-    /** La versione di Minecraft su cui gira, come tripletta di numeri. */
+    /** The Minecraft version it runs on, as a triple of numbers. */
     public static int[] MinecraftServer_getReleaseTarget(MinecraftServer server)
     {
         String version = net.minecraft.SharedConstants.getCurrentVersion().name();
@@ -323,7 +323,7 @@ public final class Vanilla
         return target;
     }
 
-    /** Quello che c'e' dentro un predicato di blocco scritto in un comando. */
+    /** What is inside a block predicate written in a command. */
     public record BlockPredicatePayload(BlockState state, TagKey<Block> tagKey, Map<Value, Value> properties,
             CompoundTag tag)
     {
@@ -336,10 +336,10 @@ public final class Vanilla
     }
 
     /**
-     * Le palette di un template di struttura, che vanilla tiene private.
+     * A structure template's palettes, which vanilla keeps private.
      *
-     * <p>Servono a {@code structure_matches}: un template puo' avere piu' varianti dello stesso
-     * volume, e "combacia" vuol dire che ne combacia almeno una.
+     * <p>Needed by {@code structure_matches}: a template can have multiple variants of the same
+     * volume, and "matches" means at least one of them matches.
      */
     public static List<net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate.Palette>
             StructureTemplate_palettes(
@@ -348,7 +348,7 @@ public final class Vanilla
         return ((com.gnottero.blossom.mixins.access.StructureTemplate_blossomAccessMixin) (Object) template).blossom$palettes();
     }
 
-    /** Costruisce una sorgente comando "silenziosa" per {@code run()}. */
+    /** Builds a "silent" command source for {@code run()}. */
     public static void CommandSourceStack_setupPrivates(CommandSourceStack source, boolean silent,
             net.minecraft.commands.CommandResultCallback callback,
             net.minecraft.commands.arguments.EntityAnchorArgument.Anchor anchor,

@@ -7,16 +7,16 @@ import java.util.Optional;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Cosa c'è intorno a un progetto: gli altri pack installati e, se configurato, un registry.
+ * What surrounds a project: the other packs installed and, if configured, a registry.
  *
- * <p>Il core non sa cosa sia un mondo di Minecraft. Sa che esiste un posto dove i pack stanno già
- * installati e che qualcuno sa elencarli: quel qualcuno è il mod, che qui dentro passa la cartella
- * {@code <mondo>/blossom/}. Fuori dal gioco - nei test, o incorporando il core altrove - c'è
- * {@link #NONE}, e allora esistono solo le dipendenze a percorso.
+ * <p>The core doesn't know what a Minecraft world is. It knows there is a place where packs are
+ * already installed and that someone can list them: that someone is the mod, which passes in the
+ * {@code <world>/blossom/} directory here. Outside the game (in tests, or embedding the core
+ * elsewhere) there is {@link #NONE}, and then only path dependencies exist.
  */
 public interface PackEnvironment
 {
-    // Nessun pack installato intorno, nessun registry: solo dipendenze a percorso locale.
+    // No packs installed around, no registry: only local path dependencies.
     PackEnvironment NONE = new PackEnvironment()
     {
         @Override
@@ -38,12 +38,12 @@ public interface PackEnvironment
         }
     };
 
-    /** La cartella del pack {@code name} già installato, se c'è. */
+    /** The directory of pack {@code name} if it's already installed. */
     Optional<Path> installedPack(String name);
 
-    /** I pack installati, per suggerire un nome a chi ne ha scritto uno che non esiste. */
+    /** The installed packs, to suggest a name to whoever wrote one that doesn't exist. */
     List<String> installedPackNames();
 
-    /** Il registry configurato, o {@code null} se su questo server non ce n'è uno. */
+    /** The configured registry, or {@code null} if this server has none. */
     @Nullable PackRegistry registry();
 }

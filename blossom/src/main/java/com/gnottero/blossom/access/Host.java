@@ -11,9 +11,9 @@ import net.minecraft.world.entity.player.Player;
 import blossom.value.MapValue;
 
 /**
- * Il poco che l'API di gioco deve chiedere al mod stesso invece che a Minecraft: la propria
- * versione, lo stato per thread del riempimento senza aggiornamenti, e i due pezzi di interfaccia
- * che si mandano al client con pacchetti vanilla.
+ * The small set of things the game API needs to ask the mod itself rather than Minecraft: its own
+ * version, the per-thread state for fills without block updates, and the two bits of interface
+ * that get sent to the client with vanilla packets.
  */
 public final class Host
 {
@@ -21,7 +21,7 @@ public final class Host
     {
     }
 
-    /** La versione del mod, letta dal manifesto Fabric. */
+    /** The mod's version, read from the Fabric manifest. */
     public static String modVersion()
     {
         return net.fabricmc.loader.api.FabricLoader.getInstance()
@@ -30,7 +30,7 @@ public final class Host
                 .orElse("dev");
     }
 
-    /** Blossom non ha una regola globale per saltare gli aggiornamenti di blocco. */
+    /** Blossom has no global rule for skipping block updates. */
     public static ThreadLocal<Boolean> getImpendingFillSkipUpdates()
     {
         return SKIP_UPDATES;
@@ -38,16 +38,16 @@ public final class Host
 
     private static final ThreadLocal<Boolean> SKIP_UPDATES = ThreadLocal.withInitial(() -> false);
 
-    /** Il testo formattato di {@code format(...)}. */
+    /** The formatted text from {@code format(...)}. */
     public static Component Messenger_compose(Object... parts)
     {
         return com.gnottero.blossom.util.Text.compose(parts);
     }
 
     /**
-     * Intestazione o pie' della lista giocatori (il riquadro del tasto Tab).
+     * Header or footer of the player list (the Tab-key panel).
      *
-     * <p>E' un pacchetto vanilla: lo vede qualunque client, senza mod dalla parte del giocatore.
+     * <p>It is a vanilla packet: any client sees it, no mod needed on the player's side.
      */
     public static void setTabList(ServerPlayer player, boolean header, @Nullable Component text)
     {

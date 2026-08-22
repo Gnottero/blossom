@@ -1,16 +1,16 @@
 package blossom.exception;
 
 /**
- * Lo script ha superato il budget di esecuzione: troppo tempo, o troppa ricorsione.
+ * The script has exceeded its execution budget: too much time, or too much recursion.
  *
- * <p>È l'errore del watchdog (PIANO_LINGUAGGIO.md §9). Vive fuori dalla gerarchia catturabile di
- * {@code try}/{@code catch} apposta: se uno script potesse intercettarlo, un ciclo infinito dentro
- * un {@code try} continuerebbe a girare e il watchdog non servirebbe a niente. L'unico modo di
- * uscirne è che l'esecuzione finisca.
+ * <p>This is the watchdog's error (PIANO_LINGUAGGIO.md §9). It deliberately lives outside the
+ * catchable {@code try}/{@code catch} hierarchy: if a script could intercept it, an infinite loop
+ * inside a {@code try} would keep running and the watchdog would be useless. The only way out is
+ * for execution to end.
  */
 public class ExecutionBudgetError extends BlossomError
 {
-    /** Cosa è stato superato: serve a distinguere i due casi anche dai log. */
+    /** What was exceeded: lets the two cases be told apart even from the logs. */
     public enum Limit
     {
         TIME("tempo"), DEPTH("profondita' di chiamata");

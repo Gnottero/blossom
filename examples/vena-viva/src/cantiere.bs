@@ -6,21 +6,21 @@ import "core.mc.effect" as effect;
 import "core.mc.scan" as scan;
 import "core.mc.text" as text;
 
-// Tutto quello che tocca il mondo sta qui: leggere blocchi, mostrare particelle, parlare a chi
-// gioca. Il resto dell'app chiama queste funzioni e non sa come sono fatte dentro.
+// Everything that touches the world lives here: reading blocks, showing particles, talking to
+// players. The rest of the app calls these functions and doesn't know how they work inside.
 
 pub let RAGGIO = 6;
 
-// Legge un cubo attorno al centro e restituisce una lista di [posizione, blocco].
-// Chiamata da dentro un task, va incapsulata in task_dock da chi la chiama: qui non lo facciamo,
-// perche' una funzione che decide da sola come essere schedulata e' una funzione che non si puo'
-// riusare dal thread principale.
+// Reads a cube around the center and returns a list of [position, block].
+// Called from inside a task, it must be wrapped in task_dock by the caller: we don't do that here,
+// because a function that decides on its own how to be scheduled is a function that can't be
+// reused from the main thread.
 pub fn leggi_intorno(centro: list, raggio: num) -> list.map(
     scan.rect(centro, raggio),
     [_, block.block(_) + '']
 );
 
-// Il riquadro attorno alla vena, per far vedere cosa ha guardato lo script.
+// The box around the vein, to show what the script looked at.
 pub fn mostra_riquadro(angoli, colore: str) -> if(
     angoli == null, 0,
     effect.particle_box(colore, angoli:0, angoli:1, 1)
@@ -35,8 +35,8 @@ pub fn avvisa(giocatore, tipo: str, rimasti: num, parola: str) -> text.hud(
         'g   rimasti ', colore_di(rimasti) + ' ' + rimasti,
         'g   (' + parola + ')'
     ),
-    100         // tick: la riga se ne va da sola dopo cinque secondi
+    100         // ticks: the line goes away on its own after five seconds
 );
 
-// privata: la scala di colori e' una scelta di presentazione, non un'informazione
+// private: the color scale is a presentation choice, not information
 fn colore_di(rimasti) -> if(rimasti == 0, 'r', rimasti <= 2, 'y', 'l');

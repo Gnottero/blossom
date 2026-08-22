@@ -1,10 +1,10 @@
 package blossom.utils;
 
 /**
- * Le poche funzioni matematiche che il core prendeva da {@code net.minecraft.util.Mth}.
+ * The handful of math functions the core used to take from {@code net.minecraft.util.Mth}.
  *
- * <p>Riscritte qui perché il core non può dipendere da Minecraft: sono banali e stanno sul
- * percorso caldo dei generatori di rumore, quindi restano statiche e senza allocazioni.
+ * <p>Rewritten here because the core cannot depend on Minecraft. They are trivial and sit on
+ * the hot path of the noise generators, so they stay static and allocation-free.
  */
 public final class MathUtils
 {
@@ -13,8 +13,8 @@ public final class MathUtils
     }
 
     /**
-     * Parte intera inferiore, come {@code Mth.floor}: evita il doppio arrotondamento di
-     * {@code (int) Math.floor(value)} passando per il cast diretto.
+     * Floor, like {@code Mth.floor}: avoids the double rounding of
+     * {@code (int) Math.floor(value)} by going through a direct cast instead.
      */
     public static int floor(double value)
     {

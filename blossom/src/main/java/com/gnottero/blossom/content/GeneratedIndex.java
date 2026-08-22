@@ -8,15 +8,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * L'elenco dei file che i generatori hanno prodotto.
+ * The list of files that the generators have produced.
  *
- * <p>Serve a una cosa sola: sapere, alla rigenerazione, quali file sono nostri. Cosi' un json scritto
- * a mano dentro la stessa cartella non viene mai toccato, e uno generato che non serve piu' non resta
- * li' a fare da fantasma. Senza questo elenco le due cose sarebbero indistinguibili, e l'unica scelta
- * sarebbe fra cancellare troppo e non cancellare mai.
+ * <p>It serves a single purpose: knowing, at regeneration time, which files are ours. That way a
+ * json written by hand in the same folder is never touched, and a generated one that is no longer
+ * needed does not stay there as a ghost. Without this list the two would be indistinguishable, and
+ * the only choice would be between deleting too much and never deleting at all.
  *
- * <p>Un file di testo, una riga per percorso: si legge, si mette sotto controllo di versione, e se
- * qualcuno lo cancella il peggio che succede e' che la ripulitura salta un giro.
+ * <p>A text file, one line per path: it can be read, put under version control, and if someone
+ * deletes it the worst that happens is that cleanup skips a round.
  */
 public final class GeneratedIndex
 {
@@ -53,8 +53,8 @@ public final class GeneratedIndex
         }
         catch (IOException e)
         {
-            // un elenco illeggibile non deve fermare una generazione: si riparte da zero, e al
-            // massimo qualche file generato prima resta li'
+            // an unreadable index must not stop a generation: we start over from scratch, and at
+            // worst some previously generated file stays behind
             return List.of();
         }
     }

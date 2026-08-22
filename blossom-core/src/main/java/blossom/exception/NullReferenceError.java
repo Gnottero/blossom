@@ -2,7 +2,7 @@ package blossom.exception;
 
 import org.jspecify.annotations.Nullable;
 
-/** Uso di un valore nullo dove ne serviva uno vero. */
+/** Use of a null value where a real one was required. */
 public class NullReferenceError extends BlossomError
 {
     public NullReferenceError(SourcePosition position, String message)

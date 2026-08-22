@@ -11,7 +11,7 @@ import net.minecraft.util.Mth;
 
 import com.gnottero.blossom.access.Access;
 
-/** Quale blocco un giocatore sta rompendo, e a che punto e' la crepa. */
+/** Which block a player is breaking, and how far the crack has progressed. */
 @Mixin(ServerPlayerGameMode.class)
 public class ServerPlayerGameMode_blossomAccessMixin implements Access.GameMode
 {
@@ -47,11 +47,11 @@ public class ServerPlayerGameMode_blossomAccessMixin implements Access.GameMode
     {
         if (destroyPos == null)
         {
-            return; // nessun blocco sotto il dito: non c'e' niente su cui disegnare la crepa
+            return; // no block under the cursor: there's nothing to draw the crack on
         }
         lastSentState = Mth.clamp(progress, -1, 10);
-        // l'id e' quello del giocatore cambiato di segno: l'animazione resta separata da quella che
-        // il gioco manda per conto suo, che altrimenti la sovrascriverebbe al tick dopo
+        // The id is the player's id with the sign flipped: this keeps the animation separate from
+        // the one the game sends on its own, which would otherwise overwrite it the next tick
         level.destroyBlockProgress(-player.getId(), destroyPos, lastSentState);
     }
 }

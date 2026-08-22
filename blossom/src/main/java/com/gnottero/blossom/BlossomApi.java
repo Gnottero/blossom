@@ -6,21 +6,21 @@ import blossom.interpreter.Expression;
 import blossom.language.StdLib;
 
 /**
- * L'API di gioco: quali moduli {@code core.mc.*} esistono e cosa esporta ciascuno.
+ * The game API: which {@code core.mc.*} modules exist and what each one exports.
  *
- * <p>Le implementazioni vivono nelle classi di {@code com.gnottero.blossom.api} e restano registrate una
- * volta sola su ogni espressione, in una mappa piatta: e' la *visibilita'* a passare per i moduli,
- * come per la libreria del core. Chi scrive vede {@code block.set(...)} e sa da dove viene, ma la
- * chiamata non paga niente in piu', perche' il legame simbolo → implementazione si risolve al
- * caricamento e non ad ogni invocazione.
+ * <p>The implementations live in classes under {@code com.gnottero.blossom.api} and get registered
+ * once on each expression, in a flat map: it is *visibility* that goes through modules, just like
+ * for the core library. Code that writes {@code block.set(...)} sees where it comes from, but the
+ * call pays nothing extra, because the symbol-to-implementation binding is resolved at load time
+ * and not on every invocation.
  *
- * <p>I nomi sono quelli che descrivono l'operazione nel modo piu' corto che resta chiaro:
- * {@code set}, {@code block_state}, {@code entity_load}. Chi legge uno script deve capire cosa fa
- * senza aprire la documentazione.
+ * <p>Names are chosen to describe the operation in the shortest way that stays clear:
+ * {@code set}, {@code block_state}, {@code entity_load}. Someone reading a script should understand
+ * what it does without opening the documentation.
  */
 public final class BlossomApi
 {
-    /** {@code core.mc.block} - leggere e scrivere blocchi, e quello che si sa di un blocco */
+    /** {@code core.mc.block}: reading and writing blocks, and what is known about a block. */
     public static final java.util.Map<String, String> BLOCK = java.util.Map.ofEntries(
             java.util.Map.entry("block", "block"),
             java.util.Map.entry("data", "block_data"),
@@ -44,7 +44,7 @@ public final class BlossomApi
             java.util.Map.entry("blocks_movement", "blocks_movement"),
             java.util.Map.entry("ticks_randomly", "ticks_randomly"),
             java.util.Map.entry("power", "power"),
-            // una domanda sola, con lo strato come argomento: vedi WorldAccess
+            // a single query, with the layer as an argument: see WorldAccess
             java.util.Map.entry("light", "light"),
             java.util.Map.entry("see_sky", "see_sky"),
             java.util.Map.entry("opacity", "opacity"),
@@ -57,7 +57,7 @@ public final class BlossomApi
             java.util.Map.entry("pos", "pos"),
             java.util.Map.entry("pos_offset", "pos_offset"));
 
-    /** {@code core.mc.world} - il mondo intorno: tempo, chunk, biomi, strutture, dimensioni */
+    /** {@code core.mc.world}: the world around, time, chunks, biomes, structures, dimensions. */
     public static final java.util.Map<String, String> WORLD = java.util.Map.ofEntries(
             java.util.Map.entry("weather", "weather"),
             java.util.Map.entry("top", "top"),
@@ -84,12 +84,12 @@ public final class BlossomApi
             java.util.Map.entry("tick_time", "tick_time"),
             java.util.Map.entry("tick", "game_tick"));
 
-    /** {@code core.mc.scan} - percorrere volumi di blocchi senza scriversi tre cicli annidati */
+    /** {@code core.mc.scan}: walking block volumes without writing three nested loops. */
     public static final java.util.Map<String, String> SCAN = java.util.Map.of(
             "scan", "scan", "volume", "volume", "neighbors", "neighbours",
             "rect", "rect", "diamond", "diamond");
 
-    /** {@code core.mc.entity} - trovare, creare, interrogare e modificare entita' */
+    /** {@code core.mc.entity}: finding, spawning, querying, and modifying entities. */
     public static final java.util.Map<String, String> ENTITY = java.util.Map.ofEntries(
             java.util.Map.entry("player", "player"),
             java.util.Map.entry("spawn", "spawn"),
@@ -104,7 +104,7 @@ public final class BlossomApi
             java.util.Map.entry("on_load", "entity_load_handler"),
             java.util.Map.entry("has_client", "has_client"));
 
-    /** {@code core.mc.item} - gli oggetti e i loro data component */
+    /** {@code core.mc.item}: items and their data components. */
     public static final java.util.Map<String, String> ITEM = java.util.Map.ofEntries(
             java.util.Map.entry("max_stack", "stack_limit"),
             java.util.Map.entry("catalog", "item_list"),
@@ -117,7 +117,7 @@ public final class BlossomApi
             java.util.Map.entry("set_component", "set_item_component"),
             java.util.Map.entry("component_catalog", "component_list"));
 
-    /** {@code core.mc.inventory} - gli inventari, di chi li porta e di cosa li contiene */
+    /** {@code core.mc.inventory}: inventories, who carries them, and what they hold. */
     public static final java.util.Map<String, String> INVENTORY = java.util.Map.ofEntries(
             java.util.Map.entry("size", "inventory_size"),
             java.util.Map.entry("has", "inventory_has_items"),
@@ -127,31 +127,31 @@ public final class BlossomApi
             java.util.Map.entry("remove", "inventory_remove"),
             java.util.Map.entry("drop", "drop_item"));
 
-    /** {@code core.mc.structure} - salvare, piazzare e confrontare template di struttura */
+    /** {@code core.mc.structure}: saving, placing, and comparing structure templates. */
     public static final java.util.Map<String, String> STRUCTURE = java.util.Map.of(
             "save", "structure_save",
             "load", "structure_load",
             "matches", "structure_matches",
             "size", "structure_size",
-            // erano in core.mc.world: sono le strutture del generatore, ma il dominio e' questo
+            // used to be in core.mc.world: these are the generator's structures, but this is their domain
             "at", "structures",
             "place", "set_structure",
             "references", "structure_references",
             "eligibility", "structure_eligibility");
 
-    /** {@code core.mc.shape} - far vedere quello che uno script sta calcolando */
+    /** {@code core.mc.shape}: showing what a script is computing. */
     public static final java.util.Map<String, String> SHAPE = java.util.Map.of(
             "draw", "draw_shape",
             "clear", "clear_shapes",
             "types", "shape_types");
 
-    /** {@code core.mc.screen} - aprire una schermata a un giocatore e reagire ai suoi click */
+    /** {@code core.mc.screen}: opening a screen for a player and reacting to their clicks. */
     public static final java.util.Map<String, String> SCREEN = java.util.Map.of(
             "open", "create_screen",
             "close", "close_screen",
             "property", "screen_property");
 
-    /** {@code core.mc.score} - gli obiettivi e i punteggi */
+    /** {@code core.mc.score}: objectives and scores. */
     public static final java.util.Map<String, String> SCORE = java.util.Map.of(
             "score", "scoreboard",
             "add", "scoreboard_add",

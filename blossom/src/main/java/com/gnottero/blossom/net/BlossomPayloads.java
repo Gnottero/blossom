@@ -9,32 +9,32 @@ import net.minecraft.resources.Identifier;
 import com.gnottero.blossom.BlossomMod;
 
 /**
- * I due canali con cui server e client Blossom si parlano.
+ * The two channels the Blossom server and client talk over.
  *
- * <p>Il mod e' server-side, ma alcune cose - disegnare linee nello spazio, testo fluttuante - non
- * hanno nessun pacchetto vanilla che le esprima. Il patto e' che <b>il client e' facoltativo</b>:
- * chi ce l'ha vede il disegno vero, chi non ce l'ha vede un'approssimazione di particelle. Nessuna
- * funzione smette di funzionare per chi gioca vanilla.
+ * <p>The mod is server-side, but some things (drawing lines in space, floating text) have no
+ * vanilla packet that can express them. The contract is that <b>the client is optional</b>:
+ * whoever has it sees the real drawing, whoever does not sees a particle approximation. No
+ * feature stops working for a vanilla player.
  *
- * <p>Appena un giocatore entra il server gli manda un {@code hello}: un client vanilla scarta il
- * payload sconosciuto, uno Blossom risponde, e solo chi ha risposto riceve i pacchetti di disegno.
- * Non c'e' altro modo di saperlo - il protocollo non elenca i mod del client.
+ * <p>As soon as a player joins, the server sends them a {@code hello}: a vanilla client discards
+ * the unknown payload, a Blossom client replies, and only whoever replied receives the drawing
+ * packets. There is no other way to know: the protocol does not list the client's mods.
  */
 public final class BlossomPayloads
 {
-    /** server → client alla connessione, e client → server come risposta */
+    /** server → client on connect, and client → server as a reply */
     public static final Identifier HELLO_CHANNEL =
             Identifier.fromNamespaceAndPath(BlossomMod.MOD_ID, "hello");
-    /** server → client: le forme da disegnare */
+    /** server → client: the shapes to draw */
     public static final Identifier SHAPES_CHANNEL =
             Identifier.fromNamespaceAndPath(BlossomMod.MOD_ID, "shapes");
 
     /**
-     * La versione del protocollo.
+     * The protocol version.
      *
-     * <p>Viaggia nell'{@code hello} in tutte e due le direzioni: un client di una versione diversa
-     * viene trattato come se non ci fosse, e riceve le particelle. È meglio di far finta che si
-     * capiscano e disegnare male.
+     * <p>Travels in the {@code hello} in both directions: a client on a different version is
+     * treated as if it were not there, and gets the particles. That is better than pretending
+     * they understand each other and drawing badly.
      */
     public static final int PROTOCOL_VERSION = 1;
 
@@ -45,7 +45,7 @@ public final class BlossomPayloads
     {
     }
 
-    /** Il saluto, in tutte e due le direzioni. */
+    /** The greeting, in both directions. */
     public record Hello(CompoundTag data) implements CustomPacketPayload
     {
         public static final Type<Hello> TYPE = new Type<>(HELLO_CHANNEL);
@@ -81,7 +81,7 @@ public final class BlossomPayloads
         }
     }
 
-    /** Le forme da disegnare, dal server al client. */
+    /** The shapes to draw, from the server to the client. */
     public record Shapes(CompoundTag data) implements CustomPacketPayload
     {
         public static final Type<Shapes> TYPE = new Type<>(SHAPES_CHANNEL);

@@ -4,65 +4,65 @@ import blossom.exception.ExecutionBudgetError;
 import blossom.exception.SourcePosition;
 
 /**
- * Il watchdog: quanto puo' girare un'esecuzione prima che venga fermata (PIANO_LINGUAGGIO.md §9).
+ * The watchdog: how long an execution may run before it gets stopped (PIANO_LINGUAGGIO.md §9).
  *
- * <p>Il codice gira dentro il tick loop del server: uno script che cicla dentro un evento non
- * rallenta l'app, ferma il mondo.
+ * <p>Code runs inside the server's tick loop: a script that loops forever inside an event doesn't
+ * just slow the app down, it stops the world.
  *
- * <p>Il contatore viene battuto solo dove l'esecuzione puo' ripetersi all'infinito - iterazioni dei
- * loop e chiamate a funzione utente - perche' un'espressione senza cicli ne' chiamate e' finita per
- * costruzione. L'orologio si legge una volta ogni {@link #CLOCK_CHECK_MASK}+1 battute: dentro il
- * loop stretto di un interprete tree-walking, {@code System.nanoTime()} si vede nel benchmark.
+ * <p>The counter is only ticked where execution could repeat forever (loop iterations and user
+ * function calls), because an expression with no loops and no calls is finite by construction.
+ * The clock is read only once every {@link #CLOCK_CHECK_MASK}+1 ticks: inside the tight loop of a
+ * tree-walking interpreter, {@code System.nanoTime()} shows up in the benchmark.
  *
- * <p>Un'istanza misura una singola esecuzione (un evento, un comando, un caricamento), vive sul
- * {@link Context} ed e' ereditata dai frame figli - altrimenti basterebbe spezzare il ciclo in due
- * funzioni per aggirarla. Un {@code task()} riceve invece il proprio budget dalla stessa politica:
- * gira su un thread suo e non occupa il tick.
+ * <p>An instance measures a single execution (an event, a command, a load), lives on the
+ * {@link Context}, and is inherited by child frames, otherwise splitting the loop across two
+ * functions would be enough to dodge it. A {@code task()} instead gets its own budget from the
+ * same policy: it runs on its own thread and doesn't occupy the tick.
  */
 public final class ExecutionBudget
 {
     /**
-     * Ogni quante battute si guarda l'orologio: 4096 battute di un loop vuoto sono nell'ordine delle
-     * decine di microsecondi, quindi la risoluzione del watchdog resta molto sotto un tick.
+     * How many ticks between clock checks: 4096 ticks of an empty loop take on the order of tens
+     * of microseconds, so the watchdog's resolution stays well under a tick.
      */
     private static final int CLOCK_CHECK_MASK = 0xFFF;
 
     /**
-     * I limiti, senza lo stato: è quello che un'app dichiara nel manifesto e che il server tiene come
-     * default. Immutabile, quindi condivisibile fra tutte le esecuzioni di un'app.
+     * The limits, without the state: this is what an app declares in its manifest and what the
+     * server keeps as a default. Immutable, so shareable across all of an app's executions.
      *
-     * @param timeoutMillis tempo massimo di una esecuzione, {@code 0} per nessun limite
-     * @param maxDepth      chiamate a funzione annidate, {@code 0} per nessun limite
+     * @param timeoutMillis maximum time for an execution, {@code 0} for no limit
+     * @param maxDepth      nested function calls, {@code 0} for no limit
      */
     public record Policy(long timeoutMillis, int maxDepth)
     {
-        /** Nessun limite: i test del linguaggio e chi incorpora il core fuori da un server. */
+        /** No limit: the language's own tests and whoever embeds the core outside a server. */
         public static final Policy UNLIMITED = new Policy(0, 0);
 
         /**
-         * Il default dentro il gioco.
+         * The default inside the game.
          *
-         * <p>Due secondi sono tantissimo per un tick (che ne dura 0,05) e pochissimo per un ciclo
-         * infinito: la soglia non serve a far rispettare il budget di tick - quello è compito di chi
-         * scrive lo script - ma a distinguere "lento" da "non finirà mai". La profondità massima
-         * arriva prima dello {@code StackOverflowError} della JVM, così l'errore dice dove sei
-         * invece di essere un crash dello stack java.
+         * <p>Two seconds is a lot for a tick (which lasts 0.05) and very little for an infinite
+         * loop: the threshold isn't meant to enforce the tick budget (that's the script author's
+         * job), but to distinguish "slow" from "will never finish". The max depth kicks in before
+         * the JVM's own {@code StackOverflowError}, so the error tells you where you are instead
+         * of being a raw Java stack crash.
          */
         public static final Policy DEFAULT = new Policy(2000, 256);
 
         /**
-         * Il default per quello che l'utente ha lanciato a mano: un comando o il caricamento di
-         * un'app possono legittimamente macinare a lungo, e chi ha premuto invio sta aspettando.
+         * The default for whatever the user launched by hand: a command or an app load may
+         * legitimately grind on for a while, and whoever pressed enter is waiting.
          */
         public static final Policy INTERACTIVE = new Policy(15000, 256);
 
         /**
-         * I limiti di un {@code task()}.
+         * The limits of a {@code task()}.
          *
-         * <p>Nessun limite di tempo, ma la profondità di chiamata resta: un task gira su un thread
-         * suo e non tiene fermo il tick, e "gira a lungo" è esattamente il motivo per cui uno lo
-         * lancia. Fermarlo a due secondi renderebbe inutile la funzione che serve a evitare il
-         * problema che il watchdog risolve.
+         * <p>No time limit, but the call depth still applies: a task runs on its own thread and
+         * doesn't hold up the tick, and "runs for a long time" is exactly why one is launched.
+         * Capping it at two seconds would defeat the purpose of the feature meant to work around
+         * the problem the watchdog solves.
          */
         public Policy asBackground()
         {
@@ -74,7 +74,7 @@ public final class ExecutionBudget
             return timeoutMillis <= 0 && maxDepth <= 0;
         }
 
-        /** Un misuratore nuovo, con l'orologio che parte adesso. */
+        /** A fresh meter, with its clock starting now. */
         public ExecutionBudget start()
         {
             return isUnlimited() ? UNLIMITED_BUDGET : new ExecutionBudget(this);
@@ -82,8 +82,8 @@ public final class ExecutionBudget
     }
 
     /**
-     * Il misuratore che non misura niente: un singleton, così un contesto senza watchdog non alloca e
-     * le sue battute sono un ramo prevedibile e basta.
+     * The meter that measures nothing: a singleton, so a context with no watchdog allocates
+     * nothing and its ticks are just a predictable branch.
      */
     public static final ExecutionBudget UNLIMITED_BUDGET = new ExecutionBudget(Policy.UNLIMITED);
 
@@ -105,18 +105,17 @@ public final class ExecutionBudget
         return policy;
     }
 
-    /** Quante iterazioni/chiamate ha contato finora: lo usa il profiler per il rapporto finale. */
+    /** How many iterations/calls have been counted so far: used by the profiler for its final report. */
     public long ticks()
     {
         return ticks;
     }
 
     /**
-     * Una battuta: la chiama chi sta per ripetere qualcosa (una iterazione di loop) o chi sta per
-     * entrare in una funzione.
+     * A tick: called by whoever is about to repeat something (a loop iteration) or about to enter
+     * a function.
      *
-     * <p>Scritta corta apposta perché la JVM la faccia sparire nel codice inlined quando il budget è
-     * illimitato.
+     * <p>Deliberately kept short so the JVM inlines it away when the budget is unlimited.
      */
     public void tick()
     {
@@ -130,13 +129,13 @@ public final class ExecutionBudget
         }
     }
 
-    /** Entra in una chiamata a funzione: conta come battuta e come livello di profondità. */
+    /** Enters a function call: counts as both a tick and a depth level. */
     public void enterCall(String function)
     {
         tick();
         if (policy.maxDepth() > 0 && ++depth > policy.maxDepth())
         {
-            depth--; // il frame non è stato aperto: non deve restare contato
+            depth--; // The frame was never opened: it must not stay counted
             throw new ExecutionBudgetError(SourcePosition.UNKNOWN, ExecutionBudgetError.Limit.DEPTH,
                     "Too many nested calls (limit: " + policy.maxDepth() + ") when entering '" + function
                             + "'. If the recursion is intended, raise 'max_depth' in the manifest; if it is not,"

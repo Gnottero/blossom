@@ -14,30 +14,30 @@ import blossom.exception.BlossomRuntimeError;
 import blossom.exception.SourcePosition;
 
 /**
- * La generazione del contenuto di un pack.
+ * The generation of a pack's content.
  *
- * <p>Il modello e' quello dei data generator: si lancia a mano con
- * {@code /blossom data generate <app>}, e quello che produce sono json veri dentro {@code data/},
- * che restano li' e si guardano con un editor o con {@code git diff}.
+ * <p>The model is the same as data generators: it is launched by hand with
+ * {@code /blossom data generate <app>}, and what it produces are real json files inside
+ * {@code data/}, which stay there and can be viewed with an editor or with {@code git diff}.
  *
- * <p>Perche' su comando e non all'apertura del mondo: cosi' il generatore e' codice Blossom
- * normale, con il server acceso e l'API tutta disponibile, invece di girare in un momento in cui il
- * mondo non c'e' ancora; e un generatore lento o rotto non ritarda l'apertura di un mondo.
+ * <p>Why on command and not when the world opens: this way the generator is normal Blossom code,
+ * with the server running and the whole API available, instead of running at a moment when the
+ * world does not exist yet; and a slow or broken generator does not delay a world's opening.
  *
- * <p>Chi scrive a mano un json dentro {@code data/} non se lo vede toccare: l'elenco di cosa e' stato
- * generato sta in {@code data/.blossom-generated}, e la rigenerazione riscrive e ripulisce solo
- * quello.
+ * <p>Whoever writes a json by hand inside {@code data/} does not see it touched: the list of what
+ * has been generated lives in {@code data/.blossom-generated}, and regeneration only rewrites and
+ * cleans up that.
  */
 public final class Generators
 {
-    /** La sessione aperta sul thread che sta generando, o {@code null} fuori da una generazione. */
+    /** The session open on the thread that is generating, or {@code null} outside a generation. */
     private static final ThreadLocal<Session> OPEN = new ThreadLocal<>();
 
     private Generators()
     {
     }
 
-    /** Quello che una generazione ha scritto, per raccontarlo a chi ha dato il comando. */
+    /** What a generation has written, to report it to whoever issued the command. */
     public record Report(int written, int removed)
     {
     }
@@ -53,7 +53,7 @@ public final class Generators
         }
     }
 
-    /** La sessione aperta, o l'errore che spiega perche' non c'e'. */
+    /** The open session, or the error explaining why there is none. */
     private static Session open()
     {
         Session session = OPEN.get();
@@ -67,9 +67,9 @@ public final class Generators
     }
 
     /**
-     * Scrive una risorsa. {@code id} e' {@code spazio:cartella/nome}, come nei comandi del gioco.
+     * Writes a resource. {@code id} is {@code namespace:folder/name}, as in the game's commands.
      *
-     * @return il percorso relativo scritto
+     * @return the relative path written
      */
     public static String write(String id, String contents, String extension) throws IOException
     {
@@ -87,7 +87,7 @@ public final class Generators
         return relative;
     }
 
-    /** {@code prova:recipe/spada} diventa {@code data/prova/recipe/spada.json}. */
+    /** {@code prova:recipe/spada} becomes {@code data/prova/recipe/spada.json}. */
     private static String pathOf(String id, String extension)
     {
         int colon = id.indexOf(':');
@@ -107,8 +107,8 @@ public final class Generators
     }
 
     /**
-     * Apre una generazione, esegue {@code work}, e ripulisce cio' che era stato generato prima e
-     * questa volta non lo e' piu'.
+     * Opens a generation, runs {@code work}, and cleans up what had been generated before and
+     * this time is not any more.
      */
     public static Report generate(Path packRoot, Runnable work) throws IOException
     {
@@ -144,7 +144,7 @@ public final class Generators
         return new Report(session.written.size(), removed);
     }
 
-    /** Il {@code pack.mcmeta} lo scrive la generazione: e' cio' che rende {@code data/} un datapack. */
+    /** The generation writes {@code pack.mcmeta}: it is what makes {@code data/} a datapack. */
     private static void writeMetadata(Path data) throws IOException
     {
         int format = net.minecraft.SharedConstants.getCurrentVersion()
@@ -161,7 +161,7 @@ public final class Generators
         Files.writeString(data.resolve("pack.mcmeta"), json, StandardCharsets.UTF_8);
     }
 
-    /** Le cartelle rimaste vuote dopo una ripulitura non servono a nessuno. */
+    /** Folders left empty after a cleanup are of no use to anyone. */
     private static void pruneEmptyDirectories(Path data) throws IOException
     {
         try (var walk = Files.walk(data))

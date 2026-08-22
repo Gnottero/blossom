@@ -4,7 +4,7 @@ import blossom.interpreter.Interpreter;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-/** C.2 - le stringhe fra doppi apici interpolano. */
+/** C.2 - double-quoted strings interpolate. */
 class InterpolationTest
 {
     private static String eval(String code)

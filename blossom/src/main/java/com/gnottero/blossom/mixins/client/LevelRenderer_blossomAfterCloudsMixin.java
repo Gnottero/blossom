@@ -14,13 +14,13 @@ import net.minecraft.client.renderer.feature.FeatureRenderDispatcher;
 import com.gnottero.blossom.client.AfterCloudsFrame;
 
 /**
- * Disegna il riempimento traslucido delle forme subito dopo le nuvole.
+ * Draws the translucent fill of shapes right after the clouds.
  *
- * <p>Il punto è preciso: dopo le nuvole - così il riempimento le mescola nella proporzione giusta,
- * che è il motivo di tutta questa fase (vedi {@code SubmitNodeCollection_blossomAfterCloudsMixin}) -
- * e prima della pioggia, che sta fra la camera e la forma molto più spesso di quanto le stia dietro.
- * L'aggancio è sulla chiamata al tempo atmosferico e non sulle nuvole, perché quella è dentro un
- * {@code if}: con le nuvole spente non verrebbe eseguito niente.
+ * <p>The timing is precise: after the clouds, so the fill blends with them in the right proportion
+ * (which is the whole reason for this phase, see {@code SubmitNodeCollection_blossomAfterCloudsMixin}),
+ * and before the rain, which sits between the camera and the shape far more often than behind it.
+ * The hook is on the weather rendering call rather than on the clouds, because that call is inside an
+ * {@code if}: with clouds disabled, nothing would run.
  */
 @Mixin(LevelRenderer.class)
 public abstract class LevelRenderer_blossomAfterCloudsMixin

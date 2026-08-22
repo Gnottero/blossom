@@ -11,26 +11,27 @@ import blossom.value.VariableReferenceValue;
 import blossom.value.Value;
 
 /**
- * Le parole chiave delle dichiarazioni: {@code fn}, {@code let}, {@code let mut}, {@code pub}.
+ * The declaration keywords: {@code fn}, {@code let}, {@code let mut}, {@code pub}.
  *
- * <p>Sono prefissi, non funzioni: legano meno di {@code ->} e di {@code =}, quindi prendono tutta la
- * definizione che li segue e la registrano nella tabella dei simboli del modulo. La registrazione
- * avviene una volta, mentre il modulo si carica; a runtime non resta nulla da decidere.
+ * <p>These are prefixes, not functions: they bind more loosely than {@code ->} and {@code =}, so
+ * they take the entire definition that follows them and register it in the module's symbol
+ * table. Registration happens once, while the module is loading; at runtime there is nothing left
+ * to decide.
  *
- * <p>Perché prefissi e non convenzioni sui nomi: è il principio §1.1 del piano. Che un simbolo sia
- * di modulo o esportato è una proprietà dichiarata, non qualcosa che si deduce da come inizia il suo
- * nome.
+ * <p>Why prefixes and not naming conventions: this follows principle §1.1 of the plan. Whether a
+ * symbol is module-private or exported is a declared property, not something deduced from how its
+ * name begins.
  */
 public class Modules
 {
-    /** i nomi riservati: non possono più essere usati come variabili o funzioni */
+    /** The reserved names: they can no longer be used as variables or functions. */
     public static final java.util.Set<String> KEYWORDS = java.util.Set.of("fn", "let", "mut", "pub", "module", "import", "as");
 
     public static void apply(Expression expression)
     {
         int precedence = Operators.precedence.get("declaration");
 
-        // fn <definizione> - dichiara una funzione del modulo, privata salvo 'pub'
+        // fn <definition> - declares a module function, private unless marked 'pub'
         expression.addLazyUnaryOperator("fn", "declare_function", precedence, false, false, t -> Context.Type.NONE, (c, t, lv) ->
         {
             Value defined = lv.evalValue(c, Context.Type.NONE);
@@ -42,12 +43,12 @@ public class Modules
             return (cc, tt) -> defined;
         });
 
-        // let <nome> = <valore> - binding di modulo immutabile
+        // let <name> = <value> - immutable module binding
         declareBinding(expression, "let", precedence, false);
-        // let mut <nome> = <valore> - binding di modulo riassegnabile
+        // let mut <name> = <value> - reassignable module binding
         declareBinding(expression, "let_mut", precedence, true);
 
-        // pub <dichiarazione> - esporta il simbolo appena dichiarato
+        // pub <declaration> - exports the symbol just declared
         expression.addLazyUnaryOperator("pub", "export", precedence, false, false, t -> Context.Type.NONE, (c, t, lv) ->
         {
             Value declared = lv.evalValue(c, Context.Type.NONE);
@@ -77,11 +78,11 @@ public class Modules
             Value value = reference.current();
             ModuleSymbols symbols = c.host.symbolsOf(expression.module);
             symbols.declareBinding(name, mutable);
-            // l'assegnamento interno ha creato una variabile locale al corpo del modulo: il valore
-            // appartiene al modulo, quindi va spostato dove le funzioni possono vederlo
+            // the inner assignment created a variable local to the module body: the value
+            // belongs to the module, so it must be moved where functions can see it
             c.delVariable(name);
             c.host.setGlobalVariable(expression.module, name, value);
-            // la dichiarazione vale il riferimento e non il valore: 'pub' ci sta sopra e vuole il nome
+            // the declaration evaluates to the reference, not the value: 'pub' sits on top of it and wants the name
             return new VariableReferenceValue(name, value);
         });
     }

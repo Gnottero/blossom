@@ -4,18 +4,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * I pochi agganci globali del core verso l'ambiente che lo ospita.
+ * The core's few global hooks into the environment that hosts it.
  *
- * <p>Il core non conosce né Minecraft né il mod che lo incorpora: quando gli serve un logger o
- * sapere se l'host è in modalità debug passa da qui, e l'host configura questa classe una volta
- * all'avvio invece di essere importato dal core (che è esattamente l'accoppiamento che l'estrazione
- * elimina).
+ * <p>The core knows neither Minecraft nor the mod that embeds it: when it needs a logger or to
+ * know whether the host is in debug mode, it goes through here, and the host configures this
+ * class once at startup instead of being imported by the core (which is exactly the coupling the
+ * extraction removes).
  */
 public final class Blossom
 {
     public static final Logger LOG = LoggerFactory.getLogger("blossom");
 
-    /** volatile: l'host la imposta dal thread di avvio, gli script la leggono dai loro */
+    /** Volatile: the host sets it from the startup thread, scripts read it from theirs. */
     private static volatile boolean debug = false;
 
     private Blossom()
@@ -23,8 +23,8 @@ public final class Blossom
     }
 
     /**
-     * In debug le eccezioni interne del linguaggio riempiono lo stack trace java, che costa e serve
-     * solo a chi sta debuggando l'interprete stesso.
+     * In debug mode, the language's internal exceptions fill in the Java stack trace, which costs
+     * performance and is only useful to whoever is debugging the interpreter itself.
      */
     public static boolean isDebugEnabled()
     {

@@ -377,7 +377,7 @@
       "block.set(pos, 'oak_stairs', {'facing' -> 'north', 'half' -> 'top'});",
       "// copying a block along with its data\nblock.set(there, block.block(here));"
     ],
-    "note": "A property the block does not have is an error, with the right name suggested — not a silent default."
+    "note": "A property the block does not have is an error, with the right name suggested, not a silent default."
   },
   "destroy": {
     "signatures": [

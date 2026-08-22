@@ -36,19 +36,20 @@ public class FunctionValue extends Value implements Callables.ILazyFunction
     private Map<String, LazyValue> outerState;
     private final List<String> args;
     /**
-     * il tipo canonico dichiarato per ogni parametro, o {@code null} se la firma non ne dichiara
-     * nessuno. Nel caso normale - nessun tipo - il controllo a runtime e' un confronto con null
+     * The canonical type declared for each parameter, or {@code null} if the signature declares
+     * none. In the normal case (no types) the runtime check is just a comparison with null.
      */
     private final @Nullable List<String> argumentTypes;
     /**
-     * il valore di riserva di ogni parametro, {@code null} dove non ce n'e' uno, e la lista intera
-     * {@code null} quando nessun parametro ne ha. Nel caso normale il costo e' un confronto con null
+     * The fallback value for each parameter, {@code null} where there isn't one, and the whole
+     * list {@code null} when no parameter has one. In the normal case the cost is just a
+     * comparison with null.
      */
     private final @Nullable List<LazyValue> defaults;
     private final String varArgs;
     /**
-     * il nome del modulo, memorizzato alla prima richiesta perche' il profiler lo chiede ad ogni
-     * chiamata. Non nel costruttore: l'espressione puo' ancora non sapere a quale modulo appartiene
+     * The module name, cached on first request because the profiler asks for it on every call.
+     * Not computed in the constructor: the expression may not yet know which module it belongs to.
      */
     private String moduleName = null;
     /**
@@ -129,8 +130,8 @@ public class FunctionValue extends Value implements Callables.ILazyFunction
     }
 
     /**
-     * Il modulo in cui la funzione è definita, per il profiler; {@code "<code>"} fuori da un
-     * modulo. Calcolato una volta perché lo legge il punto più caldo dell'interprete.
+     * The module the function is defined in, for the profiler; {@code "<code>"} outside a
+     * module. Computed once because it's read by the hottest point of the interpreter.
      */
     public String moduleName()
     {
@@ -229,9 +230,9 @@ public class FunctionValue extends Value implements Callables.ILazyFunction
         }
         catch (final blossom.exception.BlossomError typed)
         {
-            // un errore tipizzato risale con il proprio frame: avvolgerlo qui in un
-            // ExpressionException cancellerebbe categoria, posizione e suggerimento, cioe' tutto
-            // quello per cui il §4 del piano esiste
+            // A typed error propagates with its own frame: wrapping it in an ExpressionException
+            // here would erase category, position, and suggestion, i.e. everything §4 of the
+            // plan exists for
             throw typed.pushFrame(fullName(), blossom.exception.BlossomError.positionOf(expression, token));
         }
         catch (InternalExpressionException exc)
@@ -246,11 +247,11 @@ public class FunctionValue extends Value implements Callables.ILazyFunction
     }
 
     /**
-     * Gli argomenti nell'ordine dei parametri, con i nomi risolti e i default riempiti.
+     * The arguments in parameter order, with names resolved and defaults filled in.
      *
-     * <p>Chi non usa ne' l'una ne' l'altra cosa paga un confronto con null e un {@code instanceof}
-     * sull'ultimo argomento: gli argomenti con nome stanno in coda, come in ogni linguaggio che li
-     * ha, quindi guardare l'ultimo basta a sapere se ce ne sono.
+     * <p>Callers using neither feature pay only a null comparison and an {@code instanceof} check
+     * on the last argument: named arguments go last, as in every language that has them, so
+     * looking at the last one is enough to know whether there are any.
      */
     private List<Value> resolveArguments(Context c, List<Value> params, Expression e, Token t)
     {
@@ -311,7 +312,7 @@ public class FunctionValue extends Value implements Callables.ILazyFunction
         {
             if (value == null)
             {
-                break;   // manca davvero: lo dice assertArgsOk, con il messaggio che sa gia' dare
+                break;   // genuinely missing: assertArgsOk reports it, with the message it already knows how to give
             }
             result.add(value);
         }
@@ -332,8 +333,8 @@ public class FunctionValue extends Value implements Callables.ILazyFunction
     }
 
     /**
-     * Quanti argomenti bisogna passare per forza: i parametri, meno quelli che hanno un valore di
-     * riserva.
+     * How many arguments must be passed no matter what: the parameters, minus the ones that have
+     * a fallback value.
      */
     public int requiredArguments()
     {
@@ -423,8 +424,8 @@ public class FunctionValue extends Value implements Callables.ILazyFunction
         for (int i = 0; i < args.size(); i++)
         {
             String arg = args.get(i);
-            // nessuna copia: il nome della variabile non vive piu' sul valore, quindi legare un
-            // argomento a un parametro non puo' piu' rinominarlo sotto al chiamante. Vedi D-093
+            // No copy: the variable name no longer lives on the value, so binding an argument to
+            // a parameter can no longer rename it out from under the caller. See D-093
             Value val = arguments.get(i);
             if (argumentTypes != null)
             {
@@ -442,11 +443,11 @@ public class FunctionValue extends Value implements Callables.ILazyFunction
             newFrame.setVariable(varArgs, ListValue.wrap(extraParams));
         }
         Value retVal;
-        // il watchdog conta la chiamata prima di aprirla e la chiude in ogni caso, anche quando la
-        // funzione esce per eccezione: un frame lasciato contato farebbe fallire la chiamata dopo
+        // The watchdog counts the call before opening it and closes it in every case, even when
+        // the function exits via exception: a frame left counted would make the next call fail
         newFrame.budget.enterCall(name);
         blossom.interpreter.Profiler profiler = newFrame.profiler;
-        long profileStart = profiler.enter(); // a profiler spento e' un campo letto e un return
+        long profileStart = profiler.enter(); // with the profiler off this is just a field read and a return
         try
         {
             retVal = body.evalValue(newFrame, type); // todo not sure if we need to propagete type / consider boolean context in defined functions - answer seems ye
@@ -468,12 +469,12 @@ public class FunctionValue extends Value implements Callables.ILazyFunction
     }
 
     /**
-     * Verifica il tipo dichiarato di un parametro.
+     * Checks a parameter's declared type.
      *
-     * <p>Il controllo è a chiamata e non a caricamento: senza inferenza sul corpo non c'è modo di
-     * sapere staticamente cosa arriverà. Quello che si guadagna è comunque il grosso — l'errore
-     * scatta sul confine della funzione, dicendo quale parametro e cosa ci è arrivato, invece di
-     * saltare fuori tre righe dentro il corpo su un'operazione che non c'entra.
+     * <p>The check happens at call time, not at load time: without inference over the body
+     * there's no way to know statically what will arrive. What's gained is still the bulk of the
+     * benefit: the error fires at the function boundary, saying which parameter and what arrived,
+     * instead of surfacing three lines into the body on an unrelated operation.
      */
     private void checkParameterType(int index, String parameter, Value value, Expression e, Token t)
     {

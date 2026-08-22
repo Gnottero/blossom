@@ -12,7 +12,7 @@ import net.minecraft.world.entity.ai.memory.MemorySlot;
 
 import com.gnottero.blossom.access.Access;
 
-/** La memoria di un mob, per {@code entity.query(e, 'brain', ...)}. */
+/** A mob's memory, for {@code entity.query(e, 'brain', ...)}. */
 @Mixin(Brain.class)
 public class Brain_blossomAccessMixin implements Access.BrainMemories
 {

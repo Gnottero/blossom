@@ -11,25 +11,25 @@ import blossom.exception.SourcePosition;
 import blossom.exception.Suggestions;
 
 /**
- * L'host minimo del core: esegue codice senza alcun ambiente di gioco intorno.
+ * The core's minimal host: executes code without any game environment around it.
  *
- * <p>Serve a due cose - i test JUnit puri e il benchmark - ed è la base da cui il mod deriva il
- * proprio host. Conosce i moduli del progetto per nome, e per ciascuno il preambolo già letto, così
- * da poter installare gli alias di un modulo prima che il suo corpo giri.
+ * <p>It serves two purposes (pure JUnit tests and the benchmark) and is the base the mod derives
+ * its own host from. It knows the project's modules by name, and for each one the preamble already
+ * read, so it can install a module's aliases before its body runs.
  */
 public class BlossomHost extends ScriptHost
 {
     private final Map<String, Module> libraries;
     /**
-     * nome del modulo → (alias → nome globale del modulo importato).
+     * Module name to (alias to global name of the imported module).
      *
-     * <p>Non il preambolo così com'è: dentro una dipendenza {@code import "vector" as v} punta al
-     * modulo che questo host registra come {@code utils.vector}, e la traduzione la sa solo chi ha
-     * risolto i percorsi. Tenere qui il preambolo grezzo significherebbe rifare quella risoluzione
-     * ad ogni accesso, e sbagliarla.
+     * <p>Not the preamble as-is: inside a dependency {@code import "vector" as v} points to the
+     * module this host registers as {@code utils.vector}, and only whoever resolved the paths
+     * knows the translation. Keeping the raw preamble here would mean redoing that resolution on
+     * every access, and getting it wrong.
      */
     private final Map<String, Map<String, String>> importAliases;
-    /** applicato ad ogni espressione appena creata: è il punto in cui il layer di gioco inietta la sua API */
+    /** Applied to every newly created expression: the point where the game layer injects its API. */
     private final UnaryOperator<Expression> setup;
 
     public BlossomHost(@Nullable Module code, BlossomServer server, Map<String, Module> libraries,
@@ -46,8 +46,8 @@ public class BlossomHost extends ScriptHost
     }
 
     /**
-     * Prepara un'espressione come la vede questo host: sorgente testuale, modulo di appartenenza e
-     * funzioni built-in del layer che ci sta sopra.
+     * Prepares an expression the way this host sees it: text source, owning module, and the
+     * built-in functions of the layer above it.
      */
     public Expression prepare(@Nullable Module module, String code)
     {
@@ -78,7 +78,7 @@ public class BlossomHost extends ScriptHost
     {
         if (blossom.language.StdLib.isBuiltinModule(name))
         {
-            // un modulo di libreria non ha corpo da eseguire: esiste solo come spazio dei nomi
+            // A library module has no body to run: it exists only as a namespace
             return new Module(name, "null", true);
         }
         Module module = libraries.get(name);
@@ -96,7 +96,7 @@ public class BlossomHost extends ScriptHost
         prepare(module, module.code()).executeAndEvaluate(c, true, loadOverrides, null);
     }
 
-    /** Copia difensiva delle librerie note, per chi vuole costruire un host imparentato. */
+    /** Defensive copy of the known libraries, for whoever wants to build a related host. */
     public Map<String, Module> libraries()
     {
         return new HashMap<>(libraries);

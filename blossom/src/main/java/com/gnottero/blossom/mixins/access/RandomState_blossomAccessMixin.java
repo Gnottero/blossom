@@ -10,7 +10,7 @@ import net.minecraft.world.level.levelgen.RandomState;
 
 import com.gnottero.blossom.access.Access;
 
-/** Cattura il visitor del generatore: serve a {@code world.sample_noise}. */
+/** Captures the generator's visitor: needed by {@code world.sample_noise}. */
 @Mixin(RandomState.class)
 public class RandomState_blossomAccessMixin implements Access.RandomStateVisitor
 {

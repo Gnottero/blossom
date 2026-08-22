@@ -12,14 +12,16 @@ import blossom.value.FunctionValue;
 import blossom.value.Value;
 
 /**
- * Un'app caricata, vista da chi deve richiamarla da fuori: eventi, schermate, callback.
+ * A loaded app, seen from code that needs to call back into it from outside: events, screens,
+ * callbacks.
  *
- * <p>E' solo il minimo che serve per chiamare una funzione dentro un'app sapendo chi l'ha chiesto:
- * caricamento, permessi e comandi stanno in {@link ScriptRuntime}, che e' un oggetto diverso apposta.
+ * <p>This is just the minimum needed to call a function inside an app while knowing who asked for
+ * it: loading, permissions, and commands live in {@link ScriptRuntime}, which is a separate object
+ * on purpose.
  */
 public record AppHost(String name, Interpreter interpreter)
 {
-    /** @return l'app caricata con quel nome, o {@code null} se non e' caricata */
+    /** @return the app loaded under that name, or {@code null} if it is not loaded */
     public static @Nullable AppHost byName(String name)
     {
         ScriptRuntime runtime = BlossomMod.runtime();
@@ -32,10 +34,10 @@ public record AppHost(String name, Interpreter interpreter)
     }
 
     /**
-     * L'app a cui appartiene il codice in esecuzione.
+     * The app that the currently running code belongs to.
      *
-     * @throws blossom.exception.TypeMismatchError se il codice non gira dentro un'app caricata:
-     *         succede a chi prova a usare i file o gli eventi da {@code /blossom script run}
+     * @throws blossom.exception.TypeMismatchError if the code is not running inside a loaded app:
+     *         this happens when trying to use files or events from {@code /blossom script run}
      */
     public static AppHost of(blossom.interpreter.Context context)
     {
@@ -50,32 +52,33 @@ public record AppHost(String name, Interpreter interpreter)
         return host;
     }
 
-    /** L'host del core sotto questa app: da qui passano storage e moduli. */
+    /** The core host beneath this app: storage and modules go through here. */
     public blossom.interpreter.ScriptHost host()
     {
         return interpreter.host();
     }
 
-    /** Il modulo principale dell'app. */
+    /** The app's main module. */
     public blossom.interpreter.Module main()
     {
         return interpreter.host().main;
     }
 
     /**
-     * Chiama una funzione dell'app.
+     * Calls a function of the app.
      *
-     * <p>Un errore dentro la funzione viene riportato e non risale al gioco: chi chiama e' quasi
-     * sempre un mixin dentro il tick loop, e un'app rotta non deve fermare il server.
+     * <p>An error inside the function is reported and does not propagate back to the game: the
+     * caller is almost always a mixin inside the tick loop, and a broken app must not stop the
+     * server.
      *
-     * @return il valore restituito, o {@code null} se la chiamata e' fallita
+     * @return the returned value, or {@code null} if the call failed
      */
     public @Nullable Value call(CommandSourceStack source, FunctionValue function, List<Value> arguments)
     {
         try
         {
-            // ogni callback e' un'esecuzione a se': il watchdog riparte, altrimenti un'app viva da
-            // ore avrebbe finito il budget al primo giorno
+            // each callback is its own execution: the watchdog restarts, otherwise an app that has
+            // been alive for hours would run out of budget on the first day
             Context context = new ScriptContext(interpreter.host(), source).beginExecution();
             return function.callInContext(context, Context.Type.NONE, arguments).evalValue(context);
         }

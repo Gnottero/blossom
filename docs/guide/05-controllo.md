@@ -1,95 +1,95 @@
-# 5. Controllo di flusso
+# 5. Control flow
 
-Non ci sono istruzioni: `if`, i cicli e le trasformazioni sono funzioni che restituiscono un valore.
-Il che vuol dire che si compongono, e che una condizione si può mettere dove sta un valore.
+There are no statements: `if`, the loops and the transformations are functions that return a value.
+Which means they compose, and that a condition can go wherever a value goes.
 
 ## `if`
 
 ```
-if(condizione, allora);
-if(condizione, allora, altrimenti);
-if(c1, a1, c2, a2, ..., altrimenti);        // catena: la prima vera vince
+if(condition, then);
+if(condition, then, otherwise);
+if(c1, a1, c2, a2, ..., otherwise);         // a chain: the first true one wins
 ```
 
 ```
-if(vita < 5, 'critico', vita < 15, 'ferito', 'sano');
-if(false, 'a');             // null: senza ramo finale, se nessuna condizione è vera, è null
+if(health < 5, 'critical', health < 15, 'hurt', 'healthy');
+if(false, 'a');             // null: with no final branch, if nothing matched the result is null
 ```
 
-I rami non presi **non vengono valutati**: `if(x != 0, 100 / x, 0)` è sicuro.
+Branches that are not taken **are not evaluated**: `if(x != 0, 100 / x, 0)` is safe.
 
 ## `match`
 
-Quando le condizioni sono tutte confronti sullo **stesso** valore, `match` lo dice una volta sola:
+When the conditions are all comparisons against the **same** value, `match` says it once:
 
 ```
-match(danno,
-    0            -> 'illeso',
-    d: num       -> if(d > 20, 'grave', 'ferito'),
-    else         -> 'ignoto');
+match(damage,
+    0            -> 'unharmed',
+    d: num       -> if(d > 20, 'severe', 'hurt'),
+    else         -> 'unknown');
 ```
 
-Una forma a sinistra della freccia puo' essere:
+A pattern to the left of the arrow can be:
 
-| Forma | Combacia |
+| Pattern | Matches |
 | --- | --- |
-| un valore (`0`, `'ciao'`) | se il soggetto e' uguale |
-| un nome (`d`) | sempre, e lega il soggetto a quel nome |
-| un nome con tipo (`d: num`) | se il soggetto e' di quel tipo, e lo lega |
-| `else` | il ramo finale |
+| a value (`0`, `'hello'`) | when the subject is equal to it |
+| a name (`d`) | always, and binds the subject to that name |
+| a name with a type (`d: num`) | when the subject has that type, and binds it |
+| `else` | the final branch |
 
-Il soggetto si valuta **una volta sola**, e i corpi dei bracci non presi non si valutano affatto.
-Senza nessun braccio che combacia il risultato e' `null`, come per un `if` senza ramo finale.
+The subject is evaluated **once**, and the bodies of the arms that are not taken are not evaluated at
+all. When no arm matches, the result is `null`, just as for an `if` with no final branch.
 
-Non ci sono guardie (`d if d > 20 -> ...`): richiederebbero un `if` infisso, cioe' grammatica nuova,
-e un `if` dentro il corpo del braccio dice la stessa cosa.
+There are no guards (`d if d > 20 -> ...`): they would need an infix `if`, that is new grammar, and
+an `if` inside the arm's body says the same thing.
 
-## Cicli
+## Loops
 
-| | Firma | Restituisce |
+| | Signature | Returns |
 | --- | --- | --- |
-| `loop` | `loop(quante_volte, corpo)` | l'ultimo valore del corpo |
-| `for` | `for(lista, corpo)` | **quante volte** il corpo è risultato vero |
-| `while` | `while(condizione, tetto, corpo)` | l'ultimo valore del corpo |
-| `c_for` | `c_for(init, condizione, passo, corpo)` | l'ultimo valore del corpo |
+| `loop` | `loop(times, body)` | the last value of the body |
+| `for` | `for(list, body)` | **how many times** the body came out true |
+| `while` | `while(condition, ceiling, body)` | the last value of the body |
+| `c_for` | `c_for(init, condition, step, body)` | the last value of the body |
 
 ```
-somma = 0;
-loop(5, somma += _);                    // _ vale 0, 1, 2, 3, 4
+sum = 0;
+loop(5, sum += _);                      // _ is 0, 1, 2, 3, 4
 
-for([1, 2, 3], somma += _);             // _ è l'elemento, _i il suo indice
+for([1, 2, 3], sum += _);               // _ is the element, _i its index
 
-quanti_alti = for(giocatori, entity.query(_, 'y') > 100);   // for conta i veri
+how_many_high = for(players, entity.query(_, 'y') > 100);   // for counts the true ones
 
 i = 0;
-while(i < 3, 1000, i += 1);             // 1000 è il tetto di iterazioni, non la condizione
+while(i < 3, 1000, i += 1);             // 1000 is the iteration ceiling, not the condition
 
-c_for(i = 0, i < 10, i += 2, somma += i);
+c_for(i = 0, i < 10, i += 2, sum += i);
 ```
 
-Il **tetto** di `while` non è un dettaglio decorativo: è il numero massimo di giri, e serve perché
-un ciclo che gira dentro un evento tiene fermo il server. Raggiungerlo non è un errore, il ciclo
-semplicemente finisce.
+The **ceiling** of `while` is not decorative: it is the maximum number of laps, and it exists
+because a loop running inside an event holds the server still. Reaching it is not an error, the loop
+simply ends.
 
-`break()` esce dal ciclo, `continue()` salta al giro dopo, e tutti e due accettano un valore che
-diventa il valore del ciclo (o dell'iterazione):
+`break()` leaves the loop, `continue()` skips to the next lap, and both accept a value that becomes
+the value of the loop (or of the iteration):
 
 ```
 loop(10, if(_ == 3, break(_)); 0);      // 3
 
-somma = 0;
-for([1, 2, 3], if(_ == 2, continue()); somma += _);      // salta il 2
+sum = 0;
+for([1, 2, 3], if(_ == 2, continue()); sum += _);      // skips the 2
 ```
 
-`break` esce dal ciclo **più interno**. Non esiste un `break` etichettato: per uscire da due livelli,
-usa una funzione e `return`.
+`break` leaves the **innermost** loop. There is no labelled `break`: to leave two levels, use a
+function and `return`.
 
-`exit(valore)` è un'altra cosa: ferma tutta l'esecuzione in corso, non solo il ciclo.
+`exit(value)` is a different thing: it stops the whole execution in progress, not just the loop.
 
-## Trasformazioni
+## Transformations
 
-Sono in [`core.list`](../api/core.list.md) e prendono un'**espressione**, non una funzione: dentro,
-`_` è l'elemento corrente, `_i` il suo indice e `_a` l'accumulatore di `reduce`.
+They live in [`core.list`](../api/core.list.md) and take an **expression**, not a function: inside
+it, `_` is the current element, `_i` its index and `_a` the accumulator of `reduce`.
 
 ```
 import "core.list" as list;
@@ -98,40 +98,41 @@ list.map([1, 2, 3], _ * 2);                 // [2, 4, 6]
 list.map([10, 20], _i);                     // [0, 1]
 list.filter([1, 2, 3, 4], _ % 2 == 0);      // [2, 4]
 list.reduce([1, 2, 3, 4], _a + _, 0);       // 10
-list.find([1, 2, 3], _ > 1);               // 2, oppure null se nessuno
-list.all([2, 4], _ % 2 == 0);               // true (su una lista vuota è true)
-list.sort(['bbb', 'a'], list.size(_));// ordina secondo la chiave calcolata
+list.find([1, 2, 3], _ > 1);                // 2, or null when nothing matches
+list.all([2, 4], _ % 2 == 0);               // true (on an empty list it is true)
+list.sort(['bbb', 'a'], list.size(_));      // sorts by the computed key
 ```
 
-`break()` dentro un `map` tronca il risultato: `list.map([1,2,3], if(_ == 2, break()); _)` dà `[1]`.
+`break()` inside a `map` truncates the result: `list.map([1,2,3], if(_ == 2, break()); _)` gives
+`[1]`.
 
-Le stesse trasformazioni accettano anche una **funzione** al posto dell'espressione, e allora i tre
-nomi impliciti li sostituiscono i parametri:
+The same transformations also accept a **function** in place of the expression, and then the three
+implicit names are replaced by parameters:
 
 ```
 list.map([1, 2, 3], fn(x) -> x * 2);                    // [2, 4, 6]
-list.map(['a', 'b'], fn(x, i) -> i);                    // [0, 1]  - il secondo e' l'indice
-list.reduce([1, 2, 3], fn(a, x) -> a + x, 0);           // 10      - in reduce il primo e' l'accumulatore
+list.map(['a', 'b'], fn(x, i) -> i);                    // [0, 1]  - the second one is the index
+list.reduce([1, 2, 3], fn(a, x) -> a + x, 0);           // 10      - in reduce the first is the accumulator
 ```
 
-Quale delle due forme sia lo decide la grammatica, non il valore: si vede scritto, e non costa
-niente a runtime. La forma corta con `_` resta la piu' veloce, perche' non crea nessun frame di
-chiamata; la lambda in cambio da' un nome all'elemento, e un nome non puo' collidere con quello del
-ciclo che sta fuori.
+Which of the two forms it is, is decided by the grammar and not by the value: you can see it in the
+source, and it costs nothing at run time. The short form with `_` stays the fastest, because it
+creates no call frame; the lambda in exchange gives the element a name, and a name cannot collide
+with the one belonging to an enclosing loop.
 
-Una funzione gia' dichiarata si chiama direttamente:
+An already declared function is called directly:
 
 ```
-fn punteggio(giocatore) -> ...;
-list.map(entity.player('all'), fn(g) -> punteggio(g));
+fn score(player) -> ...;
+list.map(entity.player('all'), fn(p) -> score(p));
 ```
 
-## Scegliere il ciclo giusto
+## Choosing the right loop
 
-- una lista da trasformare → `map`/`filter`/`reduce`: dicono cosa fai, e non tengono un contatore a
-  mano
-- un volume di blocchi → `scan.scan` o `scan.volume` di [`core.mc.scan`](../api/core.mc.scan.md),
-  che sono tre cicli annidati scritti bene
-- un lavoro lungo che non deve fermare il tick → un `task` ([capitolo 9](09-concorrenza.md))
-- un contatore con un passo strano → `c_for`
-- "finché non succede X", con un tetto → `while`
+- a list to transform → `map`/`filter`/`reduce`: they say what you are doing, and keep no counter by
+  hand
+- a volume of blocks → `scan.scan` or `scan.volume` from
+  [`core.mc.scan`](../api/core.mc.scan.md), which are three nested loops written properly
+- a long job that must not stall the tick → a `task` ([chapter 9](09-concorrenza.md))
+- a counter with an unusual step → `c_for`
+- "until X happens", with a ceiling → `while`

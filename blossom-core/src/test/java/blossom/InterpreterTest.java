@@ -11,10 +11,10 @@ import blossom.exception.ParseError;
 import blossom.interpreter.Interpreter;
 
 /**
- * Test del core estratto: girano sulla sola JVM, senza Minecraft e senza scaricare nulla.
+ * Tests for the extracted core: they run on the JVM alone, with no Minecraft and no downloads.
  *
- * <p>Coprono quello che la Fase 1 deve garantire prima di toccare la sintassi: parsing, aritmetica,
- * funzioni, closure, liste e mappe, errori.
+ * <p>They cover what Phase 1 must guarantee before touching syntax: parsing, arithmetic, functions,
+ * closures, lists and maps, errors.
  */
 class InterpreterTest
 {
@@ -23,7 +23,7 @@ class InterpreterTest
         return Interpreter.standalone().eval(code).getString();
     }
 
-    /** Come {@link #eval}, ma con la libreria importata: le built-in non sono piu' globali. */
+    /** Like {@link #eval}, but with the library imported: the built-ins are no longer global. */
     private static String evalWithStdlib(String code)
     {
         return eval("""
@@ -34,7 +34,7 @@ class InterpreterTest
                 """ + code);
     }
 
-    // --- parsing e aritmetica ---
+    // --- parsing and arithmetic ---
 
     @Test
     void parsesAndEvaluatesArithmetic()
@@ -59,12 +59,12 @@ class InterpreterTest
     @Test
     void evaluatesBooleanOperatorsLazily()
     {
-        // il ramo destro non deve essere valutato: se lo fosse, la divisione per zero croakerebbe
+        // the right-hand branch must not be evaluated: if it were, the division by zero would throw
         assertEquals("false", eval("false && (1/0)"));
         assertEquals("true", eval("true || (1/0)"));
     }
 
-    // --- variabili e funzioni ---
+    // --- variables and functions ---
 
     @Test
     void keepsStateBetweenEvaluationsOfTheSameInterpreter()
@@ -79,7 +79,7 @@ class InterpreterTest
     void definesAndCallsFunctions()
     {
         assertEquals("25", eval("square(x) -> x * x; square(5)"));
-        // 'fact' e' gia' una built-in: una definizione che la calpesta e' un errore, non una ridefinizione
+        // 'fact' is already a built-in: a definition that shadows it is an error, not a redefinition
         assertEquals("120", eval("factorial(n) -> if(n < 2, 1, n * factorial(n - 1)); factorial(5)"));
     }
 
@@ -90,39 +90,39 @@ class InterpreterTest
     }
 
     /**
-     * Il nome di una variabile lo sa il nodo che la legge, non il valore: questi casi fissano che
-     * assegnare a un parametro resti una faccenda del solo frame che lo ha.
+     * The node that reads a variable knows its name, not the value: these cases pin down that
+     * assigning to a parameter stays a matter for the frame that owns it alone.
      */
     @Test
     void assigningToAParameterDoesNotReachTheCaller()
     {
-        // il parametro ha lo stesso nome della variabile del chiamante: il caso in cui uno scambio
-        // di nomi si vedrebbe
+        // the parameter has the same name as the caller's variable: the case where a name mix-up
+        // would show
         assertEquals("1", eval("bump(n) -> (n = 99; n); n = 1; bump(n); n"));
         assertEquals("99", eval("bump(n) -> (n = 99; n); n = 1; bump(n)"));
-        // e con nomi diversi
+        // and with different names
         assertEquals("1", eval("bump(v) -> (v = 99; v); n = 1; bump(n); n"));
-        // un contenitore invece si passa per riferimento, e resta cosi'
+        // a container, instead, is passed by reference, and stays that way
         assertEquals("[1, 2, 3]", evalWithStdlib("push(l) -> list.put(l, null, 3); l = [1, 2]; push(l); l"));
-        // scambiare due parametri fra loro non deve confondere i nomi
+        // swapping two parameters with each other must not mix up the names
         assertEquals("[2, 1]", eval("exchange(a, b) -> (a <> b; [a, b]); exchange(1, 2)"));
     }
 
     @Test
     void capturesOuterVariablesExplicitly()
     {
-        // outer(...) e' l'unica via per leggere una variabile del frame esterno, e non accetta i global
+        // outer(...) is the only way to read a variable from the outer frame, and it doesn't accept globals
         assertEquals("7", eval("base = 7; read(outer(base)) -> base; read()"));
     }
 
     @Test
     void treatsFunctionsAsValues()
     {
-        // una funzione si passa per nome o come valore di funzione: 'inc' nudo sarebbe una variabile non definita
+        // a function is passed by name or as a function value: bare 'inc' would be an undefined variable
         assertEquals("9", eval("apply_twice(f, x) -> call(f, call(f, x)); inc(v) -> v + 3; apply_twice('inc', 3)"));
     }
 
-    // --- collezioni ---
+    // --- collections ---
 
     @Test
     void buildsAndIndexesLists()
@@ -142,20 +142,20 @@ class InterpreterTest
     }
 
     /**
-     * Le tre variabili implicite vivono in campi del contesto e non nella mappa delle variabili:
-     * questi casi fissano quello che deve continuare a valere comunque.
+     * The three implicit variables live in fields of the context, not in the variable map: these
+     * cases pin down what must keep holding regardless.
      */
     @Test
     void implicitVariablesNestAndRestore()
     {
-        // l'indice c'e' e conta da zero
+        // the index is there and counts from zero
         assertEquals("[0, 1, 2]", evalWithStdlib("list.map(['a', 'b', 'c'], _i)"));
-        // un ciclo dentro l'altro: quello interno non deve rubare '_' a quello esterno
+        // a loop inside another: the inner one must not steal '_' from the outer one
         assertEquals("[3, 6, 9]", evalWithStdlib("list.map([1, 2, 3], (outer_ = _; list.reduce([1, 1, 1], _a + outer_, 0)))"));
-        // finito il ciclo, '_' torna il valore di partenza invece di restare l'ultimo elemento
+        // once the loop is over, '_' goes back to its starting value instead of staying the last element
         assertEquals("0", evalWithStdlib("list.map([1, 2], _ * 2); _"));
         assertEquals("0", evalWithStdlib("for([1, 2, 3], _i); _i"));
-        // e sono raggiungibili anche per nome, dove il ciclo le ha messe
+        // and they're also reachable by name, wherever the loop put them
         assertEquals("[2, 3]", eval("""
                 import "core.list" as list;
                 import "core.system" as system;
@@ -188,7 +188,7 @@ class InterpreterTest
         assertEquals("yes", eval("if(1 > 0, 'yes', 'no')"));
     }
 
-    // --- errori ---
+    // --- errors ---
 
     @Test
     void reportsSyntaxErrors()

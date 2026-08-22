@@ -13,16 +13,16 @@ item.recipes('minecraft:stick');                 // what produces it
 
 An item is a triple `[name, count, nbt]`.
 
-### `catalog(tag?)` · `tags(item, tag?)`
+### `item.catalog(tag?)` · `item.tags(item, tag?)`
 The registered items, and the tags of an item.
 
-### `max_stack(item)` · `crafting_remainder(item)`
+### `item.max_stack(item)` · `item.crafting_remainder(item)`
 How high it stacks, and what is left after using it in a recipe (the empty bucket, say).
 
-### `name(item)`
+### `item.name(item)`
 The name shown in game, translated.
 
-### `recipes(item, type?)`
+### `item.recipes(item, type?)`
 The recipes producing that item: ingredients, result and type.
 
 ## Data components
@@ -39,17 +39,17 @@ item.set_component(item_value, 'minecraft:custom_name', '{"text":"Sword"}');
 item.set_component(item_value, 'minecraft:damage', null);   // removes it
 ```
 
-### `components(item, default?)`
+### `item.components(item, default?)`
 Every component, as a map from id to value. With `default` true it reads the ones the **item has of
 its own** instead of the ones this stack carries: it is the comparison between the two that says
 whether a value was set on purpose or is the one every item of that kind has.
 
-### `component(item, name, default?)`
+### `item.component(item, name, default?)`
 A single component, or `null` when that stack does not have it.
 
-### `set_component(item, name, value)`
+### `item.set_component(item, name, value)`
 The item with that component changed; with `value` at `null` it removes it. It returns a copy and
-does not touch the original — an item read from an inventory is already a copy, and pretending that
+does not touch the original: an item read from an inventory is already a copy, and pretending that
 writing into it changes the world would be worse than not being able to.
 
 A value that makes no sense for that component is **refused right away**, by the codec:
@@ -62,7 +62,7 @@ TypeMismatchError
 That is why these go through typed components and not through NBT: the alternative is a broken item
 discovered much later, when somebody tries to use it.
 
-### `component_catalog()`
+### `item.component_catalog()`
 The ids of every component this game knows.
 
 ---

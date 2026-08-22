@@ -4,8 +4,10 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ## 1.0.0 — non rilasciato
 
-`api_level` sale a **2.0**: e' una rottura MAJOR, e un'app che non dichiara il proprio `api_level`
-vale 1.0 e non carica piu'. E' voluto: e' meglio di un'app che carica e sbaglia.
+`api_level` sale a **2.0**: e' una rottura MAJOR, e un'app che dichiara `api_level: "1.0"` non
+carica piu'. E' voluto: e' meglio di un'app che carica e sbaglia. Un manifesto che **non** dichiara
+il campo vale invece il MINOR piu' basso del MAJOR corrente - oggi `2.0` - cioe' "non uso niente di
+recente", che e' quello che il campo facoltativo ha sempre voluto dire.
 
 ### Il contenuto di gioco dentro il pack
 
@@ -80,6 +82,40 @@ Tre moduli si dividono, perche' tenevano insieme cose diverse:
 
 ### Corretto
 
+- **I nomi delle funzioni dell'utente non sono piu' quelli delle built-in.** `fn sum(...)`,
+  `fn get(...)`, `fn map(...)`, `fn size(...)` fallivano alla definizione: il controllo guardava
+  l'elenco piatto delle implementazioni, 160 nomi, di cui 56 senza un modulo da suggerire ("'sum'
+  is not available without an import", e non c'era niente da importare). Un nome senza qualificatore
+  e' sempre dell'utente; la libreria si raggiunge per alias, quindi non c'era niente da mascherare.
+  Riservato resta il solo prelude (`if`, `loop`, `print`, `try`, ...), e usarne uno come nome di
+  funzione lo dice invece di lamentarsi di `->`.
+- **Un manifesto senza `api_level` non caricava.** Il default era scritto `1.0` a mano mentre il
+  runtime forniva `2.0`: adesso e' il MINOR piu' basso del MAJOR corrente, come dice il campo.
+- **Il costante piegato a parse time non salta piu' il `try`.** Una chiamata pura con argomenti tutti
+  costanti veniva eseguita mentre il codice si leggeva: `try(json.decode('{bad'), 'json_error', ...)`
+  non catturava niente, `if(false, json.decode('{bad'), 'ok')` esplodeva sul ramo morto, e una
+  funzione che conteneva quella riga faceva fallire il **caricamento del modulo** senza essere mai
+  chiamata. Se il calcolo anticipato fallisce, adesso si rinuncia a piegarlo e la chiamata fallisce
+  dove e' scritta.
+- **L'eccezione di un task arriva a chi lo aspetta.** `task.wait` restituiva `null` e l'errore finiva
+  solo nel log, quindi un `try` intorno non vedeva niente - il contrario di quello che
+  `core.task.md` prometteva. Il log resta, per il task che nessuno aspetta.
+- **Il tokenizer non esce piu' dalla stringa.** Uno spazio in fondo a un segnaposto (`"${1 }"`) o una
+  graffa dentro (`"${ {'k' -> 1} }"`) davano una `StringIndexOutOfBoundsException` cruda: il
+  controllo del limite veniva dopo la lettura invece che prima. E `\${` adesso e' un `${` letterale,
+  che prima non si poteva scrivere.
+- **Firme controllate quando si leggono**: `...rest` deve essere l'ultimo parametro (prima
+  `fn f(a, ...rest, b)` passava e legava gli argomenti ai nomi sbagliati), un parametro non puo'
+  essere dichiarato due volte, e la lambda passata a `map`/`reduce` deve avere i parametri che le
+  vengono passati - `list.reduce(l, fn(a) -> a, 0)` restituiva l'accumulatore iniziale in silenzio.
+- **`size` misura quello che ha una dimensione**: su un numero contava le cifre e su una lista pigra
+  i caratteri della sua rappresentazione (`list.size(list.range(5))` rispondeva `14`). Ora sono due
+  `TypeMismatchError`, e quello della lista pigra dice come materializzarla.
+- **Niente errori interni al posto di errori del linguaggio**: `l:0 <> l:1` diceva "please report
+  this issue to Blossom", e `json.decode('1e999999')` faceva uscire una `NumberFormatException` della
+  JVM invece di un `json_error`.
+- **I messaggi di `core.task` usano il nome che si scrive** (`task.wait`), non quello
+  dell'implementazione (`task_join`).
 - `modify` ed `entity_types` erano **registrati due volte**, con il corpo copiato identico: la
   seconda registrazione sovrascriveva la prima.
 - `core.task` documentava `task_await` come "aspetta senza restituire il valore", che non e' quello

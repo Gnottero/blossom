@@ -1,18 +1,18 @@
-# 12. Configurazione del server
+# 12. Server configuration
 
-Tutto quello che decide un amministratore, e che un'app non può decidere da sola, sta in un file
-solo: `config/blossomscript.json`, accanto agli altri file di configurazione dei mod.
+Everything an administrator decides, and that an app cannot decide for itself, lives in a single
+file: `config/blossomscript.json`, next to the other mods' configuration files.
 
-Il file è **facoltativo**. Senza, il mod parte con i default: nessun registry, nessuna cartella
-raggiungibile da `core.io`, nessun host raggiungibile da `core.http`, watchdog standard. Un file
-illeggibile o malformato non impedisce l'avvio — viene segnalato nel log e si parte con i default,
-perché un mod che rifiuta di caricare per una virgola di troppo rompe un server per una cosa che non
-stava usando.
+The file is **optional**. Without it the mod starts with the defaults: no registry, no directory
+reachable from `core.io`, no host reachable from `core.http`, standard watchdog. A file that is
+unreadable or malformed does not prevent startup: it is reported in the log and the defaults are
+used, because a mod that refuses to load over one comma too many breaks a server over something it
+was not even using.
 
-Il file si legge **all'apertura del mondo**. Cambiarlo con il server acceso non ha effetto: serve un
-riavvio (in singleplayer, riaprire il mondo).
+The file is read **when the world is opened**. Changing it with the server running has no effect: it
+takes a restart (in singleplayer, reopening the world).
 
-## Il file completo
+## The complete file
 
 ```json
 {
@@ -21,12 +21,12 @@ riavvio (in singleplayer, riaprire il mondo).
   "registry": { "directory": "/srv/blossom-packs" },
 
   "io": {
-    "roots": { "condiviso": "condiviso", "log": "blossom/log" },
-    "writable": ["condiviso"]
+    "roots": { "shared_data": "shared_data", "log": "blossom/log" },
+    "writable": ["shared_data"]
   },
 
   "http": {
-    "hosts": ["api.esempio.org", "*.stato.esempio.org"],
+    "hosts": ["api.example.org", "*.status.example.org"],
     "schemes": ["https"],
     "timeout_ms": 5000,
     "max_response_bytes": 1048576,
@@ -37,115 +37,117 @@ riavvio (in singleplayer, riaprire il mondo).
 }
 ```
 
-Ogni sezione è indipendente e ogni sezione mancante spegne la sua parte. `root` e le quattro sezioni
-sono tutto quello che esiste: una chiave che non è fra queste viene ignorata.
+Every section is independent, and every missing section turns its own part off. `root` and the four
+sections are all there is: a key that is not one of these is ignored.
 
-## `root` — da dove si caricano le app
+## `root`: where apps are loaded from
 
-| Chiave | Tipo | Default | Cosa fa |
+| Key | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `root` | stringa | `<mondo>/blossom` | la cartella in cui il mod cerca app e pack |
+| `root` | string | `<world>/blossom` | the directory the mod looks in for apps and packs |
 
-Senza questa chiave le app stanno in `<mondo>/blossom/`, e ogni mondo ha le sue. Dichiarandola, tutti
-i mondi di quel server guardano dove dici tu.
+Without this key, apps live in `<world>/blossom/`, and every world has its own. Declaring it makes
+every world on that server look where you say.
 
-Un percorso **relativo** si risolve dentro la cartella del mondo (`"scripts"` →
-`<mondo>/scripts/`); uno **assoluto** vale com'è, anche fuori dal mondo — una cartella di script
-condivisa fra più mondi è il caso per cui questa chiave esiste. È diverso da `io.roots`, che non può
-uscire dal mondo: lì il confine protegge dagli script, qui la scelta è di chi amministra il server e
-scrive questo file.
+A **relative** path resolves inside the world directory (`"scripts"` → `<world>/scripts/`); an
+**absolute** one is taken as it is, even outside the world (a script directory shared between
+several worlds is the case this key exists for). This is unlike `io.roots`, which cannot leave the
+world: there the boundary protects against scripts, here the choice belongs to whoever administers
+the server and writes this file.
 
-La cartella viene creata se non c'è. Cambiarla non sposta niente: le app che stavano nella vecchia
-cartella restano lì e semplicemente non vengono più viste.
+The directory is created if it is missing. Changing it moves nothing: apps that were in the old
+directory stay there and are simply no longer seen.
 
-## `registry` — da dove arrivano le dipendenze
+## `registry`: where dependencies come from
 
-Spento per default. Due forme, alternative fra loro; se ci sono entrambe vince `directory`.
+Off by default. Two mutually exclusive forms; if both are present, `directory` wins.
 
-| Chiave | Tipo | Default | Cosa fa |
+| Key | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `registry.directory` | stringa | — | una cartella `<radice>/<nome>/<versione>/`, con dentro un progetto normale |
-| `registry.url` | stringa | — | un `index.json` statico e degli zip, serviti via http |
+| `registry.directory` | string | n/a | a directory `<root>/<name>/<version>/`, with an ordinary project inside |
+| `registry.url` | string | n/a | a static `index.json` and some zip files, served over http |
 
-Un `registry` che non dice né `directory` né `url` viene ignorato con un avviso nel log. Per la
-forma dell'indice e il perché il `sha256` è obbligatorio, vedi [6. Moduli e progetti](06-moduli.md).
+A `registry` that names neither `directory` nor `url` is ignored with a warning in the log. For the
+shape of the index, and for why `sha256` is mandatory, see
+[6. Modules and projects](06-moduli.md).
 
-La cache dei download sta in `.cache/` dentro la cartella degli script, quindi segue `root`.
+The download cache lives in `.cache/` inside the script directory, so it follows `root`.
 
-## `io` — le cartelle raggiungibili da `core.io`
+## `io`: the directories reachable from `core.io`
 
-Due radici ci sono sempre, anche senza questa sezione:
+Two roots always exist, even without this section:
 
-| Radice | Dove | Scrivibile |
+| Root | Where | Writable |
 | --- | --- | --- |
-| `data` | `<mondo>/blossom/data/` | sì |
-| `shared` | `<mondo>/blossom/shared/` | sì |
+| `data` | `<world>/blossom/data/` | yes |
+| `shared` | `<world>/blossom/shared/` | yes |
 
-Sono il posto dove un'app tiene i propri dati. Non c'è nessuna separazione automatica fra un'app e
-l'altra: chi vuole i suoi dati per sé usa una sottocartella con il proprio nome
-(`io.write_json('data', 'contapassi/conteggi.json', ...)`), che è visibile nel punto della chiamata
-invece che decisa dal mod. Le cartelle vengono create al primo avvio.
+They are where an app keeps its own data. There is no automatic separation between one app and
+another: an app that wants its data to itself uses a subdirectory named after itself
+(`io.write_json('data', 'pedometer/counts.json', ...)`), which is visible at the call site instead
+of being decided by the mod. The directories are created on first startup.
 
-| Chiave | Tipo | Default | Cosa fa |
+| Key | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `io.roots` | mappa nome → percorso | `data`, `shared` | le cartelle raggiungibili, una per nome |
-| `io.writable` | lista di nomi | `data`, `shared` | quali di quelle radici si possono anche scrivere |
+| `io.roots` | map of name → path | `data`, `shared` | the reachable directories, one per name |
+| `io.writable` | list of names | `data`, `shared` | which of those roots may also be written |
 
-Quello che dichiari qui si **aggiunge** alle due di default; una radice dichiarata con lo stesso nome
-di una di quelle la sostituisce.
+What you declare here is **added** to the two defaults; a root declared with the same name as one of
+them replaces it.
 
-**I percorsi sono relativi alla cartella del mondo.** Un percorso assoluto vale solo se punta
-comunque dentro il mondo; se punta fuori, la radice viene scartata con un avviso nel log e le sue
-chiamate falliscono come se non fosse mai stata dichiarata. Fuori dalla cartella del mondo c'è il
-resto del disco del server, e nessuna configurazione deve poterlo aprire a uno script.
+**Paths are relative to the world directory.** An absolute path is valid only if it still points
+inside the world; if it points outside, the root is discarded with a warning in the log and its
+calls fail as though it had never been declared. Outside the world directory lies the rest of the
+server's disk, and no configuration should be able to open that to a script.
 
-Il confine vale anche per i link simbolici: una radice che è un link fuori dal mondo, o un link
-dentro una radice che punta fuori, viene rifiutata al momento della chiamata.
+The boundary applies to symbolic links as well: a root that is a link pointing outside the world, or
+a link inside a root that points outside, is refused at call time.
 
-Un nome che compare in `writable` ma non in `roots` è quasi sempre un refuso e viene segnalato. Il
-contrario — dichiarare una cartella e dimenticarsi di renderla scrivibile — si accorge da solo alla
-prima scrittura.
+A name that appears in `writable` but not in `roots` is almost always a typo and is reported. The
+opposite (declaring a directory and forgetting to make it writable) announces itself on the first
+write.
 
-Le funzioni sono in [`core.io`](../api/core.io.md).
+The functions are in [`core.io`](../api/core.io.md).
 
-## `http` — gli host raggiungibili da `core.http`
+## `http`: the hosts reachable from `core.http`
 
-Nessun host per default: `core.http` esiste ma non raggiunge niente.
+No host by default: `core.http` exists but reaches nothing.
 
-| Chiave | Tipo | Default | Cosa fa |
+| Key | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `http.hosts` | lista di stringhe | `[]` | i pattern consentiti: nome esatto, `*.dominio`, o `*` per tutto |
-| `http.schemes` | lista di stringhe | `["https"]` | gli schemi ammessi |
-| `http.timeout_ms` | numero | `5000` | quanto si aspetta una risposta prima di fallire |
-| `http.max_response_bytes` | numero | `1048576` | oltre questa dimensione il corpo viene rifiutato invece che letto |
-| `http.follow_redirects` | booleano | `false` | se seguire i 3xx, ricontrollando l'host ad ogni salto |
+| `http.hosts` | list of strings | `[]` | the allowed patterns: exact name, `*.domain`, or `*` for everything |
+| `http.schemes` | list of strings | `["https"]` | the permitted schemes |
+| `http.timeout_ms` | number | `5000` | how long a response is awaited before failing |
+| `http.max_response_bytes` | number | `1048576` | past this size the body is refused rather than read |
+| `http.follow_redirects` | boolean | `false` | whether to follow 3xx, re-checking the host at every hop |
 
-`*` fra gli host e `http` fra gli schemi sono ammessi ma segnalati nel log: il primo rende ogni app
-installata un canale verso qualunque server di internet, il secondo manda le richieste in chiaro.
+`*` among the hosts and `http` among the schemes are permitted but reported in the log: the first
+turns every installed app into a channel to any server on the internet, the second sends requests in
+the clear.
 
-I redirect, quando sono accesi, si fermano a cinque salti e ogni salto ripassa dall'allowlist: un
-`302` non può portare uno script fuori dagli host dichiarati.
+Redirects, when enabled, stop after five hops and every hop goes through the allowlist again: a
+`302` cannot carry a script outside the declared hosts.
 
-Le funzioni sono in [`core.http`](../api/core.http.md).
+The functions are in [`core.http`](../api/core.http.md).
 
-## `watchdog` — i limiti di esecuzione
+## `watchdog`: the execution limits
 
-Vale per le app che non dichiarano limiti propri nel loro `blossom.json` (vedi
-[9. Concorrenza](09-concorrenza.md)).
+These apply to apps that do not declare limits of their own in their `blossom.json` (see
+[9. Concurrency](09-concorrenza.md)).
 
-| Chiave | Tipo | Default | Cosa fa |
+| Key | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `watchdog.timeout_ms` | numero | `2000` | quanto può girare un blocco di codice prima di essere fermato |
-| `watchdog.max_depth` | numero | `256` | quanto può essere profonda la ricorsione |
+| `watchdog.timeout_ms` | number | `2000` | how long a block of code may run before being stopped |
+| `watchdog.max_depth` | number | `256` | how deep recursion may go |
 
-Un `timeout_ms` non positivo toglie il limite di tempo: serve solo a chi sta profilando, ed è
-segnalato nel log perché su un server è il modo di far sparire un tick senza capire perché. Il
-codice lanciato a mano da un comando ha comunque una soglia più larga: chi ha premuto invio sta
-aspettando, e non c'è nessun evento di gioco appeso.
+A non-positive `timeout_ms` removes the time limit: it is only useful to someone who is profiling,
+and it is reported in the log because on a server it is the way to make a tick disappear without
+understanding why. Code launched by hand from a command gets a wider threshold anyway: whoever
+pressed enter is waiting, and no game event is hanging on it.
 
-## Cosa **non** si configura qui
+## What is **not** configured here
 
-- **il manifesto di un'app** — `blossom.json`, dentro la cartella dell'app: dipendenze, entrypoint,
-  `autoload`, limiti propri. È l'app che si descrive, non il server che la governa.
-- **quali app partono da sole** — è `"autoload": true` nel manifesto dell'app.
-- **i permessi dei comandi** — sono quelli di Minecraft, per livello di operatore.
+- **an app's manifest**: `blossom.json`, inside the app's directory: dependencies, entrypoint,
+  `autoload`, its own limits. That is the app describing itself, not the server governing it.
+- **which apps start on their own**: that is `"autoload": true` in the app's manifest.
+- **command permissions**: those are Minecraft's, by operator level.

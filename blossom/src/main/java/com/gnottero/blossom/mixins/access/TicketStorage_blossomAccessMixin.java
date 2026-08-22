@@ -13,7 +13,7 @@ import net.minecraft.world.level.TicketStorage;
 
 import com.gnottero.blossom.access.Access;
 
-/** I ticket di caricamento chunk, per {@code world.chunk_tickets}. */
+/** The chunk loading tickets, for {@code world.chunk_tickets}. */
 @Mixin(TicketStorage.class)
 public class TicketStorage_blossomAccessMixin implements Access.Tickets
 {

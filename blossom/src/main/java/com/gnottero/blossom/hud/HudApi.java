@@ -19,14 +19,14 @@ import blossom.value.NumericValue;
 import blossom.value.Value;
 
 /**
- * {@code hud}: una riga di testo che resta sopra la hotbar (vedi {@link HudBoard}).
+ * {@code hud}: a line of text that stays above the hotbar (see {@link HudBoard}).
  *
- * <p>Sta in {@code core.mc.text} accanto a {@code display_title}, ed è la sua versione che non
- * svanisce. Non serve niente sul client.
+ * <p>Lives in {@code core.mc.text} next to {@code display_title}, and is its version that does
+ * not fade away. Needs nothing on the client.
  */
 public final class HudApi
 {
-    /** i simboli aggiunti a {@code core.mc.text} */
+    /** Symbols added to {@code core.mc.text}. */
     public static final java.util.Set<String> MODULE = java.util.Set.of("hud");
 
     private HudApi()
@@ -36,17 +36,17 @@ public final class HudApi
     public static void apply(Expression expression)
     {
         /*
-         * hud(giocatori, testo)         - mette la riga finché non la si cambia
-         * hud(giocatori, testo, durata) - la mette per quei tick, poi sparisce da sola
-         * hud(giocatori, null)          - la toglie
-         * hud(giocatore)                - la riga che quel giocatore sta vedendo, o null
+         * hud(players, text)          - sets the line until it is changed
+         * hud(players, text, ticks)   - sets it for that many ticks, then it disappears on its own
+         * hud(players, null)          - removes it
+         * hud(player)                 - the line that player is currently seeing, or null
          *
-         * Un solo nome perché sono la stessa cosa vista da quattro lati, e perché
-         * 'hud_set'/'hud_get'/'hud_clear' sarebbero tre nomi da ricordare per una riga di testo.
+         * One single name because these are the same thing seen from four sides, and because
+         * 'hud_set'/'hud_get'/'hud_clear' would be three names to remember for one line of text.
          *
-         * La durata è facoltativa e non ha un valore di default nascosto: senza, la riga resta.
-         * Sono due usi diversi e tutti e due normali - un contatore accompagna, un avviso deve
-         * andarsene da solo - e mettere una durata implicita avrebbe rotto il primo.
+         * The duration is optional and has no hidden default value: without it, the line stays.
+         * These are two different uses and both are normal - a counter sticks around, a warning
+         * should go away on its own - and giving it an implicit duration would have broken the first.
          */
         expression.addContextFunction("hud", -1, (c, t, lv) ->
         {
@@ -78,11 +78,12 @@ public final class HudApi
     }
 
     /**
-     * La durata in tick, o {@code null} se non è stata chiesta.
+     * The duration in ticks, or {@code null} if none was requested.
      *
-     * <p>Zero o negativa è un errore e non "sparisce subito": chi scrive {@code hud(p, testo, 0)}
-     * quasi sempre ha calcolato male un intervallo, e farla sparire in silenzio nasconderebbe il
-     * conto sbagliato. Per togliere la riga c'è {@code hud(p, null)}, che lo dice.
+     * <p>Zero or negative is an error, not "disappears immediately": someone writing
+     * {@code hud(p, text, 0)} has almost always miscalculated an interval, and silently making
+     * it vanish would hide the wrong count. To remove the line there is {@code hud(p, null)},
+     * which says so explicitly.
      */
     private static @org.jspecify.annotations.Nullable Long durationOf(List<Value> lv)
     {

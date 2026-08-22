@@ -4,16 +4,16 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 
 /**
- * Il lato client, che è facoltativo.
+ * The client side, which is optional.
  *
- * <p>Il mod è server-side: tutto quello che fa passa dal server, e chi gioca vanilla non perde
- * nessuna funzione. Questa metà serve a una cosa sola — disegnare le forme come forme invece che
- * come particelle — e chi non ce l'ha vede l'approssimazione. È il patto dichiarato in
- * {@link com.gnottero.blossom.net.BlossomPayloads}, e vale la pena ripeterlo qui: nessuno è costretto a
- * installare niente.
+ * <p>The mod is server-side: everything it does goes through the server, and a vanilla player
+ * does not lose any feature. This half serves a single purpose (drawing shapes as shapes instead
+ * of as particles), and whoever does not have it sees the approximation. This is the contract
+ * declared in {@link com.gnottero.blossom.net.BlossomPayloads}, and it is worth repeating here:
+ * nobody is forced to install anything.
  *
- * <p>Non c'è nessuna logica di gioco da questa parte, e non ci deve essere: un client che decidesse
- * qualcosa sarebbe un client di cui il server deve fidarsi.
+ * <p>There is no game logic on this side, and there must not be: a client that decided something
+ * on its own would be a client the server would have to trust.
  */
 @Environment(EnvType.CLIENT)
 public final class BlossomClient
@@ -29,7 +29,7 @@ public final class BlossomClient
         return SHAPES;
     }
 
-    /** Entrypoint {@code client} dichiarato in {@code fabric.mod.json}. */
+    /** The {@code client} entrypoint declared in {@code fabric.mod.json}. */
     public static void onClientStarted()
     {
         com.gnottero.blossom.BlossomMod.LOG.info("Blossom client side ready: shapes will be drawn");

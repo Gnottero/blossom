@@ -19,30 +19,30 @@ import net.minecraft.server.packs.repository.PackSource;
 import net.minecraft.server.packs.repository.RepositorySource;
 
 /**
- * I contenuti di gioco che un pack Blossom porta con se'.
+ * The game content that a Blossom pack brings along with it.
  *
- * <p>Un pack puo' avere una cartella {@code data/} con l'albero di un datapack vero. Questa sorgente
- * la offre al {@code PackRepository} del mondo, e da li' in poi sono i loader di Minecraft a fare
- * tutto il lavoro: ricette, loot table, tag, advancement, registri dinamici e worldgen passano tutti
- * dalla stessa strada, con i codec veri che validano. Un aggancio solo invece di sei, e nessuna
- * categoria di contenuto da sostenere a mano.
+ * <p>A pack can have a {@code data/} folder with the tree of a real datapack. This source offers it
+ * to the world's {@code PackRepository}, and from there on Minecraft's own loaders do all the work:
+ * recipes, loot tables, tags, advancements, dynamic registries and worldgen all go through the same
+ * path, validated by the real codecs. One hook instead of six, and no content category to maintain
+ * by hand.
  *
- * <p>Chi installa copia un pack solo: non c'e' niente da mettere in {@code <mondo>/datapacks/}.
+ * <p>Whoever installs a pack just copies it: there is nothing to put in {@code <world>/datapacks/}.
  *
- * <p>I pack sono in {@link Pack.Position#BOTTOM} e sono {@code required}. In fondo perche' un
- * datapack vero, messo li' da chi amministra, deve poter correggere una ricetta rotta di un'app di
- * cui non ha il sorgente: e' l'unica via d'uscita che gli resta. Obbligatori perche' il codice
- * dell'app da' per esistente il proprio contenuto, e un {@code /datapack disable} lo lascerebbe a
- * meta'.
+ * <p>Packs are at {@link Pack.Position#BOTTOM} and are {@code required}. At the bottom because a real
+ * datapack, placed there by whoever administers the server, must be able to fix a broken recipe from
+ * an app whose source they do not have: it is the only way out left to them. Required because the
+ * app's code assumes its own content exists, and a {@code /datapack disable} would leave it half
+ * broken.
  */
 public final class BlossomRepositorySource implements RepositorySource
 {
     private static final Logger LOG = LoggerFactory.getLogger("blossom");
 
-    /** La cartella dei pack dentro il mondo, la stessa che legge {@code ScriptRuntime}. */
+    /** The packs folder inside the world, the same one {@code ScriptRuntime} reads. */
     private static final String SCRIPT_DIRECTORY = "blossom";
 
-    /** La cartella, dentro un pack, che il gioco legge come datapack. */
+    /** The folder, inside a pack, that the game reads as a datapack. */
     public static final String DATA_DIRECTORY = "data";
 
     private final Path worldRoot;
@@ -64,8 +64,8 @@ public final class BlossomRepositorySource implements RepositorySource
         {
             candidates.filter(Files::isDirectory).sorted().forEach(directory ->
             {
-                // le cartelle di servizio - la cache delle dipendenze, gli zip esportati - non sono
-                // pack, e non devono diventare contenuto per il fatto di stare li' in mezzo
+                // service folders (the dependency cache, exported zips) are not packs, and must not
+                // become content just because they happen to sit in there
                 if (directory.getFileName().toString().startsWith("."))
                 {
                     return;
@@ -84,8 +84,8 @@ public final class BlossomRepositorySource implements RepositorySource
         }
         catch (Exception e)
         {
-            // il mondo si apre lo stesso: un pack con il contenuto rotto non deve impedire di
-            // entrare, e chi guarda il log trova il perche'
+            // the world still opens: a pack with broken content must not block entry, and whoever
+            // checks the log finds out why
             LOG.error("Could not read the content of the Blossom packs in {}", packs, e);
         }
     }
@@ -105,7 +105,7 @@ public final class BlossomRepositorySource implements RepositorySource
         return pack;
     }
 
-    /** Le sorgenti del repository di un mondo, con la nostra in coda. */
+    /** A world's repository sources, with ours appended at the end. */
     public static net.minecraft.server.packs.repository.RepositorySource[] appendTo(
             net.minecraft.server.packs.repository.RepositorySource[] sources, Path datapacksDirectory)
     {

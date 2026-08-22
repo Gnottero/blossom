@@ -25,14 +25,14 @@ import blossom.value.StringValue;
 import blossom.value.Value;
 
 /**
- * Gli handler che uno script ha attaccato a una singola entita' con {@code entity.event(...)}.
+ * The handlers a script has attached to a single entity with {@code entity.event(...)}.
  *
- * <p>Vivono dentro l'entita' (vedi il mixin {@code Entity_blossomAccessMixin}), non in una mappa
- * globale: seguono l'entita' fra i mondi e spariscono con lei, senza nessuna pulizia da ricordare.
+ * <p>They live inside the entity (see the mixin {@code Entity_blossomAccessMixin}), not in a global
+ * map: they follow the entity across worlds and disappear with it, with no cleanup to remember.
  */
 public final class EntityEvents
 {
-    /** Cosa puo' succedere a un'entita'. Il primo argomento passato e' sempre l'entita' stessa. */
+    /** What can happen to an entity. The first argument passed is always the entity itself. */
     public enum Kind
     {
         /** {@code (entity)} */
@@ -60,7 +60,7 @@ public final class EntityEvents
             return id;
         }
 
-        /** Quanti argomenti riceve la funzione: l'entita' piu' quelli specifici dell'evento. */
+        /** How many arguments the function receives: the entity plus the event's specific ones. */
         public int arity()
         {
             return extraArity + 1;
@@ -79,7 +79,7 @@ public final class EntityEvents
         }
     }
 
-    /** un handler per una singola entita' */
+    /** A handler for a single entity. */
     public record Handler(String app, Interpreter interpreter, FunctionValue function, List<Value> extraArguments)
     {
     }
@@ -92,7 +92,7 @@ public final class EntityEvents
         this.entity = entity;
     }
 
-    /** Aggiunge o toglie ({@code function == null}) l'handler dell'app data. */
+    /** Adds or removes ({@code function == null}) the handler of the given app. */
     public void set(Kind kind, String app, Interpreter interpreter, @Nullable FunctionValue function,
             @Nullable List<Value> extraArguments)
     {
@@ -121,8 +121,9 @@ public final class EntityEvents
     }
 
     /**
-     * Genera l'evento. Gli argomenti specifici arrivano grezzi da Minecraft e vengono convertiti qui,
-     * ma solo se qualcuno ascolta: un'entita' senza handler paga una {@code isEmpty()} per tick.
+     * Fires the event. The specific arguments arrive raw from Minecraft and are converted here,
+     * but only if someone is listening: an entity with no handlers pays for an {@code isEmpty()}
+     * per tick.
      */
     public void fire(Kind kind, Object... arguments)
     {

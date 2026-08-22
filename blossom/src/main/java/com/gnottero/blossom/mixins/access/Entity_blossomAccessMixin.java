@@ -16,11 +16,11 @@ import com.gnottero.blossom.access.Access;
 import com.gnottero.blossom.event.EntityEvents;
 
 /**
- * Lo stato che il gioco tiene privato dentro un'entita', piu' gli handler che uno script le ha
- * attaccato con {@code entity.event(...)}.
+ * The state the game keeps private inside an entity, plus the handlers a script has attached to it
+ * with {@code entity.event(...)}.
  *
- * <p>Gli handler vivono qui e non in una mappa esterna apposta: seguono l'entita' e spariscono con
- * lei, senza che nessuno debba ricordarsi di ripulire.
+ * <p>The handlers live here rather than in a dedicated external map: they follow the entity and
+ * disappear with it, so nobody has to remember to clean up.
  */
 @Mixin(Entity.class)
 public abstract class Entity_blossomAccessMixin implements Access.EntityState

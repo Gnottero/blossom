@@ -14,18 +14,18 @@ import blossom.value.Value;
 import com.gnottero.blossom.content.Generators;
 
 /**
- * {@code core.mc.data} - scrivere il contenuto di gioco di un pack.
+ * {@code core.mc.data} - writing a pack's game content.
  *
- * <p>Il contenuto di un pack sta in {@code data/}, con l'albero di un datapack vero. Scriverlo a mano
- * si puo' e va benissimo; questo modulo serve a **generarlo**, che e' il motivo per cui conviene
- * averlo in un linguaggio invece che in quaranta file quasi identici.
+ * <p>A pack's content lives under {@code data/}, with the layout of a real datapack. Writing it by
+ * hand works fine; this module exists to **generate** it, which is the reason it makes sense to have
+ * it in a language instead of forty nearly identical files.
  *
- * <p>Si usa solo durante {@code /blossom data generate <app>}, che chiama la {@code generate()}
- * dell'app: fuori di li' scrivere non avrebbe un momento giusto in cui farlo, e l'errore lo dice.
+ * <p>It is only used during {@code /blossom data generate <app>}, which calls the app's
+ * {@code generate()}: outside of that there is no right moment to write, and the error says so.
  */
 public final class ContentApi
 {
-    // i nomi pubblici del modulo stanno in BlossomApi.DATA, con tutti gli altri
+    // the module's public names live in BlossomApi.DATA, along with all the others
 
     private ContentApi()
     {
@@ -34,10 +34,10 @@ public final class ContentApi
     public static void apply(Expression expression)
     {
         /*
-         * write(id, valore) - una risorsa json.
+         * write(id, value) - a json resource.
          *
-         * L'id e' quello dei comandi del gioco, 'spazio:cartella/nome', e il percorso lo decide lui:
-         * chi scrive non deve sapere che 'data/' ha quella forma li'.
+         * The id is the one used by game commands, 'namespace:folder/name', and it decides the path
+         * itself: the caller doesn't need to know that 'data/' has that shape.
          */
         expression.addContextFunction("data_write", 2, (c, t, lv) ->
         {
@@ -54,7 +54,7 @@ public final class ContentApi
             }
         });
 
-        /* write_text(id, righe) - per i pochi file che json non sono, come una .mcfunction. */
+        /* write_text(id, lines) - for the few files that aren't json, like a .mcfunction. */
         expression.addContextFunction("data_write_text", 2, (c, t, lv) ->
         {
             String id = lv.get(0).getString();

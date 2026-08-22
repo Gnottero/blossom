@@ -8,12 +8,12 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 
 /**
- * Le palette di un template, che vanilla tiene private (voce ST-5 dell'inventario).
+ * A template's palettes, which vanilla keeps private (inventory entry ST-5).
  *
- * <p>Servono a {@code structure_matches}: un template puo' avere piu' varianti dello stesso volume,
- * e "combacia" vuol dire che ne combacia almeno una. Senza accesso alle palette l'unico modo di
- * confrontare sarebbe piazzare la struttura da qualche parte e guardare cosa esce, che modifica il
- * mondo per rispondere a una domanda.
+ * <p>Needed by {@code structure_matches}: a template can have several variants of the same volume,
+ * and "matches" means at least one of them matches. Without access to the palettes, the only way to
+ * compare would be to place the structure somewhere and see what comes out, which modifies the
+ * world just to answer a question.
  */
 @Mixin(StructureTemplate.class)
 public interface StructureTemplate_blossomAccessMixin

@@ -81,7 +81,7 @@
       "find(inventory, item)",
       "find(inventory, item, from_slot)"
     ],
-    "summary": "The find slot holding a given item.",
+    "summary": "The first slot holding a given item.",
     "params": [
       [
         "inventory",
@@ -89,7 +89,7 @@
       ],
       [
         "item",
-        "the item to look for; `null` finds the find empty slot"
+        "the item to look for; `null` finds the first empty slot"
       ],
       [
         "from_slot",
@@ -99,7 +99,7 @@
     "returns": "`num` — the slot, `null` when there is none.",
     "examples": [
       "inventory.find(player, 'diamond');       // 3",
-      "inventory.find(player, null);            // the find free slot"
+      "inventory.find(player, null);            // the first free slot"
     ]
   },
   "remove": {
@@ -130,24 +130,20 @@
   },
   "has": {
     "signatures": [
-      "has(inventory, item)",
-      "has(inventory, ...items)"
+      "has(inventory)"
     ],
-    "summary": "Whether the inventory holds everything asked for.",
+    "summary": "Whether the inventory holds anything at all.",
     "params": [
       [
         "inventory",
         "the entity or the position holding it"
-      ],
-      [
-        "...items",
-        "the items, as names or as `[name, count]` pairs"
       ]
     ],
-    "returns": "`bool` — whether all of them are there.",
+    "returns": "`bool` — `false` when every slot is empty; `null` when there is no inventory there.",
     "examples": [
-      "inventory.has(player, ['emerald', 5], ['stick', 2]);"
-    ]
+      "inventory.has(chest_pos);   // false for an empty chest"
+    ],
+    "note": "It is the emptiness check, not a test for particular items. To ask whether something specific is in there use `inventory.find`, and to take it out only when it is all there use `inventory.remove`, which removes nothing when there is not enough."
   },
   "drop": {
     "signatures": [

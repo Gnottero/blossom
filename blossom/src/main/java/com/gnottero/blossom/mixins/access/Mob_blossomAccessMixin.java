@@ -14,7 +14,7 @@ import net.minecraft.world.entity.ai.goal.GoalSelector;
 
 import com.gnottero.blossom.access.Access;
 
-/** L'intelligenza di un mob: obiettivi vanilla, obiettivi aggiunti da uno script, e persistenza. */
+/** A mob's AI: vanilla goals, goals added by a script, and persistence. */
 @Mixin(Mob.class)
 public abstract class Mob_blossomAccessMixin implements Access.MobAi
 {
@@ -29,7 +29,7 @@ public abstract class Mob_blossomAccessMixin implements Access.MobAi
     @Shadow
     private boolean persistenceRequired;
 
-    /** gli obiettivi che uno script ha aggiunto, per poterli togliere per nome */
+    /** The goals a script has added, kept so they can be removed by name. */
     @Unique
     private final Map<String, Goal> blossom$temporaryTasks = new HashMap<>();
 

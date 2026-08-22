@@ -186,7 +186,7 @@
       "fixed = item.set_component(stack, 'minecraft:damage', 0);\nitem.set(player, 0, 1, fixed:0, fixed:2);",
       "item.set_component(stack, 'minecraft:damage', null);   // removes it"
     ],
-    "note": "A value that makes no sense for that component is refused right away by the codec, with a `TypeMismatchError` — the alternative is a broken item discovered much later, when somebody tries to use it."
+    "note": "A value that makes no sense for that component is refused right away by the codec, with a `TypeMismatchError`; the alternative is a broken item discovered much later, when somebody tries to use it."
   },
   "component_catalog": {
     "signatures": [

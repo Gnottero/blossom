@@ -1,114 +1,121 @@
-# 9. Concorrenza
+# 9. Concurrency
 
-Il server ha un thread che fa girare il mondo, venti volte al secondo. Tutto quello che uno script
-fa dentro un evento lo fa **su quel thread**, e mentre lo fa il mondo è fermo. Da qui tutto il resto
-di questo capitolo.
+The server has one thread that runs the world, twenty times a second. Everything a script does
+inside an event, it does **on that thread**, and while it does the world stands still. Everything
+else in this chapter follows from that.
 
-## Quando serve un task
+## When a task is needed
 
-Un `task` gira su un thread suo: non tiene fermo il tick, e non ha scadenza.
+A `task` runs on a thread of its own: it does not hold the tick, and it has no deadline.
 
 ```
 import "core.task" as task;
 
-fn conta_minerali(centro) -> ...;                   // lavoro lungo
+fn count_ores(centre) -> ...;                   // long work
 
-t = task.start('conta_minerali', centro);            // parte subito, non blocca
-task.done(t);                             // ha finito?
-task.wait(t);                                  // aspetta e prendi il risultato
+t = task.start('count_ores', centre);           // starts immediately, does not block
+task.done(t);                                   // has it finished?
+task.wait(t);                                   // wait and take the result
 ```
 
-Serve quando: scansioni un volume grosso, generi qualcosa di costoso, aspetti qualcosa. **Non** serve
-per andare più veloce — è concorrenza, non parallelismo automatico, e il coordinamento costa.
+You need it when you scan a large volume, generate something expensive, or wait for something. You
+do **not** need it to go faster: it is concurrency, not automatic parallelism, and the coordination
+costs.
 
-| Funzione | Cosa fa |
+| Function | What it does |
 | --- | --- |
-| `task.start(f, ...args)` | avvia e restituisce un handle |
-| `task.wait(t)` | aspetta la fine e restituisce il valore |
-| `task.next(t)` | aspetta senza restituire |
-| `task.done(t)` · `task.value(t)` | se ha finito, e il risultato se c'è |
-| `task.count()` | quanti task sono in volo |
-| `task.send(t, v)` · `yield(v)` · `task.has_next(t)` | scambiare valori con un task in corso |
-| `sleep(ms)` | sospende |
+| `task.start(f, ...args)` | starts the work and returns a handle |
+| `task.wait(t)` | waits for the end and returns the value |
+| `task.done(t)` | whether it has finished |
+| `task.value(t)` | the value produced so far, without waiting |
+| `task.count()` | how many tasks are in flight |
+| `task.dock(expr)` | evaluates `expr` on the main thread |
+| `task.synchronize(lock, expr)` | runs `expr` while holding a named lock |
+| `task.sleep(ms)` | suspends the current thread |
+| `task.yield(v)` · `task.next(t)` · `task.has_next(t)` · `task.send(t, v)` | exchanging values with a running coroutine |
 
-## Toccare il mondo da dentro un task
+`wait` and `next` are two different kinds of waiting, and that is why they have two names: `wait`
+waits for the work to finish and hands you its result, `next` takes the next value the coroutine has
+produced with `yield`.
 
-Il mondo non è thread-safe. Da un task, ogni chiamata che legge o scrive blocchi ed entità va
-incapsulata in `task.dock`, che la esegue sul thread principale:
+## Touching the world from inside a task
+
+The world is not thread-safe. From a task, every call that reads or writes blocks and entities must
+be wrapped in `task.dock`, which runs it on the main thread:
 
 ```
-fn scansione(centro) -> (
-    trovati = 0;
+fn survey(centre) -> (
+    found = 0;
     loop(1000, (
-        p = punto(centro, _);
-        if(task.dock(block.block(p)) == 'diamond_ore', trovati += 1)
+        p = point(centre, _);
+        if(task.dock(block.block(p)) == 'diamond_ore', found += 1)
     ));
-    trovati
+    found
 );
 ```
 
-Il `task.dock` costa: fa la coda con il tick. La forma giusta è **un dock per blocco di lavoro**, non
-uno per ogni singola lettura — leggi tutto quello che ti serve in un dock solo, poi elabora fuori.
+`task.dock` costs: it queues up with the tick. The right shape is **one dock per unit of work**, not
+one per individual read: read everything you need in a single dock, then process outside.
 
 ```
-dati = task.dock(list.map(posizioni, block.block(_)));      // una sola sosta
-risultato = elabora(dati);                                       // fuori dal thread del gioco
+data = task.dock(list.map(positions, block.block(_)));      // a single stop
+result = process(data);                                     // off the game thread
 ```
 
-## Valori condivisi
+## Shared values
 
-Le singole operazioni su una lista o una mappa condivisa sono già atomiche: assegnare, `+=`, `put`,
-`delete`, `length`, iterare. Quello che non è atomico è una **sequenza**: `x = x + 1` legge e scrive
-in due tempi, e fra i due un altro task può passare.
+Individual operations on a shared list or map are already atomic: assignment, `+=`, `put`, `remove`,
+`size`, iteration. What is not atomic is a **sequence**: `x = x + 1` reads and writes in two steps,
+and between the two another task can slip in.
 
-Per le sequenze c'è `synchronize`:
+For sequences there is `synchronize`:
 
 ```
-task.synchronize('registro', (
-    totale = stato:'totale';
-    stato:'totale' = totale + 1
+task.synchronize('register', (
+    total = state:'total';
+    state:'total' = total + 1
 ));
 ```
 
-Il lock è **reentrant** (una funzione sincronizzata può chiamarne un'altra sullo stesso lock) e
-**equo** (chi aspetta entra nell'ordine in cui è arrivato). Il nome del lock è una stringa qualunque:
-usane uno per risorsa, non uno solo per tutta l'app, o hai serializzato l'app.
+The lock is **reentrant** (a synchronised function may call another one on the same lock) and
+**fair** (waiters enter in the order they arrived). The lock's name is any string: use one per
+resource, not one for the whole app, or you have serialised the app.
 
-## Il watchdog
+## The watchdog
 
-Ogni esecuzione ha un budget di tempo e una profondità massima di chiamata:
+Every execution has a time budget and a maximum call depth:
 
-| Quando | Tempo | Profondità |
+| When | Time | Depth |
 | --- | --- | --- |
-| dentro un evento di gioco | 2 s | 256 |
-| da `/blossom script run` o al caricamento | 15 s | 256 |
-| dentro un `task.start()` | nessun limite | 256 |
+| inside a game event | 2 s | 256 |
+| from `/blossom script run`, or at load time | 15 s | 256 |
+| inside a `task.start()` | no limit | 256 |
 
-Il task non ha scadenza **apposta**: gira su un thread suo, non tiene fermo niente, ed è la cosa da
-usare quando un lavoro è davvero lungo. La profondità invece vale anche lì: una ricorsione infinita
-riempie comunque uno stack.
+The task has no deadline **on purpose**: it runs on its own thread, holds nothing still, and is the
+thing to use when a job really is long. The depth limit applies there too: an infinite recursion
+fills a stack regardless.
 
-Il manifesto può cambiarli:
+The manifest can change them:
 
 ```json
 "watchdog": { "timeout_ms": 5000, "max_depth": 512 }
 ```
 
-`"watchdog": false` li toglie. L'errore del watchdog non è catturabile con `try`.
+`"watchdog": false` removes them. The watchdog error cannot be caught with `try`.
 
-## Lo schema che funziona quasi sempre
+## The pattern that almost always works
 
-Un lavoro lungo che deve finire nel mondo si scrive in tre pezzi:
+Long work that has to land in the world is written in three pieces:
 
 ```
-fn avvia_lavoro(centro) -> task.start('lavoro', centro);
+fn start_work(centre) -> task.start('work', centre);
 
-fn lavoro(centro) -> (
-    dati = task.dock(raccogli(centro));         // 1. leggi, in una sosta sola
-    piano = calcola(dati);                           // 2. pensa, fuori dal tick
-    task.dock(applica(piano))                   // 3. scrivi, in una sosta sola
+fn work(centre) -> (
+    data = task.dock(collect(centre));      // 1. read, in a single stop
+    plan = compute(data);                   // 2. think, off the tick
+    task.dock(apply(plan))                  // 3. write, in a single stop
 );
 ```
 
-Leggi in blocco, pensa fuori, scrivi in blocco. Le due soste sono due tick occupati; tutto il resto
-non tocca il server.
+Read in bulk, think outside, write in bulk. The two stops are two busy ticks; everything else never
+touches the server.

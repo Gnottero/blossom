@@ -16,15 +16,20 @@ import blossom.value.FunctionAnnotationValue;
 import blossom.value.ListValue;
 import blossom.value.Value;
 
+import org.jspecify.annotations.Nullable;
+
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class Functions
 {
     public static void apply(Expression expression) // public just to get the javadoc right
     {
-        // il vecchio import(nome, simboli...) non esiste piu': l'import e' una dichiarazione del
-        // preambolo, risolta a caricamento, e i simboli si raggiungono per alias (vedi DECISIONI.md)
+        // the old import(name, symbols...) no longer exists: import is now a preamble
+        // declaration, resolved at load time, and symbols are reached through an alias (see
+        // DECISIONI.md)
 
         // needs to be lazy because of custom context of execution of arguments as a signature
         expression.addCustomFunction("call", new Callables.AbstractLazyFunction(-1, "call")
@@ -36,7 +41,7 @@ public class Functions
                 {
                     throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "function", "'call' expects at least function name to call");
                 }
-                //lv.remove(lv.size()-1); // aint gonna cut it // maybe it will because of the eager eval changes
+                // lv.remove(lv.size()-1); // aint gonna cut it // maybe it will because of the eager eval changes
                 if (t != Context.SIGNATURE) // just call the function
                 {
                     List<Value> args = Callables.AbstractFunction.unpackLazy(lv, c, Context.NONE);
@@ -51,6 +56,7 @@ public class Functions
                 List<LazyValue> defaults = new ArrayList<>();
                 List<String> globals = new ArrayList<>();
                 String varArgs = null;
+                int varArgsAt = -1;
                 for (int i = 1; i < lv.size(); i++)
                 {
                     Value v = lv.get(i).evalValue(c, Context.LOCALIZATION);
@@ -67,6 +73,7 @@ public class Functions
                                 throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "function", "Variable argument identifier is already defined as " + varArgs + ", trying to overwrite with " + fav.name());
                             }
                             varArgs = fav.name();
+                            varArgsAt = args.size();
                         }
                     }
                     else if (v instanceof final blossom.value.TypedParameterValue typed)
@@ -83,7 +90,7 @@ public class Functions
                     }
                     else if (v instanceof final blossom.value.NamedArgumentValue named)
                     {
-                        // 'update = true' dentro una firma: un parametro con un valore di riserva
+                        // 'update = true' inside a signature: a parameter with a fallback value
                         args.add(named.name());
                         argumentTypes.add(null);
                         defaults.add(named.value());
@@ -93,6 +100,7 @@ public class Functions
                         throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "function", "Only variables can be used in function signature, not  " + v.getString());
                     }
                 }
+                validateSignature(name, args, varArgs, varArgsAt, globals);
                 FunctionSignatureValue signature = new FunctionSignatureValue(name, args, argumentTypes, varArgs, globals);
                 signature.withDefaults(defaults);
                 Value retval = signature;
@@ -120,14 +128,14 @@ public class Functions
 
 
         /*
-         * fn(a, b) -> a + b - una funzione scritta senza nome.
+         * fn(a, b) -> a + b : a function written without a name.
          *
-         * Il tokenizer non ha bisogno di sapere niente: decide FUNCTION o VARIABLE guardando se
-         * dopo il nome c'e' una parentesi, quindi 'fn(' e' gia' una chiamata mentre 'fn nome(...)'
-         * resta la parola chiave della dichiarazione. Le due forme non possono confondersi.
+         * The tokenizer doesn't need to know anything special: it decides FUNCTION or VARIABLE by
+         * checking whether a parenthesis follows the name, so 'fn(' is already a call while
+         * 'fn name(...)' remains the declaration keyword. The two forms can't be confused.
          *
-         * Il corpo e' identico a quello di 'call' in Context.SIGNATURE, meno il primo argomento:
-         * li' il nome della funzione e' scritto, qui lo mette il parser.
+         * The body is identical to that of 'call' in Context.SIGNATURE, minus the first argument:
+         * there the function name is written explicitly, here the parser supplies it.
          */
         expression.addCustomFunction("fn", new Callables.AbstractLazyFunction(-1, "fn")
         {
@@ -145,6 +153,7 @@ public class Functions
                 List<LazyValue> defaults = new ArrayList<>();
                 List<String> globals = new ArrayList<>();
                 String varArgs = null;
+                int varArgsAt = -1;
                 for (LazyValue parameter : lv)
                 {
                     Value v = parameter.evalValue(c, Context.LOCALIZATION);
@@ -161,6 +170,7 @@ public class Functions
                                 throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "function", "Variable argument identifier is already defined as " + varArgs + ", trying to overwrite with " + fav.name());
                             }
                             varArgs = fav.name();
+                            varArgsAt = args.size();
                         }
                     }
                     else if (v instanceof final blossom.value.TypedParameterValue typed)
@@ -177,7 +187,7 @@ public class Functions
                     }
                     else if (v instanceof final blossom.value.NamedArgumentValue named)
                     {
-                        // 'update = true' dentro una firma: un parametro con un valore di riserva
+                        // 'update = true' inside a signature: a parameter with a fallback value
                         args.add(named.name());
                         argumentTypes.add(null);
                         defaults.add(named.value());
@@ -187,6 +197,7 @@ public class Functions
                         throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "function", "Only variables can be used in function signature, not  " + v.getString());
                     }
                 }
+                validateSignature("fn(...)", args, varArgs, varArgsAt, globals);
                 FunctionSignatureValue signature =
                         new FunctionSignatureValue(Expression.anonymousName(tok), args, argumentTypes, varArgs, globals);
                 signature.withDefaults(defaults);
@@ -214,8 +225,8 @@ public class Functions
         });
 
 
-        // pigra perche' l'argomento le serve come nome, non come valore: addContextFunction valuta
-        // i propri argomenti in Context.NONE, dove un identificatore e' gia' stato letto
+        // lazy because the argument is needed as a name, not as a value: addContextFunction
+        // evaluates its own arguments in Context.NONE, where an identifier has already been read
         expression.addLazyFunction("outer", 1, (c, t, lv) ->
         {
             if (t != Context.LOCALIZATION)
@@ -238,8 +249,8 @@ public class Functions
             }
             if (type == Context.MATCH)
             {
-                // dentro un match la freccia lega una forma a un corpo, e il corpo non si valuta
-                // qui: di dieci bracci ne viene eseguito uno
+                // inside a match the arrow binds a shape to a body, and the body is not evaluated
+                // here: out of ten arms only one gets executed
                 Value arm = new blossom.value.MatchArmValue(lv1.evalValue(c, Context.LOCALIZATION), lv2);
                 return (cc, tt) -> arm;
             }
@@ -256,5 +267,47 @@ public class Functions
         expression.addImpureFunction("return", lv -> {
             throw new ReturnStatement(lv.size() == 0 ? Value.NULL : lv.get(0));
         });
+    }
+
+    /**
+     * Controlla una firma prima che diventi una funzione.
+     *
+     * <p>Sono errori che si vedono guardando la riga, quindi vanno detti quando la riga si legge:
+     * lasciarli passare non produce un errore piu' tardi, produce una funzione che lega gli
+     * argomenti a nomi diversi da quelli che c'e' scritto.
+     *
+     * @param varArgsAt quanti parametri normali c'erano quando e' comparso {@code ...rest}: se non
+     *                  sono tutti, il resto della firma sta dopo qualcosa che prende tutto il resto
+     */
+    private static void validateSignature(String name, List<String> args, @Nullable String varArgs,
+            int varArgsAt, List<String> globals)
+    {
+        if (varArgs != null && varArgsAt != args.size())
+        {
+            throw new ParseError(SourcePosition.UNKNOWN, "'...'" + varArgs + " must be the last parameter of "
+                    + name + ": it takes every argument that is left, so nothing can follow it.");
+        }
+        Set<String> seen = new HashSet<>();
+        for (String parameter : args)
+        {
+            if (!seen.add(parameter))
+            {
+                throw new ParseError(SourcePosition.UNKNOWN,
+                        "Parameter '" + parameter + "' of " + name + " is declared twice.");
+            }
+        }
+        if (varArgs != null && !seen.add(varArgs))
+        {
+            throw new ParseError(SourcePosition.UNKNOWN,
+                    "Parameter '" + varArgs + "' of " + name + " is declared twice.");
+        }
+        for (String outer : globals)
+        {
+            if (!seen.add(outer))
+            {
+                throw new ParseError(SourcePosition.UNKNOWN,
+                        "'outer(" + outer + ")' of " + name + " collides with a parameter of the same name.");
+            }
+        }
     }
 }

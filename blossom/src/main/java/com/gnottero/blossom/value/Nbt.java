@@ -24,11 +24,11 @@ import blossom.value.StringValue;
 import blossom.value.Value;
 
 /**
- * La conversione da valore Blossom a NBT.
+ * Conversion from a Blossom value to NBT.
  *
- * <p>Sta qui e non dentro i valori del core apposta: NBT e' un formato di Minecraft, e il core non
- * deve conoscerlo (PIANO_LINGUAGGIO.md §1). I valori del layer di gioco che sanno serializzarsi da
- * soli implementano {@link Serializable}; tutti gli altri passano da {@link #toTag}.
+ * <p>This lives here rather than in the core values on purpose: NBT is a Minecraft format, and the
+ * core must stay unaware of it (PIANO_LINGUAGGIO.md §1). Game-layer values that know how to
+ * serialize themselves implement {@link Serializable}; everything else goes through {@link #toTag}.
  */
 public final class Nbt
 {
@@ -36,15 +36,15 @@ public final class Nbt
     {
     }
 
-    /** Un valore del layer di gioco che ha una forma NBT propria. */
+    /** A game-layer value that has its own NBT representation. */
     public interface Serializable
     {
         Tag toTag(boolean force, RegistryAccess registries);
     }
 
     /**
-     * @param force se {@code true}, quello che non ha una forma NBT diventa la sua stringa invece di
-     *        far fallire la conversione
+     * @param force if {@code true}, anything without an NBT representation becomes its string form
+     *        instead of failing the conversion
      */
     public static Tag toTag(Value value, boolean force, RegistryAccess registries)
     {
@@ -118,9 +118,9 @@ public final class Nbt
     }
 
     /**
-     * Una lista NBT vuole elementi dello stesso tipo, mentre una lista Blossom no: se i tipi non
-     * coincidono, o si allargano al piu' generale che li contiene tutti (numeri), o - solo con
-     * {@code force} - diventano stringhe.
+     * An NBT list wants elements of the same type, while a Blossom list does not: if the types
+     * don't match, they either widen to the most general type that contains them all (numbers),
+     * or, only with {@code force}, become strings.
      */
     private static Tag ofList(ListValue list, boolean force, RegistryAccess registries)
     {

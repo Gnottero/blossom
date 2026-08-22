@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.7.1
+
+The handbook follows the corrections made to `docs/`, where several entries described behaviour the
+mod does not have.
+
+- **the trigonometry works in degrees**, not radians: `math.sin(90)` is `1`. `sin`, `cos`, `tan`,
+  `asin`, `acos`, `atan`, `atan2`, `sec`, `csc`, `cot` and `acot` said radians and showed examples
+  wrapped in `math.rad(...)`, which computed the sine of a number of degrees equal to the radians.
+  The hyperbolic ones take a plain number and never took an angle
+- **`math.number` returns `null`** on a string that is not a number; the note claimed a
+  `TypeMismatchError`, so the value nobody checked was the one that looked safe
+- **`math.reset_seed` returns a `bool`** — whether a generator for that seed already existed — and
+  its seed is a number: a string is a `TypeMismatchError`, and both the entry and its example used
+  one. Same for the seed of `math.rand`
+- **`math.log1p` is base 2**, matching `log`, and not base 10
+- **`inventory.has(inventory)`** asks whether the inventory holds anything at all: it takes one
+  argument, and the entry documented a variadic "does it hold all of these", which the mod never
+  implemented
+- **`score.display(slot, objective)`** takes both arguments; the one-argument reading form does not
+  exist and is an `ArityError`. The slot is `below_name`, not `belowName`
+- **`system.convert_date`** gives nine elements, the week of the year included
+- **`structure.at`, `structure.references`, `structure.place`**: what each returns, corrected — `at`
+  answers about the structures that *start* in the chunk, `references` gives a list and not a map
+- a `first` → `find` rename had gone through the prose of the handbook as well as its keys, leaving
+  "the find element", "the find free slot" and "since the find of January 1970" in seven files
+- **the generator reads the aliased signatures**: the pages of `docs/api/` now write a call as
+  `math.sqrt(x)` rather than `sqrt(x)`, so that a heading says which module it belongs to. The
+  scraper accepts the prefix and drops it
+
 ## 0.7.0
 
 Blossom 1.0: the syntax of the language and the renamed API.

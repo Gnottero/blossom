@@ -119,7 +119,7 @@
       "m = {};\nmap.put(m, 'a', 1);   // m is now {'a' -> 1}",
       "map.put(counters, name, (counters:name || 0) + 1);"
     ],
-    "note": "It changes the map in place. It is atomic even between tasks; a *sequence* of operations is not — for that there is `synchronize` in `core.start`."
+    "note": "It changes the map in place. It is atomic even between tasks; a *sequence* of operations is not; for that there is `synchronize` in `core.start`."
   },
   "remove": {
     "signatures": [

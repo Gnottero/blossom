@@ -15,11 +15,11 @@ import net.minecraft.client.renderer.RenderPipelines;
 import com.gnottero.blossom.client.BlossomRenderTypes;
 
 /**
- * Mette la nostra pipeline nell'elenco di quelle da compilare all'avvio.
+ * Adds our pipeline to the list of ones compiled at startup.
  *
- * <p>Il gioco compila gli shader di questo elenco quando carica le risorse. Una pipeline che non c'è
- * verrebbe compilata al primo disegno, cioè nel mezzo di un frame: si vedrebbe uno scatto la prima
- * volta che uno script disegna una forma piena. Costa una compilazione all'avvio, e non si nota.
+ * <p>The game compiles the shaders in this list when it loads resources. A pipeline that isn't there
+ * would get compiled on the first draw, that is, in the middle of a frame: you'd see a stutter the
+ * first time a script draws a filled shape. It costs one compilation at startup, and it goes unnoticed.
  */
 @Mixin(RenderPipelines.class)
 public abstract class RenderPipelines_blossomPipelinesMixin

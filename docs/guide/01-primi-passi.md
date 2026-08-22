@@ -1,138 +1,140 @@
-# 1. Primi passi
+# 1. Getting started
 
-## Cosa serve
+## Requirements
 
-Fabric Loader 0.19.3+ e Java 25, sul server. Il jar si costruisce dal repo:
+Fabric Loader 0.19.3 or newer and Java 25, on the server. Build the jar from the repository:
 
 ```
 ./gradlew :blossom:build
 ```
 
-e finisce in `blossom/build/libs/`. Copialo in `mods/`. Non serve Carpet, non serve niente
-altro.
+The artifact lands in `blossom/build/libs/`. Copy it into `mods/`. Carpet is not required, and
+neither is anything else.
 
-Il mod è **server-side**: chi si collega con un client vanilla non perde nessuna funzione. Lo stesso
-jar messo anche sul client aggiunge solo il disegno delle forme di
-[`core.mc.shape`](../api/core.mc.shape.md); senza client quelle forme si vedono come particelle.
+The mod is **server-side**. Players connecting with a vanilla client lose no functionality. Putting
+the same jar on the client adds one thing only: real rendering for the shapes of
+[`core.mc.shape`](../api/core.mc.shape.md). Without the client-side jar those shapes are drawn as
+particles instead.
 
-Per provare senza installare niente:
+To try it without installing anything:
 
 ```
 ./gradlew :blossom:runServer
 ```
 
-La prima volta il server si ferma chiedendo l'EULA di Mojang: scrivi `eula=true` in
-`blossom/run/eula.txt` e rilancia.
+On the first run the server stops and asks you to accept Mojang's EULA. Write `eula=true` into
+`blossom/run/eula.txt` and start it again.
 
-## Il file più corto che fa qualcosa
+## The shortest file that does something
 
-Gli script di un mondo vivono in `<mondo>/blossom/`. Un file `.bs` è un'app:
+The scripts of a world live in `<world>/blossom/`. A single `.bs` file is an app:
 
 ```
-// <mondo>/blossom/saluta.bs
-module saluta;
+// <world>/blossom/greeter.bs
+module greeter;
 
 import "core.mc.text" as text;
 import "core.mc.event" as event;
 
-fn benvenuto(giocatore) -> (
-    text.send(giocatore, 'benvenuto');
+fn welcome(player) -> (
+    text.send(player, 'welcome');
     false
 );
 
-event.on('player_connects', benvenuto);
-print('saluta pronta');
+event.on('player_connects', welcome);
+print('greeter ready');
 ```
 
-In gioco:
+In game:
 
 ```
-/blossom script load saluta
+/blossom script load greeter
 ```
 
-Il `print` finale compare subito: il corpo di un modulo viene eseguito quando l'app si carica, ed è
-lì che si registrano gli handler. Da quel momento `benvenuto` scatta a ogni collegamento.
+The trailing `print` appears immediately: the body of a module runs when the app is loaded, and that
+is where handlers are registered. From that moment on, `welcome` fires on every connection.
 
-Tre cose che quel file dichiara e che non sono facoltative:
+Three things that file declares, none of them optional:
 
-1. **`module saluta;`** in testa, e il nome deve combaciare con il percorso del file. Il caricatore
-   lo controlla prima di eseguire qualunque cosa.
-2. **ogni `import` ha un alias.** `import "core.mc.text" as text;` — senza `as` è un errore. Due
-   librerie non possono litigare su un nome perché il nome lo scegli tu, in questo file.
-3. **niente è disponibile per magia.** `sqrt(4)` senza import non funziona: l'errore ti dice in
-   quale modulo vive `sqrt` e quale riga aggiungere.
+1. **`module greeter;`** on the first line, and the name must match the file's path. The loader
+   checks this before executing anything.
+2. **Every `import` carries an alias.** `import "core.mc.text" as text;`: leaving out `as` is an
+   error. Two libraries can never fight over a name, because the name is chosen by you, in this
+   file.
+3. **Nothing is available by magic.** `sqrt(4)` without an import does not work: the error tells you
+   which module `sqrt` lives in and which line to add.
 
-## Provare senza salvare un file
+## Trying code without saving a file
 
 ```
 /blossom script run 2 + 3 * 4
 /blossom script run import "core.math" as math; math.sqrt(16)
 ```
 
-`run` valuta in un interprete pulito, che non vede le app caricate. Per entrare **dentro** un'app,
-con le sue funzioni e il suo stato:
+`run` evaluates in a clean interpreter that cannot see the loaded apps. To evaluate **inside** an
+app, with its functions and its state in scope:
 
 ```
-/blossom script in saluta benvenuto(entity.player())
+/blossom script in greeter welcome(entity.player())
 ```
 
-## Tutti i comandi
+## Every command
 
-| Comando | Cosa fa |
+| Command | What it does |
 | --- | --- |
-| `/blossom script run <codice>` | valuta codice al volo, in un interprete pulito |
-| `/blossom script in <app> <codice>` | valuta codice dentro un'app caricata |
-| `/blossom script load <app>` | carica `<mondo>/blossom/<app>.bs`, o il pack `<mondo>/blossom/<app>/` |
-| `/blossom script reload <app>` | ricarica un'app già caricata |
-| `/blossom script unload <app>` | scarica un'app e i suoi handler di evento |
-| `/blossom script list` | cosa è caricato e cosa c'è su disco |
-| `/blossom pack update <app>` | ri-risolve le dipendenze e riscrive `blossom.lock` |
-| `/blossom profile run <codice>` | misura dove va il tempo, funzione per funzione |
-| `/blossom profile in <app> <codice>` | come sopra, dentro un'app caricata |
-| `/blossom profile start <app>` · `stop <app>` | misura un'app viva, handler compresi |
+| `/blossom script run <code>` | evaluates code on the fly, in a clean interpreter |
+| `/blossom script in <app> <code>` | evaluates code inside a loaded app |
+| `/blossom script load <app>` | loads `<world>/blossom/<app>.bs`, or the pack `<world>/blossom/<app>/` |
+| `/blossom script reload <app>` | reloads an app that is already loaded |
+| `/blossom script unload <app>` | unloads an app together with its event handlers |
+| `/blossom script list` | what is loaded, and what is on disk |
+| `/blossom pack update <app>` | re-resolves dependencies and rewrites `blossom.lock` |
+| `/blossom profile run <code>` | measures where the time goes, function by function |
+| `/blossom profile in <app> <code>` | the same, inside a loaded app |
+| `/blossom profile start <app>` · `stop <app>` | measures a live app, event handlers included |
 
-Ricaricare un'app **toglie i suoi handler prima di rieseguire il file**: non restano due copie dello
-stesso listener attaccate all'evento. È il motivo per cui registrare gli handler nel corpo del
-modulo, come nell'esempio, è la cosa giusta da fare.
+Reloading an app **removes its handlers before re-running the file**, so two copies of the same
+listener are never attached to the same event. That is why registering handlers in the module body,
+as in the example above, is the right thing to do.
 
-## Da un file a un progetto
+## From a file to a project
 
-Appena il file cresce, diventa una cartella con un manifesto:
+As soon as the file grows, it becomes a directory with a manifest:
 
 ```
-<mondo>/blossom/mia-app/
+<world>/blossom/my-app/
 ├── blossom.json
 └── src/
-    ├── main.bs           ← module main
-    └── conti/
-        └── registro.bs   ← module conti.registro
+    ├── main.bs             ← module main
+    └── ledger/
+        └── register.bs     ← module ledger.register
 ```
 
 ```json
 {
-  "name": "mia-app",
+  "name": "my-app",
   "version": "0.1.0",
   "entrypoint": "src/main.bs",
-  "api_level": "1.0"
+  "api_level": "2.0"
 }
 ```
 
-Si carica con lo stesso comando: `/blossom script load mia-app`. Come si dividono i moduli, cosa
-esportano e come si dipende da un altro progetto è il [capitolo 6](06-moduli.md).
+It loads with the same command: `/blossom script load my-app`. How to split modules, what they
+export and how to depend on another project is [chapter 6](06-moduli.md).
 
-## Dove finiscono i dati
+## Where the data goes
 
-| Cosa | Dove |
+| What | Where |
 | --- | --- |
-| il codice dell'app | `<mondo>/blossom/<app>.bs` o `<mondo>/blossom/<app>/` |
-| i dati delle app (radice `data` di [`core.io`](../api/core.io.md)) | `<mondo>/blossom/data/` |
-| i dati condivisi fra app (radice `shared`) | `<mondo>/blossom/shared/` |
-| le dipendenze scaricate da un registry | `<mondo>/blossom/.cache/` |
-| la configurazione del server ([capitolo 12](12-configurazione.md)) | `config/blossomscript.json` |
+| the app's code | `<world>/blossom/<app>.bs` or `<world>/blossom/<app>/` |
+| per-app data (the `data` root of [`core.io`](../api/core.io.md)) | `<world>/blossom/data/` |
+| data shared between apps (the `shared` root) | `<world>/blossom/shared/` |
+| dependencies downloaded from a registry | `<world>/blossom/.cache/` |
+| the server configuration ([chapter 12](12-configurazione.md)) | `config/blossomscript.json` |
 
-Tutto quello che uno script apre sta sotto la cartella del mondo: le radici di
-[`core.io`](../api/core.io.md) si dichiarano lì dentro e non possono uscirne, e il resto del disco
-del server non è raggiungibile da nessuna configurazione.
+Everything a script can open lives under the world directory: the roots of
+[`core.io`](../api/core.io.md) are declared in there and cannot escape it, and the rest of the
+server's disk is unreachable from any configuration.
 
-Un'app non vede i dati di un'altra per sbaglio: per passarsi qualcosa ci sono i file `shared_*` e
-gli eventi di applicazione ([capitolo 8](08-eventi.md)).
+One app does not see another app's data by accident. To pass something along there are the
+`shared_*` files and application events ([chapter 8](08-eventi.md)).

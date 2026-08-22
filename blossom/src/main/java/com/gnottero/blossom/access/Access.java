@@ -34,12 +34,12 @@ import com.gnottero.blossom.event.EntityEvents;
 import blossom.value.Value;
 
 /**
- * Le finestre che il mod apre dentro Minecraft.
+ * The windows the mod opens into Minecraft.
  *
- * <p>Ogni interfaccia qui dentro viene implementata da un mixin in {@code com.gnottero.blossom.mixins.access}
- * su una classe del gioco: e' il modo di leggere e scrivere campi che vanilla tiene privati senza
- * spargere cast e reflection per tutta l'API. Chi scrive codice dell'API non tocca queste
- * interfacce direttamente: passa dalla facciata {@link Vanilla}, che nasconde i cast.
+ * <p>Every interface here is implemented by a mixin in {@code com.gnottero.blossom.mixins.access}
+ * onto a game class: it is the way to read and write fields that vanilla keeps private, without
+ * spreading casts and reflection across the whole API. Code writing the API does not touch these
+ * interfaces directly: it goes through the {@link Vanilla} facade, which hides the casts.
  */
 public final class Access
 {

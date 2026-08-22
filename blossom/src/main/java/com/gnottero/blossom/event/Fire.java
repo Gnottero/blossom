@@ -33,12 +33,11 @@ import blossom.value.StringValue;
 import blossom.value.Value;
 
 /**
- * Le forme ricorrenti con cui gli eventi vengono generati.
+ * The recurring shapes with which events are fired.
  *
- * <p>I mixin sono il punto piu' caldo del mod: stanno dentro il tick loop e devono restare corti e
- * senza logica. Qui c'e' la costruzione degli argomenti, una volta sola per forma, e ogni metodo
- * comincia con il controllo che qualcuno stia ascoltando - cosi' un evento che nessuno ascolta costa
- * una lettura di campo.
+ * <p>The mixins are the mod's hottest spot: they live inside the tick loop and must stay short and
+ * free of logic. Here is where arguments are built, once per shape, and every method starts with a
+ * check that someone is actually listening, so an event nobody listens to only costs a field read.
  */
 public final class Fire
 {
@@ -70,7 +69,7 @@ public final class Fire
                 StringValue.of(handName(hand))));
     }
 
-    /** {@code (player, item)} - per gli eventi in cui la mano non vuol dire niente */
+    /** {@code (player, item)} - for events in which the hand does not matter */
     public static boolean pickup(Event event, ServerPlayer player, ItemStack stack)
     {
         if (!event.isListened())

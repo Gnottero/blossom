@@ -69,9 +69,9 @@
     "signatures": ["number(v)"],
     "summary": "Converts a value to a number.",
     "params": [["v", "the value to convert, usually a string"]],
-    "returns": "`num` — the value read as a number.",
-    "examples": ["math.number('42');     // 42", "math.number('3.5');    // 3.5"],
-    "note": "A value that is not a number raises a `TypeMismatchError` with the position of the call: it does not come back as `null` to be discovered three lines further down."
+    "returns": "`num` — the value read as a number, `null` when it cannot be read as one; the size of a list or a map.",
+    "examples": ["math.number('42');      // 42", "math.number('3.5');     // 3.5", "math.number('abc');     // null", "math.number([1, 2, 3]); // 3 - the size"],
+    "note": "A string that is not a number comes back as `null`, it does not throw: a value arriving from outside (a command argument, an http body, a file) has to be checked before it is used."
   },
   "max": {
     "signatures": ["max(a, b, ...)", "max(list)"],
@@ -119,87 +119,89 @@
   },
   "log1p": {
     "signatures": ["log1p(x)"],
-    "summary": "The logarithm in base 10 of `1 + x`, accurate for very small `x`.",
+    "summary": "The logarithm in base 2 of `1 + x`, accurate for very small `x`.",
     "params": [["x", "a number greater than -1"]],
-    "returns": "`num` — `log10(1 + x)`.",
-    "examples": ["math.log1p(0.0001);   // 0.00004342769..."]
+    "returns": "`num` — `log2(1 + x)`.",
+    "examples": ["math.log1p(1);   // 1"],
+    "note": "It is the base-2 counterpart of `ln1p`, matching `log`, which is also base 2."
   },
 
   "sin": {
     "signatures": ["sin(x)"],
-    "summary": "The sine of an angle in radians.",
-    "params": [["x", "the angle, in radians"]],
+    "summary": "The sine of an angle in degrees.",
+    "params": [["x", "the angle, in degrees"]],
     "returns": "`num` — between -1 and 1.",
-    "examples": ["math.sin(0);              // 0", "math.sin(math.rad(90));   // 1"]
+    "examples": ["math.sin(0);    // 0", "math.sin(90);   // 1"],
+    "note": "Angles here are in **degrees**, like the yaw and the pitch of the game. For a value that arrives in radians there is `math.deg`."
   },
   "cos": {
     "signatures": ["cos(x)"],
-    "summary": "The cosine of an angle in radians.",
-    "params": [["x", "the angle, in radians"]],
+    "summary": "The cosine of an angle in degrees.",
+    "params": [["x", "the angle, in degrees"]],
     "returns": "`num` — between -1 and 1.",
-    "examples": ["math.cos(0);   // 1", "// a circle of radius 5 around the origin\nfor(range(360), block.set([math.cos(math.rad(_)) * 5, 64, math.sin(math.rad(_)) * 5], 'stone'));"]
+    "examples": ["math.cos(0);   // 1", "// a circle of radius 5 around the origin\nfor(list.range(360), block.set([math.cos(_) * 5, 64, math.sin(_) * 5], 'stone'));"]
   },
   "tan": {
     "signatures": ["tan(x)"],
-    "summary": "The tangent of an angle in radians.",
-    "params": [["x", "the angle, in radians"]],
+    "summary": "The tangent of an angle in degrees.",
+    "params": [["x", "the angle, in degrees"]],
     "returns": "`num` — `sin(x) / cos(x)`.",
-    "examples": ["math.tan(math.rad(45));   // 1"]
+    "examples": ["math.tan(45);   // 1"]
   },
   "asin": {
     "signatures": ["asin(x)"],
     "summary": "The arc sine: the angle whose sine is `x`.",
     "params": [["x", "between -1 and 1"]],
-    "returns": "`num` — the angle in radians, from `-pi/2` to `pi/2`.",
-    "examples": ["math.deg(math.asin(1));   // 90"]
+    "returns": "`num` — the angle in degrees, from `-90` to `90`.",
+    "examples": ["math.asin(1);   // 90"]
   },
   "acos": {
     "signatures": ["acos(x)"],
     "summary": "The arc cosine: the angle whose cosine is `x`.",
     "params": [["x", "between -1 and 1"]],
-    "returns": "`num` — the angle in radians, from `0` to `pi`.",
-    "examples": ["math.deg(math.acos(0));   // 90"]
+    "returns": "`num` — the angle in degrees, from `0` to `180`.",
+    "examples": ["math.acos(0);   // 90"]
   },
   "atan": {
     "signatures": ["atan(x)"],
     "summary": "The arc tangent: the angle whose tangent is `x`.",
     "params": [["x", "the tangent"]],
-    "returns": "`num` — the angle in radians, from `-pi/2` to `pi/2`.",
-    "examples": ["math.deg(math.atan(1));   // 45"]
+    "returns": "`num` — the angle in degrees, from `-90` to `90`.",
+    "examples": ["math.atan(1);   // 45"]
   },
   "atan2": {
     "signatures": ["atan2(y, x)"],
     "summary": "The angle of the point `(x, y)` measured from the positive x axis, with the right quadrant.",
     "params": [["y", "the vertical component"], ["x", "the horizontal component"]],
-    "returns": "`num` — the angle in radians, from `-pi` to `pi`.",
-    "examples": ["math.deg(math.atan2(1, 1));     // 45", "math.deg(math.atan2(1, -1));    // 135", "// the yaw pointing from one position to another\nmath.deg(math.atan2(z2 - z1, x2 - x1)) - 90;"],
+    "returns": "`num` — the angle in degrees, from `-180` to `180`.",
+    "examples": ["math.atan2(1, 1);     // 45", "math.atan2(1, -1);    // 135", "// the yaw pointing from one position to another\nmath.atan2(z2 - z1, x2 - x1) - 90;"],
     "note": "The one to use for directions: `atan(y / x)` cannot tell apart two opposite points and divides by zero on the vertical."
   },
   "acot": {
     "signatures": ["acot(x)"],
     "summary": "The arc cotangent: the angle whose cotangent is `x`.",
     "params": [["x", "the cotangent"]],
-    "returns": "`num` — the angle in radians.",
-    "examples": ["math.deg(math.acot(1));   // 45"]
+    "returns": "`num` — the angle in degrees.",
+    "examples": ["math.acot(1);   // 45"]
   },
   "sinh": {
     "signatures": ["sinh(x)"],
     "summary": "The hyperbolic sine, `(e^x - e^-x) / 2`.",
-    "params": [["x", "the argument"]],
+    "params": [["x", "the argument — a plain number, not an angle"]],
     "returns": "`num` — the hyperbolic sine.",
     "examples": ["math.sinh(0);   // 0"]
   },
   "cosh": {
     "signatures": ["cosh(x)"],
     "summary": "The hyperbolic cosine, `(e^x + e^-x) / 2` - the shape of a hanging chain.",
-    "params": [["x", "the argument"]],
+    "params": [["x", "the argument — a plain number, not an angle"]],
     "returns": "`num` — the hyperbolic cosine, never below 1.",
     "examples": ["math.cosh(0);   // 1"]
   },
   "tanh": {
     "signatures": ["tanh(x)"],
     "summary": "The hyperbolic tangent: squashes any number into the range -1 to 1.",
-    "params": [["x", "the argument"]],
+    "params": [["x", "the argument — a plain number, not an angle"]],
     "returns": "`num` — between -1 and 1.",
     "examples": ["math.tanh(0);      // 0", "math.tanh(100);    // 1"]
   },
@@ -227,42 +229,42 @@
   "sec": {
     "signatures": ["sec(x)"],
     "summary": "The secant, `1 / cos(x)`.",
-    "params": [["x", "the angle, in radians"]],
+    "params": [["x", "the angle, in degrees"]],
     "returns": "`num` — the secant.",
     "examples": ["math.sec(0);   // 1"]
   },
   "sech": {
     "signatures": ["sech(x)"],
     "summary": "The hyperbolic secant, `1 / cosh(x)`.",
-    "params": [["x", "the argument"]],
+    "params": [["x", "the argument — a plain number, not an angle"]],
     "returns": "`num` — between 0 and 1.",
     "examples": ["math.sech(0);   // 1"]
   },
   "csc": {
     "signatures": ["csc(x)"],
     "summary": "The cosecant, `1 / sin(x)`.",
-    "params": [["x", "the angle, in radians"]],
+    "params": [["x", "the angle, in degrees"]],
     "returns": "`num` — the cosecant.",
-    "examples": ["math.csc(math.rad(90));   // 1"]
+    "examples": ["math.csc(90);   // 1"]
   },
   "csch": {
     "signatures": ["csch(x)"],
     "summary": "The hyperbolic cosecant, `1 / sinh(x)`.",
-    "params": [["x", "the argument, not zero"]],
+    "params": [["x", "the argument (a plain number, not an angle) and not zero"]],
     "returns": "`num` — the hyperbolic cosecant.",
     "examples": ["math.csch(1);   // 0.8509181282393216"]
   },
   "cot": {
     "signatures": ["cot(x)"],
     "summary": "The cotangent, `1 / tan(x)`.",
-    "params": [["x", "the angle, in radians"]],
+    "params": [["x", "the angle, in degrees"]],
     "returns": "`num` — the cotangent.",
-    "examples": ["math.cot(math.rad(45));   // 1"]
+    "examples": ["math.cot(45);   // 1"]
   },
   "coth": {
     "signatures": ["coth(x)"],
     "summary": "The hyperbolic cotangent, `1 / tanh(x)`.",
-    "params": [["x", "the argument, not zero"]],
+    "params": [["x", "the argument (a plain number, not an angle) and not zero"]],
     "returns": "`num` — the hyperbolic cotangent.",
     "examples": ["math.coth(1);   // 1.3130352854993315"]
   },
@@ -271,31 +273,33 @@
     "summary": "Converts radians into degrees.",
     "params": [["radians", "the angle in radians"]],
     "returns": "`num` — the same angle in degrees.",
-    "examples": ["math.deg(pi);   // 180"]
+    "examples": ["math.deg(pi);   // 180"],
+    "note": "The trigonometric functions of this module already work in degrees: this is for an angle that arrives in radians from somewhere else."
   },
   "rad": {
     "signatures": ["rad(degrees)"],
-    "summary": "Converts degrees into radians - what every trigonometric function here wants.",
+    "summary": "Converts degrees into radians.",
     "params": [["degrees", "the angle in degrees"]],
     "returns": "`num` — the same angle in radians.",
-    "examples": ["math.rad(180);            // 3.141592653589793", "math.sin(math.rad(30));   // 0.5"]
+    "examples": ["math.rad(180);   // 3.141592653589793"],
+    "note": "The trigonometric functions of this module already take degrees, so this is for handing an angle to something that wants radians, not for calling `math.sin`."
   },
 
   "rand": {
     "signatures": ["rand(limit)", "rand(limit, seed)"],
     "summary": "A random number between zero and the limit, or a random element when the argument is a list.",
-    "params": [["limit", "a number (upper bound, excluded) or a list to pick from"], ["seed", "optional: draws from a generator bound to that seed instead of the shared one"]],
+    "params": [["limit", "a number (upper bound, excluded) or a list to pick from"], ["seed", "optional: a **number**; draws from a generator bound to it instead of the shared one"]],
     "returns": "`num` when the limit is a number, otherwise one element of the list.",
     "examples": ["math.rand(10);                      // between 0 and 10, with decimals", "floor(math.rand(10));               // a whole number from 0 to 9", "math.rand(['a', 'b', 'c']);         // one of the three", "if(math.rand(1) < 0.05, 'rare');    // a 5% chance"],
-    "note": "The result is a decimal number: `rand(10)` is not a whole number, put a `floor` around it when you want one."
+    "note": "The result is a decimal number: `rand(10)` is not a whole number, put a `floor` around it when you want one. In a boolean position the draw is compared against 1, so `rand(limit)` is true with probability `1 - 1/limit` and never for a limit of 1 or less, for an explicit probability, compare, as in the example."
   },
   "reset_seed": {
     "signatures": ["reset_seed(seed)"],
     "summary": "Restarts the random generator bound to a seed, so the same sequence of draws comes out again.",
-    "params": [["seed", "the name of the generator, a number or a string"]],
-    "returns": "`num` — how many draws that generator had made before being reset.",
-    "examples": ["math.reset_seed('test');\nmath.rand(100, 'test');   // always the same value after a reset"],
-    "note": "It is what makes a test on random code repeatable: reset, run, compare."
+    "params": [["seed", "the number the generator is bound to"]],
+    "returns": "`bool` — whether a generator for that seed already existed.",
+    "examples": ["math.reset_seed(1234);\nmath.rand(100, 1234);   // always the same value after a reset with that seed"],
+    "note": "It is what makes a test on random code repeatable: reset, run, compare. The seed is a number; a string is a `TypeMismatchError`."
   },
   "perlin": {
     "signatures": ["perlin(x)", "perlin(x, y)", "perlin(x, y, z)", "perlin(x, y, z, seed)"],

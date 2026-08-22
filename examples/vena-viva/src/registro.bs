@@ -5,18 +5,18 @@ import "core.map" as map;
 import "core.io" as io;
 import "core.task" as task;
 
-// Lo stato dell'app, e il disco. Nessun altro modulo scrive qui dentro: si passa da queste
-// funzioni, che sono l'unico posto dove il salvataggio puo' essere dimenticato.
+// The app's state, and the disk. No other module writes in here directly: you go through these
+// functions, which are the only place where saving can be forgotten.
 
 let mut vene = [];              // [{'tipo' -> str, 'pos' -> [x,y,z], 'rimasti' -> n, 'chi' -> str}]
-let mut totali = {};            // tipo -> quanti blocchi di quel tipo sono stati rotti
+let mut totali = {};            // tipo -> how many blocks of that type have been broken
 
-// Le scritture arrivano anche da un task, cioe' da un altro thread: una sequenza
-// leggi-modifica-scrivi non e' atomica, e va dentro una sezione critica.
+// Writes also arrive from a task, i.e. from another thread: a read-modify-write sequence
+// isn't atomic, and needs to go inside a critical section.
 let LOCK = 'registro';
 
-// La radice 'data' c'e' su ogni server; la sottocartella con il nome dell'app tiene i dati
-// separati da quelli delle altre.
+// The 'data' root exists on every server; the subfolder named after the app keeps its data
+// separate from the others.
 let FILE = 'vena-viva/registro.json';
 
 pub fn carica() -> (

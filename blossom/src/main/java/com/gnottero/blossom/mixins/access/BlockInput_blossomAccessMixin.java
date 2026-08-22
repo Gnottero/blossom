@@ -10,7 +10,7 @@ import net.minecraft.nbt.CompoundTag;
 
 import com.gnottero.blossom.access.Access;
 
-/** Il tag NBT scritto in un argomento blocco ({@code stone{...}}). */
+/** The NBT tag written in a block argument ({@code stone{...}}). */
 @Mixin(BlockInput.class)
 public class BlockInput_blossomAccessMixin implements Access.BlockInputTag
 {

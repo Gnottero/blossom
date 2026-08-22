@@ -4,12 +4,12 @@
     "signatures": [
       "roots()"
     ],
-    "summary": "The names of the roots an administrator has declared in `config/blossomscript.json`.",
+    "summary": "The names of the roots this server makes reachable.",
     "params": [],
-    "returns": "`list` — the names list; empty when nothing is configured.",
+    "returns": "`list` — the names, the two roots that always exist included.",
     "examples": [
-      "io.roots();   // ['shared', 'log']",
-      "if(!(io.roots() ~ 'shared'), send('this server has no shared folder'));"
+      "io.roots();   // ['data', 'shared', 'log']",
+      "if((io.roots() ~ 'exchange') == null, print('this server has no exchange folder'));"
     ],
     "note": "There are no absolute paths in scripts: every function of this module starts with one of these names, and the rest of the path is relative to it."
   },
@@ -90,7 +90,7 @@
       "io.list('shared', 'notes');   // ['today.txt', 'yesterday.txt']",
       "for(io.list('shared', ''), send(_));"
     ],
-    "note": "It is **not** recursive, on purpose: a recursion over a big root blocks the tick without the author noticing. Whoever wants to walk down a tree writes it one level at a time — and while writing it, sees it."
+    "note": "It is **not** recursive, on purpose: a recursion over a big root blocks the tick without the author noticing. Whoever wants to walk down a tree writes it one level at a time, and while writing it, sees it."
   },
   "read_text": {
     "signatures": [

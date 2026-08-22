@@ -6,16 +6,16 @@ import java.util.Locale;
 import blossom.interpreter.Profiler;
 
 /**
- * Il rapporto di {@code /blossom profile}, in una forma leggibile in chat.
+ * The report for {@code /blossom profile}, formatted to be readable in chat.
  *
- * <p>Due tabelle: prima i moduli, perché la prima domanda è "chi si mangia il tick", poi le funzioni
- * più costose, perché la seconda è "quale riga vado a guardare". Di ogni riga si mostrano tempo
- * proprio e tempo totale: una funzione con il totale enorme e il proprio minuscolo non è lenta, è
- * solo quella in cima allo stack, e ottimizzarla non cambia niente.
+ * <p>Two tables: first the modules, because the first question is "who is eating the tick", then
+ * the most expensive functions, because the second question is "which line should I look at".
+ * Each row shows both self time and total time: a function with a huge total but a tiny self time
+ * is not slow, it is just the one sitting at the top of the stack, and optimizing it changes nothing.
  */
 public final class ProfileReport
 {
-    /** quante funzioni mostrare: oltre la ventina la chat diventa illeggibile e nessuno le legge */
+    /** How many functions to show: past about twenty, the chat becomes unreadable and nobody reads them. */
     private static final int TOP_FUNCTIONS = 15;
 
     private ProfileReport()

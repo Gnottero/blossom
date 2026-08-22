@@ -21,17 +21,17 @@ import com.gnottero.blossom.event.Event;
 import com.gnottero.blossom.event.Fire;
 
 /**
- * Genera {@code chunk_generated} e {@code chunk_loaded}.
+ * Fires {@code chunk_generated} and {@code chunk_loaded}.
  *
- * <p>L'aggancio usato dall'upstream - un metodo intermedio di {@code ChunkMap} - non esiste piu' dopo
- * la riscrittura della pipeline dei chunk. Il punto giusto su questa versione e'
- * {@code ChunkStatusTasks.full}, l'ultimo passo con cui un chunk diventa un chunk vero: ci passano
- * sia quelli appena generati sia quelli riletti dal disco, ed e' l'ultimo posto in cui i due casi
- * sono distinguibili - un chunk gia' completo arriva avvolto in un {@link ImposterProtoChunk}.
+ * <p>The hook used upstream (an intermediate method of {@code ChunkMap}) no longer exists after the
+ * chunk pipeline rewrite. On this version the right spot is {@code ChunkStatusTasks.full}, the last
+ * step where a chunk becomes an actual chunk: both freshly generated ones and ones reloaded from
+ * disk pass through it, and it's the last place where the two cases can be told apart, since an
+ * already-complete chunk arrives wrapped in an {@link ImposterProtoChunk}.
  *
- * <p>Il metodo gira su un thread di generazione, quindi gli eventi vengono rimandati al thread del
- * server: un handler che legge il mondo da un thread di worldgen e' il tipo di corsa che si
- * manifesta un mese dopo su un server pieno.
+ * <p>The method runs on a generation thread, so the events are deferred to the server thread: a
+ * handler reading the world from a worldgen thread is the kind of race that shows up a month later
+ * on a busy server.
  */
 @Mixin(ChunkStatusTasks.class)
 public abstract class ChunkStatusTasks_blossomEventsMixin

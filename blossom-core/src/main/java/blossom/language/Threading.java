@@ -22,7 +22,7 @@ public class Threading
         {
             if (lv.isEmpty())
             {
-                throw new ArityError(SourcePosition.UNKNOWN,"'task' requires at least function to call as a parameter");
+                throw new ArityError(SourcePosition.UNKNOWN,"'task.start' requires at least function to call as a parameter");
             }
             FunctionArgument functionArgument = FunctionArgument.findIn(c, expression.module, lv, 0, false, true);
             ThreadValue thread = new ThreadValue(Value.NULL, functionArgument.function, expr, tok, c, functionArgument.checkedArgs());
@@ -37,7 +37,7 @@ public class Threading
         {
             if (!(v instanceof final ThreadValue tv))
             {
-                throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "task", "'task_value' could only be used with a task value");
+                throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "task", "'task.value' could only be used with a task value");
             }
             return tv.getValue();
         });
@@ -46,7 +46,7 @@ public class Threading
         {
             if (!(v instanceof final ThreadValue tv))
             {
-                throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "task", "'task_join' could only be used with a task value");
+                throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "task", "'task.wait' could only be used with a task value");
             }
             return tv.join();
         });
@@ -61,7 +61,7 @@ public class Threading
         {
             if (!(v instanceof final ThreadValue tv))
             {
-                throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "task", "'task_completed' could only be used with a task value");
+                throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "task", "'task.done' could only be used with a task value");
             }
             return BooleanValue.of(tv.isFinished());
         });
@@ -71,7 +71,7 @@ public class Threading
         {
             if (lv.isEmpty())
             {
-                throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "task", "'synchronize' require at least an expression to synchronize");
+                throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "task", "'task.synchronize' requires at least an expression to synchronize");
             }
             Value lockValue = Value.NULL;
             int ind = 0;
@@ -130,11 +130,11 @@ public class Threading
         {
             if (c.getThreadContext() == null)
             {
-                throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "task", "'yield' can only be used in a task");
+                throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "task", "'task.yield' can only be used in a task");
             }
             if (lv.isEmpty())
             {
-                throw new ArityError(SourcePosition.UNKNOWN,"'yield' requires at least one argument");
+                throw new ArityError(SourcePosition.UNKNOWN,"'task.yield' requires at least one argument");
             }
             boolean lock = lv.size() > 1 && lv.get(1).evalValue(c, Context.BOOLEAN).getBoolean();
             Value value = lv.get(0).evalValue(c);
@@ -147,11 +147,11 @@ public class Threading
             Value threadValue = lv.get(0).evalValue(c);
             if (!(threadValue instanceof ThreadValue thread))
             {
-                throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "task", "'task_next' requires a task value");
+                throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "task", "'task.next' requires a task value");
             }
             if (!thread.isCoroutine)
             {
-                throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "task", "'task_next' requires a coroutine task value");
+                throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "task", "'task.next' requires a coroutine task value");
             }
             Value ret = lv.get(1).evalValue(c);
             thread.send(ret);
@@ -163,11 +163,11 @@ public class Threading
             Value threadValue = lv.get(0).evalValue(c);
             if (!(threadValue instanceof ThreadValue thread))
             {
-                throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "task", "'task_await' requires a task value");
+                throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "task", "'task.next' requires a task value");
             }
             if (!thread.isCoroutine)
             {
-                throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "task", "'task_await' requires a coroutine task value");
+                throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "task", "'task.next' requires a coroutine task value");
             }
             Value ret = thread.next();
             return ret == Value.EOL ? ((cc, tt) -> Value.NULL) : ((cc, tt) -> ret);
@@ -178,7 +178,7 @@ public class Threading
             Value threadValue = lv.get(0).evalValue(c);
             if (!(threadValue instanceof ThreadValue thread))
             {
-                throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "task", "'task_ready' requires a task value");
+                throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "task", "'task.has_next' requires a task value");
             }
             boolean ret = thread.isCoroutine && thread.hasNext();
             return (cc, tt) -> BooleanValue.of(ret);

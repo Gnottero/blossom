@@ -11,7 +11,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
-/* The expression evaluators exception class. */
+/** The expression evaluators exception class. */
 public class ExpressionException extends StacklessRuntimeException implements ResolvedException
 {
     public final Context context;

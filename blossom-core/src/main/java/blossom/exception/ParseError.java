@@ -5,7 +5,7 @@ import org.jspecify.annotations.Nullable;
 import blossom.interpreter.Expression;
 import blossom.interpreter.Token;
 
-/** Errore di sintassi, rilevato al caricamento del modulo. */
+/** Syntax error, detected when the module is loaded. */
 public class ParseError extends BlossomError
 {
     public ParseError(SourcePosition position, String message)
@@ -19,11 +19,11 @@ public class ParseError extends BlossomError
     }
 
     /**
-     * L'errore di sintassi di un token preciso, con il frammento di codice intorno.
+     * The syntax error for a specific token, with the surrounding code snippet.
      *
-     * <p>Il frammento e' quello che il vecchio {@code ExpressionException} sapeva gia' produrre - e'
-     * la parte piu' utile del messaggio - ma qui arriva dentro un errore tipizzato e con posizione,
-     * come chiede il §4 del piano.
+     * <p>The snippet is the same thing the old {@code ExpressionException} already knew how to
+     * produce (it's the most useful part of the message), but here it arrives inside a typed error
+     * with a position, as required by §4 of the plan.
      */
     public static ParseError at(Expression expression, Token token, String message)
     {
@@ -31,6 +31,6 @@ public class ParseError extends BlossomError
                 expression.getModuleName() == null ? "<code>" : expression.getModuleName(),
                 token.lineno + 1, token.linepos + 1);
         String snippet = String.join("\n", expression.getExpressionSnippet(token));
-        return new ParseError(position, snippet.isEmpty() ? message : message + "\n\n  " + snippet);
+        return new ParseError(position, snippet.isEmpty() ? message : message + "\n\n" + snippet);
     }
 }

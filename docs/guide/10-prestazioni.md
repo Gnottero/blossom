@@ -1,115 +1,116 @@
-# 10. Prestazioni
+# 10. Performance
 
-Il vincolo vero non è "quanto è veloce il linguaggio", è **quanto dura un tick**: 50 ms, e dentro ci
-sta anche tutto il resto del gioco. Uno script che ne prende 5 è già un quinto del budget del server.
+The real constraint is not "how fast is the language", it is **how long a tick lasts**: 50 ms, and
+the whole rest of the game has to fit in there too. A script that takes 5 of them has already taken
+a fifth of the server's budget.
 
-## Gli ordini di grandezza
+## Orders of magnitude
 
-Misure su AMD Ryzen 5 5600H, OpenJDK 25 (i numeri completi e il metodo sono in
-[`BENCHMARK.md`](../../../BENCHMARK.md)):
+Measured on an AMD Ryzen 5 5600H, OpenJDK 25 (the full numbers and the method are in
+[`BENCHMARK.md`](../../BENCHMARK.md)):
 
-| Operazione | Costo |
+| Operation | Cost |
 | --- | --- |
-| un'iterazione di loop aritmetico | ~55 ns |
-| una chiamata a funzione utente (1 argomento) | ~178 ns (circa 3 iterazioni) |
-| la stessa chiamata con 4 argomenti | ~332 ns |
-| una lettura indicizzata da lista | ~80 ns |
-| costruire una mappa da 2 chiavi | ~234 ns |
+| one iteration of an arithmetic loop | ~55 ns |
+| one call to a user function (1 argument) | ~178 ns (about 3 iterations) |
+| the same call with 4 arguments | ~332 ns |
+| one indexed read from a list | ~80 ns |
+| building a 2-key map | ~234 ns |
 
-Una chiamata costa ancora **per argomento**: circa 65 ns ciascuno oltre il primo. Se una funzione
-chiamata in un ciclo stretto prende sei parametri, la lista dei parametri è metà del suo costo.
+A call still costs **per argument**: roughly 65 ns each beyond the first. If a function called in a
+tight loop takes six parameters, the parameter list is half its cost.
 
-Tradotto: in un tick da 50 ms ci stanno **circa 900.000 operazioni aritmetiche**. Il linguaggio non è
-il collo di bottiglia di quasi nessuno script. Quello che costa davvero è un altro elenco:
+Translated: a 50 ms tick holds **about 900,000 arithmetic operations**. The language is not the
+bottleneck of almost any script. What actually costs is a different list:
 
-| Cosa | Perché costa |
+| What | Why it costs |
 | --- | --- |
-| leggere o scrivere un blocco | passa dal mondo, e il mondo è una struttura vera |
-| `entity_area` / `entity_selector` su raggi grandi | scorre entità |
-| uno `scan` su un volume grosso | è il prodotto delle tre dimensioni: raggio 32 sono 274.625 blocchi |
-| un `task_dock` per ogni singola lettura | ogni sosta fa la coda con il tick |
-| un handler su `tick` che fa tutto ogni tick | venti volte al secondo, per sempre |
+| reading or writing a block | it goes through the world, and the world is a real data structure |
+| `entity.area` / `entity.select` with large radii | it walks entities |
+| a `scan` over a large volume | it is the product of three dimensions: radius 32 is 274,625 blocks |
+| a `task.dock` for every single read | every stop queues up with the tick |
+| a `tick` handler that does everything every tick | twenty times a second, forever |
 
-Un ordine di grandezza di differenza fra il costo del linguaggio e il costo del mondo vuol dire una
-cosa sola: **ottimizza gli accessi al mondo, non l'aritmetica**.
+An order of magnitude between the cost of the language and the cost of the world means one thing:
+**optimise world access, not arithmetic**.
 
-## Misurare invece di indovinare
+## Measuring instead of guessing
 
-Per confrontare due implementazioni, `system.measure(espressione)` la esegue ripetutamente per
-un intervallo fisso e dice quante volte ci è riuscita: numero più alto, implementazione più veloce.
+To compare two implementations, `system.measure(expression)` runs it repeatedly for a fixed interval
+and reports how many times it managed to: higher number, faster implementation.
 
-Per la domanda vera — *chi si mangia il tick* — c'è `/blossom profile`:
+For the real question, *what is eating the tick*, there is `/blossom profile`:
 
-| Comando | Cosa misura |
+| Command | What it measures |
 | --- | --- |
-| `/blossom profile run <codice>` | un'espressione al volo |
-| `/blossom profile in <app> <codice>` | del codice dentro un'app caricata |
-| `/blossom profile start <app>` | accende la misura sull'app: da lì conta anche i suoi handler |
-| `/blossom profile stop <app>` | chiude e stampa il rapporto |
+| `/blossom profile run <code>` | one expression, on the fly |
+| `/blossom profile in <app> <code>` | some code inside a loaded app |
+| `/blossom profile start <app>` | turns measurement on for the app: from then on its handlers count too |
+| `/blossom profile stop <app>` | closes and prints the report |
 
-Il rapporto ha due tabelle: i moduli ordinati per tempo proprio, e le quindici funzioni più costose
-con **tempo proprio e tempo totale**. La coppia serve: il totale è il tempo passato dentro la
-funzione, comprese quelle che chiama; il proprio è quello che resta togliendole. Una funzione con
-totale enorme e proprio minuscolo non è lenta — è solo in cima allo stack, e ottimizzarla non cambia
-niente.
+The report has two tables: modules ordered by self time, and the fifteen most expensive functions
+with **self time and total time**. The pair matters: total is the time spent inside the function,
+including everything it calls; self is what is left after removing those. A function with a huge
+total and a tiny self is not slow: it is merely on top of the stack, and optimising it changes
+nothing.
 
-Su un'app a eventi la coppia da usare è `start`/`stop`: `run` misura solo quello che scrivi tu sulla
-riga di comando, mentre il problema di solito è un handler che scatta cento volte al secondo.
+On an event-driven app the pair to use is `start`/`stop`: `run` measures only what you type on the
+command line, while the problem is usually a handler firing a hundred times a second.
 
-## Le sistemazioni che pagano
+## The fixes that pay
 
-**Restringi il volume prima di percorrerlo.** Un raggio dimezzato è un ottavo del lavoro.
+**Narrow the volume before walking it.** Halving the radius is an eighth of the work.
 
 ```
-// no: 274.625 blocchi
-scan.scan(centro, [32, 32, 32], if(block.block(_) == 'diamond_ore', trovati += 1));
+// no: 274,625 blocks
+scan.scan(centre, [32, 32, 32], if(block.block(_) == 'diamond_ore', found += 1));
 
-// sì: cerca dove ha senso cercare
+// yes: look where it makes sense to look
 scan.volume([x-16, 0, z-16], [x+16, 16, z+16], ...);
 ```
 
-**Leggi una volta, decidi dopo.** Ogni `block.block(p)` è un accesso al mondo: se ti serve lo stesso
-punto tre volte, mettilo in una variabile.
+**Read once, decide later.** Every `block.block(p)` is a world access: if you need the same point
+three times, put it in a variable.
 
-**Filtra prima di chiamare.** `entity.on_load(['zombie'], f)` filtra per tipo dentro il
-mod; l'evento `entity_loads` con un `if` dentro l'handler ti fa pagare una chiamata per ogni entità
-che compare nel mondo.
+**Filter before calling.** `entity.on_load(['zombie'], f)` filters by type inside the mod; the
+`entity_loads` event with an `if` inside the handler makes you pay one call for every entity that
+appears in the world.
 
-**Diradare invece di ridurre.** Un controllo che deve essere reattivo, non istantaneo, non ha bisogno
-di ogni tick:
+**Thin out instead of cutting down.** A check that has to be responsive, not instantaneous, does not
+need every tick:
 
 ```
 let mut t = 0;
-fn su_tick() -> (t += 1; if(t % 20 == 0, controlla()));
+fn on_tick() -> (t += 1; if(t % 20 == 0, check()));
 ```
 
-**Un `task_dock` per blocco di lavoro**, non uno per lettura ([capitolo 9](09-concorrenza.md)).
+**One `task.dock` per unit of work**, not one per read ([chapter 9](09-concorrenza.md)).
 
-**Le liste pigre restano pigre.** `list.range(1000000)` non alloca un milione di valori; ci passi
-sopra con `map`/`filter` e non paghi la memoria. Materializzarla con `list.slice(...)` la paga tutta.
+**Lazy lists stay lazy.** `list.range(1000000)` does not allocate a million values; you walk over it
+with `map`/`filter` and never pay the memory. Materialising it with `list.slice(...)` pays for all
+of it.
 
-**I tipi sui parametri costano un confronto per parametro annotato.** Sull'interfaccia pubblica di un
-modulo sono un affare; su una funzione chiamata in un ciclo stretto, no.
+**Parameter types cost one comparison per annotated parameter.** On a module's public interface they
+are a good trade; on a function called in a tight loop they are not.
 
-## Cosa fa già l'interprete
+## What the interpreter already does
 
-Prima di essere valutato, l'albero passa da un passo di compilazione: costanti piegate, operatori
-associativi appiattiti, sottoalberi puri risolti una volta sola. Vale circa il **32%** su un loop
-aritmetico. Un effetto collaterale visibile: `json.decode('{')` con una costante può fallire
-già in fase di parsing invece che dentro il tuo `try`.
+Before being evaluated, the tree goes through a compilation pass: constants are folded, associative
+operators flattened, pure subtrees resolved once. That is worth about **32%** on an arithmetic loop.
+One visible side effect: `json.decode('{')` with a constant can fail during parsing rather than
+inside your `try`.
 
-Gli import sono risolti **una volta al caricamento**: `math.sqrt` non cerca niente per nome a
-runtime, e un modulo in più non rallenta le chiamate.
+Imports are resolved **once, at load time**: `math.sqrt` looks nothing up by name at run time, and
+one extra module does not slow calls down.
 
-Anche i nomi delle variabili si decidono al parsing: il nodo compilato sa già se sta leggendo una
-locale, una globale, un simbolo importato o una implicita (`_`, `_i`, `_a`, che sono campi del
-contesto e non voci di una mappa). A runtime non resta nessuna domanda sul nome.
+Variable names are decided at parse time too: the compiled node already knows whether it is reading
+a local, a global, an imported symbol or an implicit one (`_`, `_i`, `_a`, which are context fields
+and not map entries). At run time no question about the name remains.
 
-Il frame di una chiamata **non è una mappa a hash**: fino a sedici variabili locali sono due array
-paralleli con scansione lineare, e una funzione senza parametri non alloca niente. Un valore non
-viene avvolto in nessun oggetto pigro per essere passato o restituito, e gli argomenti non vengono
-copiati entrando nel frame. Le due cose insieme valgono **-24%** e **-12%** sulle chiamate a
-funzione, e portano il costo per parametro da ~110 a ~65 ns.
+A call frame **is not a hash map**: up to sixteen locals are two parallel arrays with a linear scan,
+and a function with no parameters allocates nothing. A value is not wrapped in any lazy object to be
+passed or returned, and arguments are not copied on entering the frame. Together the two are worth
+**-24%** and **-12%** on function calls, and bring the per-parameter cost from ~110 down to ~65 ns.
 
-Il watchdog costa circa **5 ns per iterazione** e **19 ns per chiamata**. Spegnerlo per andare più
-veloce non è un buon affare: si spegne quando dà fastidio, non per guadagnare quei nanosecondi.
+The watchdog costs about **5 ns per iteration** and **19 ns per call**. Turning it off to go faster
+is a bad trade: you turn it off when it gets in the way, not to win those nanoseconds.

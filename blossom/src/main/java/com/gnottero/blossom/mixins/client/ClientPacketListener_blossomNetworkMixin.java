@@ -14,14 +14,14 @@ import com.gnottero.blossom.client.BlossomClient;
 import com.gnottero.blossom.net.BlossomPayloads;
 
 /**
- * Risponde al saluto del server e riceve le forme.
+ * Responds to the server's hello and receives shapes.
  *
- * <p>È il client a dire "ci sono": il server non ha nessun altro modo di saperlo, e finché non
- * risponde riceve le particelle come qualunque client vanilla. Se il protocollo non combacia non si
- * risponde affatto — meglio le particelle che un disegno interpretato con le regole sbagliate.
+ * <p>It's the client that says "I'm here": the server has no other way of knowing, and until it
+ * responds it receives particles like any vanilla client. If the protocol doesn't match, it doesn't
+ * respond at all, particles are better than a drawing interpreted with the wrong rules.
  *
- * <p>Il bersaglio è {@code ClientPacketListener} e non la sua superclasse comune: lì il metodo è
- * astratto, e in un metodo astratto non c'è niente in cui iniettare.
+ * <p>The target is {@code ClientPacketListener} and not its common superclass: there the method is
+ * abstract, and there's nothing to inject into in an abstract method.
  */
 @Mixin(ClientPacketListener.class)
 public abstract class ClientPacketListener_blossomNetworkMixin
@@ -34,13 +34,13 @@ public abstract class ClientPacketListener_blossomNetworkMixin
         {
             if (hello.version() == BlossomPayloads.PROTOCOL_VERSION)
             {
-                // 'send' e' pubblico ma dichiarato nella superclasse: si passa dal cast invece
-                // che da uno @Shadow, che su un membro ereditato non si puo' fare
+                // 'send' is public but declared in the superclass: use a cast instead of a
+                // @Shadow, which doesn't work on an inherited member
                 ((ClientCommonPacketListenerImpl) (Object) this).send(new ServerboundCustomPayloadPacket(
                         BlossomPayloads.Hello.of(BlossomPayloads.PROTOCOL_VERSION)));
             }
-            // il payload e' gestito: senza fermare qui, vanilla lo dichiara sconosciuto nel log a
-            // ogni connessione, che e' un avviso falso
+            // the payload is handled: without stopping here, vanilla logs it as unknown on every
+            // connection, which is a false warning
             ci.cancel();
             return;
         }

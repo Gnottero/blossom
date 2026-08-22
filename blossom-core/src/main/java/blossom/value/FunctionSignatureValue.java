@@ -9,14 +9,14 @@ public class FunctionSignatureValue extends FrameworkValue
     private final List<String> globals;
     private final String varArgs;
     /**
-     * il tipo canonico dichiarato per ogni parametro, {@code null} dove non e' stato dichiarato.
-     * Stessa lunghezza di {@link #arguments}, cosi' il controllo a runtime e' un indice e non una
-     * ricerca per nome
+     * The canonical type declared for each parameter, {@code null} where none was declared.
+     * Same length as {@link #arguments}, so the runtime check is an index lookup rather than a
+     * search by name.
      */
     private final List<String> argumentTypes;
     /**
-     * il valore di riserva di ogni parametro, {@code null} dove non ce n'e' uno. Stessa lunghezza di
-     * {@link #arguments}, cosi' a runtime e' un indice e non una ricerca per nome
+     * The fallback value for each parameter, {@code null} where there isn't one. Same length as
+     * {@link #arguments}, so at runtime it's an index lookup rather than a search by name.
      */
     private List<blossom.interpreter.LazyValue> defaults = java.util.Collections.emptyList();
 
@@ -40,13 +40,13 @@ public class FunctionSignatureValue extends FrameworkValue
         this.defaults = values;
     }
 
-    /** @return i default dichiarati, o {@code null} se nessun parametro ne ha uno */
+    /** @return the declared defaults, or {@code null} if no parameter has one */
     public List<blossom.interpreter.LazyValue> defaults()
     {
         return defaults.stream().anyMatch(java.util.Objects::nonNull) ? defaults : null;
     }
 
-    /** @return i tipi dichiarati, o {@code null} se nessun parametro ne ha uno */
+    /** @return the declared types, or {@code null} if no parameter has one */
     public List<String> argumentTypes()
     {
         return argumentTypes.stream().anyMatch(java.util.Objects::nonNull) ? argumentTypes : null;

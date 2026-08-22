@@ -1,39 +1,40 @@
-# 13. Il contenuto di gioco
+# 13. Game content
 
-Un pack Blossom non porta solo comportamento: puo' portare anche **contenuto**, cioe' quello che
-finora si scriveva in un datapack a parte — ricette, loot table, tag, advancement, e tutto il resto.
+A Blossom pack does not carry behaviour only: it can carry **content** as well, meaning everything
+that until now went into a separate datapack: recipes, loot tables, tags, advancements, and all the
+rest.
 
-## La cartella `data/`
+## The `data/` directory
 
-Accanto a `src/`, un pack puo' avere una cartella `data/` con **l'albero di un datapack vero**:
+Next to `src/`, a pack may have a `data/` directory holding **a real datapack tree**:
 
 ```
-mio-pack/
+my-pack/
 ├── blossom.json
 ├── src/
 │   └── main.bs
 └── data/
     ├── pack.mcmeta
-    └── mio/
-        ├── recipe/spada.json
-        ├── loot_table/vena.json
-        ├── tags/block/tenero.json
-        └── advancement/inizio.json
+    └── mine/
+        ├── recipe/sword.json
+        ├── loot_table/vein.json
+        ├── tags/block/soft.json
+        └── advancement/start.json
 ```
 
-E' la struttura che chi ha gia' scritto un datapack conosce, senza cambiare niente: gli stessi
-percorsi, gli stessi json, gli stessi codec del gioco che li validano. Quello che cambia e' che **non
-c'e' un datapack da installare a parte**: chi riceve il pack lo copia in `<mondo>/blossom/` e basta,
-come per il codice.
+It is the structure anyone who has written a datapack already knows, unchanged: the same paths, the
+same json, the same game codecs validating them. What changes is that **there is no separate
+datapack to install**: whoever receives the pack copies it into `<world>/blossom/` and that is all,
+exactly as for the code.
 
-Il contenuto entra prima che il gioco costruisca i propri registri, quindi funziona **tutto**:
-ricette, loot table, tag e advancement, che si ricaricano con `/reload`; e anche gli incantesimi, i
-tipi di danno, il worldgen e le dimensioni, che il gioco fissa una volta all'apertura del mondo.
+The content is registered before the game builds its own registries, so **everything** works:
+recipes, loot tables, tags and advancements, which reload with `/reload`; and also enchantments,
+damage types, worldgen and dimensions, which the game fixes once when the world is opened.
 
-## Generare invece di ripetere
+## Generating instead of repeating
 
-Scrivere a mano quaranta ricette quasi identiche e' il motivo per cui conviene avere un linguaggio.
-Un'app che espone una funzione `generate()` la puo' far scrivere al codice:
+Writing forty nearly identical recipes by hand is the reason it pays to have a language. An app that
+exposes a `generate()` function can have the code write them:
 
 ```
 module main;
@@ -42,100 +43,101 @@ import "core.mc.data" as data;
 import "core.list" as list;
 import "core.map" as map;
 
-// il materiale, e come si chiama la sua spada
-let METALLI = {'iron' -> 'iron', 'gold' -> 'golden', 'copper' -> 'copper'};
+// the material, and what its sword is called
+let METALS = {'iron' -> 'iron', 'gold' -> 'golden', 'copper' -> 'copper'};
 
 pub fn generate() -> (
-    list.map(map.keys(METALLI), fn(m) -> data.write("mio:recipe/spada_${m}", {
+    list.map(map.keys(METALS), fn(m) -> data.write("mine:recipe/sword_${m}", {
         'type' -> 'minecraft:crafting_shaped',
         'pattern' -> [' # ', ' # ', ' / '],
         'key' -> {'#' -> "minecraft:${m}_ingot", '/' -> 'minecraft:stick'},
-        'result' -> {'id' -> "minecraft:${METALLI:m}_sword", 'count' -> 1}
+        'result' -> {'id' -> "minecraft:${METALS:m}_sword", 'count' -> 1}
     }));
 
-    data.write('mio:tags/item/metalli', {
-        'values' -> list.map(map.keys(METALLI), fn(m) -> "minecraft:${m}_ingot")
+    data.write('mine:tags/item/metals', {
+        'values' -> list.map(map.keys(METALS), fn(m) -> "minecraft:${m}_ingot")
     })
 );
 ```
 
 ```
-/blossom data generate mio-pack
+/blossom data generate my-pack
 5 resources written in data/. Run /reload to apply them; a new registry entry or worldgen needs a restart.
 ```
 
-Quello che ne esce sono **json veri**, che restano sul disco e si guardano con un editor o con
-`git diff`. Il comando scrive anche `pack.mcmeta`.
+What comes out are **real json files**, which stay on disk and can be inspected with an editor or
+with `git diff`. The command writes `pack.mcmeta` as well.
 
-`data.write(id, valore)` prende un id come quello dei comandi — `spazio:cartella/nome` — e decide lui
-il percorso. Per i file che json non sono, come una `.mcfunction`, c'e' `data.write_text`.
+`data.write(id, value)` takes an id shaped like the ones in commands (`namespace:directory/name`)
+and works out the path itself. For files that are not json, such as an `.mcfunction`, there is
+`data.write_text`.
 
-**Su comando e non all'apertura del mondo**, perche' cosi' il generatore e' codice normale, con il
-server acceso e l'API tutta disponibile, e un generatore lento o rotto non ritarda l'apertura di un
-mondo.
+**On a command and not when the world opens**, because that way the generator is ordinary code, with
+the server running and the whole API available, and a slow or broken generator does not delay the
+opening of a world.
 
-## Generato e scritto a mano, insieme
+## Generated and hand-written, side by side
 
-`data/.blossom-generated` elenca cosa hanno prodotto i generatori. Rigenerare riscrive e ripulisce
-**solo quello**: un json scritto a mano nella stessa cartella non viene mai toccato. Si puo' quindi
-incollare un datapack esistente dentro `data/` e generare accanto, o partire a mano e passare al
-generatore un pezzo alla volta.
+`data/.blossom-generated` lists what the generators produced. Regenerating rewrites and cleans up
+**only that**: a json written by hand in the same directory is never touched. So you can paste an
+existing datapack inside `data/` and generate alongside it, or start by hand and move one piece at a
+time over to the generator.
 
-## Vedere e portare via
+## Looking and taking away
 
-`/blossom data list <app>` dice cosa c'e' nella `data/` di un pack, e chi l'ha scritto:
+`/blossom data list <app>` says what is in a pack's `data/`, and who wrote it:
 
 ```
-7 files in the data/ of 'prova', 6 of them generated:
-  generated  data/prova/recipe/spada_copper.json
-  by hand    data/prova/tags/block/scritto_a_mano.json
+7 files in the data/ of 'demo', 6 of them generated:
+  generated  data/demo/recipe/sword_copper.json
+  by hand    data/demo/tags/block/hand_written.json
   generated  pack.mcmeta
 ```
 
-La colonna serve a una cosa: sapere a colpo d'occhio cosa riscrive la prossima generazione e cosa
-invece resta com'e'.
+The column is there for one thing: to see at a glance what the next generation will rewrite and what
+will stay as it is.
 
-`/blossom data export <app>` ne fa uno zip in `<mondo>/blossom/.export/`:
-
-```
-The content of 'prova' is a datapack in blossom/.export/prova.zip: it works on a server without Blossom.
-```
-
-E' un datapack normale — si puo' dare a chi il mod non ce l'ha, o tenerlo per controllare che quello
-che il generatore produce sia quello che ci si aspettava. L'elenco dei generati non ci finisce
-dentro: e' roba nostra, non del datapack.
-
-## Quando qualcosa e' sbagliato
-
-I json li validano i codec del gioco, come per un datapack qualunque, e i messaggi sono i loro:
+`/blossom data export <app>` turns it into a zip in `<world>/blossom/.export/`:
 
 ```
-Failed to parse mio:spada_gold from pack blossom/mio-pack
+The content of 'demo' is a datapack in blossom/.export/demo.zip: it works on a server without Blossom.
+```
+
+It is an ordinary datapack: it can be handed to someone who does not have the mod, or kept to check
+that what the generator produced is what you expected. The list of generated files does not go
+inside: that is ours, not the datapack's.
+
+## When something is wrong
+
+The json is validated by the game's codecs, as for any datapack, and the messages are theirs:
+
+```
+Failed to parse mine:sword_gold from pack blossom/my-pack
 Caused by: Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: minecraft:gold_sword
 ```
 
-Vale la pena saperlo: un contenuto che non si legge **impedisce al mondo di aprirsi**, esattamente
-come farebbe un datapack rotto. E' il prezzo di passare dalla strada vera invece che da una nostra.
+Worth knowing: content that cannot be read **prevents the world from opening**, exactly as a broken
+datapack would. That is the price of going down the real road instead of one of our own.
 
-## Come si vede
+## How it shows up
 
-Per il gioco e' un datapack come un altro, e si vede:
+To the game it is a datapack like any other, and it shows:
 
 ```
 /datapack list
-There are 2 data pack(s) enabled: [vanilla (built-in)], [blossom/mio-pack (built-in)]
+There are 2 data pack(s) enabled: [vanilla (built-in)], [blossom/my-pack (built-in)]
 ```
 
-## Chi vince
+## Who wins
 
-Un pack Blossom sta **in fondo** alla lista, sotto i datapack veri di `<mondo>/datapacks/`. E' voluto:
-chi amministra un server deve poter correggere una ricetta rotta di un'app di cui non ha il sorgente,
-e sovrapporre un datapack e' l'unica via che gli resta.
+A Blossom pack sits **at the bottom** of the list, below the real datapacks in `<world>/datapacks/`.
+That is deliberate: whoever administers a server must be able to fix a broken recipe belonging to an
+app whose source they do not have, and overlaying a datapack is the only route left to them.
 
-Non si puo' invece **spegnere**: il codice di un'app da' per esistente il proprio contenuto, e un
-`/datapack disable` lo lascerebbe a meta'. Chi non vuole il contenuto toglie il pack.
+What cannot be done is **disabling** it: an app's code assumes its own content exists, and a
+`/datapack disable` would leave it half there. Whoever does not want the content removes the pack.
 
 ## `pack.mcmeta`
 
-Serve, ed e' quello di sempre. E' anche cio' che rende `data/` un datapack valido di per se': si puo'
-zippare e darlo a chi il mod non ce l'ha.
+It is required, and it is the usual one. It is also what makes `data/` a valid datapack in its own
+right: it can be zipped and handed to someone who does not have the mod.

@@ -24,7 +24,7 @@ public class FunctionAnnotationValue extends Value
         this.type = type;
     }
 
-    /** Il nome della variabile annotata: 'outer(x)' o '... rest' dentro una firma. */
+    /** The name of the annotated variable: 'outer(x)' or '... rest' in a signature. */
     public String name()
     {
         return name;

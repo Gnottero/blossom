@@ -22,15 +22,15 @@ import net.minecraft.client.renderer.state.level.CameraRenderState;
 import com.gnottero.blossom.client.BlossomClient;
 
 /**
- * Disegna le forme di Blossom insieme al resto della scena.
+ * Draws Blossom's shapes together with the rest of the scene.
  *
- * <p>Il punto di iniezione non è casuale. Le primitive vanno consegnate <b>nella stessa fase</b> in
- * cui vanilla consegna le proprie, cioè prima che il frame corrente le raccolga: consegnarle dopo
- * significa che vengono raccolte dal frame successivo, e siccome la traslazione relativa alla camera
- * viene fissata al momento della consegna, il disegno insegue la camera invece di stare fermo.
+ * <p>The injection point is not arbitrary. Primitives must be submitted <b>in the same phase</b> in
+ * which vanilla submits its own, that is, before the current frame collects them: submitting them
+ * later means they get collected by the next frame, and since the camera-relative translation is
+ * fixed at submission time, the drawing would trail the camera instead of staying put.
  *
- * <p>Risolto per costruzione, agganciandosi subito dopo {@code submitFeatures} invece di aggiungere
- * una fase di rendering propria (voce BE-7 dell'inventario).
+ * <p>Solved by construction, by hooking right after {@code submitFeatures} instead of adding a
+ * dedicated render phase (inventory entry BE-7).
  */
 @Mixin(LevelRenderer.class)
 public abstract class LevelRenderer_blossomShapesMixin
@@ -49,11 +49,11 @@ public abstract class LevelRenderer_blossomShapesMixin
     {
         if (BlossomClient.shapes().isEmpty())
         {
-            return; // il caso normale: nessuna allocazione, nessun lavoro
+            return; // the common case: no allocation, no work
         }
         DrawableGizmoPrimitives primitives = new DrawableGizmoPrimitives();
-        // il partial tick e' quello del gioco, non quello reale: un'entita' seguita si muove coi
-        // tick, e usare l'altro la farebbe scivolare avanti mentre il gioco e' in pausa
+        // the partial tick is the game's, not the real one: a followed entity moves with ticks,
+        // and using the other one would make it drift forward while the game is paused
         BlossomClient.shapes().submit(primitives, submitNodeStorage, cameraState,
                 deltaTracker.getGameTimeDeltaPartialTick(false));
         if (!primitives.isEmpty())

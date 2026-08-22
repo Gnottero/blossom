@@ -35,25 +35,25 @@ import blossom.value.Value;
 import com.gnottero.blossom.value.ValueConversions;
 
 /**
- * {@code core.mc.structure}: salvare, piazzare e confrontare template di struttura (voci ST-1..ST-4
- * dell'inventario).
+ * {@code core.mc.structure}: saving, placing and comparing structure templates (inventory entries
+ * ST-1..ST-4).
  *
- * <p>Sono gli stessi template del blocco struttura di vanilla, e vivono nello stesso posto
- * ({@code <mondo>/generated/<namespace>/structure/<nome>.nbt}): quello che uno script salva si apre
- * con un blocco struttura, e viceversa. Non è un dettaglio implementativo — è il motivo per cui
- * queste funzioni valgono la pena rispetto a copiare blocchi a mano.
+ * <p>These are the same templates used by vanilla's structure block, and they live in the same place
+ * ({@code <world>/generated/<namespace>/structure/<name>.nbt}): whatever a script saves opens with a
+ * structure block, and vice versa. That's not an implementation detail, it's the reason these
+ * functions are worth using instead of copying blocks by hand.
  *
- * <h2>L'ancoraggio</h2>
+ * <h2>Anchoring</h2>
  *
- * <p>Rotazione e specchiatura fanno ruotare la struttura <em>attorno</em> al punto di ancoraggio,
- * quindi con l'ancora ingenua una struttura ruotata di 90° finisce da un'altra parte. Qui la
- * posizione chiesta resta sempre l'angolo minimo del risultato trasformato
- * ({@link #anchorOf}): è quello che uno si aspetta guardando il mondo, e rende
- * {@code structure_load} e {@code structure_matches} reciproci.
+ * <p>Rotation and mirroring rotate the structure <em>around</em> the anchor point, so with a naive
+ * anchor a structure rotated by 90 degrees ends up somewhere else. Here the requested position always
+ * stays the minimum corner of the transformed result ({@link #anchorOf}): that's what one expects
+ * looking at the world, and it makes {@code structure_load} and {@code structure_matches} inverses of
+ * each other.
  */
 public final class Structures
 {
-    /** i simboli esportati da {@code core.mc.structure} */
+    /** The symbols exported by {@code core.mc.structure} */
     public static final java.util.Set<String> MODULE = java.util.Set.of(
             "structure_save", "structure_load", "structure_matches", "structure_size");
 
@@ -64,10 +64,10 @@ public final class Structures
     public static void apply(Expression expression)
     {
         /*
-         * structure_save(nome, da, a, con_entita'?) - salva un volume come template.
+         * structure_save(name, from, to, include_entities?) - saves a volume as a template.
          *
-         * Passa da StructureBlockEntity.saveStructure, cioe' esattamente quello che fa il blocco
-         * struttura: il file che esce e' indistinguibile da uno salvato a mano.
+         * Goes through StructureBlockEntity.saveStructure, i.e. exactly what the structure block
+         * does: the resulting file is indistinguishable from one saved by hand.
          */
         expression.addContextFunction("structure_save", -1, (c, t, lv) ->
         {
@@ -91,18 +91,18 @@ public final class Structures
 
             ServerLevel level = cc.level();
             Value[] result = {Value.FALSE};
-            // scrive un file dentro il mondo: va fatto sul thread del server, come ogni modifica
+            // writes a file inside the world: must happen on the server thread, like any change
             cc.server().executeBlocking(() -> result[0] = BooleanValue.of(
                     StructureBlockEntity.saveStructure(level, structure, origin, size, !includeEntities, "", true, List.of())));
             return result[0];
         });
 
         /*
-         * structure_load(nome, pos, rotazione?, specchio?, con_entita'?, integrita'?, seme?)
+         * structure_load(name, pos, rotation?, mirror?, include_entities?, integrity?, seed?)
          *
-         * 'integrita'' sotto 1 toglie blocchi a caso, come il blocco struttura: con un 'seme' la
-         * stessa rovina si puo' ricostruire uguale, che e' l'unico modo di rendere ripetibile una
-         * generazione casuale.
+         * 'integrity' below 1 removes blocks at random, like the structure block: with a 'seed' the
+         * same ruin can be rebuilt identically, which is the only way to make a random generation
+         * repeatable.
          */
         expression.addContextFunction("structure_load", -1, (c, t, lv) ->
         {
@@ -142,10 +142,10 @@ public final class Structures
         });
 
         /*
-         * structure_matches(nome, da, a, rotazione?, specchio?) - la regione combacia col template?
+         * structure_matches(name, from, to, rotation?, mirror?) - does the region match the template?
          *
-         * Un template puo' avere piu' palette, cioe' varianti dello stesso volume: combacia se ne
-         * combacia almeno una. I blocchi 'structure_void' non contano, come in vanilla.
+         * A template can have several palettes, i.e. variants of the same volume: it matches if at
+         * least one of them matches. 'structure_void' blocks don't count, same as in vanilla.
          */
         expression.addContextFunction("structure_matches", -1, (c, t, lv) ->
         {
@@ -165,7 +165,7 @@ public final class Structures
             Optional<StructureTemplate> template = level.getStructureManager().get(structure);
             if (template.isEmpty())
             {
-                return Value.NULL; // il template non esiste: diverso da "non combacia"
+                return Value.NULL; // the template doesn't exist: different from "doesn't match"
             }
             BlockPos from = fromLocator.block.getPos();
             BlockPos to = toLocator.block.getPos();
@@ -173,8 +173,8 @@ public final class Structures
                     Math.min(from.getZ(), to.getZ()));
             StructurePlaceSettings settings = new StructurePlaceSettings().setRotation(rotation).setMirror(mirror);
             BoundingBox box = template.get().getBoundingBox(settings, BlockPos.ZERO);
-            // una regione di dimensioni diverse non puo' combaciare, e controllarlo prima evita di
-            // leggere migliaia di blocchi per arrivare alla stessa conclusione
+            // a region of different size can never match, and checking this first avoids reading
+            // thousands of blocks just to reach the same conclusion
             if (Math.abs(from.getX() - to.getX()) + 1 != box.getXSpan()
                     || Math.abs(from.getY() - to.getY()) + 1 != box.getYSpan()
                     || Math.abs(from.getZ() - to.getZ()) + 1 != box.getZSpan())
@@ -192,7 +192,7 @@ public final class Structures
             return Value.FALSE;
         });
 
-        /** structure_size(nome, rotazione?) - le dimensioni del template, ruotato se serve. */
+        /** structure_size(name, rotation?) - the template's dimensions, rotated if needed. */
         expression.addContextFunction("structure_size", -1, (c, t, lv) ->
         {
             if (lv.isEmpty())
@@ -254,11 +254,11 @@ public final class Structures
     }
 
     /**
-     * Dove ancorare il template perche' {@code pos} resti l'angolo minimo del risultato.
+     * Where to anchor the template so that {@code pos} stays the minimum corner of the result.
      *
-     * <p>Rotazione e specchiatura girano la struttura attorno all'ancora: senza questo spostamento,
-     * la stessa chiamata con rotazione diversa piazzerebbe la struttura in un punto diverso, e
-     * nessuno lo troverebbe ovvio.
+     * <p>Rotation and mirroring turn the structure around the anchor: without this offset, the same
+     * call with a different rotation would place the structure at a different point, and nobody would
+     * find that obvious.
      */
     private static BlockPos anchorOf(StructureTemplate template, StructurePlaceSettings settings, BlockPos pos)
     {
@@ -274,7 +274,7 @@ public final class Structures
             BlockState expected = info.state();
             if (expected.is(Blocks.STRUCTURE_VOID))
             {
-                continue; // il vuoto strutturale non dice niente su cosa ci sia li'
+                continue; // structure void doesn't say anything about what's actually there
             }
             BlockPos worldPos = StructureTemplate.calculateRelativePosition(settings, info.pos()).offset(origin);
             if (level.getBlockState(worldPos) != expected.mirror(settings.getMirror()).rotate(settings.getRotation()))

@@ -18,50 +18,50 @@ saved to json without converting it.
 
 ## Reading
 
-### `block(pos)`
+### `block.block(pos)`
 The block at that position. Compared with a string it answers on the name.
 
-### `state(pos)` · `state(pos, property)`
+### `block.state(pos)` · `block.state(pos, property)`
 The properties of the block as a map, or the value of a single property.
 
-### `data(pos)`
+### `block.data(pos)`
 The NBT of the block entity, `null` when that block does not have one.
 
-### `tags(pos)` · `tags(pos, tag)`
+### `block.tags(pos)` · `block.tags(pos, tag)`
 The tags the block belongs to, or whether it belongs to the given one.
 
-### `catalog()` · `catalog(tag)`
+### `block.catalog()` · `block.catalog(tag)`
 Every registered block, or the ones of a tag.
 
 ## Physical properties
 
-### `solid(pos)` · `air(pos)` · `liquid(pos)`
+### `block.solid(pos)` · `block.air(pos)` · `block.liquid(pos)`
 Whether the block is solid, air, or a liquid.
 
-### `flammable(pos)` · `transparent(pos)`
+### `block.flammable(pos)` · `block.transparent(pos)`
 Whether it burns and whether it lets light through.
 
-### `blocks_movement(pos)` · `suffocates(pos)`
+### `block.blocks_movement(pos)` · `block.suffocates(pos)`
 Whether it stops movement, and whether it suffocates whoever is inside it.
 
-### `hardness(pos)` · `blast_resistance(pos)`
+### `block.hardness(pos)` · `block.blast_resistance(pos)`
 How hard it is to break and how well it resists explosions.
 
-### `sound(pos)` · `map_color(pos)`
+### `block.sound(pos)` · `block.map_color(pos)`
 Sound group and colour on the map.
 
-### `ticks_randomly(pos)` · `power(pos)`
+### `block.ticks_randomly(pos)` · `block.power(pos)`
 Whether it gets random ticks, and the redstone signal it emits.
 
 ## Light
 
-### `light(pos)` · `light(pos, kind)`
+### `block.light(pos)` · `block.light(pos, kind)`
 The light at that point. Without a kind it is the total, the higher of the two layers; with one it is
 that layer alone:
 
 | Kind | What it is |
 | --- | --- |
-| `'total'` | the higher of block and sky — the default |
+| `'total'` | the higher of block and sky (the default) |
 | `'block'` | what blocks around emit |
 | `'sky'` | what comes from the sky |
 | `'effective'` | the one that counts for spawning |
@@ -70,40 +70,43 @@ that layer alone:
 
 A kind that does not exist says which ones do.
 
-### `see_sky(pos)` · `brightness(pos)`
-Whether the point sees the sky, and the brightness as a number between 0 and 1.
+### `block.see_sky(pos)`
+Whether the point has an unobstructed view of the sky.
 
-### `opacity(pos)` · `blocks_daylight(pos)`
+For brightness as a number between 0 and 1 there is no separate function: it is a kind of light,
+`block.light(pos, 'brightness')`.
+
+### `block.opacity(pos)` · `block.blocks_daylight(pos)`
 How much light the block absorbs, and whether it stops daylight from going further down.
 
 ## Writing
 
-### `set(pos, block, properties...)`
+### `block.set(pos, block, properties...)`
 Places a block. The properties are passed as name/value pairs, or as a map. A property the block does
 not have is an error, with a suggestion of the right name.
 
-### `destroy(pos)` · `destroy(pos, -1)` · `destroy(pos, tool)`
+### `block.destroy(pos)` · `block.destroy(pos, -1)` · `block.destroy(pos, tool)`
 Breaks the block: with drops, without drops, or as if it had been broken with that tool.
 
-### `harvest(player, pos)`
+### `block.harvest(player, pos)`
 Breaks the block the way that player would break it, respecting their tool and enchantments.
 
-### `place_item(item, pos, face?, consider_flags?)`
+### `block.place_item(item, pos, face?, consider_flags?)`
 Uses an item on a block, the way a player clicking on it would.
 
-### `update(pos)` · `tick(pos)` · `random_tick(pos)`
+### `block.update(pos)` · `block.tick(pos)` · `block.random_tick(pos)`
 Forces a block update, a scheduled tick or a random tick.
 
-### `without_updates(expression)`
+### `block.without_updates(expression)`
 Runs the expression without propagating block updates: useful to build in bulk without setting off
 redstone and falling blocks at every step.
 
-### `explosion(pos, power?, type?, fire?, source?, cause?)`
+### `block.explosion(pos, power?, type?, fire?, source?, cause?)`
 Blows something up at that point.
 
 ## Positions
 
-### `pos(entity)` · `pos_offset(pos, direction, how_much?)`
+### `block.pos(entity)` · `block.pos_offset(pos, direction, how_much?)`
 The position of an entity, and a position shifted in a direction.
 
 ---
@@ -120,4 +123,4 @@ The position of an entity, and a position shifted in a direction.
 | `block_sound(p)` | `sound(p)` |
 | `map_colour(p)` | `map_color(p)` |
 | `create_explosion(...)` | `explosion(...)` |
-| `block_light(p)` · `sky_light(p)` · `effective_light(p)` · `emitted_light(p)` · `brightness(p)` | `light(p, kind)` — one question, the layer as an argument |
+| `block_light(p)` · `sky_light(p)` · `effective_light(p)` · `emitted_light(p)` · `brightness(p)` | `light(p, kind)` (one question, the layer as an argument) |

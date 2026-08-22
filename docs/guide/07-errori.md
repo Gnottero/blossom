@@ -1,6 +1,6 @@
-# 7. Errori
+# 7. Errors
 
-Un errore in Blossom ha una **categoria**, una **posizione** e uno **stack che attraversa i moduli**:
+An error in Blossom has a **category**, a **position** and a **stack that crosses modules**:
 
 ```
 UndefinedSymbolError
@@ -11,99 +11,101 @@ UndefinedSymbolError
   Did you mean: 'add'?
 ```
 
-Il suggerimento compare quando un nome è abbastanza vicino a uno che esiste — e solo allora: se hai
-scritto `qwertyuiop`, nessuno finge di sapere cosa intendevi.
+The suggestion appears when a name is close enough to one that exists, and only then: if you wrote
+`qwertyuiop`, nobody pretends to know what you meant.
 
-## Le due famiglie
+## The two families
 
-La distinzione che conta per scrivere codice non è fra le categorie, ma fra **chi le solleva**.
+The distinction that matters when writing code is not between categories, but between **who raises
+them**.
 
-| | Errori del linguaggio | Eccezioni lanciate |
+| | Language errors | Thrown exceptions |
 | --- | --- | --- |
-| Chi | l'interprete e le funzioni di libreria | `throw(...)`, e le operazioni che possono fallire per colpa del mondo (json, nbt, file, item o blocco che non esiste) |
-| Esempi | `ParseError`, `ArityError`, `TypeMismatchError`, `UndefinedSymbolError`, `IndexOutOfBoundsError`, `NullReferenceError`, `ImportError`, `CompatibilityError` | `user_exception`, `value_exception`, `unknown_item`, `io_exception`, `json_error`, `nbt_error`, `b64_error` |
-| `try` le cattura? | **no** | sì |
-| Cosa vuol dire | c'è un bug nello script | è successa una cosa prevista che può andare male |
+| Raised by | the interpreter and the library functions | `throw(...)`, and the operations that can fail because of the world (json, nbt, files, an item or block that does not exist) |
+| Examples | `ParseError`, `ArityError`, `TypeMismatchError`, `UndefinedSymbolError`, `IndexOutOfBoundsError`, `NullReferenceError`, `ImportError`, `CompatibilityError` | `user_exception`, `value_exception`, `unknown_item`, `io_exception`, `json_error`, `nbt_error`, `b64_error` |
+| Does `try` catch them? | **no** | yes |
+| What they mean | there is a bug in the script | something anticipated went wrong |
 
-`try` **non** cattura un `ArityError` o un `TypeMismatchError`, ed è voluto: quelli non sono
-situazioni da gestire, sono codice sbagliato che deve arrivare in faccia a chi lo ha scritto, con
-posizione e stack. Nasconderli dietro un `catch` generico è il modo in cui uno script sopravvive per
-mesi facendo la cosa sbagliata in silenzio.
+`try` does **not** catch an `ArityError` or a `TypeMismatchError`, and that is deliberate: those are
+not situations to handle, they are wrong code that must land in the face of whoever wrote it, with a
+position and a stack. Hiding them behind a generic `catch` is how a script survives for months doing
+the wrong thing in silence.
 
-Molti errori del linguaggio arrivano prima ancora che lo script giri: nome di modulo che non
-corrisponde al file, simbolo privato usato da fuori, tipo inesistente in una firma, evento che non
-esiste, handler con l'arietà sbagliata. Un'app che carica è già passata da quei controlli.
+Many language errors arrive before the script even runs: a module name that does not match the file,
+a private symbol used from outside, a non-existent type in a signature, an event that does not
+exist, a handler with the wrong arity. An app that loads has already passed those checks.
 
 ## `try`
 
 ```
-try(espressione);                                   // ingoia le sole eccezioni utente
-try(espressione, ripiego);                          // idem, con un valore di ripiego
-try(espressione, 'filtro', ripiego);                // solo quel tipo
-try(espressione, 'f1', r1, 'f2', r2, ..., ripiego); // più filtri in ordine
+try(expression);                                    // swallows user exceptions only
+try(expression, fallback);                          // the same, with a fallback value
+try(expression, 'filter', fallback);                // that type only
+try(expression, 'f1', r1, 'f2', r2, ..., fallback); // several filters, in order
 ```
 
-Il ramo di ripiego puo' essere una **lambda**, e allora l'errore ha un nome:
+The fallback branch can be a **lambda**, and then the error has a name:
 
 ```
-try(lavoro(), 'exception', fn(e) -> print('non ci sono riuscito: ' + e));
-try(lavoro(), 'exception', fn(e, tr) -> log(e, tr:'token'));   // il secondo e' _trace
+try(work(), 'exception', fn(e) -> print('could not do it: ' + e));
+try(work(), 'exception', fn(e, tr) -> log(e, tr:'token'));   // the second one is _trace
 ```
 
-E' la forma da preferire: `_` e' anche l'elemento corrente di ogni ciclo, quindi un `for` dentro un
-`catch` se lo porta via, e il valore dell'eccezione va salvato a mano prima. Con un nome quel
-problema non esiste.
+This is the form to prefer: `_` is also the current element of every loop, so a `for` inside a
+`catch` takes it away, and the exception value has to be saved by hand beforehand. With a name that
+problem does not exist.
 
-Nella forma senza lambda, `_` resta il valore lanciato:
+In the form without a lambda, `_` holds the thrown value:
 
 ```
 import "core.json" as json;
 
-fn leggi_configurazione(testo) -> try(
-    json.decode(testo),
+fn read_configuration(text) -> try(
+    json.decode(text),
     'json_error', (
-        print('configurazione illeggibile: ' + _);
-        {}                          // un default, e l'app parte lo stesso
+        print('unreadable configuration: ' + _);
+        {}                          // a default, and the app starts anyway
     )
 );
 ```
 
-I filtri seguono una **gerarchia**: `json_error` sta sotto `io_exception`, che sta sotto `exception`.
-Filtrare su `exception` cattura tutto quello che è catturabile; filtrare su un tipo che non c'entra
-lascia passare l'eccezione al `try` di sopra.
+Filters follow a **hierarchy**: `json_error` sits under `io_exception`, which sits under
+`exception`. Filtering on `exception` catches everything catchable; filtering on an unrelated type
+lets the exception through to the enclosing `try`.
 
-| Filtro | Cattura |
+| Filter | Catches |
 | --- | --- |
-| `exception` | tutto il catturabile |
-| `user_exception` | quello che lancia `throw(valore)` |
-| `value_exception` | valori non validi, e sotto di lui `unknown_item`, `unknown_block`, `unknown_biome`, `unknown_particle`, `unknown_poi`, `unknown_dimension`, `unknown_structure`, `unknown_criterion`, `unknown_screen` |
-| `io_exception` | disco e formati, e sotto di lui `nbt_error`, `json_error`, `b64_error` |
+| `exception` | everything catchable |
+| `user_exception` | whatever `throw(value)` raises |
+| `value_exception` | invalid values, and beneath it `unknown_item`, `unknown_block`, `unknown_biome`, `unknown_particle`, `unknown_poi`, `unknown_dimension`, `unknown_structure`, `unknown_criterion`, `unknown_screen` |
+| `io_exception` | disk and formats, and beneath it `nbt_error`, `json_error`, `b64_error` |
 
-Attenzione alla forma corta: `try(codice)` e `try(codice, ripiego)` senza filtro catturano **solo le
-eccezioni utente**. Un `json_error` passa attraverso. Se vuoi prendere tutto, scrivilo:
-`try(codice, 'exception', ripiego)`.
+Watch out for the short form: `try(code)` and `try(code, fallback)` without a filter catch **user
+exceptions only**. A `json_error` passes straight through. If you want to catch everything, write
+it: `try(code, 'exception', fallback)`.
 
 ## `throw`
 
 ```
-throw();                                    // user_exception, valore null
-throw('messaggio');                         // user_exception, con un valore
-throw('value_exception', 'non valido');     // di un tipo preciso
+throw();                                    // user_exception, null value
+throw('message');                           // user_exception, with a value
+throw('value_exception', 'not valid');      // of a specific type
 ```
 
-Il valore lanciato può essere qualunque cosa, non solo una stringa: una mappa è il modo di far
-arrivare al `catch` più di un dato.
+The thrown value can be anything, not just a string: a map is how you get more than one datum to the
+`catch`.
 
 ```
-fn preleva(conto, quanto) -> (
-    if(quanto > conto:'saldo', throw({'errore' -> 'fondi', 'mancano' -> quanto - conto:'saldo'}));
-    conto:'saldo' += -quanto
+fn withdraw(account, amount) -> (
+    if(amount > account:'balance',
+        throw({'error' -> 'funds', 'short_by' -> amount - account:'balance'}));
+    account:'balance' += -amount
 );
 
-try(preleva(conto, 100), 'mancano ' + _:'mancano');
+try(withdraw(account, 100), 'short by ' + _:'short_by');
 ```
 
-Un tipo di eccezione che non esiste è un errore subito, con suggerimento:
+An exception type that does not exist is an immediate error, with a suggestion:
 
 ```
 UndefinedSymbolError
@@ -112,94 +114,94 @@ UndefinedSymbolError
 
 ## `_trace`
 
-Dentro un ramo di `catch`, oltre a `_` c'è `_trace`, una mappa con tre chiavi:
+Inside a `catch` branch, alongside `_` there is `_trace`, a map with three keys:
 
-| Chiave | Cosa contiene |
+| Key | What it holds |
 | --- | --- |
-| `stack` | una lista di `[modulo, funzione, riga, colonna]`, dal punto del lancio in giù |
-| `locals` | le variabili locali nel punto in cui l'eccezione è partita |
-| `token` | `[testo, riga, colonna]` del punto esatto |
+| `stack` | a list of `[module, function, line, column]`, from the throw site downwards |
+| `locals` | the local variables at the point where the exception started |
+| `token` | `[text, line, column]` of the exact spot |
 
-Serve per il log di diagnostica, non per la logica:
+It is for diagnostic logging, not for logic:
 
 ```
-try(lavoro(), 'exception', (
-    io.append_text('data', 'errori.txt', 'fallito a ' + _trace:'token' + ': ' + _ + '\n');
+try(work(), 'exception', (
+    io.append_text('data', 'errors.txt', 'failed at ' + _trace:'token' + ': ' + _ + '\n');
     null
 ));
 ```
 
-## Il watchdog
+## The watchdog
 
-Un'app che cicla all'infinito dentro un evento non rallenta se stessa: **ferma il tick**, e con lui
-il mondo. Per questo ogni esecuzione ha un budget:
+An app that loops forever inside an event does not slow itself down: it **stops the tick**, and the
+world with it. That is why every execution has a budget:
 
 ```
 ExecutionBudgetError[time]
-  in torre.sorveglia  (src/torre.bs:12:5)
+  in tower.watch  (src/tower.bs:12:5)
 
   Execution stopped after 2000 ms: the script is running too long and the server is waiting for
   it. If it really needs all that time, move it to a task.start() or raise 'timeout_ms' in the manifest.
 ```
 
-| Quando | Tempo | Profondità di chiamata |
+| When | Time | Call depth |
 | --- | --- | --- |
-| dentro un evento di gioco | 2 s | 256 |
-| da `/blossom script run` o al caricamento | 15 s | 256 |
-| dentro un `task.start()` | nessun limite | 256 |
+| inside a game event | 2 s | 256 |
+| from `/blossom script run`, or at load time | 15 s | 256 |
+| inside a `task.start()` | no limit | 256 |
 
-Si cambiano nel manifesto, e allora valgono in tutti e tre i casi:
+They are changed in the manifest, and then they apply to all three cases:
 
 ```json
 "watchdog": { "timeout_ms": 5000, "max_depth": 512 }
 ```
 
-`"watchdog": false` li toglie: legittimo per un'app di cui ti fidi, ma da quel momento un suo ciclo
-infinito richiede il riavvio del server.
+`"watchdog": false` removes them: legitimate for an app you trust, but from that moment on an
+infinite loop in it requires restarting the server.
 
-L'errore del watchdog **non è catturabile** con `try` — se lo fosse, un ciclo infinito dentro un
-`try` continuerebbe a girare.
+The watchdog error **cannot be caught** with `try`: if it could, an infinite loop inside a `try`
+would keep running.
 
-## Errori dentro un handler di evento
+## Errors inside an event handler
 
-Un handler che esplode non porta giù né l'app né le altre app: l'errore viene stampato con il suo
-stack e l'evento prosegue.
+A handler that blows up takes down neither the app nor the other apps: the error is printed with its
+stack and the event carries on.
 
-Stampato **dove**: nel log del server e in chat, agli operatori collegati. Un handler non ha nessuno
-a cui rispondere — nessuno ha scritto un comando, è un pistone che si è mosso — e per molto tempo
-l'unico posto in cui questi errori esistevano era la console, che chi gioca non guarda. Lo stesso
-errore ripetuto compare in chat una volta ogni cinque secondi, con il conto di quelli soppressi nel
-frattempo: una macchina a pistoni con un handler rotto sbaglia molte volte al secondo, e non è una
-buona ragione per rendere la chat illeggibile. Nel log ci sono comunque tutti.
+Printed **where**: in the server log and in chat, to connected operators. A handler has nobody to
+answer to (nobody typed a command, a piston moved), and for a long time the only place these errors
+existed was the console, which players do not watch. The same repeated error appears in chat once
+every five seconds, with a count of the ones suppressed in the meantime: a piston machine with a
+broken handler fails many times a second, and that is not a good reason to make chat unreadable.
+The log has all of them regardless.
 
-Vale allo stesso modo per le chiamate rimandate con `schedule` e per i callback delle schermate. Ma "prosegue" vuol dire che l'azione **non** viene annullata, perché il
-valore di ritorno non c'è mai stato. Se un evento annullabile deve fallire in sicurezza, mettici tu
-il `try` e decidi cosa restituire:
+The same applies to calls deferred with `schedule` and to screen callbacks. But "carries on" means
+the action is **not** cancelled, because the return value never existed. If a cancellable event has
+to fail safely, put the `try` there yourself and decide what to return:
 
 ```
-fn su_campana(pos, direzione, chi) -> (
+fn on_bell(pos, direction, who) -> (
     try(
-        costruisci(pos),
+        build(pos),
         'exception', (
-            motivo = _;         // '_' cambia significato dentro il for: salvalo prima
-            for(entity.player('all'), text.send(_, 'non ci sono riuscito: ' + motivo))
+            reason = _;         // '_' changes meaning inside the for: save it first
+            for(entity.player('all'), text.send(_, 'could not do it: ' + reason))
         )
     );
-    false           // il suono va avanti comunque
+    false           // the sound goes ahead anyway
 );
 ```
 
-Quel `motivo = _` non è pedanteria: `_` è lo stesso nome che usano `for`, `map` e `filter` per
-l'elemento corrente. Dentro un ciclo, il valore dell'eccezione non c'è più.
+That `reason = _` is not pedantry: `_` is the same name `for`, `map` and `filter` use for the
+current element. Inside a loop, the exception's value is gone.
 
-Oggi la risposta migliore è non usare `_` per niente e scrivere il `catch` come lambda, che il nome
-ce l'ha già:
+Today the better answer is not to use `_` at all and to write the `catch` as a lambda, which already
+has the name:
 
 ```
-fn su_campana(pos, direzione, chi) -> (
+fn on_bell(pos, direction, who) -> (
     try(
-        costruisci(pos),
-        'exception', fn(motivo) -> for(entity.player('all'), text.send(_, 'non ci sono riuscito: ' + motivo))
+        build(pos),
+        'exception', fn(reason) -> for(entity.player('all'), text.send(_, 'could not do it: ' + reason))
     );
     false
 );

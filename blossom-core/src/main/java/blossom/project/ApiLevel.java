@@ -4,32 +4,35 @@ import blossom.exception.CompatibilityError;
 import blossom.exception.SourcePosition;
 
 /**
- * Il livello dell'API dichiarato nel manifesto, e la regola che dice se un'app puo' girare.
+ * The API level declared in the manifest, and the rule that says whether an app can run.
  *
- * <p>{@code api_level} e' {@code MAJOR.MINOR} e descrive l'API di Blossom, non l'app. <b>MAJOR</b>
- * cambia quando qualcosa che funzionava smette di funzionare (un simbolo tolto o rinominato, una
- * firma o un evento che cambia); <b>MINOR</b> quando si aggiunge soltanto. Le correzioni di bug non
- * muovono nessuno dei due.
+ * <p>{@code api_level} is {@code MAJOR.MINOR} and describes Blossom's API, not the app's. <b>MAJOR</b>
+ * changes when something that used to work stops working (a symbol removed or renamed, a signature
+ * or event that changes); <b>MINOR</b> only when something is added. Bug fixes move neither.
  *
- * <p>Un'app gira se il MAJOR combacia esattamente e il suo MINOR non supera quello del runtime. Le
- * due direzioni falliscono per motivi diversi e il messaggio lo dice. Il campo e' facoltativo: chi
- * non lo scrive dichiara il MINOR piu' basso del MAJOR corrente.
+ * <p>An app runs if MAJOR matches exactly and its MINOR does not exceed the runtime's. The two
+ * directions fail for different reasons, and the message says which. The field is optional: an app
+ * that omits it declares the lowest MINOR of the current MAJOR.
  */
 public record ApiLevel(int major, int minor) implements Comparable<ApiLevel>
 {
     /**
-     * Il livello dell'API fornita da questo runtime.
+     * The API level provided by this runtime.
      *
-     * <p>Va alzato insieme al cambiamento che lo giustifica, non a fine ciclo: un numero aggiornato
-     * dopo, in blocco, non dice più a quale versione risale ogni funzione.
+     * <p>Must be raised together with the change that justifies it, not at the end of a release
+     * cycle: a number bumped later, in bulk, no longer tells which version each function dates back to.
      */
     public static final ApiLevel CURRENT = new ApiLevel(2, 0);
 
-    /** Quello che si assume per un manifesto che non lo dichiara. */
-    public static final ApiLevel DEFAULT = new ApiLevel(1, 0);
+    /**
+     * What is assumed for a manifest that does not declare it: the lowest MINOR of the current
+     * MAJOR. Pinning it to a literal would make every manifest without the field unloadable the
+     * moment MAJOR moves on, which is the opposite of "I use nothing recent".
+     */
+    public static final ApiLevel DEFAULT = new ApiLevel(CURRENT.major(), 0);
 
     /**
-     * @throws IllegalArgumentException se non è nella forma {@code MAJOR.MINOR}
+     * @throws IllegalArgumentException if not in the form {@code MAJOR.MINOR}
      */
     public static ApiLevel parse(String text)
     {
@@ -48,16 +51,16 @@ public record ApiLevel(int major, int minor) implements Comparable<ApiLevel>
         }
     }
 
-    /** @return se un'app che dichiara questo livello può girare su {@code runtime} */
+    /** @return whether an app declaring this level can run on {@code runtime} */
     public boolean isSupportedBy(ApiLevel runtime)
     {
         return major == runtime.major() && minor <= runtime.minor();
     }
 
     /**
-     * Controlla il livello e fallisce con un messaggio che dice cosa fare.
+     * Checks the level and fails with a message that says what to do.
      *
-     * @throws CompatibilityError se l'app non può girare su questo runtime
+     * @throws CompatibilityError if the app cannot run on this runtime
      */
     public void requireSupportedBy(ApiLevel runtime, String appName, SourcePosition where)
     {

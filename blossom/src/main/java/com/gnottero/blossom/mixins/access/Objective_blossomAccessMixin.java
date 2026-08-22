@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 import net.minecraft.world.scores.Objective;
 import net.minecraft.world.scores.criteria.ObjectiveCriteria;
 
-/** Cambiare criterio a un obiettivo gia' creato. */
+/** Changing the criterion of an already-created objective. */
 @Mixin(Objective.class)
 public interface Objective_blossomAccessMixin
 {

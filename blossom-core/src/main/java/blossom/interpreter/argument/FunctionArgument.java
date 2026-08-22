@@ -63,14 +63,14 @@ public class FunctionArgument extends Argument
         }
         FunctionValue fun = (FunctionValue) functionValue;
         int argsize = fun.getArguments().size();
-        // con argomenti passati per nome il conto qui non dice niente di utile - due argomenti per
-        // un parametro puo' voler dire "lo stesso due volte", non "uno di troppo" - e chi sa dirlo
-        // con precisione e' il confine della funzione, che i nomi li ha
+        // With named arguments the count here says nothing useful: two arguments for one
+        // parameter might mean "the same one twice", not "one too many", and only the function's
+        // own signature (which has the names) can tell precisely.
         boolean named = !params.isEmpty() && params.get(params.size() - 1) instanceof NamedArgumentValue;
         if (checkArgs && !named)
         {
-            // il minimo sono i parametri senza valore di riserva: quelli che ce l'hanno chi chiama
-            // puo' non passarli, ed e' 'execute' a riempirli
+            // The minimum is the parameters without a default value: the ones that have one
+            // may be omitted by the caller, and 'execute' fills them in.
             int required = fun.requiredArguments();
             int extraargs = params.size() - required - offset - 1;
             if (extraargs < 0)
@@ -91,16 +91,16 @@ public class FunctionArgument extends Argument
     }
 
     /**
-     * La funzione che quel nome indica: prima una funzione dichiarata, poi una variabile che ne
-     * contiene una.
+     * Resolves the function that name refers to: first a declared function, then a variable
+     * holding one.
      *
-     * <p>L'ordine conta ed e' quello che tiene il costo dov'era: una chiamata a una funzione
-     * dichiarata - il caso normale - trova al primo colpo e non paga niente in piu'. La lettura
-     * della variabile la paga solo chi chiama davvero un valore-funzione, cioe' chi scrive
-     * {@code f(x)} con {@code f} legata a una lambda.
+     * <p>The order matters and is what keeps the cost where it belongs: a call to a declared
+     * function (the normal case) resolves on the first try and pays nothing extra. Reading the
+     * variable is a cost paid only by whoever actually calls a function value, i.e. writes
+     * {@code f(x)} with {@code f} bound to a lambda.
      *
-     * <p>Un nome qualificato ({@code vec.add}) salta il secondo passo: una variabile non ha il
-     * punto nel nome, quindi li' non c'e' niente da cercare.
+     * <p>A qualified name ({@code vec.add}) skips the second step: a variable name never
+     * contains a dot, so there is nothing to look up there.
      */
     private static FunctionValue resolveByName(Context c, Module module, String name)
     {
@@ -118,7 +118,7 @@ public class FunctionArgument extends Argument
         {
             return held;
         }
-        // niente ne' come funzione ne' come variabile: l'errore giusto lo sa gia' costruire l'host
+        // Neither a function nor a variable: the host already knows how to build the right error
         return c.host.getAssertFunction(module, name);
     }
 

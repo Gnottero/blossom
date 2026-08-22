@@ -30,11 +30,6 @@ class ModuleSystemTest
     private static Path project(Path root, String manifest) throws IOException
     {
         Files.createDirectories(root.resolve("src"));
-        // il livello di API va dichiarato: senza, un progetto vale 1.0 e non carica piu'
-        if (!manifest.contains("api_level"))
-        {
-            manifest = manifest.replaceFirst("\\{", "{\"api_level\": \"2.0\", ");
-        }
         Files.writeString(root.resolve("blossom.json"), manifest);
         return root;
     }

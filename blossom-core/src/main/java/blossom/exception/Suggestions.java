@@ -5,15 +5,15 @@ import java.util.Collection;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Il "forse intendevi" degli errori.
+ * The "did you mean" of errors.
  *
- * <p>Il piano (§4) è esplicito su due punti: la distanza si calcola con un fuzzy match, e i
- * candidati sono solo i simboli davvero visibili in quel punto - non tutto lo spazio dei nomi, che
- * produrrebbe suggerimenti a caso e farebbe perdere tempo a chi legge.
+ * <p>The plan (§4) is explicit on two points: the distance is computed with a fuzzy match, and the
+ * candidates are only the symbols actually visible at that point, not the whole namespace, which
+ * would produce random suggestions and waste the reader's time.
  */
 public final class Suggestions
 {
-    /** oltre questa distanza due nomi non si somigliano abbastanza da valere un suggerimento */
+    /** Beyond this distance, two names don't resemble each other enough to be worth suggesting. */
     private static final int MAX_DISTANCE = 3;
 
     private Suggestions()
@@ -21,13 +21,13 @@ public final class Suggestions
     }
 
     /**
-     * @return il candidato più vicino a {@code name}, o {@code null} se nessuno gli somiglia
+     * @return the candidate closest to {@code name}, or {@code null} if none resembles it
      */
     public static @Nullable String closestTo(String name, Collection<String> candidates)
     {
         String best = null;
         int bestDistance = Integer.MAX_VALUE;
-        // un nome corto tollera meno errori di uno lungo: 'ad' vs 'add' e' un refuso, 'a' vs 'add' no
+        // a short name tolerates fewer errors than a long one: 'ad' vs 'add' is a typo, 'a' vs 'add' is not
         int limit = Math.min(MAX_DISTANCE, Math.max(1, name.length() / 2 + 1));
         for (String candidate : candidates)
         {
@@ -42,8 +42,8 @@ public final class Suggestions
     }
 
     /**
-     * Distanza di Levenshtein, con taglio: appena una riga intera supera {@code limit} il risultato
-     * non può più scendere sotto, quindi si smette invece di riempire tutta la matrice.
+     * Levenshtein distance, with a cutoff: as soon as an entire row exceeds {@code limit} the result
+     * can no longer drop below it, so computation stops instead of filling the whole matrix.
      */
     public static int distance(String a, String b, int limit)
     {

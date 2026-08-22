@@ -14,7 +14,7 @@ fn handle(scr, player, action, data) -> (
 );
 ```
 
-### `open(player, type, title, callback?)`
+### `screen.open(player, type, title, callback?)`
 Opens a screen. The types are the vanilla ones: `generic_9x1`..`generic_9x6`, `generic_3x3`,
 `anvil`, `beacon`, `blast_furnace`, `brewing_stand`, `crafting`, `enchantment`, `furnace`,
 `grindstone`, `hopper`, `lectern`, `loom`, `merchant`, `shulker_box`, `smithing`, `smoker`,
@@ -25,9 +25,9 @@ The returned value is the screen: it is used as an inventory with the functions 
 The callback gets `(screen, player, action, data)` and the actions are `slot_click`, `button_click`,
 `select_recipe`, `close`. Returning a true value cancels the action.
 
-### `close(screen)`
+### `screen.close(screen)`
 Closes it. The player goes back to their own inventory.
 
-### `property(screen, property)` · `property(screen, property, value)`
+### `screen.property(screen, property)` · `screen.property(screen, property, value)`
 Reads or writes a property of the screen (the level of an enchantment, the progress of a furnace, the
 fuel...).

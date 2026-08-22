@@ -2,7 +2,7 @@ package blossom.exception;
 
 import org.jspecify.annotations.Nullable;
 
-/** Riferimento a un simbolo che non esiste nel punto in cui viene usato. */
+/** Reference to a symbol that doesn't exist at the point where it's used. */
 public class UndefinedSymbolError extends BlossomError
 {
     public UndefinedSymbolError(SourcePosition position, String message)

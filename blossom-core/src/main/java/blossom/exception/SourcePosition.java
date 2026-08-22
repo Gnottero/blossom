@@ -3,14 +3,14 @@ package blossom.exception;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Dove, esattamente: file, riga, colonna.
+ * Where, exactly: file, line, column.
  *
- * <p>Il piano (§4) chiede che ogni errore sappia dirlo. Un valore immutabile e minuscolo, perché ne
- * vengono costruiti tanti durante il parsing.
+ * <p>The plan (§4) requires every error to be able to report this. A small immutable value, since
+ * many of them get constructed during parsing.
  */
 public record SourcePosition(String file, int line, int column)
 {
-    /** Posizione ignota: usata solo dove l'informazione davvero non c'è, mai come scorciatoia. */
+    /** Unknown position: used only where the information is genuinely unavailable, never as a shortcut. */
     public static final SourcePosition UNKNOWN = new SourcePosition("<unknown>", 0, 0);
 
     public boolean isKnown()

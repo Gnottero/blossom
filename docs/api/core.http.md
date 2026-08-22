@@ -35,13 +35,13 @@ Nothing is reachable until it is declared in `config/blossomscript.json`:
 - **without a declaration nothing is reachable.** `core.http` imported on a server that configured
   nothing exists but opens nothing, and says so.
 - **a host is exact or one leading wildcard.** `api.example.com` matches that name only;
-  `*.example.com` matches its subdomains and not `example.com` itself. `*` alone opens everything —
+  `*.example.com` matches its subdomains and not `example.com` itself. `*` alone opens everything:
   it is logged as a warning at startup, because it turns every installed app into a channel out of
   the server.
 - **`https` unless stated otherwise.** Allowing plain `http` is possible and logged: those requests
   travel unencrypted and can be read and altered in transit.
 - **redirects are not followed by default.** With `follow_redirects` on they are followed at most
-  five hops, and every hop is checked against the allowlist again — a `302` cannot walk a script out
+  five hops, and every hop is checked against the allowlist again: a `302` cannot walk a script out
   of the declared hosts.
 
 ## Off the server thread
@@ -65,8 +65,8 @@ Every request gives back a map:
 | `url` | the url that actually answered, which differs from the one asked after a redirect |
 
 A status outside 2xx is **not** an error: it is an answer, and the script decides what to do with
-it. The errors are the things that produce no answer at all — host unreachable, timeout, a body
-larger than the configured limit — and they arrive as `http_exception`:
+it. The errors are the things that produce no answer at all (host unreachable, timeout, a body
+larger than the configured limit) and they arrive as `http_exception`:
 
 ```
 try(
@@ -80,16 +80,16 @@ catchable. A `try` written for a slow server must not end up hiding a missing co
 
 ## The functions
 
-### `hosts()`
+### `http.hosts()`
 
 The host patterns this server allows, sorted as they were declared. Empty means the network is
 closed; a script that wants to be polite can check before failing.
 
 ```
-if (size(http.hosts()) == 0, print('no network on this server'));
+if(list.size(http.hosts()) == 0, print('no network on this server'));
 ```
 
-### `get(url)`, `get(url, headers)`
+### `http.get(url)`, `http.get(url, headers)`
 
 A `GET`. `headers` is a map of name to value.
 
@@ -98,7 +98,7 @@ http.get('https://api.example.com/players');
 http.get('https://api.example.com/players', {'authorization' -> 'Bearer ' + token});
 ```
 
-### `post(url, body)`, `post(url, body, headers)`
+### `http.post(url, body)`, `http.post(url, body, headers)`
 
 A `POST` with `body` sent as UTF-8.
 
@@ -106,7 +106,7 @@ A `POST` with `body` sent as UTF-8.
 http.post('https://api.example.com/events', 'player=steve', {'content-type' -> 'text/plain'});
 ```
 
-### `request(method, url)`, `request(method, url, body)`, `request(method, url, body, headers)`
+### `http.request(method, url)`, `http.request(method, url, body)`, `http.request(method, url, body, headers)`
 
 Any of `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`, in any case. `body` may be `null`.
 
@@ -114,7 +114,7 @@ Any of `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`, in any case. `body` may 
 http.request('delete', 'https://api.example.com/session/' + id);
 ```
 
-### `get_json(url)`, `get_json(url, headers)`
+### `http.get_json(url)`, `http.get_json(url, headers)`
 
 A `GET` with `accept: application/json`, giving back the body already decoded into values instead of
 the response map. A body that is not valid json throws `json_error`.
@@ -124,7 +124,7 @@ players = http.get_json('https://api.example.com/players');
 print(players:0:'name');
 ```
 
-### `post_json(url, value)`, `post_json(url, value, headers)`
+### `http.post_json(url, value)`, `http.post_json(url, value, headers)`
 
 Encodes `value` as json, sends it with `content-type: application/json`, and decodes the answer the
 same way `get_json` does.
@@ -133,23 +133,23 @@ same way `get_json` does.
 http.post_json('https://api.example.com/events', {'kind' -> 'joined', 'player' -> 'steve'});
 ```
 
-### `encode_url(text)`, `decode_url(text)`
+### `http.encode_url(text)`, `http.decode_url(text)`
 
 Percent-encoding of a single piece of a url. `decode_url` throws `value_exception` on a malformed
 sequence.
 
 ```
-http.encode_url('due parole');   // 'due+parole'
+http.encode_url('two words');    // 'two+words'
 ```
 
-### `encode_query(parameters)`
+### `http.encode_query(parameters)`
 
 A map turned into a query string, keys and values encoded, sorted by pair so the same map always
 gives the same string.
 
 ```
-'https://api.example.com/search?' + http.encode_query({'q' -> 'due parole', 'page' -> 2});
-// https://api.example.com/search?page=2&q=due+parole
+'https://api.example.com/search?' + http.encode_query({'q' -> 'two words', 'page' -> 2});
+// https://api.example.com/search?page=2&q=two+words
 ```
 
 ## What is not here

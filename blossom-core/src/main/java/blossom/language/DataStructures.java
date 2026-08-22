@@ -31,9 +31,9 @@ public class DataStructures
 {
     public static void apply(Expression expression)
     {
-        // pigra per via dell'assegnamento multiplo: in 'l(a, b) = l(1, 2)' gli elementi di sinistra
-        // sono nomi da legare, non variabili da leggere, e la valutazione eager di AbstractFunction
-        // impone Context.NONE ai propri argomenti. Il contesto di l-value deve arrivare fino a loro
+        // lazy because of multiple assignment: in 'l(a, b) = l(1, 2)' the elements on the left
+        // are names to bind, not variables to read, and the eager evaluation of AbstractFunction
+        // forces Context.NONE on its own arguments. The l-value context must reach them
         expression.addLazyFunction("l", (c, t, lv) ->
         {
             Context.Type inner = t == Context.LVALUE ? Context.LVALUE : Context.NONE;
@@ -41,8 +41,8 @@ public class DataStructures
             for (LazyValue element : lv)
             {
                 Value value = element.evalValue(c, inner);
-                // '...rest' dentro una lista si spiana: lo faceva la valutazione eager di
-                // AbstractFunction, che qui non c'e' piu'
+                // '...rest' inside a list gets flattened: the eager evaluation of AbstractFunction
+                // used to do this, and it is no longer there
                 if (value instanceof final blossom.value.FunctionUnpackedArgumentsValue unpacked)
                 {
                     params.addAll(unpacked.getItems());
@@ -138,13 +138,14 @@ public class DataStructures
         });
 
         /*
-         * sort(lista) - per il valore; sort(lista, chiave) - per quello che la chiave calcola.
+         * sort(list) - by value; sort(list, key) - by whatever the key computes.
          *
-         * Erano due funzioni, 'sort' e 'sort_key'. E 'sort_key' con un argomento solo non ordinava
-         * niente: mescolava la lista, che e' un'altra operazione con lo stesso nome. Ora un
-         * argomento vuol dire l'ordine naturale, che e' quello che il nome promette.
+         * These used to be two functions, 'sort' and 'sort_key'. And 'sort_key' with a single
+         * argument did not sort anything: it shuffled the list, which is a different operation
+         * with the same name. Now a single argument means natural order, which is what the name
+         * promises.
          *
-         * Pigra perche' la chiave e' un'espressione con '_', o una lambda.
+         * Lazy because the key is an expression using '_', or a lambda.
          */
         expression.addLazyFunction("sort_key", (c, t, lv) ->
         {
@@ -165,7 +166,7 @@ public class DataStructures
                 return (ct, tt) -> ret;
             }
             LazyValue sortKey = Loops.keyOf(c, lv.get(1));
-            //scoping
+            // entering scope
             LazyValue defaultVal = c.implicitValue;
             toSort.sort((v1, v2) -> {
                 c.implicitValue = (cc, tt) -> v1;
@@ -174,7 +175,7 @@ public class DataStructures
                 Value ev2 = sortKey.evalValue(c);
                 return ev1.compareTo(ev2);
             });
-            //revering scope
+            // reverting scope
             c.implicitValue = defaultVal;
             Value ret = ListValue.wrap(toSort);
             return (cc, tt) -> ret;
@@ -230,9 +231,9 @@ public class DataStructures
 
         expression.addBinaryContextOperator(":", "element",  Operators.precedence.get("attribute~:"), true, true, false, (ctx, t, container, address) ->
         {
-            // dentro una firma, 'a: num' non e' un accesso a un elemento ma un tipo dichiarato.
-            // Non serve grammatica nuova: in contesto di firma un identificatore sconosciuto
-            // diventa gia' un valore legato al proprio nome, quindi qui arrivano due nomi
+            // inside a signature, 'a: num' is not an element access but a declared type.
+            // No new grammar is needed: in signature context an unknown identifier already
+            // becomes a value bound to its own name, so what arrives here are two names
             if (t == Context.LOCALIZATION)
             {
                 if (!(container instanceof final blossom.value.VariableReferenceValue parameter)
@@ -243,9 +244,9 @@ public class DataStructures
                 }
                 return new blossom.value.TypedParameterValue(parameter.name(), declaredType.name());
             }
-            // fuori da una firma il nome non serve: se il contenitore e' arrivato come riferimento
-            // a variabile - accade quando l'argomento viene valutato in contesto di l-value - a
-            // interessare e' il valore che ci sta dietro
+            // outside a signature the name is not needed: if the container arrived as a variable
+            // reference (which happens when the argument is evaluated in l-value context), what
+            // matters is the value behind it
             container = blossom.value.VariableReferenceValue.dereference(container);
             if (container instanceof final LContainerValue lcv)
             {
@@ -265,7 +266,7 @@ public class DataStructures
             return t != Context.LVALUE ? cvi.get(address) : new LContainerValue(cvi, address);
         });
 
-        // lazy cause conditional typing - questionable
+        // lazy cause conditional typing, questionable
         expression.addLazyFunction("get", (c, t, lv) ->
         {
             if (lv.isEmpty())
@@ -350,8 +351,9 @@ public class DataStructures
             {
                 throw new ArityError(SourcePosition.UNKNOWN,"'put' takes at least three arguments, a container, address, and values to insert at that index");
             }
-            // in contesto di l-value una variabile si valuta al proprio riferimento: qui il nome
-            // non serve, serve il contenitore che ci sta dietro. Su un LContainerValue e' un no-op
+            // in l-value context a variable evaluates to its own reference: the name is not
+            // needed here, what is needed is the container behind it. On an LContainerValue this
+            // is a no-op
             Value container = blossom.value.VariableReferenceValue.dereference(lv.get(0).evalValue(c, Context.LVALUE));
             if (container instanceof final LContainerValue lcv)
             {
@@ -441,8 +443,11 @@ public class DataStructures
             {
                 return JsonSupport.GSON.fromJson(v.getString(), Value.class);
             }
-            catch (JsonParseException jpe)
+            catch (JsonParseException | NumberFormatException | ArithmeticException jpe)
             {
+                // NumberFormatException arriva da gson su un numero che non entra da nessuna parte
+                // ('1e999999'): e' pur sempre json che non si puo' leggere, e chi chiama deve poterlo
+                // filtrare come tale invece di vedere un errore interno della JVM
                 throw new ThrowStatement("Invalid json string: " + v.getString(), Throwables.JSON_ERROR);
             }
         });

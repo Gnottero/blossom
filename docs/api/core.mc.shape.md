@@ -34,7 +34,7 @@ particles cannot be coloured at will), curves become polygons, and a label canno
 whoever has no client gets the text in chat once. A block or an item becomes a particle showing its
 texture at the right point.
 
-### `draw(type, duration, attributes)`
+### `shape.draw(type, duration, attributes)`
 
 `duration` is in ticks. `attributes` is a map; the ones common to every shape:
 
@@ -123,7 +123,15 @@ There are seven types because they are the things needed to show what a script i
 a volume, a radius, a column, a number, a block, an item. Arbitrary polygonal faces are deliberately
 not among them: that is for making graphics, not for understanding what your own code is doing.
 
-### `clear()`
+### `shape.types()`
+The list of the shape type names this server knows, in the order the table above lists them. Useful
+for a script that validates its own configuration before drawing.
+
+```
+shape.types();      // ['line', 'box', 'sphere', 'cylinder', 'label', 'block', 'item']
+```
+
+### `shape.clear()`
 Forgets the shapes still waiting to be redrawn as particles. It does not remove the ones already sent
 to a client, which expire on their own.
 

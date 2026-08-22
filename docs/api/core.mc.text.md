@@ -11,12 +11,12 @@ text.send(player, text.format('rb watch out', 'w  something went wrong'));
 text.title(player, 'title', text.format('gb Level 2'));
 ```
 
-### `send(message)` · `send(target, message)`
+### `text.send(message)` · `text.send(target, message)`
 Writes a message: to whoever launched the script, or to a given target. The target is a player or a
 **list of players**, so the list `entity.player('all')` returns goes in as it is, with no loop around
 it. It returns the message, so it can be slipped in the middle of an expression without breaking it.
 
-### `format(pieces...)`
+### `text.format(pieces...)`
 Formatted text. Every piece is `'style text'`, where the style is made of letters:
 
 | | | | |
@@ -31,11 +31,11 @@ Formatted text. Every piece is `'style text'`, where the style is made of letter
 A piece starting with a symbol attaches an action to the previous piece: `^` text on hover, `!` runs
 a command, `?` writes it in chat, `@` opens an address, `&` copies to the clipboard.
 
-### `title(targets, type, text?, fade_in?, stay?, fade_out?)`
+### `text.title(targets, type, text?, fade_in?, stay?, fade_out?)`
 Writes big on the screen. The types are `'title'`, `'subtitle'`, `'actionbar'`,
 `'player_list_header'`, `'player_list_footer'`, and `'clear'`/`'reset'` to remove.
 
-### `hud(players, text, duration?)` · `hud(player)`
+### `text.hud(players, text, duration?)` · `text.hud(player)`
 A line of text above the hotbar.
 
 ```
@@ -47,8 +47,8 @@ text.hud(player);                                      // what they are seeing, 
 ```
 
 `duration` is in ticks. **Without it, the line stays**: there is no hidden default duration. They are
-two different uses and both are normal — a counter keeps the player company, a warning has to leave
-on its own — and an implicit duration would have broken the first one. The expiry is checked every
+two different uses and both are normal (a counter keeps the player company, a warning has to leave
+on its own) and an implicit duration would have broken the first one. The expiry is checked every
 tick, so "stays 5 ticks" stays 5 ticks.
 
 A duration of zero or less is an error, not "disappears immediately": whoever writes it has almost
@@ -60,7 +60,7 @@ touched.
 
 **How it works, and what it implies.** The game has no packet saying "keep this text there": the
 title and the action bar have a duration and then fade. This function resends the action bar before
-it fades, so the line stays — and since it is all vanilla, it **works on any client**, with nothing
+it fades, so the line stays, and since it is all vanilla, it **works on any client**, with nothing
 installed. The text goes out immediately when you change it, and is resent half a second at a time
 for as long as it has to stay: one packet every ten ticks per player, not one per tick.
 

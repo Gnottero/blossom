@@ -9,7 +9,7 @@ public class UndefValue extends NullValue
     public static final UndefValue UNDEF = new UndefValue();
     public static final UndefValue EOL = new UndefValue();
 
-    /** il nome della variabile mai inizializzata, per il messaggio d'errore */
+    /** The name of the never-initialized variable, for the error message. */
     private final String name;
 
     public UndefValue()
@@ -22,7 +22,7 @@ public class UndefValue extends NullValue
         this.name = name;
     }
 
-    /** Il segnaposto della variabile {@code name}, che sotto 'strict' non si puo' leggere. */
+    /** The placeholder for variable {@code name}, which cannot be read under 'strict'. */
     public static UndefValue named(String name)
     {
         return new UndefValue(name);

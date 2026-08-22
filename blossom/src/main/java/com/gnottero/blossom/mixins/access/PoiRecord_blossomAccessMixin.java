@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 
 import net.minecraft.world.entity.ai.village.poi.PoiRecord;
 
-/** I posti liberi di un punto di interesse, per {@code world.poi} e {@code world.set_poi}. */
+/** The free slots of a point of interest, for {@code world.poi} and {@code world.set_poi}. */
 @Mixin(PoiRecord.class)
 public interface PoiRecord_blossomAccessMixin
 {

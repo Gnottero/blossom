@@ -11,7 +11,7 @@ import net.minecraft.world.scores.Objective;
 import net.minecraft.world.scores.Scoreboard;
 import net.minecraft.world.scores.criteria.ObjectiveCriteria;
 
-/** Gli obiettivi raggruppati per criterio, per aggiornarli tutti insieme. */
+/** The objectives grouped by criterion, so they can all be updated together. */
 @Mixin(Scoreboard.class)
 public interface Scoreboard_blossomAccessMixin
 {

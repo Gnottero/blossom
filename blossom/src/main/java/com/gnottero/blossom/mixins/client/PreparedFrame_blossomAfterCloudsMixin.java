@@ -18,11 +18,11 @@ import com.gnottero.blossom.client.AfterCloudsFrame;
 import com.gnottero.blossom.client.AfterCloudsSubmits;
 
 /**
- * Esegue la fase di {@link AfterCloudsSubmits} sul frame già preparato.
+ * Executes the {@link AfterCloudsSubmits} phase on the already-prepared frame.
  *
- * <p>È lo stesso schema di {@code executeTranslucentAfterTerrain} e delle altre: si scorre l'ordine
- * di consegna e si esegue la fase per ognuno. Chi la chiama è
- * {@code LevelRenderer_blossomAfterCloudsMixin}, nel punto giusto del frame.
+ * <p>Same pattern as {@code executeTranslucentAfterTerrain} and the others: walk the submission
+ * order and execute the phase for each. The caller is
+ * {@code LevelRenderer_blossomAfterCloudsMixin}, at the right point in the frame.
  */
 @Mixin(FeatureRenderDispatcher.PreparedFrame.class)
 public abstract class PreparedFrame_blossomAfterCloudsMixin implements AfterCloudsFrame

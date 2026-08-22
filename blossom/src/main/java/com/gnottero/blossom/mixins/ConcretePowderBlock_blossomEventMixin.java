@@ -24,12 +24,12 @@ import com.gnottero.blossom.event.Event;
 import com.gnottero.blossom.event.Fire;
 
 /**
- * La parte di {@code block_forms} che riguarda il cemento (voce BE-3 dell'inventario).
+ * The part of {@code block_forms} that concerns concrete (inventory entry BE-3).
  *
- * <p>Due strade diverse portano allo stesso risultato e vanno intercettate tutte e due: la polvere
- * che cade nell'acqua ({@code onLand}) e quella che ne viene toccata dopo essere gia' a terra
- * ({@code updateShape}). Nel secondo caso non c'e' nessuna scrittura da deviare - il gioco decide
- * guardando un booleano - quindi si annulla dicendo che l'acqua non c'e'.
+ * <p>Two different paths lead to the same result and both must be intercepted: powder falling into
+ * water ({@code onLand}) and powder that gets touched by water after already sitting on the ground
+ * ({@code updateShape}). In the second case there's no write to redirect, the game decides just by
+ * checking a boolean, so it's cancelled by reporting that the water isn't there.
  */
 @Mixin(ConcretePowderBlock.class)
 public abstract class ConcretePowderBlock_blossomEventMixin extends FallingBlock

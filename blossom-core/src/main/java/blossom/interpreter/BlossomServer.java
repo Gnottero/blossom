@@ -5,10 +5,10 @@ import java.nio.file.Path;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Lo {@link ScriptServer} del core: sa solo dove stanno i file su disco.
+ * The core's {@link ScriptServer}: it only knows where the files sit on disk.
  *
- * <p>Il layer Minecraft ne fornirà uno che risolve dentro la cartella del mondo; qui la radice è
- * esplicita, così i test girano su una directory temporanea e senza gioco.
+ * <p>The Minecraft layer will provide one that resolves inside the world folder; here the root is
+ * explicit, so tests can run against a temporary directory with no game involved.
  */
 public class BlossomServer extends ScriptServer
 {
@@ -21,7 +21,7 @@ public class BlossomServer extends ScriptServer
         this.root = root;
     }
 
-    /** Dichiara le radici di {@code core.io}: e' il mod - o un test - a decidere quali sono. */
+    /** Declares the roots of {@code core.io}: it's the mod (or a test) that decides which they are. */
     public void setIoRoots(blossom.language.IoRoots roots)
     {
         this.ioRoots = roots;
@@ -33,7 +33,7 @@ public class BlossomServer extends ScriptServer
         return ioRoots;
     }
 
-    /** Dichiara gli host di {@code core.http}: e' il mod - o un test - a decidere quali sono. */
+    /** Declares the hosts of {@code core.http}: it's the mod (or a test) that decides which they are. */
     public void setHttpAccess(blossom.language.HttpAccess access)
     {
         this.httpAccess = access;

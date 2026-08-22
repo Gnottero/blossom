@@ -2,11 +2,11 @@ package blossom.value;
 
 
 /**
- * La base dei valori che esistono solo per l'interprete e non per chi scrive lo script - firme di
- * funzione, argomenti spacchettati, annotazioni.
+ * The base for values that exist only for the interpreter and not for whoever writes the script:
+ * function signatures, unpacked arguments, annotations.
  *
- * <p>Non sono valori del linguaggio: se uno di questi arriva dove ne serve uno vero, l'errore va
- * segnalato invece che nascosto dietro una conversione plausibile.
+ * <p>These are not language values: if one of them ends up where a real value is expected, the
+ * error must be reported rather than hidden behind a plausible conversion.
  */
 public abstract class FrameworkValue extends Value
 {

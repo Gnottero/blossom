@@ -138,6 +138,12 @@ public class Tokenizer
         int i = 0;
         while (i < raw.length())
         {
+            if (raw.charAt(i) == '\\' && i + 1 < raw.length() && raw.charAt(i + 1) == '$')
+            {
+                literal.append('$'); // '\\${' written by hand: a literal '${', not a placeholder
+                i += 2;
+                continue;
+            }
             if (raw.charAt(i) == '$' && i + 1 < raw.length() && raw.charAt(i + 1) == '{')
             {
                 if (!literal.isEmpty())
@@ -235,7 +241,14 @@ public class Tokenizer
 
     public boolean hasNext()
     {
-        return (pos < input.length());
+        // whitespace at the end is not a token: saying "yes" here and then handing back null is what
+        // made a placeholder body like "${1 }" blow up
+        int ahead = pos;
+        while (ahead < input.length() && Character.isWhitespace(input.charAt(ahead)))
+        {
+            ahead++;
+        }
+        return ahead < input.length();
     }
 
     /**
@@ -356,7 +369,7 @@ public class Tokenizer
             return previousToken = null;
         }
         char ch = input.charAt(pos);
-        while (Character.isWhitespace(ch) && pos < input.length())
+        while (Character.isWhitespace(ch))
         {
             linepos++;
             if (ch == '\n')
@@ -364,7 +377,13 @@ public class Tokenizer
                 lineno++;
                 linepos = 0;
             }
-            ch = input.charAt(++pos);
+            // the bound is checked before reading, not after: an input that ends in whitespace
+            // (a placeholder body like "${1 }") must end the scan, not walk off the string
+            if (++pos >= input.length())
+            {
+                return previousToken = null;
+            }
+            ch = input.charAt(pos);
         }
         token.pos = pos;
         token.lineno = lineno;
@@ -421,12 +440,22 @@ public class Tokenizer
                 if (cur == '\\' && pos + 1 < input.length())
                 {
                     char next = input.charAt(pos + 1);
-                    token.append(switch (next)
+                    if (next == '$')
                     {
-                        case 'n' -> '\n';
-                        case 't' -> '\t';
-                        default -> next;
-                    });
+                        // the escape survives into the raw text: expandInterpolation is the one that
+                        // has to know this '$' does not open a placeholder, and it reads it later
+                        token.append('\\');
+                        token.append('$');
+                    }
+                    else
+                    {
+                        token.append(switch (next)
+                        {
+                            case 'n' -> '\n';
+                            case 't' -> '\t';
+                            default -> next;
+                        });
+                    }
                     pos += 2;
                     linepos += 2;
                     continue;

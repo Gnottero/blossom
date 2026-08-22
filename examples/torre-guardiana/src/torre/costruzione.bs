@@ -4,12 +4,12 @@ import "core.mc.block" as block;
 import "core.list" as list;
 import "core.math" as math;
 
-// Il materiale della torre sta qui e non nel main: chi cambia l'aspetto della costruzione
-// non deve andare a leggere la logica degli eventi.
+// The tower's material lives here and not in main: whoever changes how the construction looks
+// doesn't need to go read the event logic.
 let materiale = 'stone_bricks';
 let materiale_cima = 'sea_lantern';
 
-// Privata: e' un dettaglio di come si costruisce, non qualcosa che altri moduli devono poter usare.
+// Private: it's a detail of how things get built, not something other modules should be able to use.
 fn colonna(x, y, z, altezza, blocco) -> (
     list.map(list.range(altezza), block.set([x, y + _, z], blocco));
     altezza

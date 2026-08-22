@@ -23,10 +23,10 @@ import blossom.interpreter.Interpreter;
 import blossom.language.HttpAccess;
 
 /**
- * {@code core.http}: richieste verso host dichiarati.
+ * {@code core.http}: requests to declared hosts.
  *
- * <p>Come per {@code core.io}, metà dei test riguarda quello che non deve funzionare: un host non
- * dichiarato, uno schema non consentito, un redirect che porta fuori dall'allowlist.
+ * <p>As with {@code core.io}, half the tests cover what must not work: an undeclared host, a
+ * disallowed scheme, a redirect that leads outside the allowlist.
  */
 class HttpTest
 {
@@ -110,7 +110,7 @@ class HttpTest
     @Test
     void aStatusOutsideTwoHundredIsAnAnswerAndNotAnError()
     {
-        // un 404 e' un'informazione, non un guasto: chi chiama decide cosa farne
+        // a 404 is information, not a failure: the caller decides what to do with it
         assertEquals("404", localhost().eval(IMPORT + "http.get('" + base + "/missing'):'status'").getString());
     }
 
@@ -133,7 +133,7 @@ class HttpTest
     {
         Interpreter interpreter = localhost();
         assertEquals("1", interpreter.eval(IMPORT + "http.get_json('" + base + "/json'):'a'").getString());
-        // il corpo spedito e' json, e la risposta torna gia' decodificata
+        // the body sent is json, and the response comes back already decoded
         assertEquals("POST:{\"a\":1}:null", interpreter.eval(IMPORT + "import \"core.json\" as json; "
                 + "http.post('" + base + "/echo', json.encode({'a' -> 1})):'body'").getString());
         assertEquals("1", interpreter.eval(IMPORT + "http.post_json('" + base + "/json', {'a' -> 1}):'a'").getString());
@@ -158,8 +158,8 @@ class HttpTest
     @Test
     void aRedirectOutOfTheAllowlistIsRefused()
     {
-        // seguire i 3xx senza ricontrollare l'host renderebbe l'allowlist aggirabile dal server
-        // dall'altra parte, che e' esattamente chi non decide le regole qui
+        // following 3xx redirects without re-checking the host would make the allowlist
+        // bypassable by the server on the other end, which is exactly who doesn't set the rules here
         Interpreter interpreter = withAccess(
                 new HttpAccess(List.of("127.0.0.1"), Set.of("http", "https"), 5_000, 1 << 20, true));
         BlossomRuntimeError error = assertThrows(BlossomRuntimeError.class,
@@ -184,7 +184,7 @@ class HttpTest
     @Test
     void networkFailuresAreCatchable()
     {
-        // una porta chiusa e' una condizione di rete: si cattura, al contrario di un host vietato
+        // a closed port is a network condition: it can be caught, unlike a forbidden host
         Interpreter interpreter = withAccess(
                 new HttpAccess(List.of("127.0.0.1"), Set.of("http"), 500, 1 << 20, false));
         assertEquals("giu'", interpreter.eval(

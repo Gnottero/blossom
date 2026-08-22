@@ -14,7 +14,7 @@ import net.minecraft.world.level.storage.LevelStorageSource;
 
 import com.gnottero.blossom.access.Access;
 
-/** Fa avanzare il server di un tick su richiesta, e dice dov'e' il salvataggio del mondo. */
+/** Advances the server by one tick on request, and exposes where the world storage lives. */
 @Mixin(MinecraftServer.class)
 public abstract class MinecraftServer_blossomAccessMixin extends ReentrantBlockableEventLoop<TickTask>
         implements Access.Server
@@ -40,8 +40,8 @@ public abstract class MinecraftServer_blossomAccessMixin extends ReentrantBlocka
     @Override
     public void blossom$forceTick(BooleanSupplier until)
     {
-        // il tick va forzato senza che il server creda di essere in ritardo, altrimenti salta
-        // meta' del lavoro per recuperare
+        // The tick must be forced without letting the server think it's behind, otherwise it
+        // skips half the work trying to catch up
         nextTickTimeNanos = lastOverloadWarningNanos = Util.getNanos();
         tickServer(until);
         pollTask();

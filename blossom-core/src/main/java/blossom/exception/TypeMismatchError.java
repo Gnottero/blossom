@@ -2,7 +2,7 @@ package blossom.exception;
 
 import org.jspecify.annotations.Nullable;
 
-/** Un valore di tipo diverso da quello che l'operazione richiede. */
+/** A value of a different type than the operation requires. */
 public class TypeMismatchError extends BlossomError
 {
     public TypeMismatchError(SourcePosition position, String message)

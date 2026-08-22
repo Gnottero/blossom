@@ -198,14 +198,14 @@ public class ScreenValue extends Value implements Nbt.Serializable
         AppHost appHost = AppHost.byName(this.hostname);
         if (appHost == null)
         {
-            // l'app che ha aperto la schermata non c'e' piu': la schermata non ha piu' un padrone
+            // the app that opened the screen is gone: the screen no longer has an owner
             this.close();
             this.screenHandler = null;
             return false;
         }
         CommandSourceStack source = player.createCommandSourceStack();
         Value result = appHost.call(source, callback, args);
-        // un handler che risponde vero chiude la porta all'azione, come in ogni altro evento
+        // a handler that returns true blocks the action, as with any other event
         return result != null && result.getBoolean();
     }
 

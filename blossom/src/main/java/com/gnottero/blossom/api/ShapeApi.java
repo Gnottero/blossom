@@ -34,7 +34,7 @@ import blossom.value.StringValue;
 import blossom.value.Value;
 
 /**
- * {@code core.mc.shape}: far vedere quello che uno script sta calcolando.
+ * {@code core.mc.shape}: show what a script is computing.
  *
  * <pre>
  * import "core.mc.shape" as shape;
@@ -42,27 +42,27 @@ import blossom.value.Value;
  * shape.draw_shape('box', 100, {'from' -&gt; [0, 64, 0], 'to' -&gt; [8, 70, 8], 'color' -&gt; 'red'});
  * </pre>
  *
- * <p>Chi ha Blossom anche sul client vede il disegno vero, chi gioca vanilla la stessa geometria a
- * particelle: chi scrive lo script non deve sapere chi ha cosa. Gli attributi stanno tutti in una
- * mappa, e un nome che non esiste per quella forma e' un errore invece di un silenzio.
+ * <p>A player with Blossom on the client sees the real drawing; a vanilla player sees the same
+ * geometry as particles. The script author doesn't need to know who has what. Attributes all live
+ * in one map, and a name that doesn't exist for that shape is an error, not a silent no-op.
  */
 public final class ShapeApi
 {
-    /** i simboli esportati da {@code core.mc.shape} */
+    /** The symbols exported by {@code core.mc.shape}. */
     public static final java.util.Set<String> MODULE = java.util.Set.of(
             "draw_shape", "clear_shapes", "shape_types");
 
-    /** i colori con un nome, perché scrivere 0xff0000ff a mano non lo fa nessuno volentieri */
+    /** Named colors, because nobody wants to type 0xff0000ff by hand. */
     private static final Map<String, Integer> NAMED_COLORS = Map.of(
             "white", 0xFFFFFFFF, "black", 0x000000FF, "red", 0xFF3B30FF, "green", 0x34C759FF,
             "blue", 0x2F7BFFFF, "yellow", 0xFFD60AFF, "cyan", 0x30D5C8FF, "magenta", 0xFF2D95FF,
             "orange", 0xFF9500FF, "grey", 0x8E8E93FF);
 
-    /** quello che vale per qualunque forma */
+    /** Attributes valid for any shape. */
     private static final Set<String> COMMON_ATTRIBUTES =
             Set.of("color", "fill", "line", "player", "follow", "snap", "debug");
 
-    /** quello che vale per una forma sola, oltre a {@link #COMMON_ATTRIBUTES} */
+    /** Attributes valid for a single shape type, in addition to {@link #COMMON_ATTRIBUTES}. */
     private static final Map<String, Set<String>> ATTRIBUTES_BY_TYPE = Map.of(
             "line", Set.of("from", "to"),
             "box", Set.of("from", "to"),
@@ -75,18 +75,18 @@ public final class ShapeApi
             "item", Set.of("pos", "item", "variant", "facing", "tilt", "lean", "turn", "scale",
                     "blocklight", "skylight"));
 
-    /** i valori che {@code snap} accetta: quali assi seguono l'entità, e quali al blocco */
+    /** Values accepted by {@code snap}: which axes follow the entity, and which snap to the block. */
     private static final Set<String> SNAP_VALUES = Set.of(
             "xyz", "xz", "yz", "xy", "x", "y", "z",
             "dxdydz", "dxdz", "dydz", "dxdy", "dx", "dy", "dz",
             "xdz", "dxz", "ydz", "dyz", "xdy", "dxy",
             "xydz", "xdyz", "xdydz", "dxyz", "dxydz", "dxdyz");
 
-    /** verso cosa può guardare un'etichetta, o un blocco disegnato a mezz'aria */
+    /** What a label, or a block drawn in mid-air, can face towards. */
     private static final Set<String> FACINGS = Set.of(
             "player", "camera", "north", "south", "east", "west", "up", "down");
 
-    /** in che posa si può disegnare un item: sono i modi in cui il gioco lo mostra già da sé */
+    /** The pose an item can be drawn in: the ways the game already shows it by itself. */
     private static final Set<String> VARIANTS = Set.of(
             "none", "gui", "ground", "fixed", "head",
             "first_person_left_hand", "first_person_right_hand",
@@ -99,10 +99,10 @@ public final class ShapeApi
     public static void apply(Expression expression)
     {
         /*
-         * draw_shape(tipo, durata_in_tick, attributi)
+         * draw_shape(type, duration_in_ticks, attributes)
          *
-         * Un solo modo di chiamarla, con gli attributi in una mappa: sparsi fra gli argomenti non
-         * si capirebbe dove finisce la geometria e dove cominciano le opzioni.
+         * Only one way to call it, with the attributes in a map: spread across positional
+         * arguments it wouldn't be clear where the geometry ends and the options begin.
          */
         expression.addContextFunction("draw_shape", -1, (c, t, lv) ->
         {
@@ -126,8 +126,8 @@ public final class ShapeApi
             List<ServerPlayer> audience = audienceOf(cc, attributes);
             if (shape instanceof final Shape.Label label)
             {
-                // il testo non si puo' approssimare con le particelle: a chi non ha il client
-                // arriva una volta in chat, cosi' l'informazione non va persa
+                // Text can't be approximated with particles: it's sent once in chat to those
+                // without the client, so the information isn't lost.
                 Component message = label.component() == null
                         ? Component.literal(label.text())
                         : FormattedTextValue.deserialize(label.component(), cc.registryAccess()).getText();
@@ -137,24 +137,24 @@ public final class ShapeApi
             return new NumericValue(BlossomMod.shapes().draw(shape, level, audience));
         });
 
-        /** clear_shapes() - dimentica le forme ancora in attesa di essere ridisegnate. */
+        // clear_shapes() - forget the shapes still waiting to be redrawn.
         expression.addContextFunction("clear_shapes", 0, (c, t, lv) ->
         {
             BlossomMod.shapes().clear();
             return Value.TRUE;
         });
 
-        /** shape_types() - i tipi che draw_shape accetta. */
+        // shape_types() - the types draw_shape accepts.
         expression.addContextFunction("shape_types", 0, (c, t, lv) ->
                 ListValue.wrap(Shape.TYPES.stream().map(StringValue::of)));
     }
 
     /**
-     * Un nome di attributo che non esiste è un errore, non un silenzio.
+     * An attribute name that doesn't exist is an error, not a silent no-op.
      *
-     * <p>Un {@code 'radiu'} scritto male, accettato in silenzio, farebbe uscire la forma col valore
-     * di default: si vedrebbe qualcosa di sbagliato senza capire perché. Qui si sa subito, e con il
-     * nome giusto suggerito.
+     * <p>A misspelled {@code 'radiu'}, accepted silently, would make the shape come out with the
+     * default value: something wrong would show up without any clue why. Here it's flagged right
+     * away, with the right name suggested.
      */
     private static void checkAttributes(String type, Map<Value, Value> attributes)
     {
@@ -202,7 +202,7 @@ public final class ShapeApi
                     component(cc, attributes), style(attributes), common);
             case "block" -> block(cc, attributes, common);
             case "item" -> item(cc, attributes, common);
-            // il tipo e' gia' stato validato in checkAttributes: qui non ci si arriva
+            // The type has already been validated in checkAttributes: unreachable.
             default -> throw new TypeMismatchError(SourcePosition.UNKNOWN,
                     "Unknown shape type: '" + type + "'. The types are " + Shape.TYPES + ".",
                     Suggestions.closestTo(type, Shape.TYPES));
@@ -210,11 +210,11 @@ public final class ShapeApi
     }
 
     /**
-     * Il blocco da disegnare a mezz'aria.
+     * The block to draw in mid-air.
      *
-     * <p>Si accetta il blocco come lo si scrive ({@code 'chest[facing=north]'}) o un valore blocco
-     * preso dal mondo: nel secondo caso viene con i suoi dati - il contenuto di un baule, il testo di
-     * un cartello - e quelli servono al client per disegnarlo come si deve.
+     * <p>Accepts a block written out ({@code 'chest[facing=north]'}) or a block value taken from
+     * the world; in the latter case it comes with its data (a chest's contents, a sign's text) and
+     * the client needs that to draw it properly.
      */
     private static Shape block(ScriptContext cc, Map<Value, Value> attributes, Shape.Common common)
     {
@@ -235,10 +235,10 @@ public final class ShapeApi
     }
 
     /**
-     * L'item da disegnare a mezz'aria.
+     * The item to draw in mid-air.
      *
-     * <p>Viaggia lo stack intero e non il solo nome: incantesimi, nome personalizzato e data component
-     * cambiano come l'item si vede, e chi li ha messi si aspetta di vederli.
+     * <p>The whole stack travels, not just the name: enchantments, custom name and data components
+     * change how the item looks, and whoever set them expects to see them.
      */
     private static Shape item(ScriptContext cc, Map<Value, Value> attributes, Shape.Common common)
     {
@@ -255,14 +255,14 @@ public final class ShapeApi
                 .encodeStart(cc.registryAccess().createSerializationContext(NbtOps.INSTANCE), stack)
                 .getOrThrow(message -> new TypeMismatchError(SourcePosition.UNKNOWN,
                         "That item cannot be drawn: " + message));
-        // il nome serve solo al ripiego a particelle, e li' l'id basta: lo stack intero e' in 'data'
+        // The name is only for the particle fallback, where the id is enough; the whole stack is in 'data'.
         String name = cc.registry(net.minecraft.core.registries.Registries.ITEM)
                 .getKey(stack.getItem()).toString();
         return new Shape.Sprite("item", vec(attributes, "pos"), name, data,
                 pose(attributes, "north"), common);
     }
 
-    /** Come sta nello spazio un blocco o un item disegnato a mezz'aria. */
+    /** How a block or item drawn in mid-air is positioned in space. */
     private static Shape.Sprite.Pose pose(Map<Value, Value> attributes, String defaultFacing)
     {
         Vec3 scale = scale(attributes);
@@ -277,7 +277,7 @@ public final class ShapeApi
                 choice(attributes, "variant", VARIANTS, "none"));
     }
 
-    /** {@code scale} è un numero solo, o uno per asse. */
+    /** {@code scale} is either a single number, or one per axis. */
     private static Vec3 scale(Map<Value, Value> attributes)
     {
         Value value = attributes.get(StringValue.of("scale"));
@@ -301,7 +301,7 @@ public final class ShapeApi
         return new Vec3(uniform, uniform, uniform);
     }
 
-    /** Un livello di luce fisso, o {@code -1} per quella che c'è nel posto dove sta la forma. */
+    /** A fixed light level, or {@code -1} for whatever light there is where the shape stands. */
     private static int light(Map<Value, Value> attributes, String key)
     {
         int light = (int) number(attributes, key, -1.0);
@@ -328,7 +328,7 @@ public final class ShapeApi
                 bool(attributes, "doublesided"));
     }
 
-    /** {@code -1} a sinistra, {@code 0} centrato, {@code 1} a destra. */
+    /** {@code -1} for left, {@code 0} for centered, {@code 1} for right. */
     private static int align(Map<Value, Value> attributes)
     {
         String align = choice(attributes, "align", Set.of("center", "left", "right"), "center");
@@ -341,10 +341,10 @@ public final class ShapeApi
     }
 
     /**
-     * L'entità a cui la forma sta attaccata.
+     * The entity the shape is attached to.
      *
-     * <p>Si accetta l'entità stessa o il suo id: il primo è quello che si ha in mano dentro un
-     * evento, il secondo è quello che si è magari salvato da qualche parte.
+     * <p>Accepts either the entity itself or its id: the former is what you have on hand inside an
+     * event, the latter is what you may have saved somewhere.
      */
     private static int follow(Map<Value, Value> attributes)
     {
@@ -366,10 +366,10 @@ public final class ShapeApi
     }
 
     /**
-     * Chi vede la forma.
+     * Who sees the shape.
      *
-     * <p>Senza {@code player}, tutti quelli nella dimensione in cui lo script sta girando. È il
-     * default utile: chi disegna sta quasi sempre guardando quello che succede lì.
+     * <p>Without {@code player}, everyone in the dimension the script is running in. That's the
+     * useful default: whoever is drawing is almost always looking at what happens there.
      */
     private static List<ServerPlayer> audienceOf(ScriptContext cc, Map<Value, Value> attributes)
     {
@@ -428,7 +428,7 @@ public final class ShapeApi
         return value != null && !value.isNull() && value.getBoolean();
     }
 
-    /** Un attributo che può valere solo una fra poche parole. */
+    /** An attribute that can only be one of a few words. */
     private static String choice(Map<Value, Value> attributes, String key, Set<String> allowed, String fallback)
     {
         Value value = attributes.get(StringValue.of(key));
@@ -461,12 +461,12 @@ public final class ShapeApi
     }
 
     /**
-     * Il testo con il suo stile, se chi disegna ne ha passato uno.
+     * The text with its style, if whoever is drawing passed one.
      *
-     * <p>Un testo di {@code core.mc.text} porta colori e formattazione, e sarebbe un peccato buttarli
-     * per la strada: viaggia serializzato accanto alla versione senza stile, che resta quella che
-     * arriva in chat a chi non ha il client. Una stringa e basta non ha niente da serializzare, e
-     * allora non si manda niente.
+     * <p>A {@code core.mc.text} text carries colors and formatting, and it would be a shame to
+     * drop them along the way: it travels serialized alongside the plain version, which stays the
+     * one that reaches chat for those without the client. A plain string has nothing to
+     * serialize, so nothing is sent.
      */
     private static net.minecraft.nbt.@org.jspecify.annotations.Nullable Tag component(
             ScriptContext cc, Map<Value, Value> attributes)
@@ -478,11 +478,11 @@ public final class ShapeApi
     }
 
     /**
-     * Il colore, come nome o come numero {@code 0xRRGGBBAA}.
+     * The color, as a name or as a {@code 0xRRGGBBAA} number.
      *
-     * <p>I nomi non sono una comodità e basta: un colore scritto a mano in esadecimale è la cosa che
-     * si sbaglia più spesso, e quasi sempre il canale alfa finisce a zero — cioè la forma non si
-     * vede, e sembra che la funzione non abbia funzionato.
+     * <p>Names aren't just a convenience: a hand-typed hex color is the mistake that happens most
+     * often, and the alpha channel almost always ends up at zero, meaning the shape doesn't show
+     * up and it looks like the function didn't work.
      */
     private static int color(Map<Value, Value> attributes, String key, int fallback)
     {

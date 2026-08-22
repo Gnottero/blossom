@@ -12,16 +12,16 @@ import blossom.exception.ParseError;
 import blossom.exception.SourcePosition;
 
 /**
- * Il preambolo di un modulo, separato dal corpo.
+ * A module's preamble, separated from its body.
  *
- * <p>{@code module ...;} e {@code import ... as ...;} sono dichiarazioni, non espressioni: vanno
- * lette prima di compilare qualunque cosa, perché il resolver deve sapere quali moduli servono
- * ancora prima di costruire l'albero del corpo (§3.2 e §4 del piano: gli errori di import sono
- * errori di caricamento, non sorprese a runtime).
+ * <p>{@code module ...;} and {@code import ... as ...;} are declarations, not expressions: they must
+ * be read before compiling anything, because the resolver needs to know which modules are needed
+ * before the body's tree is even built (see PIANO_LINGUAGGIO.md §3.2 and §4: import errors are
+ * loading errors, not runtime surprises).
  *
- * <p>Il corpo restituito ha la stessa lunghezza del sorgente originale - il preambolo viene
- * sostituito con spazi, conservando le andate a capo - così riga e colonna di ogni errore del corpo
- * restano quelle vere del file, senza dover riportare offset in giro.
+ * <p>The returned body has the same length as the original source (the preamble is replaced with
+ * spaces, keeping the line breaks), so line and column numbers in any error from the body stay the
+ * true ones for the file, with no offsets to carry around.
  */
 public final class ModuleSource
 {
@@ -36,7 +36,7 @@ public final class ModuleSource
         this.body = body;
     }
 
-    /** Un import risolto staticamente: l'alias con cui il modulo corrente vede il modulo importato. */
+    /** A statically resolved import: the alias by which the current module sees the imported one. */
     public record ImportDeclaration(String alias, ModuleName target, SourcePosition position)
     {
     }
@@ -46,19 +46,19 @@ public final class ModuleSource
         return declaredName;
     }
 
-    /** Gli import nell'ordine in cui compaiono, per alias. */
+    /** The imports in the order they appear, keyed by alias. */
     public Map<String, ImportDeclaration> imports()
     {
         return imports;
     }
 
     /**
-     * Il corpo del modulo, cioè quello che resta tolto il preambolo.
+     * The module's body, i.e. what remains once the preamble is stripped.
      *
-     * <p>Un modulo che dichiara solo il proprio nome e i propri import è legittimo - è la facciata
-     * che raccoglie e riespone altri moduli - e il suo corpo è vuoto. Al parser però un'espressione
-     * vuota non si può dare, quindi diventa {@code null}: valutarlo non fa niente, che è appunto
-     * quello che un modulo senza corpo deve fare.
+     * <p>A module that only declares its own name and imports is legitimate (it's a facade that
+     * collects and re-exposes other modules), and its body is empty. The parser cannot be handed an
+     * empty expression though, so it becomes {@code null}: evaluating it does nothing, which is
+     * exactly what a bodyless module should do.
      */
     public String body()
     {
@@ -71,9 +71,9 @@ public final class ModuleSource
     }
 
     /**
-     * Legge il preambolo di {@code code}.
+     * Reads the preamble of {@code code}.
      *
-     * @param fileName il nome del file, per i messaggi di errore
+     * @param fileName the file's name, for error messages
      */
     public static ModuleSource parse(String fileName, String code)
     {
@@ -84,8 +84,8 @@ public final class ModuleSource
     }
 
     /**
-     * Lettore di dichiarazioni: minuscolo di proposito, perché la grammatica del preambolo è
-     * minuscola. Salta spazi e commenti come il tokenizer del linguaggio.
+     * Reader for declarations: deliberately minimal, because the preamble's grammar is minimal too.
+     * Skips whitespace and comments just like the language's tokenizer.
      */
     private static final class Scanner
     {
@@ -161,7 +161,7 @@ public final class ModuleSource
             }
         }
 
-        /** Sostituisce il preambolo con spazi, lasciando le andate a capo dove sono. */
+        /** Replaces the preamble with spaces, leaving line breaks where they are. */
         String blankOutPreamble()
         {
             StringBuilder blanked = new StringBuilder(code.length());
@@ -174,7 +174,7 @@ public final class ModuleSource
             return blanked.toString();
         }
 
-        // --- primitive di lettura ---
+        // --- reading primitives ---
 
         private void skipIrrelevant()
         {
@@ -209,7 +209,7 @@ public final class ModuleSource
             int after = position + keyword.length();
             if (after < code.length() && (Character.isLetterOrDigit(code.charAt(after)) || code.charAt(after) == '_'))
             {
-                return false; // e' l'inizio di un identificatore piu' lungo, non la parola chiave
+                return false; // it's the start of a longer identifier, not the keyword
             }
             for (int i = 0; i < keyword.length(); i++)
             {
@@ -236,7 +236,7 @@ public final class ModuleSource
             }
             if (start == position)
             {
-                throw new ParseError(here(), "manca " + what);
+                throw new ParseError(here(), "missing " + what);
             }
             return code.substring(start, position);
         }
@@ -259,7 +259,7 @@ public final class ModuleSource
             }
             if (start == position)
             {
-                throw new ParseError(here(), "manca " + what);
+                throw new ParseError(here(), "missing " + what);
             }
             return code.substring(start, position);
         }
@@ -287,7 +287,7 @@ public final class ModuleSource
                 throw new ParseError(here(), "unterminated quotes in the import");
             }
             String target = code.substring(start, position);
-            advance(); // la virgoletta di chiusura
+            advance(); // the closing quote
             return target;
         }
 
@@ -321,7 +321,7 @@ public final class ModuleSource
         }
     }
 
-    /** Gli alias dichiarati, utile nei messaggi di errore con suggerimento. */
+    /** The declared aliases, useful in error messages with a suggestion. */
     public List<String> aliases()
     {
         return new ArrayList<>(imports.keySet());

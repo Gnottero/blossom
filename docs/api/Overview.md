@@ -16,7 +16,7 @@ import "core.list" as list;
 | [`core.map`](core.map.md) | maps: keys, values, pairs |
 | [`core.json`](core.json.md) | conversion to and from json |
 | [`core.task`](core.task.md) | concurrency, waiting, critical sections |
-| [`core.io`](core.io.md) | files, inside declared roots — NBT and datapacks included |
+| [`core.io`](core.io.md) | files, inside declared roots (NBT and datapacks included) |
 | [`core.http`](core.http.md) | http requests towards declared hosts |
 | [`core.system`](core.system.md) | time, introspection, measurement |
 
@@ -42,6 +42,28 @@ import "core.list" as list;
 | [`core.mc.event`](core.mc.event.md) | reacting to what happens |
 | [`core.mc.system`](core.mc.system.md) | commands, statistics, diagnostics |
 | [`core.mc.data`](core.mc.data.md) | generating the pack's own game content |
+
+## Conventions across the game layer
+
+A handful of shapes recur in every `core.mc.*` module, and knowing them once saves reading them
+eighteen times.
+
+| Shape | Written as | Notes |
+| --- | --- | --- |
+| a position | `[x, y, z]` or three loose arguments | the two are interchangeable everywhere |
+| radii | one number or three | one number means the same in all three axes |
+| an item | `[name, count, nbt]` | an empty slot is `['minecraft:air', 0, {}]`, not `null` |
+| a block | a block value, or its name as a string | a block value compares equal to its name |
+| a player | a player value, or their name as a string | many functions also accept a **list** of players |
+| a resource id | `'namespace:name'` | the `minecraft:` prefix may be left out |
+
+Two conventions about failure, which hold throughout:
+
+- **absence is `null`**, not an error: a block with no block entity, an entity that is not there, a
+  property nothing has.
+- **an invalid name is an error**, not `null`: a misspelled block, item, biome or particle throws a
+  catchable `unknown_*` exception, and a misspelled *property* or *event* name is a load-time error
+  with a suggestion. See [7. Errors](../guide/07-errori.md).
 
 ## The prelude
 

@@ -9,7 +9,7 @@ import net.minecraft.world.entity.animal.equine.AbstractHorse;
 
 import com.gnottero.blossom.access.Access;
 
-/** La sella e la bisaccia di un cavallo sono un inventario a parte. */
+/** A horse's saddle and saddlebag are a separate inventory. */
 @Mixin(AbstractHorse.class)
 public class AbstractHorse_blossomAccessMixin implements Access.InventoryBearer
 {

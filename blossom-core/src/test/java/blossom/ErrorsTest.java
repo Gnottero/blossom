@@ -24,11 +24,10 @@ import blossom.exception.UndefinedSymbolError;
 import blossom.interpreter.Interpreter;
 
 /**
- * Un test per ogni categoria di errore elencata in PIANO_LINGUAGGIO.md §4, più il formato del
- * messaggio.
+ * One test per error category listed in PIANO_LINGUAGGIO.md §4, plus the message format.
  *
- * <p>Verificano due cose distinte: che la categoria sia quella giusta (perché è su quella che si
- * fanno i {@code catch} mirati) e che il messaggio dica abbastanza a un umano.
+ * <p>They verify two distinct things: that the category is the right one (since that's what
+ * targeted {@code catch} blocks rely on) and that the message tells a human enough.
  */
 class ErrorsTest
 {
@@ -98,14 +97,14 @@ class ErrorsTest
         assertTrue(error.kind().contains("control_flow"), error.kind());
     }
 
-    // --- formato del messaggio ---
+    // --- message format ---
 
     @Test
     void formatsLikeThePlanRequires()
     {
         BlossomError error = new UndefinedSymbolError(
                 new SourcePosition("src/math/vector.bs", 4, 12),
-                "Simbolo 'ad' non trovato nel modulo 'math.vector'.",
+                "Symbol 'ad' not found in module 'math.vector'.",
                 "add");
         error.pushFrame("math.vector.add", new SourcePosition("src/math/vector.bs", 4, 12));
         error.pushFrame("main", new SourcePosition("src/main.bs", 8, 1));
@@ -113,8 +112,8 @@ class ErrorsTest
         String formatted = error.format();
         assertTrue(formatted.startsWith("UndefinedSymbolError"), formatted);
         assertTrue(formatted.contains("in math.vector.add  (src/math/vector.bs:4:12)"), formatted);
-        assertTrue(formatted.contains("called from main  (src/main.bs:8:1)"), formatted);
-        assertTrue(formatted.contains("Simbolo 'ad' non trovato"), formatted);
+        assertTrue(formatted.contains("called from main    (src/main.bs:8:1)"), formatted);
+        assertTrue(formatted.contains("Symbol 'ad' not found"), formatted);
         assertTrue(formatted.endsWith("Did you mean: add?"), formatted);
     }
 
@@ -126,7 +125,7 @@ class ErrorsTest
         assertTrue(error.frames().getFirst().position().isKnown(), error.format());
     }
 
-    // --- il suggeritore ---
+    // --- the suggester ---
 
     @Test
     void usingALibraryFunctionWithoutImportingItSaysWhereItLives()

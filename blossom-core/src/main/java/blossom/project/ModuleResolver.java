@@ -9,19 +9,19 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 /**
- * Da nome di modulo a file su disco.
+ * From a module name to a file on disk.
  *
- * <p>Un resolver rappresenta lo spazio dei nomi di <em>un</em> progetto: la sua cartella sorgenti, e
- * un resolver figlio per ogni dipendenza. Il primo segmento del nome decide dove cercare —
- * {@code utils.vector} cerca in una dipendenza chiamata {@code utils} se esiste, altrimenti nel
- * progetto stesso. Nessuna ricerca "a tentativi" su più percorsi: un nome ha una sola origine
- * possibile, così un modulo non può essere ombreggiato da un altro senza che nessuno se ne accorga.
+ * <p>A resolver represents the namespace of <em>one</em> project: its source directory, plus a
+ * child resolver for each dependency. The name's first segment decides where to look:
+ * {@code utils.vector} looks in a dependency called {@code utils} if one exists, otherwise in the
+ * project itself. There is no "try several paths" search: a name has exactly one possible origin,
+ * so a module can never be shadowed by another without anyone noticing.
  *
- * <p>I figli sono resolver e non semplici cartelle perché una dipendenza ha a sua volta le proprie
- * dipendenze, con i propri alias: dentro {@code utils}, {@code math.vec} significa quello che dice
- * il manifesto di {@code utils}, non quello che dice il nostro. Senza questa separazione due
- * progetti che chiamano {@code math} due librerie diverse non potrebbero convivere — che è
- * esattamente il problema che gli alias obbligatori risolvono fra moduli, portato un livello sopra.
+ * <p>The children are resolvers, not plain directories, because a dependency has its own
+ * dependencies in turn, with its own aliases: inside {@code utils}, {@code math.vec} means whatever
+ * {@code utils}'s manifest says, not whatever ours says. Without this separation, two projects that
+ * both call a library {@code math} could not coexist, which is exactly the problem that mandatory
+ * aliases solve between modules, carried one level up.
  */
 public final class ModuleResolver
 {
@@ -40,10 +40,10 @@ public final class ModuleResolver
     }
 
     /**
-     * Il resolver di un progetto, dipendenze comprese, tenendo conto del suo {@code blossom.lock} e
-     * riscrivendolo se le scelte sono cambiate.
+     * The resolver for a project, dependencies included, taking its {@code blossom.lock} into
+     * account and rewriting it if the choices changed.
      *
-     * @param refreshing se ri-risolvere ignorando quello che il lock aveva scelto
+     * @param refreshing whether to re-resolve while ignoring what the lock had chosen
      */
     public static ModuleResolver of(Path projectRoot, ProjectManifest manifest, PackEnvironment environment,
             boolean refreshing) throws IOException
@@ -51,27 +51,25 @@ public final class ModuleResolver
         return new DependencyResolver(environment, refreshing).resolveRoot(projectRoot, manifest);
     }
 
-    /** Un resolver per una sola cartella di sorgenti, senza progetto intorno. */
+    /** A resolver for a single source directory, with no project around it. */
     public static ModuleResolver ofSourceRoot(Path sourceRoot)
     {
         return new ModuleResolver(sourceRoot, Map.of());
     }
 
     /**
-     * Dove sta un modulo, come si chiama a casa sua, e in che spazio dei nomi vanno letti i suoi
-     * import.
+     * Where a module lives, what it's called at home, and in which namespace its imports must be read.
      *
-     * @param localName il nome che il file dichiara: dentro una dipendenza è il nome senza il
-     *                  prefisso della dipendenza, perché quel modulo non sa di essere una dipendenza
-     *                  di qualcun altro
-     * @param scope     il resolver in cui vanno risolti gli import di <em>quel</em> file
-     * @param prefix    la catena di alias attraversata per arrivarci, con il punto finale: serve a
-     *                  ricostruire il nome globale del modulo, che è quello con cui l'host lo
-     *                  registra
+     * @param localName the name the file declares: inside a dependency this is the name without the
+     *                  dependency's prefix, because that module doesn't know it is someone else's
+     *                  dependency
+     * @param scope     the resolver in which <em>that</em> file's imports must be resolved
+     * @param prefix    the chain of aliases crossed to get here, with a trailing dot: used to
+     *                  rebuild the module's global name, the one the host registers it under
      */
     public record Resolution(Path file, ModuleName localName, ModuleResolver scope, String prefix)
     {
-        /** Il nome del modulo visto dalla radice del progetto. */
+        /** The module's name as seen from the project's root. */
         public ModuleName globalName()
         {
             return prefix.isEmpty() ? localName : new ModuleName(prefix + localName.value());
@@ -95,7 +93,7 @@ public final class ModuleResolver
         return new Resolution(name.toPath(sourceRoot), name, this, "");
     }
 
-    /** Tutti i moduli effettivamente presenti, per suggerire un nome quando quello scritto non esiste. */
+    /** All the modules actually present, to suggest a name when the one written doesn't exist. */
     public List<String> knownModuleNames()
     {
         List<String> names = new ArrayList<>(namesUnder(sourceRoot, ""));

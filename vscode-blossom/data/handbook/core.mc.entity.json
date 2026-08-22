@@ -229,7 +229,7 @@
       "fn watch(e) -> if(entity.query(e, 'y') < 0, entity.modify(e, 'kill'));\nentity.on(mob, 'on_tick', watch);",
       "entity.on(mob, 'on_tick', null);   // removed"
     ],
-    "note": "The handler lives inside the entity: it follows it between worlds and disappears with it. The find argument is always the entity itself, and the number of arguments is checked at once, not at the find event."
+    "note": "The handler lives inside the entity: it follows it between worlds and disappears with it. The first argument is always the entity itself, and the number of arguments is checked at once, not at the first event."
   },
   "on_load": {
     "signatures": [

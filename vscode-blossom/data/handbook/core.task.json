@@ -38,7 +38,7 @@
     "examples": [
       "t = task.start(heavy_computation);\nresult = task.wait(t);"
     ],
-    "note": "It blocks the thread that calls it. Calling it from the tick of the game means stopping the server until the task ends — from there use `wait` of `core.mc.system`, which knows how to wait without blocking the tick."
+    "note": "It blocks the thread that calls it. Calling it from the tick of the game means stopping the server until the task ends; from there use `wait` of `core.mc.system`, which knows how to wait without blocking the tick."
   },
   "next": {
     "signatures": [
@@ -197,7 +197,7 @@
     "examples": [
       "// read and write are two steps: without the lock a count gets lost\ntask.synchronize('counter', counter = counter + 1);"
     ],
-    "note": "The lock is reentrant (a synchronised function can call another one on the same lock) and fair (whoever waits gets in in the order they arrived). Single operations — an assignment, a `put`, a `remove` — are already atomic on their own and need no lock; it is *sequences* that do."
+    "note": "The lock is reentrant (a synchronised function can call another one on the same lock) and fair (whoever waits gets in in the order they arrived). Single operations (an assignment, a `put`, a `remove`) are already atomic on their own and need no lock; it is *sequences* that do."
   },
   "sleep": {
     "signatures": [

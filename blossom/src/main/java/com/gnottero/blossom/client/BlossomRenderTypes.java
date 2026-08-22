@@ -18,23 +18,23 @@ import net.minecraft.client.renderer.rendertype.RenderType;
 import com.gnottero.blossom.mixins.client.RenderType_blossomCreateInvoker;
 
 /**
- * Il modo di disegnare un riempimento che copre davvero quello che ha dietro.
+ * How to draw a fill that actually covers what is behind it.
  *
- * <p>Le primitive di debug del gioco hanno una sola pipeline per le facce, {@code DEBUG_FILLED_BOX},
- * che mescola sempre in trasparenza e non scrive la profondita': una faccia con alfa {@code ff} non
- * nasconde niente, e le nuvole ci passano sopra. Non e' il colore, e' la pipeline. Per il
- * riempimento opaco ce ne serve quindi una uguale ma senza mescolare e che scriva la profondita';
- * quello traslucido continua a passare dai gizmo.
+ * <p>The game's debug primitives have a single pipeline for faces, {@code DEBUG_FILLED_BOX}, which
+ * always blends with transparency and does not write depth: a face with alpha {@code ff} hides
+ * nothing, and the clouds pass right over it. It is not the color, it is the pipeline. For an
+ * opaque fill we therefore need one that is the same but does not blend and does write depth;
+ * the translucent fill still goes through the gizmos.
  *
- * <p>Il resto dei parametri e' copiato da {@code DEBUG_FILLED_BOX} apposta: confronto di profondita'
- * {@code GREATER_THAN_OR_EQUAL} perche' il gioco la usa rovesciata, culling spento perche' una forma
- * si guarda anche da dentro, e lo stesso scostamento di layering delle linee, cosi' reticolo e
- * riempimento della stessa forma non litigano sullo stesso piano.
+ * <p>The rest of the parameters are copied from {@code DEBUG_FILLED_BOX} on purpose: depth
+ * comparison {@code GREATER_THAN_OR_EQUAL} because the game uses it reversed, culling off because
+ * a shape is also viewed from inside, and the same layering offset as the lines, so the wireframe
+ * and the fill of the same shape do not fight over the same plane.
  */
 @Environment(EnvType.CLIENT)
 public final class BlossomRenderTypes
 {
-    /** la pipeline: come quella delle facce di debug, ma opaca e che scrive la profondità */
+    /** The pipeline: like the one for debug faces, but opaque and writing depth. */
     public static final RenderPipeline OPAQUE_FILL_PIPELINE = RenderPipeline.builder()
             .withLocation("pipeline/blossom_opaque_fill")
             .withBindGroupLayout(BindGroupLayouts.PROJECTION)

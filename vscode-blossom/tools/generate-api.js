@@ -214,8 +214,14 @@ function docsFor(moduleName, symbols) {
     if (!fs.existsSync(page)) return found;
     const text = read(page);
 
-    // the signatures: `name(arg, arg)` inside inline code
-    for (const match of text.matchAll(/`([a-z_][\w]*)\(([^`()]*)\)`/g)) {
+    /*
+     * The signatures: `name(arg, arg)` inside inline code.
+     *
+     * Since the api pages write a call with the alias of its module — `math.sqrt(x)`, not `sqrt(x)`,
+     * so that a heading says on its own which module it belongs to — the prefix is optional here and
+     * dropped when it is there.
+     */
+    for (const match of text.matchAll(/`(?:[a-z_][\w]*\.)?([a-z_][\w]*)\(([^`()]*)\)`/g)) {
         if (!symbols.has(match[1])) continue;
         const entry = found.get(match[1]) || { signatures: [], doc: '' };
         const signature = match[1] + '(' + match[2].trim() + ')';
@@ -225,8 +231,10 @@ function docsFor(moduleName, symbols) {
 
     // the description: the paragraph where the symbol appears for the first time
     const paragraphs = text.split(/\n\s*\n/);
+    const alias = moduleName.split('.').pop();
     for (const symbol of symbols) {
-        const mention = new RegExp('`' + symbol.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '[`(]');
+        const escaped = symbol.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const mention = new RegExp('`(?:' + alias + '\\.)?' + escaped + '[`(]');
         const paragraph = paragraphs.find((p) => !p.startsWith('```') && mention.test(p));
         if (!paragraph) continue;
         const entry = found.get(symbol) || { signatures: [], doc: '' };

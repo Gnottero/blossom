@@ -660,7 +660,7 @@ public class EntityValue extends Value implements Nbt.Serializable
             return Value.NULL;
         });
 
-        // Blossom non ha un protocollo di handshake con il client: da qui ogni giocatore e' vanilla
+        // Blossom has no client handshake protocol, so every player is treated as vanilla here
         put("client_brand", (e, a) -> e instanceof ServerPlayer ? StringValue.of("vanilla") : Value.NULL);
         put("team", (e, a) -> e.getTeam() == null ? Value.NULL : new StringValue(e.getTeam().getName()));
         put("ping", (e, a) -> e instanceof ServerPlayer sp ? new NumericValue(sp.connection.latency()) : Value.NULL);
@@ -1738,9 +1738,9 @@ public class EntityValue extends Value implements Nbt.Serializable
     }};
 
     /**
-     * Attacca (o toglie, con {@code fun == null}) un handler a questa entita'.
+     * Attaches (or removes, with {@code fun == null}) a handler to this entity.
      *
-     * <p>L'handler vive dentro l'entita': la segue fra i mondi e sparisce con lei.
+     * <p>The handler lives inside the entity: it follows it across worlds and disappears with it.
      */
     public void setEvent(ScriptContext cc, String app, String eventName, FunctionValue fun, List<Value> args)
     {

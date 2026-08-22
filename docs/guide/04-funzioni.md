@@ -1,177 +1,184 @@
-# 4. Funzioni
+# 4. Functions
 
-## Dichiarare
+## Declaring
 
 ```
-fn raddoppia(x) -> x * 2;
+fn double(x) -> x * 2;
 
-fn area(base, altezza) -> (
-    metà = base * altezza / 2;
-    metà
+fn area(base, height) -> (
+    half = base * height / 2;
+    half
 );
 ```
 
-`fn` registra la funzione nella tabella dei simboli del modulo, **mentre il modulo si carica**: a
-runtime non resta niente da cercare. È anche quello che permette agli errori di dire "in
-`torre.costruisci`" invece di "in una funzione".
+`fn` registers the function in the module's symbol table **while the module is loading**, so nothing
+is left to look up at run time. It is also what lets errors say "in `tower.build`" instead of "in
+some function".
 
-Senza `fn`, `nome(args) -> corpo` definisce lo stesso una funzione, ma come effetto collaterale di
-un'espressione: usalo per una funzione usa-e-getta dentro un corpo, non per l'interfaccia di un
-modulo.
+Without `fn`, `name(args) -> body` still defines a function, but as the side effect of an
+expression: use it for a throwaway function inside a body, not for a module's interface.
 
-`pub` davanti la rende visibile agli altri moduli:
-
-```
-pub fn distanza(a, b) -> ...;       // la vedono tutti
-fn interna(x) -> ...;               // solo questo modulo
-```
-
-## Funzioni senza nome
-
-`fn(...)` senza nome e' una funzione scritta sul posto:
+`pub` in front makes it visible to other modules:
 
 ```
-raddoppia = fn(x) -> x * 2;
-raddoppia(3);                           // 6
+pub fn distance(a, b) -> ...;       // everyone can see it
+fn internal(x) -> ...;              // this module only
+```
+
+The name is yours. `fn map(...)`, `fn size(...)`, `fn get(...)` are ordinary names: the library is
+reached through an alias (`list.map`), so nothing of yours can shadow it. The only reserved names
+are the ones you write without importing anything — `break`, `c_for`, `call`, `continue`, `exit`,
+`fn`, `for`, `if`, `loop`, `match`, `not`, `outer`, `print`, `return`, `throw`, `try`, `while` —
+which are grammar rather than library.
+
+## Anonymous functions
+
+`fn(...)` without a name is a function written on the spot:
+
+```
+double = fn(x) -> x * 2;
+double(3);                              // 6
 
 list.map([1, 2, 3], fn(x) -> x * 2);    // [2, 4, 6]
-event.on('player_dies', fn(chi, causa) -> (log(chi); false));
+event.on('player_dies', fn(who, cause) -> (log(who); false));
 ```
 
-Le due forme non si confondono: `fn nome(...)` dichiara, `fn(...)` e' un valore. A deciderlo e' la
-parentesi subito dopo `fn`.
+The two forms cannot be confused: `fn name(...)` declares, `fn(...)` is a value. What decides is the
+parenthesis immediately after `fn`.
 
-Una lambda **cattura il frame in cui nasce**, quindi vede le variabili che la circondano senza
-doverle dichiarare con `outer`:
+A lambda **captures the frame it is born in**, so it sees the variables around it without having to
+declare them with `outer`:
 
 ```
 base = 10;
-somma = fn(x) -> x + base;
-somma(3);                               // 13
+add = fn(x) -> x + base;
+add(3);                                 // 13
 ```
 
-La cattura la paga solo chi scrive una lambda: una funzione con nome non cattura niente, come prima.
+Only the author of a lambda pays for that capture: a named function captures nothing, as before.
 
-## Chi vede cosa
+## Who sees what
 
-Dentro una funzione sono visibili: i suoi parametri, le variabili che assegna, e i **binding di
-modulo** dichiarati con `let` o `let mut`.
+Inside a function these are visible: its parameters, the variables it assigns, and the **module
+bindings** declared with `let` or `let mut`.
 
 ```
-let soglia = 10;            // immutabile
-let mut contatore = 0;      // riassegnabile
+let threshold = 10;         // immutable
+let mut counter = 0;        // reassignable
 
-pub fn conta() -> (
-    contatore += 1;                     // ok: è 'let mut'
-    if(contatore > soglia, 'troppi', contatore)
+pub fn count() -> (
+    counter += 1;                       // fine: it is a 'let mut'
+    if(counter > threshold, 'too many', counter)
 );
 ```
 
-Una variabile assegnata al livello del modulo **senza** `let` non è un binding di modulo: resta nel
-corpo, e le funzioni non la vedono.
+A variable assigned at module level **without** `let` is not a module binding: it stays in the body,
+and functions do not see it.
 
 ```
-contatore = 0;                          // no: è una variabile del corpo
-fn bump() -> contatore += 1;            // scrive su un'altra cosa
+counter = 0;                            // no: this is a body variable
+fn bump() -> counter += 1;              // writes to something else entirely
 bump();
-contatore;                              // 0
+counter;                                // 0
 ```
 
-Assegnare a un `let` immutabile è un errore, e lo dice:
+Assigning to an immutable `let` is an error, and it says so:
 
 ```
 TypeMismatchError
-  'soglia' is an immutable binding: declare it 'let mut soglia' if it has to change.
+  'threshold' is an immutable binding: declare it 'let mut threshold' if it has to change.
 ```
 
-Per leggere una variabile del frame **chiamante** c'è `outer`, che si dichiara nella firma:
+To read a variable of the **calling** frame there is `outer`, declared in the signature:
 
 ```
 base = 7;
-fn leggi(outer(base)) -> base;
-leggi();                        // 7
+fn read(outer(base)) -> base;
+read();                         // 7
 ```
 
-## Come arrivano gli argomenti
+## How arguments arrive
 
-I valori scalari (numeri, stringhe, booleani) arrivano **per copia**; liste e mappe **per
-riferimento**.
+Scalar values (numbers, strings, booleans) arrive **by copy**; lists and maps **by reference**.
 
 ```
-fn incrementa(v) -> (v += 1; null);
+fn increment(v) -> (v += 1; null);
 n = 1;
-incrementa(n);
-n;                              // 1  - invariato
+increment(n);
+n;                              // 1  - unchanged
 
-fn accoda(l) -> list.put(l, null, 9);
-lista = [1];
-accoda(lista);
-lista;                          // [1, 9]  - modificata davvero
+fn append(l) -> list.put(l, null, 9);
+values = [1];
+append(values);
+values;                         // [1, 9]  - genuinely modified
 ```
 
-Se una funzione non deve toccare la lista che riceve, copiala: `system.copy(l)`.
+If a function must not touch the list it receives, copy it: `system.copy(l)`.
 
-## Numero di argomenti
+## Number of arguments
 
-Chiamare con il numero sbagliato è un `ArityError`, sul confine della chiamata:
+Calling with the wrong count is an `ArityError`, raised at the call boundary:
 
 ```
 ArityError
   Function f(a, b) wants at least 2 arguments.
 ```
 
-L'ultimo parametro può raccogliere il resto:
+The last parameter can collect the rest:
 
 ```
-fn registra(livello, ...messaggi) -> [livello, messaggi];
+fn record(level, ...messages) -> [level, messages];
 
-registra('info', 'a', 'b');     // ['info', ['a', 'b']]
-registra('info');               // ['info', []]
+record('info', 'a', 'b');       // ['info', ['a', 'b']]
+record('info');                 // ['info', []]
 ```
 
-## Valori di riserva e argomenti con nome
+It has to be the **last** one — it takes everything that is left, so nothing can follow it — and no
+two parameters may share a name. Both are `ParseError`s at the line where the signature is written.
 
-Un parametro puo' dichiarare un valore da usare quando chi chiama non lo passa:
+## Default values and named arguments
+
+A parameter can declare a value to use when the caller does not pass one:
 
 ```
-fn posiziona(pos, blocco, aggiorna = true) -> ...;
+fn place(pos, block, update = true) -> ...;
 
-posiziona(p, 'stone');                    // aggiorna vale true
-posiziona(p, 'stone', false);             // per posizione
-posiziona(p, 'stone', aggiorna = false);  // per nome
+place(p, 'stone');                      // update is true
+place(p, 'stone', false);               // by position
+place(p, 'stone', update = false);      // by name
 ```
 
-Il valore di riserva si rivaluta **ad ogni chiamata che lo usa**: `fn f(l = [])` da' una lista nuova
-ogni volta, non sempre la stessa.
+The default is re-evaluated **on every call that uses it**: `fn f(l = [])` gives a fresh list each
+time, not the same one forever.
 
-Gli argomenti con nome vanno **in fondo**, dopo quelli per posizione, e possono stare in qualunque
-ordine fra loro:
+Named arguments go **at the end**, after the positional ones, and among themselves they may appear
+in any order:
 
 ```
 fn f(a, b, c) -> [a, b, c];
 f(1, c = 3, b = 2);         // [1, 2, 3]
-f(a = 1, 2);                // errore, e lo dice al caricamento
+f(a = 1, 2);                // an error, reported at load time
 ```
 
-I nomi si risolvono sul **confine della funzione**, quindi un nome che non esiste dice quali sono
-quelli veri, e lo stesso parametro passato due volte e' un errore invece che un valore che vince in
-silenzio.
+Names are resolved at the **function boundary**, so a name that does not exist tells you which the
+real ones are, and passing the same parameter twice is an error rather than a value that silently
+wins.
 
-## Tipi sui parametri
+## Parameter types
 
-Facoltativi, uno alla volta:
+Optional, one per parameter:
 
 ```
-fn distanza(a: list, b: list) -> ...;
-fn ripeti(quante: num, cosa) -> ...;        // 'cosa' resta libero
-fn applica(f: func, x: any) -> call(f, x);  // 'any' documenta senza vincolare
+fn distance(a: list, b: list) -> ...;
+fn repeat(times: num, what) -> ...;         // 'what' stays free
+fn apply(f: func, x: any) -> call(f, x);    // 'any' documents without constraining
 ```
 
-I tipi sono `num`, `str`, `bool`, `list`, `map`, `func`, `null`, `any`, più quelli del gioco:
-`entity`, `block`, `text`, `nbt`, `screen`. Si scrive `func` e non `fn` perché `fn` è già la parola
-chiave della dichiarazione.
+The types are `num`, `str`, `bool`, `list`, `map`, `func`, `null`, `any`, plus those of the game:
+`entity`, `block`, `text`, `nbt`, `screen`. It is spelled `func` and not `fn` because `fn` is
+already the declaration keyword.
 
-Un tipo scritto male è un errore **quando definisci** la funzione, non alla prima chiamata:
+A misspelled type is an error **when you define** the function, not on the first call:
 
 ```
 ParseError
@@ -179,105 +186,104 @@ ParseError
   Did you mean: num?
 ```
 
-Un argomento sbagliato è un errore **sul confine della funzione**, che è il punto: dice quale
-parametro, cosa voleva e cosa è arrivato, invece di esplodere tre righe dentro il corpo su
-un'operazione che non c'entra.
+A wrong argument is an error **at the function boundary**, which is the whole point: it says which
+parameter, what it wanted and what arrived, instead of blowing up three lines into the body on an
+unrelated operation.
 
 ```
 TypeMismatchError
-  in distanza  (src/geo.bs:4:1)
+  in distance  (src/geo.bs:4:1)
 
-  Parameter 'a' of distanza wants a list, but got a string (due).
+  Parameter 'a' of distance wants a list, but got a string (two).
 ```
 
-Il controllo costa un confronto di stringa per parametro annotato: mettere i tipi sull'interfaccia
-pubblica di un modulo è quasi sempre un buon affare, metterli su una funzione chiamata in un ciclo
-stretto no.
+The check costs one string comparison per annotated parameter: putting types on a module's public
+interface is almost always a good trade, putting them on a function called in a tight loop is not.
 
-## Le funzioni sono valori
-
-```
-fn triplica(x) -> x * 3;
-
-fn applica_due_volte(f, x) -> call(f, call(f, x));
-
-applica_due_volte(triplica, 2);         // 18   - per valore
-applica_due_volte('triplica', 2);       // 18   - o per nome
-```
-
-`call(f, ...)` invoca una funzione che arriva come valore o come nome. Una funzione passata a un
-altro modulo continua a risolversi correttamente: si porta dietro il modulo in cui è stata definita,
-quindi le sue chiamate interne vedono sempre i simboli giusti, non quelli di chi la invoca.
-
-È anche il motivo per cui gli handler di evento si registrano **passando la funzione**, non il suo
-nome in una stringa:
+## Functions are values
 
 ```
-event.on('player_connects', benvenuto);
+fn triple(x) -> x * 3;
+
+fn apply_twice(f, x) -> call(f, call(f, x));
+
+apply_twice(triple, 2);         // 18   - by value
+apply_twice('triple', 2);       // 18   - or by name
 ```
 
-## Documentare una funzione
+`call(f, ...)` invokes a function that arrives as a value or as a name. A function passed to another
+module keeps resolving correctly: it carries the module it was defined in with it, so its internal
+calls always see the right symbols, not those of whoever invokes it.
 
-Un commento che comincia con **tre** barre, attaccato alla dichiarazione, e' la documentazione di
-quel simbolo:
+That is also why event handlers are registered **by passing the function**, not its name in a
+string:
 
 ```
-/// Il punteggio di una torre.
+event.on('player_connects', welcome);
+```
+
+## Documenting a function
+
+A comment that begins with **three** slashes, attached to the declaration, is that symbol's
+documentation:
+
+```
+/// The score of a tower.
 ///
-/// Conta i blocchi e li pesa per il materiale; una torre piu' bassa di tre blocchi non conta.
+/// Counts the blocks and weights them by material; a tower shorter than three blocks does not count.
 ///
-/// @param altezza   quanti blocchi e' alta
-/// @param materiale il blocco di cui e' fatta
-/// @returns il punteggio, zero se la torre non conta
-/// @throws value_exception se il materiale non e' nel catalogo
-/// @example punteggio(12, 'stone');
-/// @see torre.registro
-pub fn punteggio(altezza: num, materiale: str) -> ...;
+/// @param height   how many blocks tall it is
+/// @param material the block it is made of
+/// @returns the score, zero when the tower does not count
+/// @throws value_exception when the material is not in the catalogue
+/// @example score(12, 'stone');
+/// @see tower.register
+pub fn score(height: num, material: str) -> ...;
 ```
 
-Per il linguaggio restano commenti: `///` e' `//` con una barra in piu', l'interprete li salta come
-tutti gli altri e non c'e' niente da imparare per farli funzionare. A leggerli e' l'editor —
-l'estensione VS Code mostra il testo passando sopra al nome, nel completamento e nell'aiuto sui
-parametri mentre scrivi la chiamata, e con **Blossom: write the doc comment of the function**
-scrive lo scheletro (`Ctrl+Shift+P`, oppure la lampadina sulla riga della dichiarazione): un
-`@param` per parametro, gia' con i nomi giusti.
+To the language they remain comments: `///` is `//` with one more slash, the interpreter skips them
+like every other comment, and there is nothing to learn in order to make them work. The reader is
+the editor: the VS Code extension shows the text when you hover over the name, in completion, and
+in parameter help while you write the call; **Blossom: write the doc comment of the function**
+writes the skeleton for you (`Ctrl+Shift+P`, or the lightbulb on the declaration line): one `@param`
+per parameter, already with the right names.
 
-Le etichette sono sei:
+There are six tags:
 
-| Etichetta | A cosa serve |
+| Tag | What it is for |
 | --- | --- |
-| `@param nome testo` | un parametro; il nome deve essere quello nella firma |
-| `@returns testo` | cosa torna |
-| `@throws tipo testo` | un errore che puo' uscire, con il tipo che `try` filtra |
-| `@example codice` | una riga di esempio, mostrata come codice |
-| `@see riferimento` | dove guardare per il resto |
-| `@deprecated motivo` | da non usare piu'; il nome viene mostrato come deprecato |
+| `@param name text` | one parameter; the name must be the one in the signature |
+| `@returns text` | what comes back |
+| `@throws type text` | an error that can escape, with the type that `try` filters on |
+| `@example code` | a one-line example, rendered as code |
+| `@see reference` | where to look for the rest |
+| `@deprecated reason` | not to be used any more; the name is shown as deprecated |
 
-Il testo prima della prima etichetta e' la descrizione: la **prima riga** e' il sommario — quello
-che si vede nel completamento, dove c'e' spazio per una riga sola — e quello che segue una riga
-vuota e' il resto, che si vede passando sopra al nome. Una riga rientrata sotto un'etichetta la
-continua, quindi una descrizione lunga si puo' andare a capo senza ripetere `@param`.
+The text before the first tag is the description: the **first line** is the summary (what you see
+in completion, where there is room for a single line), and what follows a blank line is the rest,
+shown when hovering over the name. An indented line under a tag continues it, so a long description
+can wrap without repeating `@param`.
 
-Il blocco documenta **la dichiarazione subito sotto**: una riga vuota o un commento normale in mezzo
-lo staccano, e a quel punto non documenta piu' niente. Vale per `fn`, per `let` e per `module`, che
-e' il posto dove scrivere a cosa serve il file.
+The block documents **the declaration immediately below it**: a blank line or an ordinary comment in
+between detaches it, and at that point it documents nothing. This works for `fn`, for `let` and for
+`module`, which is the place to write what the file is for.
 
-## Ricorsione e uscita anticipata
+## Recursion and early exit
 
 ```
 fn fib(n) -> if(n < 2, n, fib(n - 1) + fib(n - 2));
 fib(10);                        // 55
 ```
 
-Il valore di una funzione è l'ultima espressione del corpo. `return(v)` esce prima:
+The value of a function is the last expression of its body. `return(v)` leaves earlier:
 
 ```
-fn classifica(x) -> (
-    if(x < 0, return('negativo'));
+fn classify(x) -> (
+    if(x < 0, return('negative'));
     if(x == 0, return('zero'));
-    'positivo'
+    'positive'
 );
 ```
 
-La profondità di ricorsione ha un tetto (256 di default, vedi [capitolo 9](09-concorrenza.md)):
-oltrepassarlo è un `ExecutionBudgetError`, non uno stack overflow della JVM che porta giù il server.
+Recursion depth has a ceiling (256 by default, see [chapter 9](09-concorrenza.md)): crossing it is
+an `ExecutionBudgetError`, not a JVM stack overflow that takes the server down with it.

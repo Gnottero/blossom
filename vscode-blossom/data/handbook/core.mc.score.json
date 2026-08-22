@@ -101,21 +101,20 @@
   },
   "display": {
     "signatures": [
-      "display(slot)",
       "display(slot, objective)"
     ],
-    "summary": "Shows an objective in a display slot, or reads which one is there.",
+    "summary": "Shows an objective in a display slot, or clears the slot.",
     "params": [
       [
         "slot",
-        "`'sidebar'`, `'list'`, `'belowName'`, or `'sidebar.team.<colour>'`"
+        "`'sidebar'`, `'list'`, `'below_name'`, or `'sidebar.team.<colour>'`"
       ],
       [
         "objective",
-        "optional: the objective to show; `null` clears the slot"
+        "the objective to show, or `null` to clear the slot"
       ]
     ],
-    "returns": "`str` — the objective in that slot.",
+    "returns": "`str` — the name of the slot; `null` when no objective by that name exists.",
     "examples": [
       "score.display('sidebar', 'points');",
       "score.display('sidebar', null);      // clears it"

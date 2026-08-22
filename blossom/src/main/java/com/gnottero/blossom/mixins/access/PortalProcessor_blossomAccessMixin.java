@@ -7,7 +7,7 @@ import net.minecraft.world.entity.PortalProcessor;
 
 import com.gnottero.blossom.access.Access;
 
-/** Quanto tempo un'entita' e' rimasta dentro un portale. */
+/** How long an entity has stayed inside a portal. */
 @Mixin(PortalProcessor.class)
 public class PortalProcessor_blossomAccessMixin implements Access.Portal
 {

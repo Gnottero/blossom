@@ -7,7 +7,7 @@ import net.minecraft.world.level.biome.Biome;
 
 import com.gnottero.blossom.access.Access;
 
-/** Temperatura e umidita' di un bioma, che vanilla tiene private. */
+/** A biome's temperature and humidity, which vanilla keeps private. */
 @Mixin(Biome.class)
 public class Biome_blossomAccessMixin implements Access.BiomeClimate
 {

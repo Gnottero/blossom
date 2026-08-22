@@ -49,18 +49,17 @@ public class ControlFlow
 
 
         /*
-         * match(soggetto, forma -> corpo, ..., else -> corpo)
+         * match(subject, shape -> body, ..., else -> body)
          *
-         * Il soggetto si valuta una volta sola, e ogni braccio dice cosa riconosce invece di
-         * ripetere il confronto. Una forma puo' essere:
+         * The subject is evaluated only once, and each arm states what it recognizes instead of
+         * repeating the comparison. A shape can be:
          *
-         *   un valore      0 -> 'illeso'          combacia se e' uguale
-         *   un nome        d -> d * 2             combacia sempre, e lega il soggetto a quel nome
-         *   un nome tipato d: num -> ...          combacia se il soggetto e' di quel tipo
-         *   else           else -> 'ignoto'       il ramo finale
+         *   a value        0 -> 'unharmed'        matches if equal
+         *   a name         d -> d * 2             always matches, and binds the subject to that name
+         *   a typed name   d: num -> ...          matches if the subject is of that type
+         *   else           else -> 'unknown'      the final branch
          *
-         * Senza nessun braccio che combacia il risultato e' null, come per un 'if' senza ramo
-         * finale.
+         * If no arm matches, the result is null, just like an 'if' with no final branch.
          */
         expression.addCustomFunction("match", new Callables.AbstractLazyFunction(-1, "match")
         {
@@ -203,8 +202,8 @@ public class ControlFlow
                 LazyValue trace = c.getVariable("_trace");
                 c.setVariable("_trace", (ct, tt) -> MapValue.wrap(Map.of(
                         StringValue.of("stack"), ListValue.wrap(ret.stack.stream().map(f -> ListValue.of(
-                                // una funzione definita al volo (script run, test) non ha un modulo:
-                                // lo stack deve restare leggibile lo stesso, non esplodere
+                                // a function defined on the fly (script run, test) has no module:
+                                // the stack should stay readable regardless, not blow up
                                 StringValue.of(f.getModule() == null ? "" : f.getModule().name()),
                                 StringValue.of(f.getString()),
                                 NumericValue.of(f.getToken().lineno + 1),
@@ -259,14 +258,14 @@ public class ControlFlow
     }
 
     /**
-     * Il ramo di ripiego di un {@code try}, che si scrive in due modi.
+     * The fallback branch of a {@code try}, which can be written in two ways.
      *
-     * <p>La forma di sempre e' un'espressione, e dentro {@code _} e' il valore lanciato. La forma
-     * nuova e' una lambda, {@code fn(e) -> ...}, che gli da' un nome: e' quella da preferire,
-     * perche' {@code _} e' anche l'elemento corrente di ogni ciclo, e un {@code for} dentro un
-     * {@code catch} se lo porta via. Con un nome quel problema non esiste.
+     * <p>The traditional form is an expression, where {@code _} is the thrown value. The newer
+     * form is a lambda, {@code fn(e) -> ...}, which gives it a name: that is the form to prefer,
+     * because {@code _} is also the current element of any loop, and a {@code for} inside a
+     * {@code catch} would steal it. With a name that problem does not exist.
      *
-     * <p>Con due parametri il secondo e' {@code _trace}.
+     * <p>With two parameters, the second one is {@code _trace}.
      */
     private static LazyValue catchBranch(Context c, LazyValue branch)
     {
@@ -297,10 +296,11 @@ public class ControlFlow
     }
 
     /**
-     * Le variabili locali del frame in cui l'errore è nato, per il {@code _trace} di {@code try}.
+     * The local variables of the frame where the error originated, for the {@code _trace} of
+     * {@code try}.
      *
-     * <p>{@code _trace} è escluso: è quello che stiamo costruendo, e leggerlo qui lo farebbe
-     * comparire dentro se stesso.
+     * <p>{@code _trace} itself is excluded: it is what we are currently building, and reading it
+     * here would make it appear inside itself.
      */
     private static Map<Value, Value> locals(Context context)
     {

@@ -65,62 +65,64 @@ import com.gnottero.blossom.net.BlossomPayloads;
 import com.gnottero.blossom.shape.Shape;
 
 /**
- * Le forme che il server ha mandato a questo client, e il loro disegno.
+ * The shapes the server has sent to this client, and how they get drawn.
  *
- * <p>La geometria non sta qui: le classi di {@link Shape} sono le stesse che il server usa per
- * costruire le forme, e sanno già di quali segmenti e facce sono fatte. Il client le ricostruisce
- * dal NBT, conta i tick, e le passa alle primitive di disegno del gioco. Server e client non possono
- * divergere su cosa sia una sfera, perché è la stessa classe.
+ * <p>The geometry does not live here: the {@link Shape} classes are the same ones the server uses
+ * to build the shapes, and already know what segments and faces they are made of. The client
+ * rebuilds them from NBT, counts ticks, and hands them to the game's drawing primitives. Server
+ * and client cannot disagree on what a sphere is, because it is the same class.
  *
- * <p>Quello che invece sta solo qui è il testo: un'etichetta ha una posa nello spazio - guarda da
- * qualche parte, è inclinata, è alta così — e quella posa esiste soltanto nel momento in cui c'è una
- * camera. Il server non ce l'ha e non può averla, per questo a chi non ha il client il testo arriva
- * in chat invece che nel mondo.
+ * <p>What only lives here is the text: a label has a pose in space (it looks somewhere, it is
+ * tilted, it sits at a certain height), and that pose only exists at the moment there is a camera.
+ * The server does not have one and cannot have one, which is why players without the client see
+ * the text in chat instead of in the world.
  *
- * <p>Il tempo si conta in tick del client: dalla rete arriva una durata, non un istante (vedi
- * {@link Shape#toTag}), quindi non c'è nessun orologio da sincronizzare.
+ * <p>Time is counted in client ticks: a duration arrives over the network, not an instant (see
+ * {@link Shape#toTag}), so there is no clock to synchronize.
  */
 @Environment(EnvType.CLIENT)
 public final class ClientShapes
 {
     /**
-     * Quante forme si tengono al massimo.
+     * The maximum number of shapes kept at once.
      *
-     * <p>Un limite serve: dall'altra parte c'è uno script, e uno script sbagliato che disegna in un
-     * ciclo riempirebbe la memoria del client. Oltre il limite si buttano le più vecchie, che sono
-     * anche quelle che scadranno prima.
+     * <p>A limit is needed: on the other end there is a script, and a buggy script drawing in a
+     * loop would fill up the client's memory. Past the limit, the oldest shapes are dropped, which
+     * are also the ones about to expire anyway.
      */
     private static final int MAX_SHAPES = 4096;
 
-    /** la scala fra le unità del font e i blocchi */
+    /** The scale between font units and blocks. */
     private static final float FONT_SCALE = 0.0025F;
 
     private final List<Shape> shapes = new CopyOnWriteArrayList<>();
 
     /**
-     * Quello che una forma è, tradotto una volta sola.
+     * What a shape actually is, translated once.
      *
-     * <p>Dal server arriva del testo: il nome di un blocco, l'NBT di un item, un componente
-     * serializzato. Tradurlo costa - c'è di mezzo un parser e i registri - e va fatto una volta e non
-     * a ogni frame. Le chiavi sono le forme stesse, che non definiscono {@code equals}: due forme
-     * uguali restano due voci, ed è quello che si vuole, perché muoiono in momenti diversi.
+     * <p>What arrives from the server is text: a block's name, an item's NBT, a serialized
+     * component. Translating it is costly (a parser and the registries are involved), and it needs
+     * to happen once, not every frame. The keys are the shapes themselves, which do not define
+     * {@code equals}: two equal shapes remain two entries, which is what is wanted, since they die
+     * at different times.
      */
     private final Map<Shape, Model> models = new ConcurrentHashMap<>();
     private final Map<Shape, Component> texts = new ConcurrentHashMap<>();
 
     private long tick = 0;
 
-    /** il disegnatore di liquidi e i modelli con cui è stato costruito, vedi {@link #fluidRenderer} */
+    /** The fluid renderer, and the models it was built with, see {@link #fluidRenderer}. */
     private @org.jspecify.annotations.Nullable FluidRenderer fluidRenderer = null;
     private @org.jspecify.annotations.Nullable FluidStateModelSet fluidModels = null;
 
     /**
-     * Un blocco o un item pronto da disegnare.
+     * A block or item ready to be drawn.
      *
-     * @param state       lo stato del blocco, o {@code null} se la forma è un item o il blocco non
-     *                    esiste su questo client
-     * @param stack       l'item, o {@code null} se la forma è un blocco
-     * @param blockEntity la parte del blocco che ha un renderer suo (un baule, un cartello), se ce l'ha
+     * @param state       the block state, or {@code null} if the shape is an item or the block
+     *                    does not exist on this client
+     * @param stack       the item, or {@code null} if the shape is a block
+     * @param blockEntity the part of the block that has its own renderer (a chest, a sign), if it
+     *                    has one
      */
     private record Model(net.minecraft.world.level.block.state.@org.jspecify.annotations.Nullable BlockState state,
             net.minecraft.world.item.@org.jspecify.annotations.Nullable ItemStack stack,
@@ -129,7 +131,7 @@ public final class ClientShapes
         static final Model NONE = new Model(null, null, null);
     }
 
-    /** Legge un pacchetto di forme. Chiamata dal thread di rete, quindi la lista è concorrente. */
+    /** Reads a packet of shapes. Called from the network thread, so the list is concurrent. */
     public void accept(CompoundTag data)
     {
         ListTag list = data.getList(BlossomPayloads.SHAPES_KEY).orElse(null);
@@ -145,8 +147,8 @@ public final class ClientShapes
                 continue;
             }
             Shape shape = Shape.fromTag(tag, tick);
-            // null vuol dire un tipo che questo client non conosce: un server piu' nuovo. Si salta
-            // quella forma e le altre arrivano lo stesso
+            // null means a type this client doesn't know: a newer server. That shape is skipped
+            // and the others still arrive
             if (shape != null)
             {
                 shapes.add(shape);
@@ -158,7 +160,7 @@ public final class ClientShapes
         }
     }
 
-    /** Da chiamare a ogni tick del client. */
+    /** To be called on every client tick. */
     public void onTick()
     {
         tick++;
@@ -176,7 +178,7 @@ public final class ClientShapes
         }
     }
 
-    /** Butta tutto: si fa uscendo da un mondo, perché le forme appartengono alla partita. */
+    /** Drops everything: done when leaving a world, since shapes belong to the session. */
     public void clear()
     {
         shapes.clear();
@@ -191,14 +193,14 @@ public final class ClientShapes
     }
 
     /**
-     * Mette le forme fra le primitive del frame.
+     * Adds the shapes among the frame's primitives.
      *
-     * <p>Le coordinate delle linee restano quelle del mondo: è la primitiva a sapere dov'è la camera
-     * in questo frame. Prendere la posizione della camera qui - come faceva la prima versione nel
-     * fork - significa campionarla in un momento leggermente diverso da quello del resto della
-     * scena, e il disegno insegue la camera invece di stare fermo. Il testo invece la posizione
-     * della camera ce l'ha per forza, perché la sua posa dipende da dove si guarda: lì si usa quella
-     * dello stato di rendering del frame, che è la stessa che vede tutto il resto.
+     * <p>Line coordinates stay in world space: it is the primitive that knows where the camera is
+     * in this frame. Grabbing the camera position here, as the first version in the fork did,
+     * means sampling it at a slightly different moment than the rest of the scene, and the drawing
+     * ends up chasing the camera instead of staying still. Text, on the other hand, needs the
+     * camera position no matter what, since its pose depends on what it is facing: there it uses
+     * the one from the frame's render state, the same one everything else sees.
      */
     public void submit(DrawableGizmoPrimitives primitives, SubmitNodeStorage collector,
             CameraRenderState camera, float partialTick)
@@ -209,8 +211,8 @@ public final class ClientShapes
         {
             if (shape.debug() && !debugVisible)
             {
-                // una forma 'debug' si vede solo quando si guardano le hitbox: e' fatta per stare
-                // accesa a lungo senza sporcare la vista di chi sta giocando
+                // a 'debug' shape is only visible when hitboxes are shown: it is meant to stay on
+                // for a long time without cluttering the view of someone actually playing
                 continue;
             }
             Vec3 followPos = followPositionOf(shape, client, partialTick);
@@ -226,7 +228,7 @@ public final class ClientShapes
             }
             if (shape.hasLines())
             {
-                // alfa zero nel colore vuol dire "niente reticolo": una forma piena e liscia
+                // zero alpha in the color means "no wireframe": a solid, smooth shape
                 int color = argb(shape.color());
                 float width = shape.lineWidth();
                 for (Shape.Segment segment : shape.segments())
@@ -242,18 +244,18 @@ public final class ClientShapes
             List<Vec3[]> faces = anchoredFaces(shape, followPos);
             if (shape.hasOpaqueFill())
             {
-                // le primitive del gioco non sanno disegnare una faccia che copre: vedi
+                // the game's primitives don't know how to draw an opaque covering face: see
                 // BlossomRenderTypes
                 submitFill(faces, argb(shape.fillColor()), BlossomRenderTypes.opaqueFill(), collector, camera);
                 continue;
             }
-            // e non sanno disegnarne una che mescola quello che ha dietro nella giusta proporzione:
-            // vedi AfterCloudsSubmits
+            // nor one that blends with what's behind it in the right proportion: see
+            // AfterCloudsSubmits
             submitTranslucentFill(faces, argb(shape.fillColor()), collector, camera);
         }
     }
 
-    /** Le facce della forma, portate dove sta adesso l'entità seguita. */
+    /** The shape's faces, moved to wherever the followed entity is now. */
     private static List<Vec3[]> anchoredFaces(Shape shape, @org.jspecify.annotations.Nullable Vec3 followPos)
     {
         List<Vec3[]> faces = shape.faces();

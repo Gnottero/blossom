@@ -89,7 +89,7 @@
     "signatures": [
       "top(type, pos)"
     ],
-    "summary": "The find free height at that column, according to one of the height maps.",
+    "summary": "The first free height at that column, according to one of the height maps.",
     "params": [
       [
         "type",
@@ -100,7 +100,7 @@
         "the position; only x and z are used"
       ]
     ],
-    "returns": "`num` — the y of the find free block.",
+    "returns": "`num` — the y of the first free block.",
     "examples": [
       "y = world.top('surface', [10, 0, 10]);\nblock.set([10, y, 10], 'torch');"
     ]

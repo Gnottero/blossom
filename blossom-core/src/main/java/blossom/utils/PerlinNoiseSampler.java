@@ -54,7 +54,7 @@ public class PerlinNoiseSampler
             this.permutations[j + k] = b;
         }
     }
-    /** Rumore in tre dimensioni. */
+    /** Noise in three dimensions. */
     public double sample3d(double x, double y, double z)
     {//, double d, double e) {
         double f = x + this.originX;
@@ -107,7 +107,7 @@ public class PerlinNoiseSampler
         return lerp(deltaZ, lerp2(deltaX, deltaY, d, e, f, g), lerp2(deltaX, deltaY, h, i, j, k));
     }
 
-    /** Rumore nel piano. */
+    /** Noise in the plane. */
     public double sample2d(double x, double y)
     {
         double f = x + this.originX;
@@ -149,7 +149,7 @@ public class PerlinNoiseSampler
         return lerp(deltaY, lerp(deltaX, d, e), lerp(deltaX, f, g));
     }
 
-    /** Rumore su una linea. */
+    /** Noise along a line. */
     public double sample1d(double x)
     {
         double f = x + this.originX;
@@ -176,7 +176,7 @@ public class PerlinNoiseSampler
         return first + delta * (second - first);
     }
 
-    /** Il gradiente scelto dall'hash della cella, condiviso da tutte le dimensioni. */
+    /** The gradient selected by the cell's hash, shared across all dimensions. */
     public int getGradient(int hash)
     {
         return this.permutations[hash & 255] & 255;

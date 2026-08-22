@@ -12,22 +12,22 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 /**
- * Cosa c'e' nella {@code data/} di un pack, e come portarla via.
+ * What is in a pack's {@code data/}, and how to take it away.
  *
- * <p>L'esportazione esiste perche' {@code data/} e' un datapack vero, non un formato nostro: chi non
- * ha il mod puo' comunque ricevere il contenuto, e chi ce l'ha puo' controllare che quello che
- * genera sia quello che si aspetta. Uno zip e nient'altro.
+ * <p>Exporting exists because {@code data/} is a real datapack, not a format of our own: someone
+ * without the mod can still receive the content, and someone with it can check that what it
+ * generates is what they expect. A zip and nothing else.
  */
 public final class ContentExport
 {
-    /** Dove finiscono gli zip: fuori dai pack, cosi' nessuno li scambia per contenuto da caricare. */
+    /** Where the zips end up: outside the packs, so nobody mistakes them for content to load. */
     public static final String EXPORT_DIRECTORY = ".export";
 
     private ContentExport()
     {
     }
 
-    /** Una voce della {@code data/}: il percorso, e se l'ha scritta un generatore o una persona. */
+    /** An entry of {@code data/}: the path, and whether a generator or a person wrote it. */
     public record Entry(String path, boolean generated)
     {
     }
@@ -48,7 +48,7 @@ public final class ContentExport
                 String relative = data.relativize(file).toString().replace('\\', '/');
                 if (relative.equals(GeneratedIndex.FILE_NAME))
                 {
-                    return;   // l'elenco parla di se stesso, e non e' contenuto
+                    return;   // the index talks about itself, and is not content
                 }
                 entries.add(new Entry(relative, generated.contains(relative)));
             });
@@ -57,9 +57,9 @@ public final class ContentExport
     }
 
     /**
-     * Zippa la {@code data/} di un pack in un datapack che sta in piedi da solo.
+     * Zips a pack's {@code data/} into a standalone datapack.
      *
-     * @return il percorso dello zip
+     * @return the path of the zip
      */
     public static Path export(Path packsDirectory, String app) throws IOException
     {
@@ -86,7 +86,7 @@ public final class ContentExport
                     String name = data.relativize(file).toString().replace('\\', '/');
                     if (name.equals(GeneratedIndex.FILE_NAME))
                     {
-                        return FileVisitResult.CONTINUE;   // e' roba nostra, non del datapack
+                        return FileVisitResult.CONTINUE;   // this is ours, not part of the datapack
                     }
                     out.putNextEntry(new ZipEntry(name));
                     Files.copy(file, out);

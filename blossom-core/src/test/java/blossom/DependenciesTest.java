@@ -22,17 +22,17 @@ import blossom.project.PackEnvironment;
 import blossom.project.PackRegistry;
 
 /**
- * Dipendenze fra progetti: a percorso, a pack installato, dal registry; il vincolo di versione che
- * viene davvero verificato; e la risoluzione transitiva.
+ * Dependencies between projects: by path, by installed pack, from a registry; the version
+ * constraint that actually gets checked; and transitive resolution.
  */
 class DependenciesTest
 {
-    /** Un progetto minimo: manifesto, un modulo che esporta una funzione. */
+    /** A minimal project: manifest, a module exporting a function. */
     private static void writeProject(Path root, String name, String version, String extraManifest, String... modules)
             throws IOException
     {
         Files.createDirectories(root.resolve("src"));
-        // il livello di API va dichiarato: senza, un progetto vale 1.0 e non carica piu'
+        // the API level must be declared: without it a project defaults to 1.0 and no longer loads
         String apiLevel = extraManifest.contains("api_level") ? "" : ", \"api_level\": \"2.0\"";
         Files.writeString(root.resolve("blossom.json"), "{\"name\": \"" + name + "\", \"version\": \"" + version
                 + "\", \"entrypoint\": \"src/main.bs\"" + apiLevel + extraManifest + "}");
@@ -44,7 +44,7 @@ class DependenciesTest
         }
     }
 
-    /** Un ambiente in cui i pack "installati" sono le sottocartelle di una cartella data. */
+    /** An environment where the "installed" packs are the subfolders of a given directory. */
     private record Installed(Path directory, @Nullable PackRegistry registry) implements PackEnvironment
     {
         @Override
@@ -142,8 +142,8 @@ class DependenciesTest
     @Test
     void dependenciesAreResolvedTransitivelyInTheirOwnNamespace(@TempDir Path tmp) throws IOException
     {
-        // 'basso' e' una dipendenza di 'medio', che a sua volta e' dipendenza dell'app: l'app non
-        // deve sapere che 'basso' esiste, e 'medio' lo chiama con l'alias che ha scelto lui
+        // 'basso' is a dependency of 'medio', which is in turn a dependency of the app: the app
+        // must not know that 'basso' exists, and 'medio' calls it with the alias it chose itself
         writeProject(tmp.resolve("basso"), "basso", "1.0.0", "",
                 "main.bs", "module main;\n",
                 "core.bs", "module core;\n\npub fn base() -> 7;\n");

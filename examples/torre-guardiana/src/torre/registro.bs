@@ -2,8 +2,8 @@ module torre.registro;
 
 import "core.list" as list;
 
-// Lo stato del registro e' privato e mutabile: fuori da qui si passa solo per le funzioni pubbliche,
-// quindi nessun altro modulo puo' lasciarlo in uno stato incoerente.
+// The registry's state is private and mutable: outside this module you can only go through the
+// public functions, so no other module can leave it in an inconsistent state.
 let mut torri = [];
 
 pub fn aggiungi(base, altezza) -> (

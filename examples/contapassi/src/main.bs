@@ -7,26 +7,26 @@ import "core.io" as io;
 import "core.list" as list;
 import "core.map" as map;
 
-// Contapassi - un'app in un file solo.
+// Contapassi - a single-file app.
 //
-// Tiene il conto di quello che fa ogni giocatore, lo mostra sopra la hotbar e lo salva su disco.
-// Mostra: stato di modulo con 'let mut', handler di evento, HUD, persistenza, e una funzione
-// pubblica che l'amministratore chiama dalla console.
+// Keeps count of what each player does, shows it above the hotbar, and saves it to disk.
+// Shows: module state with 'let mut', event handlers, HUD, persistence, and a public
+// function that the admin calls from the console.
 
-// --- stato ---------------------------------------------------------------------------------
+// --- state ---------------------------------------------------------------------------------
 
-// 'let mut' e non un'assegnazione nuda: e' cosi' che le funzioni qui sotto lo vedono
-let mut conteggi = {};          // nome giocatore -> {'salti' -> n, 'rotti' -> n, 'morti' -> n}
+// 'let mut' and not a bare assignment: this is how the functions below see it
+let mut conteggi = {};          // player name -> {'salti' -> n, 'rotti' -> n, 'morti' -> n}
 let mut tick_passati = 0;
 
-let SALVA_OGNI = 6000;          // tick, cioe' cinque minuti
+let SALVA_OGNI = 6000;          // ticks, i.e. five minutes
 let VOCI = ['salti', 'rotti', 'morti'];
 
-// --- lettura e scrittura dello stato -------------------------------------------------------
+// --- reading and writing state -------------------------------------------------------
 
 fn scheda(giocatore) -> (
     nome = entity.query(giocatore, 'name');
-    // una chiave che non c'e' vale null, e '||' restituisce il primo operando vero
+    // a key that doesn't exist is null, and '||' returns the first truthy operand
     if(!map.has(conteggi, nome), conteggi:nome = {'salti' -> 0, 'rotti' -> 0, 'morti' -> 0});
     conteggi:nome
 );
@@ -35,7 +35,7 @@ fn aggiungi(giocatore, voce) -> (
     s = scheda(giocatore);
     s:voce = s:voce + 1;
     mostra(giocatore, s);
-    false                       // gli eventi qui sotto non vanno annullati
+    false                       // the events below must not be cancelled
 );
 
 fn mostra(giocatore, s) -> text.hud(
@@ -43,11 +43,11 @@ fn mostra(giocatore, s) -> text.hud(
     text.format('g salti ', 'w ' + s:'salti', 'g   rotti ', 'w ' + s:'rotti', 'g   morti ', 'w ' + s:'morti')
 );
 
-// --- persistenza ---------------------------------------------------------------------------
+// --- persistence ---------------------------------------------------------------------------
 
-// I dati stanno nella radice 'data', che c'e' su ogni server: una sottocartella con il nome
-// dell'app, cosi' due app non si pestano i piedi. Il controllo con 'exists' serve: leggere un file
-// che non c'e' e' un 'io_exception', non un null.
+// The data lives under the 'data' root, which exists on every server: a subfolder with the app's
+// name, so two apps don't step on each other. The check with 'exists' matters: reading a file
+// that doesn't exist is an 'io_exception', not a null.
 let FILE = 'contapassi/conteggi.json';
 
 fn carica() -> conteggi = if(io.exists('data', FILE), io.read_json('data', FILE), {});
@@ -57,7 +57,7 @@ fn salva() -> (
     false
 );
 
-// --- handler -------------------------------------------------------------------------------
+// --- handlers -------------------------------------------------------------------------------
 
 fn su_salto(giocatore) -> aggiungi(giocatore, 'salti');
 fn su_rottura(giocatore, blocco) -> aggiungi(giocatore, 'rotti');
@@ -68,19 +68,19 @@ fn su_arrivo(giocatore) -> (
     false
 );
 
-// Salvare solo allo spegnimento non basta: un server che va giu' male non chiama nessun handler.
+// Saving only on shutdown isn't enough: a server that crashes doesn't call any handler.
 fn su_tick() -> (
     tick_passati += 1;
     if(tick_passati % SALVA_OGNI == 0, salva());
     false
 );
 
-// --- interfaccia per chi amministra ---------------------------------------------------------
+// --- interface for admins ---------------------------------------------------------
 
 // /blossom script in contapassi classifica('rotti')
 pub fn classifica(voce: str) -> (
-    // '~' restituisce l'indice, o null se non c'e': si confronta con null e non si usa come
-    // condizione, perche' l'indice del primo elemento e' 0, che e' falso
+    // '~' returns the index, or null if it's not there: compare it with null and don't use it as a
+    // condition, because the index of the first element is 0, which is falsy
     if((VOCI ~ voce) == null, throw('voce sconosciuta: ' + voce + ', prova ' + list.join('/', VOCI)));
     righe = list.sort(map.pairs(conteggi), -((_:1):voce));
     list.map(righe, _:0 + ': ' + (_:1):voce)
@@ -93,7 +93,7 @@ pub fn azzera() -> (
     'azzerato'
 );
 
-// --- avvio ------------------------------------------------------------------------------------
+// --- startup ------------------------------------------------------------------------------------
 
 carica();
 

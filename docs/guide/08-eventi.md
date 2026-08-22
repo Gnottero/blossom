@@ -1,9 +1,9 @@
-# 8. Eventi
+# 8. Events
 
-Un'app che fa qualcosa da sola è un'app che ascolta. Il catalogo completo degli eventi sta in
-[`core.mc.event`](../api/core.mc.event.md); qui c'è come si usa.
+An app that does something on its own is an app that listens. The complete event catalogue is in
+[`core.mc.event`](../api/core.mc.event.md); this chapter is about how to use it.
 
-## Registrare
+## Registering
 
 ```
 module main;
@@ -11,93 +11,94 @@ module main;
 import "core.mc.event" as event;
 import "core.mc.text" as text;
 
-fn su_rottura(giocatore, blocco) -> (
-    text.send(giocatore, 'hai rotto ' + blocco);
+fn on_break(player, block) -> (
+    text.send(player, 'you broke ' + block);
     false
 );
 
-event.on('player_breaks_block', su_rottura);
+event.on('player_breaks_block', on_break);
 ```
 
-Quattro cose che questa riga decide:
+Four things that line decides:
 
-**La funzione si passa come valore**, non come nome in una stringa. Così resta legata al modulo che
-l'ha definita, e continua a risolversi quando la chiama il mod, che di quel modulo non sa niente.
+**The function is passed as a value**, not as a name in a string. That way it stays bound to the
+module that defined it, and keeps resolving when the mod (which knows nothing about that module)
+calls it.
 
-**L'arietà viene controllata subito.** Un handler con la firma sbagliata è un errore di caricamento,
-non una riga nel log tre ore dopo. Guarda la tabella del catalogo per gli argomenti di ogni evento.
+**Arity is checked immediately.** A handler with the wrong signature is a load-time error, not a log
+line three hours later. Look at the catalogue table for each event's arguments.
 
-**Il nome dell'evento viene controllato subito.** Il catalogo è chiuso: `player_break_block` (senza
-la `s`) non carica, e ti suggerisce il nome giusto.
+**The event name is checked immediately.** The catalogue is closed: `player_break_block` (without
+the `s`) does not load, and it suggests the right name.
 
-**Gli handler muoiono con l'app.** `reload` e `unload` li tolgono prima di rieseguire il file: non
-restano due copie dello stesso listener attaccate all'evento.
+**Handlers die with the app.** `reload` and `unload` remove them before re-running the file, so two
+copies of the same listener are never attached to the same event.
 
-Si registrano nel **corpo del modulo**, che è la parte eseguita al caricamento. Registrare un
-handler dentro un altro handler è possibile, ma finisce quasi sempre con dieci listener dove ne
-serviva uno.
+They are registered in the **module body**, which is the part executed at load time. Registering a
+handler inside another handler is possible, but it almost always ends with ten listeners where one
+was needed.
 
-## Annullare
+## Cancelling
 
-Un handler che restituisce un valore **vero** annulla l'azione, se l'evento è annullabile (la
-colonna "Annullabile" del catalogo). Non serve nessuna stringa magica.
-
-```
-fn niente_ossidiana(giocatore, blocco) -> blocco == 'obsidian';
-event.on('player_breaks_block', niente_ossidiana);
-```
-
-Da cui l'abitudine di chiudere ogni handler con un `false` esplicito quando **non** deve annullare:
-il valore dell'ultima espressione del corpo diventa il ritorno, e un `text.send` che restituisce il
-messaggio è un valore vero. Un handler che finisce con un `print` e nessun `false` annulla l'azione
-per sbaglio.
+A handler that returns a **truthy** value cancels the action, if the event is cancellable (the
+"Cancellable" column of the catalogue). No magic string is required.
 
 ```
-fn su_campana(pos, direzione, chi) -> (
-    text.send(chi, 'din don');
-    false                           // senza questa riga, la campana non suona più
+fn no_obsidian(player, block) -> block == 'obsidian';
+event.on('player_breaks_block', no_obsidian);
+```
+
+Hence the habit of ending every handler with an explicit `false` when it must **not** cancel: the
+value of the body's last expression becomes the return value, and a `text.send` that returns the
+message is a truthy value. A handler ending in a `print` with no `false` cancels the action by
+accident.
+
+```
+fn on_bell(pos, direction, who) -> (
+    text.send(who, 'ding dong');
+    false                           // without this line, the bell stops ringing
 );
 ```
 
-## Argomenti fissi e filtro per giocatore
+## Fixed arguments and per-player filtering
 
 ```
-event.on('player_jumps', conta_salti, ['gruppo-a']);        // arriva in coda agli argomenti
-event.on('player_jumps', solo_per_lei, null, giocatore);    // scatta solo per quel giocatore
+event.on('player_jumps', count_jumps, ['group-a']);        // appended to the arguments
+event.on('player_jumps', only_for_them, null, player);     // fires only for that player
 ```
 
-## Un tick alla volta
+## One tick at a time
 
-`tick` scatta venti volte al secondo, e tutto quello che ci metti dentro viene pagato venti volte al
-secondo. Le due tecniche che servono quasi sempre:
+`tick` fires twenty times a second, and everything you put inside it is paid for twenty times a
+second. The two techniques you almost always need:
 
 ```
 import "core.mc.event" as event;
 
-let mut tick_corrente = 0;
+let mut current_tick = 0;
 
-fn ogni_secondo() -> (
-    tick_corrente += 1;
-    if(tick_corrente % 20 == 0, lavoro_periodico())
+fn every_second() -> (
+    current_tick += 1;
+    if(current_tick % 20 == 0, periodic_work())
 );
 
-event.on('tick', ogni_secondo);
+event.on('tick', every_second);
 ```
 
-e il rinvio, per non fare tutto nello stesso tick:
+and deferral, so as not to do everything in the same tick:
 
 ```
-event.schedule(40, ricontrolla, pos);       // fra 40 tick, cioè 2 secondi
+event.schedule(40, recheck, pos);       // in 40 ticks, that is 2 seconds
 ```
 
-I tempi sono in **tick** e non in millisecondi: uno script che aspetta venti tick aspetta lo stesso
-tempo *di gioco* anche se il server rallenta.
+Times are in **ticks**, not milliseconds: a script that waits twenty ticks waits the same amount of
+*game* time even when the server slows down.
 
-## Ricaricare un'app senza perdere lo stato
+## Reloading an app without losing state
 
-Un `reload` ributta via tutto: le variabili di modulo ripartono da zero. I due eventi che coprono il
-buco sono `app_reloading`, che scatta **prima** che la versione vecchia venga smontata, e
-`app_reloaded`, che scatta **dopo** che il codice nuovo ha girato.
+A `reload` throws everything away: module variables start again from zero. The two events that cover
+the gap are `app_reloading`, which fires **before** the old version is torn down, and
+`app_reloaded`, which fires **after** the new code has run.
 
 ```
 module main;
@@ -105,74 +106,74 @@ module main;
 import "core.mc.event" as event;
 import "core.io" as io;
 
-let mut stato = {};
-let FILE = 'mia-app/stato.json';
+let mut state = {};
+let FILE = 'my-app/state.json';
 
-fn prima(app) -> (
-    if(app == 'mia-app', io.write_json('data', FILE, stato));
+fn before(app) -> (
+    if(app == 'my-app', io.write_json('data', FILE, state));
     false
 );
 
-fn dopo(app) -> (
-    if(app == 'mia-app', stato = io.read_json('data', FILE));
+fn after(app) -> (
+    if(app == 'my-app', state = io.read_json('data', FILE));
     false
 );
 
-event.on('app_reloading', prima);
-event.on('app_reloaded', dopo);
+event.on('app_reloading', before);
+event.on('app_reloaded', after);
 ```
 
-Tre cose da sapere:
+Three things to know:
 
-- **arrivano per ogni app**, non solo per la tua: il nome è l'argomento, e chi guarda solo sé stesso
-  lo confronta come qui sopra. È quello che li rende utili anche a un'app che ne sorveglia altre.
-- **la versione nuova sente il proprio `app_reloaded`**, perché l'evento scatta dopo il corpo dei
-  moduli: l'handler è già registrato quando arriva.
-- **un primo caricamento non genera niente**, e nemmeno un `unload`: non è un ricaricamento. Se il
-  codice nuovo esplode al caricamento, arriva `app_reloading` e non arriva `app_reloaded` — dalla
-  coppia si capisce com'è andata.
+- **they arrive for every app**, not just yours: the name is the argument, and an app minding only
+  itself compares it as above. That is what makes them useful to an app that watches over others.
+- **the new version hears its own `app_reloaded`**, because the event fires after the module bodies
+  have run: the handler is already registered when it arrives.
+- **a first load generates neither**, and neither does an `unload`: that is not a reload. If the new
+  code blows up while loading, `app_reloading` arrives and `app_reloaded` does not: the pair tells
+  you how it went.
 
-## Eventi di una singola entità
+## Events of a single entity
 
-Vivono dentro l'entità, la seguono fra i mondi e spariscono con lei:
+They live inside the entity, follow it between worlds and vanish with it:
 
 ```
 import "core.mc.entity" as entity;
 
-entity.on(mucca, 'on_death', fn_di_morte);
+entity.on(cow, 'on_death', on_death_fn);
 ```
 
-Gli eventi disponibili sono `on_tick`, `on_removed`, `on_death`, `on_damage`, `on_move`. Il primo
-argomento passato all'handler è sempre l'entità stessa.
+The available events are `on_tick`, `on_removed`, `on_death`, `on_damage` and `on_move`. The first
+argument passed to the handler is always the entity itself.
 
-Per reagire alla **comparsa** di entità di certi tipi c'è `entity.on_load(tipi, f)`, che
-filtra per tipo **prima** di chiamarti: ascoltare gli zombie non costa una chiamata per ogni entità
-che compare nel mondo.
+To react to the **appearance** of entities of certain types there is `entity.on_load(types, f)`,
+which filters by type **before** calling you: listening for zombies does not cost one call for every
+entity that appears in the world.
 
-## Far parlare due app
+## Making two apps talk
 
-Un'app non chiama le funzioni di un'altra: dichiara un evento e lo genera.
+An app does not call another app's functions: it declares an event and fires it.
 
 ```
-// l'app che ascolta
-event.declare('miniera_esaurita', su_esaurimento);
+// the app that listens
+event.declare('mine_exhausted', on_exhausted);
 
-// l'app che avvisa
-conteggio = event.emit('miniera_esaurita', null, pos, quanti);
+// the app that reports
+count = event.emit('mine_exhausted', null, pos, how_many);
 ```
 
-`declare` accetta anche un nome che il gioco non conosce: quello diventa un **evento di
-applicazione**, dichiarato dalla prima app che lo ascolta. `signal_event` restituisce quante app
-l'hanno sentito, o `null` se quell'evento non esiste — cioè se nessuno ascolta, e allora chi lo
-genera può risparmiarsi il lavoro.
+`declare` also accepts a name the game does not know: that becomes an **application event**, declared
+by the first app that listens for it. `emit` returns how many apps heard it, or `null` when that
+event does not exist, that is, when nobody is listening, in which case the sender can skip the
+work.
 
-È il modo previsto per accoppiare due app senza che nessuna delle due debba conoscere le funzioni
-dell'altra, e senza che l'ordine di caricamento conti.
+It is the intended way to couple two apps without either one having to know the other's functions,
+and without load order mattering.
 
-## Cosa non mettere in un handler
+## What not to put in a handler
 
-- **lavoro lungo**: il tick sta aspettando. Il budget è 2 secondi e superarlo è un errore. Se serve
-  davvero, un `task` ([capitolo 9](09-concorrenza.md)).
-- **un `print` per ogni evento frequente**: `player_rides` e `tick` scattano di continuo.
-- **errori non gestiti in un evento annullabile**: se l'handler esplode, non restituisce niente e
-  l'azione non viene annullata. Vedi la fine del [capitolo 7](07-errori.md).
+- **long work**: the tick is waiting. The budget is 2 seconds and exceeding it is an error. If you
+  genuinely need it, use a `task` ([chapter 9](09-concorrenza.md)).
+- **a `print` for every frequent event**: `player_rides` and `tick` fire constantly.
+- **unhandled errors in a cancellable event**: if the handler blows up it returns nothing, and the
+  action is not cancelled. See the end of [chapter 7](07-errori.md).

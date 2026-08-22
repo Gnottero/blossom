@@ -7,7 +7,7 @@ import net.minecraft.world.food.FoodData;
 
 import com.gnottero.blossom.access.Access;
 
-/** Il livello di esaurimento: si legge e si scrive con {@code entity.query/modify}. */
+/** The exhaustion level: read and written via {@code entity.query/modify}. */
 @Mixin(FoodData.class)
 public class FoodData_blossomAccessMixin implements Access.Food
 {

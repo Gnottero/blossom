@@ -2,7 +2,7 @@ package blossom.exception;
 
 import org.jspecify.annotations.Nullable;
 
-/** Modulo non trovato, ciclo di import, oppure accesso a un simbolo non pubblico. */
+/** Module not found, import cycle, or access to a non-public symbol. */
 public class ImportError extends BlossomError
 {
     public ImportError(SourcePosition position, String message)

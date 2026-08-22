@@ -23,53 +23,53 @@ import blossom.value.FunctionValue;
 import blossom.value.Value;
 
 /**
- * Un evento del gioco a cui uno script si puo' agganciare.
+ * A game event a script can hook into.
  *
- * <p>Ogni evento e' una costante di questa classe, con il suo nome, quanti argomenti passa e se puo'
- * essere annullato. Il catalogo e' chiuso: registrarsi a un nome che non e' qui e' un errore di
- * caricamento, non un handler che non scatta mai e nessuno capisce perche'.
+ * <p>Each event is a constant of this class, with its name, how many arguments it passes and
+ * whether it can be cancelled. The catalog is closed: registering on a name that is not here is a
+ * loading error, not a handler that never fires and nobody understands why.
  *
- * <p>Un evento tiene la propria lista di handler, quindi generarne uno che nessuno ascolta costa una
- * lettura di campo e un {@code isEmpty()}: i mixin chiamano {@link #isListened()} prima ancora di
- * costruire gli argomenti, che e' la parte cara.
+ * <p>An event keeps its own list of handlers, so firing one that nobody listens to costs a field
+ * read and an {@code isEmpty()}: the mixins call {@link #isListened()} before even building the
+ * arguments, which is the expensive part.
  *
- * <p>Un handler che restituisce un valore vero <b>annulla</b> l'azione, se l'evento e' annullabile.
- * Non serve nessuna stringa magica: il valore di ritorno e' gia' una risposta.
+ * <p>A handler that returns a true value <b>cancels</b> the action, if the event is cancellable.
+ * No magic string is needed: the return value is already an answer.
  */
 public final class Event
 {
-    /** tutti gli eventi, nell'ordine in cui vale la pena leggerli */
+    /** All events, in the order in which it is worth reading them. */
     private static final Map<String, Event> BY_NAME = new LinkedHashMap<>();
 
-    // --- ciclo di vita del server ---
+    // --- server lifecycle ---
 
-    /** {@code ()} - il server ha finito di partire */
+    /** {@code ()} - the server has finished starting */
     public static final Event SERVER_STARTS = new Event("server_starts", 0, false);
-    /** {@code ()} - il server sta per chiudere; e' l'ultimo momento utile per salvare */
+    /** {@code ()} - the server is about to shut down; the last moment it is safe to save */
     public static final Event SERVER_SHUTS_DOWN = new Event("server_shuts_down", 0, false);
     /**
-     * {@code (app)} - un'app sta per essere ricaricata, e non e' ancora stata smontata
+     * {@code (app)} - an app is about to be reloaded, and has not been torn down yet
      *
-     * <p>E' l'ultimo momento in cui gli handler della versione vecchia esistono ancora: chi vuole
-     * salvare qualcosa prima di sparire lo salva qui.
+     * <p>This is the last moment the old version's handlers still exist: whoever wants to save
+     * something before it disappears saves it here.
      */
     public static final Event APP_RELOADING = new Event("app_reloading", 1, false);
     /**
-     * {@code (app)} - un'app e' stata ricaricata, e il suo codice nuovo ha gia' girato
+     * {@code (app)} - an app has been reloaded, and its new code has already run
      *
-     * <p>Scatta dopo il corpo dei moduli, quindi la versione nuova puo' ascoltare il proprio
-     * ricaricamento: registra l'handler nel preambolo e lo trova gia' registrato quando l'evento
-     * arriva.
+     * <p>Fires after the body of the modules, so the new version can listen for its own reload:
+     * it registers the handler in the preamble and finds it already registered by the time the
+     * event arrives.
      */
     public static final Event APP_RELOADED = new Event("app_reloaded", 1, false);
-    /** {@code ()} - un tick dell'overworld */
+    /** {@code ()} - an overworld tick */
     public static final Event TICK = new Event("tick", 0, false);
-    /** {@code ()} - un tick, con il contesto del nether */
+    /** {@code ()} - a tick, with the nether's context */
     public static final Event TICK_NETHER = new Event("tick_nether", 0, false);
-    /** {@code ()} - un tick, con il contesto dell'end */
+    /** {@code ()} - a tick, with the end's context */
     public static final Event TICK_ENDER = new Event("tick_ender", 0, false);
 
-    // --- giocatore: movimento e stato ---
+    // --- player: movement and state ---
 
     /** {@code (player)} */
     public static final Event PLAYER_JUMPS = new Event("player_jumps", 1, false);
@@ -79,7 +79,7 @@ public final class Event
     public static final Event PLAYER_WAKES_UP = new Event("player_wakes_up", 1, false);
     /** {@code (player)} */
     public static final Event PLAYER_ESCAPES_SLEEP = new Event("player_escapes_sleep", 1, false);
-    /** {@code (player, strafe, forward, jumping, sneaking)} - comandi dati alla cavalcatura */
+    /** {@code (player, strafe, forward, jumping, sneaking)} - commands given to the mount */
     public static final Event PLAYER_RIDES = new Event("player_rides", 5, false);
     /** {@code (player)} */
     public static final Event PLAYER_STARTS_SNEAKING = new Event("player_starts_sneaking", 1, false);
@@ -93,22 +93,22 @@ public final class Event
     public static final Event PLAYER_SWAPS_HANDS = new Event("player_swaps_hands", 1, true);
     /** {@code (player, hand)} */
     public static final Event PLAYER_SWINGS_HAND = new Event("player_swings_hand", 2, false);
-    /** {@code (player, from, to)} - lo slot della hotbar selezionato */
+    /** {@code (player, from, to)} - the selected hotbar slot */
     public static final Event PLAYER_SWITCHES_SLOT = new Event("player_switches_slot", 3, false);
 
-    // --- giocatore: blocchi e oggetti ---
+    // --- player: blocks and items ---
 
     /** {@code (player, item, hand)} */
     public static final Event PLAYER_USES_ITEM = new Event("player_uses_item", 3, true);
-    /** {@code (player, block, facing)} - click sinistro su un blocco */
+    /** {@code (player, block, facing)} - left click on a block */
     public static final Event PLAYER_CLICKS_BLOCK = new Event("player_clicks_block", 3, true);
-    /** {@code (player, item, hand, block, face, hitvec)} - prima che il blocco decida */
+    /** {@code (player, item, hand, block, face, hitvec)} - before the block decides */
     public static final Event PLAYER_RIGHT_CLICKS_BLOCK = new Event("player_right_clicks_block", 6, true);
-    /** {@code (player, hand, block, face, hitvec)} - il blocco ha risposto */
+    /** {@code (player, hand, block, face, hitvec)} - the block has responded */
     public static final Event PLAYER_INTERACTS_WITH_BLOCK = new Event("player_interacts_with_block", 5, false);
-    /** {@code (player, item, hand, block)} - prima che il blocco venga piazzato */
+    /** {@code (player, item, hand, block)} - before the block is placed */
     public static final Event PLAYER_PLACING_BLOCK = new Event("player_placing_block", 4, true);
-    /** {@code (player, item, hand, block)} - il blocco e' stato piazzato */
+    /** {@code (player, item, hand, block)} - the block has been placed */
     public static final Event PLAYER_PLACES_BLOCK = new Event("player_places_block", 4, false);
     /** {@code (player, block)} */
     public static final Event PLAYER_BREAKS_BLOCK = new Event("player_breaks_block", 2, true);
@@ -118,14 +118,14 @@ public final class Event
     public static final Event PLAYER_FINISHES_USING_ITEM = new Event("player_finishes_using_item", 3, true);
     /** {@code (player, item)} */
     public static final Event PLAYER_PICKS_UP_ITEM = new Event("player_picks_up_item", 2, false);
-    /** {@code (player)} - ha lasciato cadere un oggetto */
+    /** {@code (player)} - dropped an item */
     public static final Event PLAYER_DROPS_ITEM = new Event("player_drops_item", 1, true);
-    /** {@code (player)} - ha lasciato cadere una pila intera */
+    /** {@code (player)} - dropped an entire stack */
     public static final Event PLAYER_DROPS_STACK = new Event("player_drops_stack", 1, true);
     /** {@code (player, recipe, full_stack)} */
     public static final Event PLAYER_CHOOSES_RECIPE = new Event("player_chooses_recipe", 3, true);
 
-    // --- giocatore: entita' e danni ---
+    // --- player: entities and damage ---
 
     /** {@code (player, entity, hand)} */
     public static final Event PLAYER_INTERACTS_WITH_ENTITY = new Event("player_interacts_with_entity", 3, true);
@@ -146,7 +146,7 @@ public final class Event
     /** {@code (player, from_pos, to_pos, from_dimension, to_dimension)} */
     public static final Event PLAYER_CHANGES_DIMENSION = new Event("player_changes_dimension", 5, false);
 
-    // --- giocatore: sessione e chat ---
+    // --- player: session and chat ---
 
     /** {@code (player)} */
     public static final Event PLAYER_CONNECTS = new Event("player_connects", 1, false);
@@ -155,47 +155,48 @@ public final class Event
     /** {@code (player, message)} */
     public static final Event PLAYER_MESSAGE = new Event("player_message", 2, true);
     /**
-     * {@code (player, command)} - un comando e' stato inviato dalla chat
+     * {@code (player, command)} - a command has been sent from chat
      *
-     * <p>Non annullabile: scatta a comando gia' accettato, e restituire vero da qui non lo ferma.
-     * Era dichiarato annullabile e non lo era: una bandiera che non fa niente e' peggio di una
-     * assente, perche' chi la legge scrive codice che crede di funzionare.
+     * <p>Not cancellable: fires with the command already accepted, and returning true from here
+     * does not stop it. It used to be declared cancellable and was not: a flag that does nothing
+     * is worse than one that is absent, because whoever reads it writes code that believes it
+     * works.
      */
     public static final Event PLAYER_COMMAND = new Event("player_command", 2, false);
     /** {@code (player, category, event, value)} */
     public static final Event STATISTIC = new Event("statistic", 4, false);
 
-    // --- mondo ---
+    // --- world ---
 
-    /** {@code (pos, skeleton_horse)} - un fulmine e' caduto; il secondo argomento e' un booleano */
+    /** {@code (pos, skeleton_horse)} - lightning has struck; the second argument is a boolean */
     public static final Event LIGHTNING = new Event("lightning", 2, false);
-    /** {@code (pos, power, source, attacker, block_interaction, create_fire)} - prima dello scoppio */
+    /** {@code (pos, power, source, attacker, block_interaction, create_fire)} - before the blast */
     public static final Event EXPLOSION = new Event("explosion", 6, true);
     /** {@code (pos, power, source, attacker, block_interaction, create_fire, blocks, entities)} */
     public static final Event EXPLOSION_OUTCOME = new Event("explosion_outcome", 8, false);
-    /** {@code (pos, item)} - un dispenser sta per attivarsi, con l'oggetto che sta per lanciare */
+    /** {@code (pos, item)} - a dispenser is about to activate, with the item it is about to launch */
     public static final Event BLOCK_DISPENSES = new Event("block_dispenses", 2, true);
-    /** {@code (x, z)} - un chunk e' stato scaricato */
+    /** {@code (x, z)} - a chunk has been unloaded */
     public static final Event CHUNK_UNLOADED = new Event("chunk_unloaded", 2, false);
-    /** {@code (x, z)} - un chunk e' stato generato per la prima volta */
+    /** {@code (x, z)} - a chunk has been generated for the first time */
     public static final Event CHUNK_GENERATED = new Event("chunk_generated", 2, false);
-    /** {@code (x, z, generato)} - un chunk e' entrato in memoria, appena creato o riletto dal disco */
+    /** {@code (x, z, generated)} - a chunk has entered memory, either just created or read back from disk */
     public static final Event CHUNK_LOADED = new Event("chunk_loaded", 3, false);
-    /** {@code (entity)} - un'entita' e' comparsa nel mondo: caricata da disco, generata o evocata */
+    /** {@code (entity)} - an entity has appeared in the world: loaded from disk, spawned or summoned */
     public static final Event ENTITY_LOADS = new Event("entity_loads", 1, false);
-    /** {@code (pos, direction, entity)} - una campana e' stata suonata; l'entita' e' null se e' stata la redstone */
+    /** {@code (pos, direction, entity)} - a bell has been rung; the entity is null if it was redstone */
     public static final Event BELL_RINGS = new Event("bell_rings", 3, true);
-    /** {@code (piston, facing, blocks)} - un pistone sta per estendersi, con i blocchi che spingera' */
+    /** {@code (piston, facing, blocks)} - a piston is about to extend, with the blocks it will push */
     public static final Event PISTON_EXTENDS = new Event("piston_extends", 3, true);
-    /** {@code (piston, facing, blocks)} - un pistone appiccicoso sta per ritrarsi, con quelli che tirera' */
+    /** {@code (piston, facing, blocks)} - a sticky piston is about to retract, with the blocks it will pull */
     public static final Event PISTON_RETRACTS = new Event("piston_retracts", 3, true);
-    /** {@code (previous_block, new_block)} - cemento, ostruzione, pietra o basalto stanno per formarsi */
+    /** {@code (previous_block, new_block)} - concrete, obsidian, stone or basalt is about to form */
     public static final Event BLOCK_FORMS = new Event("block_forms", 2, true);
 
     private final String name;
     private final int arity;
     private final boolean cancellable;
-    /** un evento che non e' del gioco ma di un'app: nasce con handle_event, scatta con signal_event */
+    /** An event that is not from the game but from an app: born with handle_event, fired with signal_event. */
     private boolean custom = false;
     private final CopyOnWriteArrayList<Handler> handlers = new CopyOnWriteArrayList<>();
 
@@ -208,12 +209,13 @@ public final class Event
     }
 
     /**
-     * Un handler registrato: la funzione, l'app a cui appartiene, e gli argomenti fissi in coda.
+     * A registered handler: the function, the app it belongs to, and the fixed trailing arguments.
      *
-     * @param filter se non {@code null}, decide guardando gli argomenti se questo handler va
-     *               chiamato. Serve a chi ascolta un evento frequente ma solo per una parte dei casi
-     *               - {@code entity_load_handler} su un tipo di entita' - e fa il lavoro in java,
-     *               dove costa un confronto, invece che dentro l'handler, dove costa una chiamata
+     * @param filter if not {@code null}, decides by looking at the arguments whether this handler
+     *               should be called. Used by whoever listens to a frequent event but only for
+     *               part of the cases (e.g. {@code entity_load_handler} on a specific entity type),
+     *               doing the work in java, where it costs a comparison, instead of inside the
+     *               handler, where it costs a call
      */
     public record Handler(String app, Interpreter interpreter, CommandSourceStack source, FunctionValue function,
             List<Value> extraArguments, @Nullable String targetPlayer,
@@ -231,13 +233,13 @@ public final class Event
         return name;
     }
 
-    /** Quanti argomenti l'evento passa alla funzione, esclusi quelli fissi dati alla registrazione. */
+    /** How many arguments the event passes to the function, excluding the fixed ones given at registration. */
     public int arity()
     {
         return arity;
     }
 
-    /** Se restituire un valore vero da un handler ferma l'azione del gioco. */
+    /** Whether returning a true value from a handler stops the game's action. */
     public boolean cancellable()
     {
         return cancellable;
@@ -249,12 +251,12 @@ public final class Event
     }
 
     /**
-     * Dichiara un evento di applicazione, o restituisce quello gia' dichiarato.
+     * Declares an application event, or returns the one already declared.
      *
-     * <p>Il catalogo del gioco resta chiuso; questi eventi invece li inventa chi scrive gli script,
-     * e servono a far parlare due app senza che l'una conosca le funzioni dell'altra.
+     * <p>The game's catalog stays closed; these events instead are invented by whoever writes the
+     * scripts, and let two apps talk to each other without one knowing the other's functions.
      *
-     * @param arity quanti argomenti chi lo genera promette di passare
+     * @param arity how many arguments whoever fires it promises to pass
      */
     public static Event custom(String name, int arity)
     {
@@ -299,18 +301,18 @@ public final class Event
         return handlers;
     }
 
-    /** @return se qualcuno ascolta: i mixin lo chiedono prima di costruire gli argomenti */
+    /** @return whether someone is listening: the mixins ask this before building the arguments */
     public boolean isListened()
     {
         return !handlers.isEmpty();
     }
 
     /**
-     * Chiama tutti gli handler.
+     * Calls all the handlers.
      *
-     * @param source chi "esegue" l'evento, per le funzioni che hanno bisogno di un mondo
-     * @param arguments costruiti solo se c'e' davvero qualcuno che ascolta
-     * @return se qualcuno ha chiesto di annullare l'azione, e l'evento e' annullabile
+     * @param source who "runs" the event, for functions that need a world
+     * @param arguments built only if someone is actually listening
+     * @return whether someone asked to cancel the action, and the event is cancellable
      */
     public boolean fire(CommandSourceStack source, Supplier<List<Value>> arguments)
     {
@@ -319,10 +321,10 @@ public final class Event
             return false;
         }
         List<Value> base = arguments.get();
-        // l'arieta' dichiarata e' quella su cui si valida la firma di un handler: se chi genera
-        // l'evento passa un numero diverso di argomenti, la validazione ha mentito e nessun handler
-        // corretto puo' essere registrato. E' successo davvero con 'bell_rings', dichiarato con un
-        // argomento mentre il mixin ne passava tre
+        // the declared arity is what a handler's signature is validated against: if whoever fires
+        // the event passes a different number of arguments, validation has lied and no correct
+        // handler can be registered. This actually happened with 'bell_rings', declared with one
+        // argument while the mixin passed three
         if (base.size() != arity)
         {
             BlossomMod.LOG.error("Event {} declares {} arguments but produces {}: this is a bug in the mod,"
@@ -343,8 +345,8 @@ public final class Event
             CommandSourceStack callSource = handler.source() == null ? source : source;
             try
             {
-                // ogni evento e' un'esecuzione a se': il watchdog riparte da qui, altrimenti
-                // un'app viva da ore avrebbe finito il budget al primo giorno
+                // each event is its own execution: the watchdog restarts from here, otherwise an
+                // app alive for hours would run out of budget on the first day
                 Context context = new ScriptContext(handler.interpreter().host(), callSource).beginExecution();
                 Value result = handler.function()
                         .callInContext(context, Context.Type.NONE, call)
@@ -359,7 +361,7 @@ public final class Event
         return cancelled;
     }
 
-    /** Genera l'evento con la sorgente del giocatore: l'handler vede il suo mondo e la sua posizione. */
+    /** Fires the event with the player's source: the handler sees their world and position. */
     public boolean fireForPlayer(ServerPlayer player, Supplier<List<Value>> arguments)
     {
         if (handlers.isEmpty())
@@ -369,7 +371,7 @@ public final class Event
         return fire(player.createCommandSourceStack(), arguments);
     }
 
-    /** Genera l'evento con la sorgente del mondo dato. */
+    /** Fires the event with the source of the given world. */
     public boolean fireInLevel(ServerLevel level, Supplier<List<Value>> arguments)
     {
         if (handlers.isEmpty())
@@ -379,7 +381,7 @@ public final class Event
         return fire(level.getServer().createCommandSourceStack().withLevel(level), arguments);
     }
 
-    /** Genera l'evento con la sorgente del server. */
+    /** Fires the event with the server's source. */
     public boolean fireOnServer(MinecraftServer server, Supplier<List<Value>> arguments)
     {
         if (handlers.isEmpty())
@@ -403,7 +405,7 @@ public final class Event
         return all;
     }
 
-    /** Toglie da ogni evento gli handler dell'app: si chiama a ricaricamento e a scaricamento. */
+    /** Removes the app's handlers from every event: called on reload and on unload. */
     public static void unregisterApp(String app)
     {
         BY_NAME.values().forEach(event -> event.removeApp(app));

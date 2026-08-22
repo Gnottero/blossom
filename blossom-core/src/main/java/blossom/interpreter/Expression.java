@@ -73,9 +73,7 @@ import java.util.stream.Collectors;
 
 public class Expression
 {
-    /**
-     * The current infix expression
-     */
+    /** The current infix expression. */
     private String expression;
 
     String getCodeString()
@@ -105,18 +103,14 @@ public class Expression
         module = mi;
     }
 
-    /**
-     * Cached AST (Abstract Syntax Tree) (root) of the expression
-     */
+    /** Cached AST (Abstract Syntax Tree) root of the expression. */
     @Nullable
     private LazyValue ast = null;
 
     @Nullable
     private ExpressionNode root = null;
 
-    /**
-     * script specific operatos and built-in functions
-     */
+    /** Script-specific operators and built-in functions. */
     private final Map<String, ILazyOperator> operators = new Object2ObjectOpenHashMap<>();
 
     public boolean isAnOperator(String opname)
@@ -125,13 +119,13 @@ public class Expression
     }
 
     /**
-     * Le funzioni built-in, in una mappa piatta: è la *visibilità* a passare per i moduli, non le
-     * chiamate.
+     * The built-in functions, in a flat map: it's *visibility* that goes through modules, not
+     * calls.
      *
-     * <p>La mappa annota i nomi registrati due volte. Non è un dettaglio contabile: due
-     * implementazioni diverse sotto lo stesso nome vorrebbero dire che l'ultima registrata vince, e
-     * la prima sparisce senza che nessuno se ne accorga finché qualcuno non chiama la funzione
-     * sbagliata. Con l'annotazione, un test lo vede.
+     * <p>The map annotates names that get registered twice. That's not a bookkeeping detail: two
+     * different implementations under the same name would mean the last one registered wins, and
+     * the first silently disappears until someone calls the wrong function. With the annotation,
+     * a test catches it.
      */
     private final Map<String, ILazyFunction> functions = new Object2ObjectOpenHashMap<>()
     {
@@ -147,12 +141,12 @@ public class Expression
         }
     };
 
-    /** i nomi di built-in registrati più di una volta su questa espressione */
+    /** The names of built-ins registered more than once on this expression. */
     private final java.util.Set<String> redefinedBuiltins = new java.util.TreeSet<>();
 
     /**
-     * I nomi di funzione built-in che sono stati registrati più di una volta, cioè quelli in cui una
-     * registrazione ha silenziosamente sostituito la precedente.
+     * The names of built-in functions that have been registered more than once, i.e. those where
+     * one registration silently replaced the previous one.
      */
     public java.util.Set<String> redefinedBuiltins()
     {
@@ -634,9 +628,9 @@ public class Expression
             {
                 try
                 {
-                    // gli operandi ereditano il contesto solo quando si sta costruendo una firma:
-                    // li' un identificatore sconosciuto e' il nome di un parametro (o di un tipo),
-                    // non una variabile da cercare
+                    // Operands inherit the context only when a signature is being built: there an
+                    // unknown identifier is the name of a parameter (or a type), not a variable
+                    // to look up
                     Context.Type operands = t == Context.LOCALIZATION ? Context.LOCALIZATION : Context.NONE;
                     return fun.apply(c, t, v1.evalValue(c, operands), v2.evalValue(c, operands));
                 }
@@ -691,8 +685,8 @@ public class Expression
         }
         if (exc instanceof final BlossomError typed)
         {
-            // un errore tipizzato sa gia' dove si trova e cosa suggerire: avvolgerlo in un
-            // ExpressionException perderebbe categoria e suggerimento, che sono il punto del §4
+            // A typed error already knows where it is and what to suggest: wrapping it in an
+            // ExpressionException would lose the category and suggestion, which are the whole point of §4
             return typed.pushFrame(e.module == null ? "<code>" : e.module.name(),
                     new SourcePosition(e.getModuleName(), token.lineno + 1, token.linepos + 1));
         }
@@ -1017,8 +1011,8 @@ public class Expression
     }
 
     /**
-     * @param argumentTypes il tipo canonico dichiarato per ogni parametro, o {@code null} se nessuno
-     *                      ne ha uno (vedi {@code blossom.value.ValueTypes})
+     * @param argumentTypes the canonical declared type for each parameter, or {@code null} if none
+     *                      has one (see {@code blossom.value.ValueTypes})
      */
     public FunctionValue createUserDefinedFunction(Context context, String name, Expression expr, Token token,
             List<String> arguments, @Nullable List<String> argumentTypes, String varArgs, List<String> outers, LazyValue code)
@@ -1026,14 +1020,19 @@ public class Expression
         return createUserDefinedFunction(context, name, expr, token, arguments, argumentTypes, null, varArgs, outers, code);
     }
 
-    /** @param defaults il valore di riserva di ogni parametro, o {@code null} se nessuno ne ha uno */
+    /** @param defaults the default value for each parameter, or {@code null} if none has one */
     public FunctionValue createUserDefinedFunction(Context context, String name, Expression expr, Token token,
             List<String> arguments, @Nullable List<String> argumentTypes, @Nullable List<LazyValue> defaults,
             String varArgs, List<String> outers, LazyValue code)
     {
-        if (functions.containsKey(name))
+        // riservato e' solo il prelude: quello si scrive senza import, quindi un omonimo dell'utente
+        // renderebbe ambigua la grammatica. Tutto il resto della libreria si raggiunge per alias
+        // ('list.map'), quindi 'fn map(...)' non maschera niente e non c'e' motivo di vietarlo
+        if (StdLib.isInPrelude(name))
         {
-            throw new ExpressionException(context, expr, token, "Function " + name + " would mask a built-in function");
+            throw new UndefinedSymbolError(BlossomError.positionOf(this, token),
+                    "'" + name + "' is part of the language and cannot be the name of a function."
+                            + " The reserved names are " + String.join(", ", new java.util.TreeSet<>(StdLib.PRELUDE)) + ".");
         }
         Map<String, LazyValue> contextValues = new HashMap<>();
         for (String outer : outers)
@@ -1055,10 +1054,10 @@ public class Expression
 
         if (isAnonymousName(name))
         {
-            // una lambda anonima cattura il frame in cui nasce: senza cattura non vedrebbe niente
-            // di quello che la circonda, e una lambda che non vede il proprio contesto non serve.
-            // La cattura e' quella di 'outer' applicata a tutto, e la paga solo chi la crea - una
-            // funzione con nome continua a non catturare nulla
+            // An anonymous lambda captures the frame it's born in: without capture it wouldn't see
+            // anything around it, and a lambda that can't see its own context is useless. The
+            // capture is the same as 'outer' applied to everything, and only whoever creates it
+            // pays for it; a named function still captures nothing
             Map<String, LazyValue> captured = contextValues == null ? new HashMap<>() : contextValues;
             context.forEachVariable(captured::putIfAbsent);
             contextValues = captured.isEmpty() ? null : captured;
@@ -1073,13 +1072,13 @@ public class Expression
         return result;
     }
 
-    /** Il prefisso del nome che il parser da' a una funzione scritta senza nome, {@code fn(a) -> ...}. */
+    /** The name prefix the parser gives to a function written without a name, {@code fn(a) -> ...}. */
     public static final String ANONYMOUS_PREFIX = "fn@";
 
     /**
-     * Il nome di una lambda anonima: non e' un identificatore valido, quindi non puo' collidere con
-     * niente che qualcuno abbia scritto, e porta con se' il punto in cui la lambda e' stata scritta,
-     * che e' quello che serve quando compare in uno stack di errore.
+     * The name of an anonymous lambda: it's not a valid identifier, so it can't collide with
+     * anything anyone wrote, and it carries with it the point where the lambda was written, which
+     * is what's needed when it shows up in an error stack.
      */
     public static String anonymousName(Token token)
     {
@@ -1154,18 +1153,18 @@ public class Expression
     }
 
     /**
-     * Il nodo compilato che legge la variabile {@code name}.
+     * The compiled node that reads variable {@code name}.
      *
-     * <p>A quale spazio dei nomi appartiene un nome si sa guardandolo, e il nome non cambia più dopo
-     * il parsing: la scelta si fa una volta qui, invece di rifarla ad ogni lettura come faceva
-     * {@link #getOrSetAnyVariable}. Su una variabile locale si risparmiano ad ogni accesso una
-     * ricerca del punto di qualificazione e un confronto di prefisso; su {@code _}, {@code _i} e
-     * {@code _a} si risparmia l'intera ricerca nella mappa, perché sono campi del contesto.
+     * <p>Which namespace a name belongs to is knowable just by looking at it, and the name never
+     * changes after parsing: the choice is made once here, instead of being redone on every read
+     * like {@link #getOrSetAnyVariable} does. For a local variable, every access saves a lookup
+     * for the qualification dot and a prefix comparison; for {@code _}, {@code _i} and {@code _a}
+     * it saves the entire map lookup, because they're fields of the context.
      */
     private LazyValue variableNode(String rawName)
     {
-        // internato una volta qui: il frame confronta i nomi per identita' prima che per contenuto,
-        // e i nomi che vengono dal parsing sono gli stessi ad ogni valutazione
+        // Interned once here: the frame compares names by identity before content, and names
+        // coming from parsing are the same object on every evaluation
         String name = rawName.intern();
         if (Context.isImplicitName(name))
         {
@@ -1188,13 +1187,14 @@ public class Expression
     }
 
     /**
-     * Il nodo che legge {@code name} valutando {@code value}, e che sa dire il proprio nome.
+     * The node that reads {@code name} by evaluating {@code value}, and that knows how to state
+     * its own name.
      *
-     * <p>Nei due contesti in cui un identificatore non è una lettura - a sinistra di un assegnamento
-     * e dentro una firma - non produce il valore ma un {@link VariableReferenceValue}: è l'l-value
-     * delle variabili, e prende il posto del nome che ogni valore si portava dietro (D-093). Dentro
-     * una firma il valore non viene nemmeno cercato, perché lì il nome è quello di un parametro che
-     * ancora non esiste.
+     * <p>In the two contexts where an identifier is not a read (on the left side of an assignment,
+     * and inside a signature) it doesn't produce the value but a {@link VariableReferenceValue}:
+     * that's the l-value of variables, and it takes the place of the name every value used to
+     * carry around (D-093). Inside a signature the value isn't even looked up, because there the
+     * name belongs to a parameter that doesn't exist yet.
      */
     private static VariableRead read(String name, LazyValue value)
     {
@@ -1646,17 +1646,21 @@ public class Expression
 
 
     /**
-     * Il nome con cui una chiamata va cercata fra le built-in.
+     * Il nome con cui una chiamata va cercata fra le built-in, o {@code null} se fra le built-in non
+     * va cercata affatto.
      *
-     * <p>Fa due lavori, entrambi una volta sola per chiamata scritta nel sorgente:
+     * <p>Succede una volta sola per chiamata scritta nel sorgente:
      * <ul>
      *   <li>{@code math.sqrt(4)} diventa {@code sqrt}, se l'alias {@code math} punta a un modulo di
      *       libreria che esporta quel simbolo;</li>
-     *   <li>{@code sqrt(4)} scritto senza import diventa un errore che dice quale modulo importare,
-     *       invece di funzionare e rimettere in piedi lo spazio globale implicito.</li>
+     *   <li>un nome senza qualificatore che non sia del prelude e' <b>sempre</b> una funzione
+     *       dell'utente: si risolve a runtime sul suo host. Le built-in si raggiungono solo
+     *       attraverso un alias, quindi lo spazio globale implicito non torna in piedi, e in cambio
+     *       {@code fn sum(a, b)} e' un nome come un altro invece che uno dei 160 riservati
+     *       dall'elenco piatto delle implementazioni.</li>
      * </ul>
      */
-    private String resolveBuiltinName(Context context, Token token)
+    private @Nullable String resolveBuiltinName(Context context, Token token)
     {
         String name = token.surface;
         if (ScriptHost.isQualified(name))
@@ -1675,18 +1679,9 @@ public class Expression
                 }
                 return StdLib.implementationOf(target, symbol);
             }
-            return name; // simbolo di un modulo dell'utente: si risolve a runtime, per il suo host
+            return null; // simbolo di un modulo dell'utente: si risolve a runtime, per il suo host
         }
-        if (functions.containsKey(name) && !StdLib.isInPrelude(name))
-        {
-            String home = StdLib.homeModuleOf(name);
-            throw new UndefinedSymbolError(BlossomError.positionOf(this, token),
-                    home == null
-                            ? "'" + name + "' is not available without an import."
-                            : "'" + name + "' lives in module '" + home + "': add import \"" + home
-                                    + "\" as " + home.substring(home.lastIndexOf('.') + 1) + "; at the top of the file.");
-        }
-        return name;
+        return StdLib.isInPrelude(name) ? name : null;
     }
 
     /**
@@ -1831,8 +1826,28 @@ public class Expression
      * in quello, l'albero viene rigirato in {@code f = (fn(a) -> a + 1)}. Nessuna precedenza da
      * cambiare e nessun costo a runtime: succede una volta, mentre si costruisce l'albero.
      */
+    /**
+     * I nomi del prelude che a sinistra di {@code ->} non sono un errore dell'utente: {@code fn} e'
+     * la lambda, {@code call} e' il nome in cui una chiamata sconosciuta - cioe' ogni funzione che
+     * l'utente sta definendo - viene riscritta, e {@code l}/{@code m}/{@code concat} li mette il
+     * tokenizer per le parentesi quadre, le graffe e le stringhe interpolate.
+     */
+    private static final Set<String> RESERVED_ON_THE_LEFT_OF_ARROW = Set.of("fn", "call", "l", "m", "concat");
+
     private ExpressionNode reassociateLambdaAssignment(Token token, ExpressionNode left, ExpressionNode right)
     {
+        // 'fn print(a) -> ...': a prelude name on the left of '->' has already become a call to the
+        // built-in, so the signature never forms and the error would talk about '->' instead of
+        // about the name. It is the name that is the problem, and it is known right here
+        if (token.surface.equals("->")
+                && left.token.type == Token.TokenType.FUNCTION
+                && !RESERVED_ON_THE_LEFT_OF_ARROW.contains(left.token.surface)
+                && StdLib.isInPrelude(left.token.surface))
+        {
+            throw new ParseError(BlossomError.positionOf(this, left.token),
+                    "'" + left.token.surface + "' is part of the language and cannot be the name of a function."
+                            + " The reserved names are " + String.join(", ", new java.util.TreeSet<>(StdLib.PRELUDE)) + ".");
+        }
         if (token.surface.equals("->")
                 && left.token.type == Token.TokenType.OPERATOR
                 && left.args != null && left.args.size() == 2
@@ -1884,10 +1899,12 @@ public class Expression
                     }
                 }
                 case FUNCTION -> {
-                    String name = resolveBuiltinName(context, token);
+                    String resolved = resolveBuiltinName(context, token);
+                    String name = resolved == null ? token.surface : resolved;
                     ILazyFunction f;
                     ArrayList<ExpressionNode> p;
-                    boolean isKnown = functions.containsKey(name); // globals will be evaluated lazily, not at compile time via .
+                    // globals will be evaluated lazily, not at compile time via .
+                    boolean isKnown = resolved != null && functions.containsKey(resolved);
                     if (isKnown)
                     {
                         f = functions.get(name);
@@ -2333,17 +2350,27 @@ public class Expression
         // applying argument unpacking
         args = AbstractLazyFunction.lazify(AbstractLazyFunction.unpackLazy(args, ctx, requestedType));
         Value result;
-        if (operation instanceof ILazyFunction)
+        try
         {
-            result = ((ILazyFunction) operation).lazyEval(ctx, expectedType, this, node.token, args).evalValue(null, expectedType);
+            if (operation instanceof ILazyFunction)
+            {
+                result = ((ILazyFunction) operation).lazyEval(ctx, expectedType, this, node.token, args).evalValue(null, expectedType);
+            }
+            else if (args.size() == 1)
+            {
+                result = ((ILazyOperator) operation).lazyEval(ctx, expectedType, this, node.token, args.get(0), null).evalValue(null, expectedType);
+            }
+            else // args == 2
+            {
+                result = ((ILazyOperator) operation).lazyEval(ctx, expectedType, this, node.token, args.get(0), args.get(1)).evalValue(null, expectedType);
+            }
         }
-        else if (args.size() == 1)
+        catch (RuntimeException | StackOverflowError failure)
         {
-            result = ((ILazyOperator) operation).lazyEval(ctx, expectedType, this, node.token, args.get(0), null).evalValue(null, expectedType);
-        }
-        else // args == 2
-        {
-            result = ((ILazyOperator) operation).lazyEval(ctx, expectedType, this, node.token, args.get(0), args.get(1)).evalValue(null, expectedType);
+            // folding is an optimisation, not a semantics: a call that fails here has to fail where
+            // it is written, at run time, so that 'try' can see it and dead code stays quiet.
+            // Giving up on this node is always safe - what is left is the call itself.
+            return optimized;
         }
         node.token.disguiseAs(null, "=> "+result.getString());
         node.op = LazyValue.ofConstant(result);

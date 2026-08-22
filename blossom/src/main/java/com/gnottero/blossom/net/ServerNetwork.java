@@ -13,14 +13,14 @@ import net.minecraft.server.level.ServerPlayer;
 import com.gnottero.blossom.BlossomMod;
 
 /**
- * Chi, fra i giocatori connessi, ha Blossom anche sul client.
+ * Which of the connected players also has Blossom on the client.
  *
- * <p>È l'unico stato che il layer di rete tiene, e serve a una decisione sola: a chi si può mandare
- * un disegno vero e a chi invece vanno mandate le particelle. Tutto il resto del mod non sa che
- * questa distinzione esista.
+ * <p>This is the only state the network layer keeps, and it serves a single decision: who can be
+ * sent a real drawing and who instead gets particles. The rest of the mod has no idea this
+ * distinction exists.
  *
- * <p>L'insieme è concorrente perché ci si scrive dal thread di rete (quando arriva la risposta di un
- * client) e ci si legge dal thread del server (quando si disegna).
+ * <p>The set is concurrent because it is written from the network thread (when a client's reply
+ * arrives) and read from the server thread (when drawing).
  */
 public final class ServerNetwork
 {
@@ -30,7 +30,7 @@ public final class ServerNetwork
     {
     }
 
-    /** Saluta un giocatore appena entrato. Un client vanilla scarta il pacchetto e non risponde. */
+    /** Greets a player who just joined. A vanilla client discards the packet and does not reply. */
     public static void onPlayerJoin(ServerPlayer player)
     {
         send(player, BlossomPayloads.Hello.of(BlossomPayloads.PROTOCOL_VERSION));
@@ -41,13 +41,13 @@ public final class ServerNetwork
         blossomClients.remove(player);
     }
 
-    /** Il client ha risposto al saluto: da adesso può ricevere i disegni. */
+    /** The client replied to the greeting: from now on it can receive drawings. */
     public static void onHello(ServerPlayer player, CompoundTag data)
     {
         int version = data.getIntOr(BlossomPayloads.VERSION_KEY, 0);
         if (version != BlossomPayloads.PROTOCOL_VERSION)
         {
-            // meglio le particelle che un disegno interpretato con le regole sbagliate
+            // better particles than a drawing interpreted with the wrong rules
             BlossomMod.LOG.info("{} has a Blossom client speaking protocol {}, this server speaks {}:"
                     + " they will get particles", player.getScoreboardName(), version, BlossomPayloads.PROTOCOL_VERSION);
             blossomClients.remove(player);
@@ -56,19 +56,19 @@ public final class ServerNetwork
         blossomClients.add(player);
     }
 
-    /** @return se questo giocatore ha un client Blossom compatibile */
+    /** @return whether this player has a compatible Blossom client */
     public static boolean hasClient(ServerPlayer player)
     {
         return blossomClients.contains(player);
     }
 
-    /** I giocatori con il client, fra quelli dati. */
+    /** The players with the client, among the given ones. */
     public static List<ServerPlayer> withClient(Collection<ServerPlayer> players)
     {
         return players.stream().filter(ServerNetwork::hasClient).toList();
     }
 
-    /** I giocatori senza il client, fra quelli dati: sono quelli che vedranno le particelle. */
+    /** The players without the client, among the given ones: they are the ones who will see particles. */
     public static List<ServerPlayer> withoutClient(Collection<ServerPlayer> players)
     {
         return players.stream().filter(player -> !hasClient(player)).toList();

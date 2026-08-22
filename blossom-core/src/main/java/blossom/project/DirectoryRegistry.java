@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 /**
- * Un registry che e' una cartella: {@code <radice>/<nome>/<versione>/}, e dentro un progetto normale.
+ * A registry that is just a directory: {@code <root>/<name>/<version>/}, holding a normal project.
  *
  * <pre>
  * registry/
@@ -18,11 +18,11 @@ import java.util.stream.Stream;
  * └── torre/2.1.0/
  * </pre>
  *
- * <p>Non e' un ripiego per i test: e' la forma per chi tiene le proprie librerie su una cartella
- * condivisa o un disco di rete - nessun server da mantenere, nessuna porta aperta, contenuto
- * ispezionabile con {@code ls}. Non scarica niente, quindi {@link #fetch} restituisce la cartella
- * pubblicata; il lock ne registra comunque l'impronta, perche' una cartella condivisa la puo'
- * cambiare anche qualcun altro.
+ * <p>This is not a fallback for tests: it's the right shape for anyone keeping their own libraries
+ * on a shared directory or a network drive, no server to maintain, no port to open, content you can
+ * inspect with {@code ls}. Nothing is downloaded, so {@link #fetch} returns the published directory
+ * as-is; the lock still records its fingerprint, because a shared directory can be changed by
+ * someone else too.
  */
 public record DirectoryRegistry(Path root) implements PackRegistry
 {
@@ -40,8 +40,8 @@ public record DirectoryRegistry(Path root) implements PackRegistry
             entries.filter(Files::isDirectory).forEach(entry ->
             {
                 Version version = Version.tryParse(entry.getFileName().toString());
-                // una cartella con un nome che non è una versione non è un errore: può essere
-                // qualunque cosa che l'amministratore ha lasciato lì
+                // a directory whose name is not a version is not an error: it can be anything
+                // the administrator left there
                 if (version != null && Files.isRegularFile(entry.resolve(ProjectManifest.FILE_NAME)))
                 {
                     versions.add(version);
@@ -66,7 +66,7 @@ public record DirectoryRegistry(Path root) implements PackRegistry
         return published;
     }
 
-    /** Un nome con dentro {@code ..} uscirebbe dal registry: non è un pack, è un tentativo. */
+    /** A name containing {@code ..} would escape the registry: it's not a pack, it's an attempt. */
     private boolean safelyUnder(Path candidate)
     {
         return candidate.normalize().startsWith(root.normalize());

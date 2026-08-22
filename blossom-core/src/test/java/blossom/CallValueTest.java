@@ -4,7 +4,7 @@ import blossom.interpreter.Interpreter;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-/** C.0 - chiamare una funzione che arriva come valore di una variabile. */
+/** C.0 - calling a function that arrives as the value of a variable. */
 class CallValueTest
 {
     private static String eval(String code)

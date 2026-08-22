@@ -7,10 +7,10 @@ import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
 
 /**
- * Apre {@code RenderType.create}, che il gioco tiene visibile solo dentro il suo pacchetto.
+ * Opens up {@code RenderType.create}, which the game keeps visible only inside its own package.
  *
- * <p>Non c'è nessun altro modo di costruire un modo di disegnare che non sia già nell'elenco di
- * vanilla, e a noi ne serve uno: vedi {@code BlossomRenderTypes} per il perché.
+ * <p>There's no other way to build a way of drawing that isn't already in vanilla's list, and we
+ * need one: see {@code BlossomRenderTypes} for why.
  */
 @Mixin(RenderType.class)
 public interface RenderType_blossomCreateInvoker

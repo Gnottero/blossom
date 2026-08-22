@@ -117,14 +117,14 @@ public class Auxiliary
     public static void apply(Expression expression)
     {
         /*
-         * post_effect(giocatori, azione, effetto?) - i post-processing shader di un giocatore
-         * (voce BE-6 dell'inventario).
+         * post_effect(players, action, effect?): a player's post-processing shader
+         * (inventory entry BE-6).
          *
-         * Rispecchia uno a uno il comando vanilla /posteffect, e passa dal suo stesso pacchetto:
-         * funziona quindi su qualunque client, anche senza Blossom installato, e sopravvive al
-         * rientro nel mondo. Nel fork la prima versione aveva un pacchetto e un renderer propri, che
-         * funzionavano solo con la mod anche sul client: quella strada e' stata abbandonata li' e non
-         * viene ripresa qui.
+         * Mirrors the vanilla /posteffect command one to one, and goes through the same packet:
+         * it therefore works on any client, even without Blossom installed, and survives re-entering
+         * the world. In the fork the first version had its own packet and renderer, which only
+         * worked with the mod on the client too; that approach was abandoned there and is not
+         * revisited here.
          */
         expression.addContextFunction("post_effect", -1, (c, t, lv) ->
         {
@@ -437,11 +437,11 @@ public class Auxiliary
         });
 
         /*
-         * print(messaggio) oppure print(destinatario, messaggio).
+         * print(message) or print(target, message).
          *
-         * <p>Il destinatario e' un giocatore o una lista di giocatori - cosi' com'e' fatto
-         * {@code entity.player('all')}, che una lista la restituisce sempre. I nomi valgono quanto le
-         * entita': chi scrive puo' passare l'uno o l'altro senza convertire niente.
+         * <p>The target is a player or a list of players, matching how {@code entity.player('all')}
+         * always returns a list. Names are as valid as entities: callers can pass either without
+         * converting anything.
          */
         expression.addContextFunction("print", -1, (c, t, lv) ->
         {
@@ -557,8 +557,8 @@ public class Auxiliary
                 final Component tabText = soundsTrue ? title : null;
                 AtomicInteger total = new AtomicInteger(0);
                 List<ServerPlayer> targetList = targets.collect(Collectors.toList());
-                // intestazione e pie' della lista giocatori sono vanilla: bastano al client normale,
-                // senza nessun protocollo nostro
+                // player list header and footer are vanilla: a normal client is enough,
+                // no custom protocol needed
                 targetList.forEach(target ->
                 {
                     Host.setTabList(target, isHeader, tabText);
@@ -778,7 +778,7 @@ public class Auxiliary
             return result[0];
         });
 
-        // schedule(ritardo_in_tick, funzione, argomenti...)
+        // schedule(delay_in_ticks, function, arguments...)
         expression.addContextFunction("schedule", -1, (c, t, lv) ->
         {
             if (lv.size() < 2)
@@ -825,15 +825,15 @@ public class Auxiliary
         });
 
         /*
-         * read_nbt / write_nbt - due funzioni di core.io che hanno bisogno di Minecraft.
+         * read_nbt / write_nbt: two core.io functions that need Minecraft.
          *
-         * Stanno qui e non in blossom-core solo perche' NBT e' un formato binario del gioco; il
-         * modulo da cui si importano e' core.io come tutte le altre (vedi BlossomApi.IO). Chi legge
-         * uno script non deve sapere quale meta' del programma implementa cosa: apre un file, e i
-         * file si aprono da un posto solo.
+         * They live here rather than in blossom-core only because NBT is a binary format of the
+         * game; the module they are imported from is core.io like all the others (see
+         * BlossomApi.IO). Someone reading a script should not have to know which half of the
+         * program implements what: it opens a file, and files are all opened from one place.
          *
-         * La firma e' quella delle altre - (radice, percorso) - quindi passare da read_json a
-         * read_nbt vuol dire cambiare il nome della funzione e basta.
+         * The signature matches the others (root, path), so switching from read_json to read_nbt
+         * just means changing the function name.
          */
         expression.addContextFunction("read_nbt", 2, (c, t, lv) ->
         {
@@ -909,7 +909,7 @@ public class Auxiliary
             return new NumericValue(player.getStats().getValue(stat));
         });
 
-        // handle_event(evento, funzione, argomenti_fissi...)
+        // handle_event(event, function, fixed_arguments...)
         expression.addContextFunction("handle_event", -1, (c, t, lv) ->
         {
             if (lv.size() < 2)
@@ -931,8 +931,8 @@ public class Auxiliary
             }
             if (event == null)
             {
-                // un evento che il gioco non conosce e' un evento di applicazione: lo dichiara chi
-                // lo ascolta per primo, e la sua arieta' e' quella della funzione registrata
+                // an event the game doesn't know about is an application event: it's declared by
+                // whoever listens for it first, and its arity is that of the registered function
                 event = com.gnottero.blossom.event.Event.custom(eventName,
                         callback.function.getArguments().size() - callback.args.size());
             }
@@ -941,7 +941,7 @@ public class Auxiliary
             return Value.TRUE;
         });
 
-        // signal_event(evento, giocatore_o_null, argomenti...) -> quante app hanno risposto
+        // signal_event(event, player_or_null, arguments...) -> how many apps responded
         expression.addContextFunction("signal_event", -1, (c, t, lv) ->
         {
             if (lv.isEmpty())

@@ -10,21 +10,21 @@ import net.minecraft.client.renderer.feature.phase.FeatureRenderPhase;
 import net.minecraft.client.renderer.rendertype.RenderType;
 
 /**
- * Quello che una {@code SubmitNodeCollection} sa fare in più, per noi: una fase di disegno che viene
- * dopo le nuvole.
+ * The extra thing a {@code SubmitNodeCollection} can do for us: a draw phase that runs after
+ * the clouds.
  *
- * <p>Il gioco raccoglie tutto quello che c'è da disegnare in un frame dentro delle <em>fasi</em>, e
- * le esegue in un ordine fisso. Nessuna delle fasi traslucide di vanilla viene eseguita dopo le
- * nuvole, e quello è esattamente il momento che serve al riempimento traslucido di una forma: vedi
+ * <p>The game collects everything to draw in a frame into <em>phases</em>, and runs them in a
+ * fixed order. None of vanilla's translucent phases run after the clouds, and that is exactly
+ * the moment a shape's translucent fill needs: see
  * {@code SubmitNodeCollection_blossomAfterCloudsMixin}.
  */
 @Environment(EnvType.CLIENT)
 public interface AfterCloudsSubmits
 {
-    /** Mette della geometria nella fase che disegna dopo le nuvole. */
+    /** Puts geometry into the phase that draws after the clouds. */
     void blossom$submitAfterClouds(PoseStack.Pose pose, RenderType renderType,
             SubmitNodeCollector.CustomGeometryRenderer renderer);
 
-    /** La fase, per chi deve eseguirla. */
+    /** The phase, for whoever needs to run it. */
     FeatureRenderPhase<?> blossom$afterCloudsPhase();
 }

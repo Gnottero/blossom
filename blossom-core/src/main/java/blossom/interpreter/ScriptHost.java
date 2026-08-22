@@ -510,6 +510,16 @@ public abstract class ScriptHost
         FunctionValue ret = getFunction(module, name);
         if (ret == null)
         {
+            // il nome puo' essere di libreria scritto senza import: e' l'errore piu' comune, e dire
+            // quale riga aggiungere costa meno che lasciare "non definita" a chi ha appena letto
+            // 'map' nella documentazione
+            String home = blossom.language.StdLib.homeModuleOf(name);
+            if (home != null)
+            {
+                throw new UndefinedSymbolError(SourcePosition.UNKNOWN,
+                        "'" + name + "' lives in module '" + home + "': add import \"" + home
+                                + "\" as " + home.substring(home.lastIndexOf('.') + 1) + "; at the top of the file.");
+            }
             if (module == main)
             {
                 throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "module", "Function '" + name + "' is not defined yet");

@@ -3,11 +3,11 @@ package blossom.exception;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Tutto il resto: la categoria generica, con un sottocodice che dice di cosa si tratta davvero.
+ * Everything else: the generic category, with a subcode that says what it's actually about.
  *
- * <p>Il sottocodice esiste perché "RuntimeError" da solo non è distinguibile programmaticamente, che
- * è proprio il difetto del sistema a un solo errore da cui partiamo. Un errore che finisce qui e che
- * si ripete spesso è il segnale che gli serve una categoria propria.
+ * <p>The subcode exists because "RuntimeError" alone isn't programmatically distinguishable, which
+ * is exactly the flaw of the single-error system we started from. An error that keeps landing here
+ * is the signal that it needs its own category.
  */
 public class BlossomRuntimeError extends BlossomError
 {

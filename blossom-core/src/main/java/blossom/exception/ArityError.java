@@ -5,7 +5,7 @@ import org.jspecify.annotations.Nullable;
 import blossom.interpreter.Expression;
 import blossom.interpreter.Token;
 
-/** Numero di argomenti sbagliato in una chiamata. */
+/** Wrong number of arguments in a call. */
 public class ArityError extends BlossomError
 {
     public ArityError(SourcePosition position, String message)
@@ -18,7 +18,7 @@ public class ArityError extends BlossomError
         super(position, message, suggestion);
     }
 
-    /** L'errore di arietà di una chiamata precisa, con la posizione della chiamata. */
+    /** The arity error of a specific call, with the call's position. */
     public static ArityError at(Expression expression, Token token, String message)
     {
         return new ArityError(positionOf(expression, token), message);

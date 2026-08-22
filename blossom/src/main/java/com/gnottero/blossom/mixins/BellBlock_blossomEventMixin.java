@@ -21,10 +21,10 @@ import blossom.value.StringValue;
 import blossom.value.Value;
 
 /**
- * Genera {@code bell_rings}, portato dal fork (voce EV-1 dell'inventario).
+ * Fires {@code bell_rings}, carried over from the fork (inventory entry EV-1).
  *
- * <p>Gli argomenti sono posizione, direzione del colpo e chi l'ha suonata - {@code null} se a
- * suonarla e' stata la redstone.
+ * <p>The arguments are the position, the direction of the hit, and who rang it, {@code null} if it
+ * was rung by redstone.
  */
 @Mixin(BellBlock.class)
 public abstract class BellBlock_blossomEventMixin

@@ -23,25 +23,25 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 
 /**
- * Un registry raggiunto via http: un indice statico e degli archivi zip.
+ * A registry reached over http: a static index and some zip archives.
  *
- * <p>L'indice e' {@code <base>/index.json} e nient'altro - niente API, niente stato lato server,
- * cosi' lo serve qualunque cosa serva file statici:
+ * <p>The index is {@code <base>/index.json} and nothing else, no API, no server-side state, so
+ * anything that serves static files can serve it:
  *
  * <pre>
  * { "vector": { "1.4.0": { "url": "vector-1.4.0.zip", "sha256": "9f86d0..." } } }
  * </pre>
  *
- * <p>{@code url} e' relativo alla base o assoluto. {@code sha256} e' <b>obbligatorio</b>: un archivio
- * scompattato senza controllo e' codice arbitrario su un server, e chiunque stia in mezzo alla
- * connessione puo' sostituirlo.
+ * <p>{@code url} is relative to the base or absolute. {@code sha256} is <b>mandatory</b>: unpacking
+ * an archive without checking it is arbitrary code on a server, and anyone in the middle of the
+ * connection could substitute it.
  *
- * <p>Ogni versione si scarica una volta e resta sotto {@code <cache>/<nome>/<versione>/}: un riavvio
- * non rifa' venti download, e un server senza connessione carica lo stesso le app che ha gia'.
+ * <p>Each version is downloaded once and stays under {@code <cache>/<name>/<version>/}: a restart
+ * does not redo twenty downloads, and a server without a connection still loads the apps it already has.
  */
 public final class HttpRegistry implements PackRegistry
 {
-    /** oltre questo, l'archivio non è più una libreria: è qualcosa che non vogliamo scompattare */
+    /** beyond this, the archive is no longer a library: it's something we don't want to unpack */
     private static final long MAX_ARCHIVE_BYTES = 32L * 1024 * 1024;
     private static final Duration TIMEOUT = Duration.ofSeconds(30);
 
@@ -52,7 +52,7 @@ public final class HttpRegistry implements PackRegistry
     private final URI base;
     private final Path cache;
     private final HttpClient client;
-    /** l'indice, letto una volta per sessione: rileggerlo ad ogni dipendenza sarebbe una richiesta a testa */
+    /** the index, read once per session: re-reading it for each dependency would be one request each */
     private Map<String, Map<Version, Published>> index = null;
 
     public HttpRegistry(URI base, Path cache)
@@ -71,8 +71,8 @@ public final class HttpRegistry implements PackRegistry
         }
         catch (IOException e)
         {
-            // il registry irraggiungibile non e' "il pack non esiste": chi chiama distingue i due
-            // casi solo se il secondo arriva come errore, quindi lo rilanciamo
+            // an unreachable registry is not "the pack doesn't exist": the caller can only tell the
+            // two cases apart if the second one arrives as an error, so we rethrow it
             throw new blossom.exception.ImportError(blossom.exception.SourcePosition.UNKNOWN,
                     "Cannot read the index of " + describe() + ": " + e.getMessage());
         }
@@ -84,7 +84,7 @@ public final class HttpRegistry implements PackRegistry
         Path destination = cache.resolve(name.toLowerCase(Locale.ROOT)).resolve(version.toString());
         if (Files.isRegularFile(destination.resolve(ProjectManifest.FILE_NAME)))
         {
-            return destination; // già in cache: la rete non si tocca
+            return destination; // already in cache: no need to touch the network
         }
         Published published = index().getOrDefault(name.toLowerCase(Locale.ROOT), Map.of()).get(version);
         if (published == null)
@@ -104,8 +104,8 @@ public final class HttpRegistry implements PackRegistry
         {
             unzip(archive, staging);
             Files.createDirectories(destination.getParent());
-            // si sposta solo alla fine: una cartella di cache a metà sarebbe indistinguibile da una
-            // completa, e verrebbe riusata così com'è al riavvio dopo
+            // moved only at the very end: a half-written cache directory would be indistinguishable
+            // from a complete one, and would be reused as-is on the next restart
             try
             {
                 Files.move(rootOf(staging), destination, java.nio.file.StandardCopyOption.ATOMIC_MOVE);
@@ -129,10 +129,10 @@ public final class HttpRegistry implements PackRegistry
     }
 
     /**
-     * La radice del progetto dentro l'archivio scompattato.
+     * The project's root inside the unpacked archive.
      *
-     * <p>Gli zip di una release contengono quasi sempre una sola cartella con dentro tutto: se il
-     * manifesto non è alla radice ma in quell'unica cartella, si scende.
+     * <p>A release's zip almost always contains a single directory holding everything: if the
+     * manifest is not at the root but inside that one directory, descend into it.
      */
     private static Path rootOf(Path unpacked) throws IOException
     {
@@ -183,13 +183,13 @@ public final class HttpRegistry implements PackRegistry
                 Version version = Version.tryParse(versionText);
                 if (version == null || !byVersion.get(versionText).isJsonObject())
                 {
-                    continue; // una riga malformata non deve rendere illeggibile tutto l'indice
+                    continue; // one malformed entry must not make the whole index unreadable
                 }
                 JsonObject spec = byVersion.getAsJsonObject(versionText);
                 if (!spec.has("url") || !spec.has("sha256"))
                 {
-                    // senza impronta la riga è inutilizzabile: meglio non vederla che scaricarla
-                    // senza poterla verificare
+                    // without a fingerprint the entry is unusable: better to skip it than to
+                    // download it with no way to verify it
                     continue;
                 }
                 versions.put(version, new Published(base.resolve(spec.get("url").getAsString()),
@@ -230,11 +230,11 @@ public final class HttpRegistry implements PackRegistry
     }
 
     /**
-     * Scompatta l'archivio, rifiutando le voci che uscirebbero dalla cartella di destinazione.
+     * Unpacks the archive, rejecting entries that would escape the destination directory.
      *
-     * <p>Il controllo sul percorso non è una precauzione teorica: uno zip con dentro
-     * {@code ../../mods/qualcosa.jar} è il modo classico di far scrivere un file dove non si deve, e
-     * qui dall'altra parte c'è la cartella di un server.
+     * <p>The path check is not a theoretical precaution: a zip containing
+     * {@code ../../mods/something.jar} is the classic way to make a file get written where it
+     * shouldn't, and on the other end here is a server's directory.
      */
     private static void unzip(byte[] archive, Path destination) throws IOException
     {
@@ -261,7 +261,7 @@ public final class HttpRegistry implements PackRegistry
         }
     }
 
-    /** Copia una voce, fermandosi se lo scompattato supera il limite (una zip bomb è compressibile). */
+    /** Copies an entry, stopping if the unpacked size exceeds the limit (a zip bomb compresses well). */
     private static long copyLimited(InputStream source, Path target, long remaining) throws IOException
     {
         try (var out = Files.newOutputStream(target))

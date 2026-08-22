@@ -1,5 +1,6 @@
 package blossom.language;
 
+import blossom.exception.ArityError;
 import blossom.exception.SourcePosition;
 import blossom.exception.BlossomRuntimeError;
 import blossom.interpreter.Context;
@@ -20,20 +21,20 @@ import java.util.List;
 public class Loops
 {
     /**
-     * Il corpo di un ciclo, che si scrive in due modi.
+     * The body of a loop, which can be written in two ways.
      *
-     * <p>La forma corta e' un'espressione con {@code _} legato all'elemento, {@code _i} al suo
-     * indice e {@code _a} all'accumulatore: e' anche la piu' veloce, perche' non crea nessun frame
-     * di chiamata. La forma lunga e' una lambda, {@code fn(x) -> ...}, che ha i suoi nomi al posto
-     * dei tre impliciti - e li' i nomi non possono piu' collidere fra un ciclo e quello che lo
-     * contiene.
+     * <p>The short form is an expression with {@code _} bound to the element, {@code _i} to its
+     * index, and {@code _a} to the accumulator: it is also the fastest, because it creates no
+     * call frame. The long form is a lambda, {@code fn(x) -> ...}, which has its own names in
+     * place of the three implicit ones, and there the names can no longer collide between a loop
+     * and whatever contains it.
      *
-     * <p>Quale delle due sia lo dice il token, quindi la decisione e' presa mentre si costruisce
-     * l'albero e non ad ogni elemento. Un corpo che non e' una lambda torna indietro com'e'
-     * arrivato, e non paga niente.
+     * <p>Which of the two it is is decided by the token, so the decision is made while building
+     * the tree and not on every element. A body that is not a lambda is returned as it arrived,
+     * at no cost.
      *
-     * @param accumulatorFirst per {@code reduce}, dove una lambda a due argomenti legge
-     *                         {@code fn(accumulatore, elemento)} e non {@code fn(elemento, indice)}
+     * @param accumulatorFirst for {@code reduce}, where a two-argument lambda reads
+     *                         {@code fn(accumulator, element)} rather than {@code fn(element, index)}
      */
     private static LazyValue loopBody(Context c, LazyValue expr, boolean accumulatorFirst)
     {
@@ -43,6 +44,22 @@ public class Loops
         }
         FunctionValue function = (FunctionValue) expr.evalValue(c, Context.NONE);
         int arity = function.getArguments().size();
+        // qui dentro ci sono esattamente due valori impliciti da passare, e un parametro in piu' o in
+        // meno non e' un dettaglio: prima si riempiva di null quello che avanzava e si lasciava fuori
+        // quello che mancava, cioe' si rispondeva un numero sbagliato invece di dire cos'era storto
+        String shape = accumulatorFirst ? "(accumulator, element)" : "(element, index)";
+        if (arity > 2 && function.getVarArgs() == null)
+        {
+            throw new ArityError(SourcePosition.UNKNOWN, "The function given here is called with "
+                    + shape + ", so it takes at most two parameters: " + function.getString()
+                    + " declares " + arity + ".");
+        }
+        if (accumulatorFirst && arity == 1)
+        {
+            throw new ArityError(SourcePosition.UNKNOWN, "The function given to 'reduce' is called with "
+                    + shape + ": " + function.getString() + " declares only one parameter, so it would"
+                    + " never see the element.");
+        }
         return (cc, tt) ->
         {
             List<Value> args = new ArrayList<>(arity);
@@ -78,7 +95,7 @@ public class Loops
         return loopBody(c, expr, false);
     }
 
-    /** Come sopra, per chi sta fuori da questo file: la chiave di {@code sort}, per esempio. */
+    /** Same as above, for callers outside this file: the key of {@code sort}, for instance. */
     public static LazyValue keyOf(Context c, LazyValue expr)
     {
         return loopBody(c, expr, false);
@@ -162,7 +179,7 @@ public class Loops
             //scoping
             LazyValue defaultVal = c.implicitValue;
             c.implicitValue = (cc, tt) -> new NumericValue(0);
-            // il watchdog letto una volta, fuori dal ciclo: vedi il commento in 'loop'
+            // the watchdog is read once, outside the loop: see the comment in 'loop'
             final blossom.interpreter.ExecutionBudget budget = c.budget;
             while (i < limit && condition.evalValue(c, Context.BOOLEAN).getBoolean())
             {
@@ -201,8 +218,8 @@ public class Loops
             LazyValue expr = loopBody(c, lv.get(1));
             //scoping
             LazyValue defaultVal = c.implicitValue;
-            // il watchdog letto una volta e tenuto in un locale: dentro il loop piu' stretto del
-            // linguaggio anche la sola rilettura del campo si vede nel benchmark
+            // the watchdog is read once and kept in a local: inside the language's tightest loop
+            // even just re-reading the field shows up in the benchmark
             final blossom.interpreter.ExecutionBudget budget = c.budget;
             for (long i = 0; i < limit; i++)
             {
@@ -249,7 +266,7 @@ public class Loops
             //scoping
             LazyValue defaultVal = c.implicitValue;
             LazyValue iterVal = c.implicitIndex;
-            // il watchdog letto una volta, fuori dal ciclo: vedi il commento in 'loop'
+            // the watchdog is read once, outside the loop: see the comment in 'loop'
             final blossom.interpreter.ExecutionBudget budget = c.budget;
             List<Value> result = new ArrayList<>();
             for (int i = 0; iterator.hasNext(); i++)
@@ -305,7 +322,7 @@ public class Loops
             //scoping
             LazyValue defaultVal = c.implicitValue;
             LazyValue iterVal = c.implicitIndex;
-            // il watchdog letto una volta, fuori dal ciclo: vedi il commento in 'loop'
+            // the watchdog is read once, outside the loop: see the comment in 'loop'
             final blossom.interpreter.ExecutionBudget budget = c.budget;
             List<Value> result = new ArrayList<>();
             for (int i = 0; iterator.hasNext(); i++)
@@ -364,7 +381,7 @@ public class Loops
             //scoping
             LazyValue defaultVal = c.implicitValue;
             LazyValue iterVal = c.implicitIndex;
-            // il watchdog letto una volta, fuori dal ciclo: vedi il commento in 'loop'
+            // the watchdog is read once, outside the loop: see the comment in 'loop'
             final blossom.interpreter.ExecutionBudget budget = c.budget;
             Value result = Value.NULL;
             for (int i = 0; iterator.hasNext(); i++)
@@ -422,7 +439,7 @@ public class Loops
             //scoping
             LazyValue defaultVal = c.implicitValue;
             LazyValue iterVal = c.implicitIndex;
-            // il watchdog letto una volta, fuori dal ciclo: vedi il commento in 'loop'
+            // the watchdog is read once, outside the loop: see the comment in 'loop'
             final blossom.interpreter.ExecutionBudget budget = c.budget;
             LazyValue result = LazyValue.TRUE;
             for (int i = 0; iterator.hasNext(); i++)
@@ -456,7 +473,7 @@ public class Loops
             LazyValue increment = lv.get(2);
             LazyValue body = lv.get(3);
             int iterations = 0;
-            // il watchdog letto una volta, fuori dal ciclo: vedi il commento in 'loop'
+            // the watchdog is read once, outside the loop: see the comment in 'loop'
             final blossom.interpreter.ExecutionBudget budget = c.budget;
             for (initial.evalValue(c, Context.VOID); condition.evalValue(c, Context.BOOLEAN).getBoolean(); increment.evalValue(c, Context.VOID))
             {
@@ -497,7 +514,7 @@ public class Loops
             //scoping
             LazyValue defaultVal = c.implicitValue;
             LazyValue iterVal = c.implicitIndex;
-            // il watchdog letto una volta, fuori dal ciclo: vedi il commento in 'loop'
+            // the watchdog is read once, outside the loop: see the comment in 'loop'
             final blossom.interpreter.ExecutionBudget budget = c.budget;
             int successCount = 0;
             for (int i = 0; iterator.hasNext(); i++)
@@ -571,7 +588,7 @@ public class Loops
             LazyValue accumulatorVal = c.implicitAccumulator;
             LazyValue iterVal = c.implicitIndex;
 
-            // il watchdog letto una volta, fuori dal ciclo: vedi il commento in 'loop'
+            // the watchdog is read once, outside the loop: see the comment in 'loop'
             final blossom.interpreter.ExecutionBudget budget = c.budget;
             for (int i = 0; iterator.hasNext(); i++)
             {

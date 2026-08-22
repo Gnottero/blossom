@@ -1,60 +1,61 @@
-# 6. Moduli e progetti
+# 6. Modules and projects
 
-Un file è un modulo. Ha un nome dichiarato, uno spazio dei nomi suo, e una lista esplicita di quello
-che lascia uscire. Non esiste uno spazio globale implicito, e non esistono convenzioni sui prefissi
-dei nomi: quello che è pubblico lo è perché c'è scritto.
+A file is a module. It has a declared name, a namespace of its own, and an explicit list of what it
+lets out. There is no implicit global scope, and there are no naming conventions about prefixes:
+what is public is public because it says so.
 
-## Le tre parole chiave
+## The three keywords
 
 ```
-module math.vector;                 // chi sono: deve combaciare col percorso del file
+module math.vector;                 // who I am: must match the file's path
 
-import "core.math" as math;         // cosa uso, e con che nome lo chiamo qui
-import "geometria/angoli" as ang;
+import "core.math" as math;         // what I use, and what I call it here
+import "geometry/angles" as ang;
 
-pub fn add(a, b) -> [a:0 + b:0, a:1 + b:1];     // esce dal modulo
-fn normalizza(v) -> ...;                        // resta qui
+pub fn add(a, b) -> [a:0 + b:0, a:1 + b:1];     // leaves the module
+fn normalise(v) -> ...;                         // stays here
 
-pub let ORIGINE = [0, 0];           // anche i binding si esportano
+pub let ORIGIN = [0, 0];            // bindings are exported too
 let mut cache = {};
 ```
 
-**`module`** va in testa e il nome deve corrispondere alla posizione dentro `src/`:
-`src/math/vector.bs` → `module math.vector;`. È un controllo che il caricatore fa prima di eseguire
-qualsiasi cosa, e serve perché il nome di un modulo sia una cosa sola, non due che possono divergere.
+**`module`** goes on the first line, and the name must correspond to the position inside `src/`:
+`src/math/vector.bs` → `module math.vector;`. The loader checks this before executing anything, and
+it exists so that a module's name is one thing rather than two that can drift apart.
 
-**`import`** ha **sempre** un alias. Non c'è la forma senza `as`: due librerie non possono litigare
-sui nomi, perché il nome lo scegli tu, in questo file, e vale solo qui. Il percorso di un modulo
-locale usa `/` (`"torre/costruzione"`), quello di un modulo di libreria usa `.` (`"core.mc.block"`).
+**`import`** **always** carries an alias. There is no form without `as`: two libraries can never
+fight over a name, because the name is chosen by you, in this file, and applies only here. The path
+of a local module uses `/` (`"tower/construction"`), the path of a library module uses `.`
+(`"core.mc.block"`).
 
-**`pub`** decide cosa esce. Toccare un simbolo privato di un altro modulo è un errore **a
-caricamento**, non una sorpresa a runtime:
+**`pub`** decides what leaves. Touching another module's private symbol is an error **at load
+time**, not a surprise at run time:
 
 ```
 UndefinedSymbolError
   Module 'lib' does not export 'secret'.
 ```
 
-## Il progetto
+## The project
 
 ```
-mia-app/
+my-app/
 ├── blossom.json
-├── blossom.lock          ← lo scrive il caricatore, non tu
+├── blossom.lock          ← written by the loader, not by you
 └── src/
-    ├── main.bs           ← module main          (l'entrypoint)
-    ├── conti.bs          ← module conti
-    └── torre/
-        ├── costruzione.bs    ← module torre.costruzione
-        └── registro.bs       ← module torre.registro
+    ├── main.bs           ← module main          (the entrypoint)
+    ├── ledger.bs         ← module ledger
+    └── tower/
+        ├── construction.bs   ← module tower.construction
+        └── register.bs       ← module tower.register
 ```
 
 ```json
 {
-  "name": "mia-app",
+  "name": "my-app",
   "version": "0.1.0",
   "entrypoint": "src/main.bs",
-  "api_level": "1.0",
+  "api_level": "2.0",
   "autoload": true,
   "dependencies": {
     "utils": { "path": "../utils", "version": "^1.2.0" }
@@ -63,42 +64,43 @@ mia-app/
 }
 ```
 
-| Campo | Obbligatorio | Cosa fa |
+| Field | Required | What it does |
 | --- | --- | --- |
-| `name` | sì | il nome del progetto |
-| `entrypoint` | sì | il file da cui parte il caricamento |
-| `version` | consigliato | semver del progetto; è quello che gli altri vincolano |
-| `api_level` | no (`1.0`) | quale API di Blossom serve |
-| `autoload` | no (`false`) | il pack si carica da solo appena il mondo è aperto |
-| `dependencies` | no | vedi sotto |
-| `watchdog` | no | limiti di esecuzione, o `false` per toglierli |
+| `name` | yes | the project's name |
+| `entrypoint` | yes | the file loading starts from |
+| `version` | recommended | the project's semver; this is what others constrain |
+| `api_level` | no (`2.0`) | which Blossom API it needs |
+| `autoload` | no (`false`) | the pack loads itself as soon as the world is open |
+| `dependencies` | no | see below |
+| `watchdog` | no | execution limits, or `false` to remove them |
 
-Una cartella così, copiata sotto `<mondo>/blossom/`, è un **pack**: `/blossom script load mia-app`.
+A directory like that, copied under `<world>/blossom/`, is a **pack**:
+`/blossom script load my-app`.
 
-## Partire da soli
+## Starting on its own
 
-`"autoload": true` vuol dire che quel pack non ha bisogno che nessuno dia `/blossom script load`:
-entra appena il mondo è aperto, su un server dedicato come in singleplayer. È la dichiarazione di
-un'app che deve esserci sempre — un guardiano, un registro, un comando custom — e non di una che stai
-provando.
+`"autoload": true` means that pack does not need anyone to type `/blossom script load`: it comes up
+as soon as the world is open, on a dedicated server as well as in singleplayer. It is the
+declaration of an app that must always be there (a warden, a ledger, a custom command), not of one
+you are still trying out.
 
-Il caricamento avviene **prima** che venga generato `server_starts`, quindi un'app che parte da sola
-può ascoltare anche quell'evento. Se non carica (manifesto rotto, modulo mancante, errore nel corpo)
-l'errore finisce nel log e in chat agli operatori, e il resto del mondo parte lo stesso.
+Loading happens **before** `server_starts` is fired, so an app that starts on its own can listen for
+that event too. If it fails to load (broken manifest, missing module, error in the body) the error
+goes to the log and to operators in chat, and the rest of the world starts anyway.
 
-Le app in un file solo (`<nome>.bs`, senza cartella e senza manifesto) non hanno dove dichiararlo:
-per farne partire una da sola, dalle un `blossom.json` e falla diventare un pack.
+Single-file apps (`<name>.bs`, no directory and no manifest) have nowhere to declare it: to make one
+start on its own, give it a `blossom.json` and turn it into a pack.
 
-## Ordine di caricamento e cicli
+## Load order and cycles
 
-I moduli vengono **tutti registrati prima** che il primo corpo giri. Due moduli che si chiamano a
-vicenda sono un caso normale, non un errore:
+Modules are **all registered before** the first body runs. Two modules that call each other are a
+normal case, not an error:
 
 ```
 // a.bs
 module a;
 import "b" as b;
-pub fn ping(n) -> if(n <= 0, 'fine', b.pong(n - 1));
+pub fn ping(n) -> if(n <= 0, 'done', b.pong(n - 1));
 
 // b.bs
 module b;
@@ -106,9 +108,9 @@ import "a" as a;
 pub fn pong(n) -> a.ping(n - 1);
 ```
 
-Quello che non si può fare è **leggere**, mentre un modulo si carica, un binding di un modulo dello
-stesso ciclo che non ha ancora eseguito il proprio corpo: lì uno dei due deve venire per forza
-prima, e l'errore lo dice invece di dare un `null` misterioso.
+What you cannot do is **read**, while a module is loading, a binding of a module in the same cycle
+that has not run its own body yet: there one of the two necessarily comes first, and the error says
+so instead of handing you a mysterious `null`.
 
 ```
 ImportError
@@ -118,106 +120,106 @@ ImportError
   a function, which is evaluated when you call it and not while the module loads.
 ```
 
-Regola pratica: nel corpo di un modulo fai solo dichiarazioni e registrazioni di handler; il lavoro
-vero mettilo dentro funzioni.
+Rule of thumb: in a module body do only declarations and handler registrations; put the real work
+inside functions.
 
-## Dipendere da un altro progetto
+## Depending on another project
 
-Tre forme, che si escludono a vicenda:
+Three forms, mutually exclusive:
 
 ```json
 "dependencies": {
   "utils":  { "path": "../utils", "version": "^1.2.0" },
-  "torre":  { "pack": "torre", "version": "^1.0.0" },
+  "tower":  { "pack": "tower", "version": "^1.0.0" },
   "vector": { "version": "^2.0.0" }
 }
 ```
 
-- **`path`** — una cartella, di solito accanto al progetto: è il modo di lavorare su due progetti
-  insieme.
-- **`pack`** — un altro pack installato nello stesso mondo, sotto `<mondo>/blossom/`: è il modo di
-  dipendere da qualcosa che un amministratore ha messo lì, senza inventarsi percorsi che sulla sua
-  macchina non esistono.
-- **solo `version`** — dal registry, se il server ne ha uno configurato. Spento per default.
+- **`path`**: a directory, usually next to the project: this is how you work on two projects at
+  once.
+- **`pack`**: another pack installed in the same world, under `<world>/blossom/`: this is how you
+  depend on something an administrator put there, without inventing paths that do not exist on their
+  machine.
+- **`version` alone**: from the registry, if the server has one configured. Off by default.
 
-Il `version` è un vincolo [semver](https://semver.org) e viene verificato davvero: `^1.2.0` accetta
-da 1.2.0 a 2.0.0 esclusa, `~1.2.0` solo le patch, `>=1.2, <2` combina, `*` accetta tutto. Sotto la
-1.0.0 ogni incremento può rompere, quindi `^0.2.3` si ferma alla 0.3.0. Un pre-release (`1.0.0-rc1`)
-non viene mai scelto da un vincolo che non lo nomina.
+`version` is a [semver](https://semver.org) constraint and it is genuinely enforced: `^1.2.0`
+accepts from 1.2.0 up to but excluding 2.0.0, `~1.2.0` only patches, `>=1.2, <2` combines, `*`
+accepts anything. Below 1.0.0 every increment may break, so `^0.2.3` stops at 0.3.0. A pre-release
+(`1.0.0-rc1`) is never selected by a constraint that does not name it.
 
-Le dipendenze sono **transitive**, e ognuna ha il proprio spazio dei nomi: dentro `utils`,
-`import "math/vec"` significa quello che dice il manifesto di `utils`, non il tuo. Due progetti
-possono chiamare `math` due librerie diverse senza sapere niente l'uno dell'altro.
+Dependencies are **transitive**, and each one has its own namespace: inside `utils`,
+`import "math/vec"` means what `utils`'s manifest says it means, not what yours says. Two projects
+can call two different libraries `math` without knowing anything about each other.
 
-Se la versione trovata non soddisfa il vincolo, l'app non parte:
+If the version found does not satisfy the constraint, the app does not start:
 
 ```
 CompatibilityError
-  in /mondo/blossom/app/blossom.json:1:1
+  in /world/blossom/app/blossom.json:1:1
 
   Dependency 'utils' (path ../utils) is at version 2.0.0, which does not satisfy the constraint
   ^1.2.0 declared in the manifest.
 ```
 
-## Il lock
+## The lock file
 
-Un vincolo come `^1.0.0` è una domanda, e la risposta cambia nel tempo. La scelta fatta viene scritta
-in `blossom.lock` accanto al manifesto, così la stessa app caricata su due server prende la stessa
-versione:
+A constraint like `^1.0.0` is a question, and the answer changes over time. The choice that was made
+is written into `blossom.lock` next to the manifest, so that the same app loaded on two servers
+picks the same version:
 
 ```json
 {
   "format": 1,
   "dependencies": {
     "vector": { "source": "registry", "version": "1.4.0", "sha256": "9f86d0..." },
-    "torre":  { "source": "pack", "version": "1.0.0" }
+    "tower":  { "source": "pack", "version": "1.0.0" }
   }
 }
 ```
 
-Per cambiare idea: `/blossom pack update <app>`. Il lock si aggiorna da solo in un caso solo —
-quando la versione bloccata non soddisfa più il vincolo, cioè quando sei stato tu a riscrivere il
-manifesto.
+To change your mind: `/blossom pack update <app>`. The lock updates itself in exactly one case:
+when the locked version no longer satisfies the constraint, that is, when you were the one who
+rewrote the manifest.
 
-Le dipendenze **a percorso non vengono bloccate**: è la cartella accanto, che stai modificando
-adesso. L'impronta `sha256` c'è solo per quelle prese dal registry, che sono le uniche il cui
-contenuto arriva da fuori.
+**Path dependencies are not locked**: that is the directory next door, the one you are editing right
+now. The `sha256` fingerprint exists only for those taken from the registry, which are the only ones
+whose contents come from outside.
 
-## Il registry
+## The registry
 
-Spento per default; si accende in `config/blossomscript.json`:
+Off by default; turned on in `config/blossomscript.json`:
 
 ```json
 { "registry": { "directory": "/srv/blossom-packs" } }
-{ "registry": { "url": "https://esempio.org/blossom/" } }
+{ "registry": { "url": "https://example.org/blossom/" } }
 ```
 
-**A cartella**: `<radice>/<nome>/<versione>/`, e dentro un progetto normale. Nessun server da
-mantenere. **Su http**: un `index.json` statico e degli zip, con `sha256` **obbligatorio** — un
-archivio scaricato ed eseguito senza controllo è codice arbitrario su un server. Ogni versione si
-scarica una volta e resta in `<mondo>/blossom/.cache/`.
+**Directory-backed**: `<root>/<name>/<version>/`, with an ordinary project inside. No server to
+maintain. **Over http**: a static `index.json` and some zip files, with `sha256` **mandatory**: an
+archive downloaded and executed without a check is arbitrary code on a server. Each version is
+downloaded once and stays in `<world>/blossom/.cache/`.
 
 ## `api_level`
 
-`api_level` è `MAJOR.MINOR` e descrive **l'API di Blossom**, non l'app: la versione dell'app è
-`version`, ed è semver. Sono due numerazioni diverse apposta — una dice "che cosa sono io", l'altra
-"di che cosa ho bisogno".
+`api_level` is `MAJOR.MINOR` and describes **the Blossom API**, not the app: the app's version is
+`version`, and that is semver. They are two separate numbering schemes on purpose: one says "what I
+am", the other "what I need".
 
-- **MAJOR** cambia quando qualcosa che funzionava smette di funzionare.
-- **MINOR** cambia quando si aggiunge.
+- **MAJOR** changes when something that worked stops working.
+- **MINOR** changes when something is added.
 
-Un'app gira se il MAJOR combacia e il suo MINOR non supera quello del mod. Non dichiararlo significa
-`1.0`, cioè "non uso niente di recente".
+An app runs if the MAJOR matches and its MINOR does not exceed the mod's. Not declaring it means the
+lowest MINOR of the MAJOR this mod provides (today `2.0`), that is, "I use nothing recent".
 
-## Come si divide un'app
+## How to split an app
 
-Una divisione che regge, dall'esperienza dei due esempi in `examples/`:
+A split that holds up, from the experience of the examples in `examples/`:
 
-| Modulo | Cosa ci sta |
+| Module | What goes in it |
 | --- | --- |
-| `main` | gli `event.on`, il `print` di avvio, le funzioni pubbliche che l'admin chiama con `script in` |
-| un modulo per dominio (`torre.costruzione`, `vena.geologia`) | la logica, senza sapere niente di eventi |
-| un modulo di stato (`registro`) | i `let mut`, il salvataggio su disco, e le funzioni per leggerlo |
+| `main` | the `event.on` calls, the startup `print`, the public functions an admin calls with `script in` |
+| one module per domain (`tower.construction`, `vein.geology`) | the logic, knowing nothing about events |
+| a state module (`register`) | the `let mut` bindings, saving to disk, and the functions to read it back |
 
-Il pezzo che tocca il mondo e il pezzo che decide **cosa** fare stanno separati: il secondo si prova
-con `/blossom script in <app> ...` senza dover far succedere l'evento vero.
+The part that touches the world and the part that decides **what** to do stay separate: the second
+can be tried with `/blossom script in <app> ...` without having to make the real event happen.

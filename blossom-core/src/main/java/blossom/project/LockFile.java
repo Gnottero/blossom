@@ -21,30 +21,29 @@ import blossom.exception.ParseError;
 import blossom.exception.SourcePosition;
 
 /**
- * {@code blossom.lock}: quale versione esatta e' stata scelta l'ultima volta, e con che impronta.
+ * {@code blossom.lock}: exactly which version was chosen last time, and with what fingerprint.
  *
- * <p>Un vincolo come {@code ^1.0.0} e' una domanda, e la risposta cambia nel tempo: senza lock la
- * stessa app caricata due volte puo' prendere due versioni diverse e "cambiare da sola". Con il
- * lock la risposta viene scritta la prima volta e riusata finche' qualcuno non chiede di aggiornarla.
+ * <p>A constraint like {@code ^1.0.0} is a question, and the answer changes over time: without a
+ * lock, the same app loaded twice could pick two different versions and "change on its own". With
+ * the lock, the answer is written the first time and reused until someone asks to update it.
  *
- * <p>Si blocca solo quello che puo' cambiare senza che l'utente lo veda: le dipendenze dal registry
- * (versione e impronta) e quelle a pack installato (la sola versione). Una dipendenza a percorso e'
- * la cartella accanto, che si sta modificando adesso, e bloccarla farebbe fallire il progetto ad
- * ogni salvataggio. L'impronta c'e' solo per il registry, l'unico caso in cui il contenuto arriva
- * da fuori.
+ * <p>Only what can change without the user seeing it gets locked: registry dependencies (version and
+ * fingerprint) and installed-pack dependencies (version only). A path dependency is the directory
+ * next door, being edited right now, and locking it would make the project fail on every save. The
+ * fingerprint exists only for the registry, the one case where the content comes from outside.
  */
 public record LockFile(Map<String, Entry> dependencies)
 {
     public static final String FILE_NAME = "blossom.lock";
-    /** la versione del formato del lock, non del progetto: se cambia, un lock vecchio si rigenera */
+    /** the lock format's version, not the project's: if it changes, an old lock regenerates itself */
     private static final int FORMAT = 1;
 
     /**
-     * Una riga del lock.
+     * One entry of the lock.
      *
-     * @param source  da dove veniva: {@code registry} o {@code pack}
-     * @param version la versione esatta scelta allora
-     * @param sha256  l'impronta di quello che è stato scaricato, solo per il registry
+     * @param source  where it came from: {@code registry} or {@code pack}
+     * @param version the exact version chosen at the time
+     * @param sha256  the fingerprint of what was downloaded, only for the registry
      */
     public record Entry(String source, Version version, @Nullable String sha256)
     {
@@ -52,7 +51,7 @@ public record LockFile(Map<String, Entry> dependencies)
 
     public static final LockFile EMPTY = new LockFile(Map.of());
 
-    /** Il lock accanto al manifesto, o {@link #EMPTY} se non c'è ancora. */
+    /** The lock next to the manifest, or {@link #EMPTY} if there isn't one yet. */
     public static LockFile read(Path projectRoot)
     {
         Path file = projectRoot.resolve(FILE_NAME);
@@ -77,8 +76,8 @@ public record LockFile(Map<String, Entry> dependencies)
         }
         if (!root.has("format") || root.get("format").getAsInt() != FORMAT)
         {
-            // un lock di un formato che non conosciamo si ignora, non si tenta di interpretare: al
-            // prossimo salvataggio verrà riscritto in quello corrente
+            // a lock in a format we don't know is ignored, not interpreted: it will be rewritten
+            // in the current format on the next save
             return EMPTY;
         }
         Map<String, Entry> entries = new LinkedHashMap<>();
@@ -109,9 +108,9 @@ public record LockFile(Map<String, Entry> dependencies)
     }
 
     /**
-     * Scrive il lock, se è cambiato.
+     * Writes the lock, if it changed.
      *
-     * @return se il file è stato toccato
+     * @return whether the file was touched
      */
     public boolean writeIfChanged(Path projectRoot) throws IOException
     {
@@ -122,8 +121,8 @@ public record LockFile(Map<String, Entry> dependencies)
         JsonObject root = new JsonObject();
         root.addProperty("format", FORMAT);
         JsonObject entries = new JsonObject();
-        // ordinato per nome: un lock che cambia ordine ad ogni scrittura è un lock che sporca ogni
-        // diff senza dire niente
+        // sorted by name: a lock that reorders itself on every write is a lock that dirties every
+        // diff without saying anything
         new TreeMap<>(dependencies).forEach((alias, entry) ->
         {
             JsonObject spec = new JsonObject();

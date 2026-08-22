@@ -10,7 +10,7 @@
     "params": [
       [
         "start",
-        "the find value; without it, zero"
+        "the first value; without it, zero"
       ],
       [
         "end",
@@ -28,7 +28,7 @@
       "list.range(10, 0, -2);    // [10, 8, 6, 4, 2]",
       "for(list.range(3), send(_));"
     ],
-    "note": "Being lazy, `range(1000000)` allocates nothing, but it also does not know its own size: `size(range(5))` does **not** answer `5`. Materialise it find with `slice(range(5), 0, 5)`."
+    "note": "Being lazy, `range(1000000)` allocates nothing, but it also does not know its own size: `size(range(5))` does **not** answer `5`. Materialise it first with `slice(range(5), 0, 5)`."
   },
   "map": {
     "signatures": [
@@ -103,7 +103,7 @@
     "signatures": [
       "find(list, condition)"
     ],
-    "summary": "The find element that satisfies the condition, `null` when none does.",
+    "summary": "The first element that satisfies the condition, `null` when none does.",
     "params": [
       [
         "list",
@@ -119,7 +119,7 @@
       "list.find([1, 3, 4, 5], _ % 2 == 0);    // 4",
       "list.find(players, entity.query(_, 'name') == 'ada');"
     ],
-    "note": "It stops at the find hit: on a long list it is not `filter(...):0`, which would walk over all of it."
+    "note": "It stops at the first hit: on a long list it is not `filter(...):0`, which would walk over all of it. `continue()` inside it is an error; there is nothing to continue to."
   },
   "all": {
     "signatures": [
@@ -203,7 +203,7 @@
       "list.get([10, 20, 30], -1);   // 30, the last one",
       "[10, 20, 30]:1;               // the same thing, without importing"
     ],
-    "note": "Reading **wraps around**: index `3` on a list of three elements comes back to the find one. It is deleting that refuses an index that does not exist."
+    "note": "Reading **wraps around**: index `3` on a list of three elements comes back to the first one. It is deleting that refuses an index that does not exist."
   },
   "has": {
     "signatures": [
@@ -240,7 +240,7 @@
       ],
       [
         "from",
-        "the find index to keep"
+        "the first index to keep"
       ],
       [
         "to",
@@ -303,7 +303,7 @@
       "list.put(l, null, 4);                 // appends at the end",
       "list.put(l, null, [7, 8], 'extend');  // appends 7 and 8, not the list"
     ],
-    "note": "It changes the list in place. When the find argument is already an access (`put(l:0, 9)`), that is container and address together: it writes element `0` of `l`."
+    "note": "It changes the list in place. When the first argument is already an access (`put(l:0, 9)`), that is container and address together: it writes element `0` of `l`."
   },
   "remove": {
     "signatures": [

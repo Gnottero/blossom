@@ -16,10 +16,10 @@ import net.minecraft.commands.Commands;
 import com.gnottero.blossom.command.BlossomCommand;
 
 /**
- * Registra /blossom nell'albero dei comandi.
+ * Registers /blossom in the command tree.
  *
- * <p>Via mixin e non via Fabric API: il mod non ha altre ragioni per dipendere da fabric-api, e
- * questo e' l'unico aggancio che gli serve.
+ * <p>Via mixin rather than via Fabric API: the mod has no other reason to depend on fabric-api, and
+ * this is the only hook it needs.
  */
 @Mixin(Commands.class)
 public abstract class Commands_blossomCommandMixin

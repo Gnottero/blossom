@@ -6,8 +6,8 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 
 /**
- * Quello che un frame già preparato sa fare in più, per noi: eseguire la fase di
- * {@link AfterCloudsSubmits}.
+ * The extra thing an already-prepared frame can do for us: run the
+ * {@link AfterCloudsSubmits} phase.
  */
 @Environment(EnvType.CLIENT)
 public interface AfterCloudsFrame

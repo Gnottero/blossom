@@ -5,14 +5,15 @@ import blossom.exception.SourcePosition;
 import blossom.exception.Suggestions;
 
 /**
- * Un parametro con il tipo dichiarato: quello che {@code nome: tipo} produce dentro una firma.
+ * A parameter with a declared type: what {@code name: type} produces inside a signature.
  *
- * <p>Vive solo il tempo di costruire la firma. Non è un valore che uno script possa vedere: appena
- * la firma è pronta, resta il nome del parametro da una parte e il tipo canonico dall'altra.
+ * <p>It lives only for the time it takes to build the signature. It's not a value a script can
+ * ever see: as soon as the signature is ready, what's left is the parameter name on one side and
+ * the canonical type on the other.
  *
- * <p>Il tipo viene validato qui, cioè alla definizione della funzione e non alla prima chiamata:
- * {@code fn f(a: nmu)} è un errore di battitura, e va detto subito invece che il giorno in cui
- * qualcuno passa di lì.
+ * <p>The type is validated here, i.e. when the function is defined and not on its first call:
+ * {@code fn f(a: nmu)} is a typo, and it should be reported right away instead of on the day
+ * someone happens to call it.
  */
 public final class TypedParameterValue extends Value
 {
@@ -32,7 +33,7 @@ public final class TypedParameterValue extends Value
         this.canonicalType = canonical;
     }
 
-    /** Il nome del parametro dichiarato. */
+    /** The name of the declared parameter. */
     public String parameter()
     {
         return parameter;

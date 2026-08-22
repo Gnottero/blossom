@@ -8,25 +8,25 @@ import blossom.interpreter.Interpreter;
 import blossom.value.Value;
 
 /**
- * Micro-benchmark di baseline del core, richiesto da PIANO_LINGUAGGIO.md §9.
+ * Baseline micro-benchmark for the core, required by PIANO_LINGUAGGIO.md §9.
  *
- * <p>Misura le due cose che un interprete tree-walking paga di più dentro un tick loop: il costo
- * per iterazione di un loop aritmetico e il costo di una chiamata a funzione definita dall'utente.
- * Non usa JMH di proposito - una dipendenza in più e un modulo separato per misurare due numeri che
- * ci servono solo come termine di paragone tra la baseline della Fase 1 e il risultato della Fase 8.
- * In compenso fa quello che JMH farebbe a mano: riscaldamento, ripetizioni, e riporta la mediana.
+ * <p>Measures the two things a tree-walking interpreter pays most for inside a tick loop: the
+ * per-iteration cost of an arithmetic loop and the cost of a call to a user-defined function.
+ * Deliberately avoids JMH, an extra dependency and a separate module to measure two numbers that
+ * only serve as a comparison between the Phase 1 baseline and the Phase 8 result.
+ * It does what JMH would do by hand instead: warmup, repetitions, and reports the median.
  */
 public final class CoreBenchmark
 {
     private static final int WARMUP_RUNS = 5;
     private static final int MEASURED_RUNS = 15;
 
-    /** il preambolo dei casi che usano la libreria: dalla fase 5 le built-in non sono piu' globali */
+    /** Preamble for cases that use the library: since Phase 5 the built-ins are no longer global. */
     private static final String IMPORTS = "import \"core.list\" as list;\n";
 
     /**
-     * @param watchdog i limiti sotto cui girare il caso: serve a misurare quanto costa il watchdog,
-     *                 che è acceso in gioco e spento nel resto delle misure
+     * @param watchdog the limits to run the case under: used to measure how much the watchdog
+     *                 costs, since it is on in-game and off for the rest of the measurements
      */
     private record Case(String name, String code, int operations, blossom.interpreter.ExecutionBudget.Policy watchdog,
             blossom.interpreter.Expression.LoadOverride compilation)
@@ -48,21 +48,21 @@ public final class CoreBenchmark
         List<Case> cases = List.of(
                 new Case("loop aritmetico", "sum = 0; loop(1000000, sum += _ * 2 - 1); sum", 1_000_000),
                 new Case("chiamate a funzione", "f(x) -> x * 2 - 1; sum = 0; loop(200000, sum += f(_)); sum", 200_000),
-                // una chiamata con piu' argomenti: il costo del frame si vede qui, dove passare un
-                // parametro in piu' e' l'unica cosa che cambia rispetto al caso qui sopra
+                // a call with more arguments: the frame cost shows up here, where passing one
+                // extra parameter is the only thing that changes compared to the case above
                 new Case("chiamate a quattro argomenti", "g(a, b, c, d) -> a * b - c + d; sum = 0; loop(200000, sum += g(_, 2, 1, _)); sum", 200_000),
                 new Case("accesso a lista", IMPORTS + "l = list.map(list.range(1000), _); sum = 0; loop(200000, sum += l:(_ % 1000)); sum", 200_000),
                 new Case("costruzione di mappe", "loop(50000, m = {'a' -> _, 'b' -> _ * 2}; m:'b'); 0", 50_000),
                 new Case("parsing", null, 1),
-                // gli stessi due casi con il watchdog acceso: e' la configurazione che gira dentro
-                // il gioco, e la differenza col caso corrispondente qui sopra e' il suo costo
+                // the same two cases with the watchdog on: this is the configuration that runs
+                // in-game, and the difference from the corresponding case above is its cost
                 new Case("loop, watchdog acceso", "sum = 0; loop(1000000, sum += _ * 2 - 1); sum", 1_000_000,
                         new blossom.interpreter.ExecutionBudget.Policy(600_000, 256)),
                 new Case("chiamate, watchdog acceso", "f(x) -> x * 2 - 1; sum = 0; loop(200000, sum += f(_)); sum", 200_000,
                         new blossom.interpreter.ExecutionBudget.Policy(600_000, 256)),
-                // gli stessi due casi senza il passo di compilazione (piegatura delle costanti e
-                // compattazione dell'albero): la differenza e' quello che quel passo gia' guadagna,
-                // ed e' il termine di paragone per decidere se serve un livello piu' aggressivo
+                // the same two cases without the compilation step (constant folding and tree
+                // compaction): the difference is what that step already gains, and is the
+                // comparison term for deciding whether a more aggressive level is needed
                 new Case("loop, senza compilazione", "sum = 0; loop(1000000, sum += _ * 2 - 1); sum", 1_000_000,
                         blossom.interpreter.ExecutionBudget.Policy.UNLIMITED,
                         blossom.interpreter.Expression.LoadOverride.CANONICAL),
@@ -85,12 +85,12 @@ public final class CoreBenchmark
     }
 
     /**
-     * Mediana e minimo.
+     * Median and minimum.
      *
-     * <p>Il minimo perché è la statistica che regge il rumore: una macchina occupata può solo
-     * rallentare una misura, mai accelerarla, quindi il campione più veloce è quello meno disturbato.
-     * La mediana resta perché se le due divergono molto vuol dire che la macchina era occupata e la
-     * misura va rifatta.
+     * <p>The minimum because it is the statistic that holds up against noise: a busy machine can
+     * only slow a measurement down, never speed it up, so the fastest sample is the least disturbed
+     * one. The median stays because if the two diverge a lot it means the machine was busy and the
+     * measurement should be redone.
      */
     private record Result(double median, double min)
     {
@@ -107,7 +107,7 @@ public final class CoreBenchmark
             long start = System.nanoTime();
             Value result = interpreter.eval(code);
             long elapsed = System.nanoTime() - start;
-            // impedisce alla jvm di eliminare la valutazione come codice morto
+            // prevents the JVM from eliminating the evaluation as dead code
             if (result == null)
             {
                 throw new AssertionError();
@@ -117,8 +117,8 @@ public final class CoreBenchmark
     }
 
     /**
-     * Il solo parsing, senza valutazione: un modulo di taglia realistica ricostruito ogni volta, che
-     * è quello che il caricamento di un'app paga.
+     * Parsing alone, without evaluation: a realistically-sized module rebuilt every time, which is
+     * what loading an app pays for.
      */
     private static Result measureParsing()
     {

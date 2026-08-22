@@ -9,37 +9,37 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Una forma da far vedere a qualcuno per un po'.
+ * A shape to show to someone for a while.
  *
- * <p>E' un valore, non un oggetto vivo: nasce dagli argomenti di {@code draw_shape}, viaggia sulla
- * rete come NBT e sparisce quando scade. Il server tiene solo l'elenco di quelle ancora vive, per
- * ridisegnarle a particelle a chi non ha il client.
+ * <p>It is a value, not a live object: it is born from {@code draw_shape}'s arguments, travels
+ * over the network as NBT, and disappears when it expires. The server only keeps the list of
+ * still-alive ones, to redraw them as particles for whoever lacks the client.
  *
- * <p>Ogni forma sa fare tre cose: scriversi in NBT (e un client Blossom la disegna vera), dire di
- * quali <em>segmenti</em> e' fatta (approssimazione a particelle su qualunque client) e di quali
- * <em>facce</em> (il riempimento). Chi scrive lo script disegna una sfera; cosa succede dall'altra
- * parte non lo riguarda.
+ * <p>Every shape knows how to do three things: write itself as NBT (so a Blossom client can draw
+ * it for real), say which <em>segments</em> it is made of (particle approximation on any client),
+ * and which <em>faces</em> it has (the fill). Whoever writes the script draws a sphere; what
+ * happens on the other end is not their concern.
  *
- * <p>Con un {@code follow} le coordinate sono relative all'entita', sommate asse per asse secondo
- * {@code snap}. Il calcolo sta in {@link #anchored} e non nei due renderer, perche' server e client
- * devono ottenere lo stesso punto.
+ * <p>With a {@code follow}, coordinates are relative to the entity, added axis by axis according
+ * to {@code snap}. The calculation lives in {@link #anchored} rather than in the two renderers,
+ * because server and client must land on the same point.
  */
 public abstract class Shape
 {
-    /** i tipi che si possono scrivere in {@code draw_shape} */
+    /** The types that can be written in {@code draw_shape}. */
     public static final List<String> TYPES =
             List.of("line", "box", "sphere", "cylinder", "label", "block", "item");
 
     /**
-     * Quello che vale per tutte le forme, qualunque geometria abbiano.
+     * What applies to every shape, regardless of its geometry.
      *
-     * @param color        il colore delle linee e del testo, {@code 0xRRGGBBAA}
-     * @param fillColor    il colore del riempimento; alfa zero vuol dire "non riempire"
-     * @param lineWidth    lo spessore delle linee
-     * @param expiresAtTick il tick del server in cui la forma smette di esistere
-     * @param follow       l'id dell'entità a cui la forma è ancorata, {@code -1} se nessuna
-     * @param snap         quali assi seguono l'entità, e quali arrotondati al blocco
-     * @param debug        se la forma si vede solo con le hitbox di debug accese
+     * @param color        the color of lines and text, {@code 0xRRGGBBAA}
+     * @param fillColor    the fill color; zero alpha means "don't fill"
+     * @param lineWidth    the thickness of the lines
+     * @param expiresAtTick the server tick at which the shape stops existing
+     * @param follow       the id of the entity the shape is anchored to, {@code -1} if none
+     * @param snap         which axes follow the entity, and which are rounded to the block
+     * @param debug        whether the shape is only visible with debug hitboxes enabled
      */
     public record Common(int color, int fillColor, float lineWidth, long expiresAtTick,
             int follow, String snap, boolean debug)

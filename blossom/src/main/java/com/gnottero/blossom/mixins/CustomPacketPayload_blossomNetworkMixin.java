@@ -15,14 +15,14 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import com.gnottero.blossom.net.BlossomPayloads;
 
 /**
- * Registra i due payload di Blossom fra quelli che il gioco sa leggere e scrivere.
+ * Registers Blossom's two payloads among the ones the game knows how to read and write.
  *
- * <p>Senza Fabric API - che il mod non richiede, e non vale la pena richiedere per due pacchetti -
- * l'elenco dei payload conosciuti è costruito una volta da vanilla e non ha un punto di estensione.
- * Qui viene esteso al volo, prima che il codec venga costruito.
+ * <p>Without Fabric API (which the mod doesn't require, and isn't worth requiring for two packets),
+ * the list of known payloads is built once by vanilla and has no extension point. Here it's extended
+ * on the fly, before the codec is built.
  *
- * <p>La lista in arrivo viene sostituita con una marcata: il metodo che si intercetta viene poi
- * richiamato con la lista estesa, e senza un modo di riconoscerla si rientrerebbe qui per sempre.
+ * <p>The incoming list is replaced with a marked one: the intercepted method is then called again
+ * with the extended list, and without a way to recognize it, this would re-enter forever.
  */
 @Mixin(CustomPacketPayload.class)
 public interface CustomPacketPayload_blossomNetworkMixin

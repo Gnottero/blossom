@@ -6,10 +6,11 @@ import com.google.gson.GsonBuilder;
 import blossom.value.Value;
 
 /**
- * L'istanza gson condivisa che sa costruire {@link Value} a partire da json.
+ * The shared Gson instance that knows how to build {@link Value} instances from JSON.
  *
- * <p>Nel fork stava in {@code carpet.script.api.Auxiliary}, cioè nel layer Minecraft, pur non
- * avendone alcun bisogno: la decodifica json è una funzione del linguaggio e vive nel core.
+ * <p>In the fork this lived in {@code carpet.script.api.Auxiliary}, i.e. the Minecraft layer,
+ * even though it had no need to be there: JSON decoding is a language feature and belongs in
+ * the core.
  */
 public final class JsonSupport
 {

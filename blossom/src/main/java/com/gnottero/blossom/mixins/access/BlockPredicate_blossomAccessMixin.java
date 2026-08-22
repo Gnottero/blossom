@@ -19,7 +19,7 @@ import com.gnottero.blossom.value.ValueConversions;
 import blossom.value.StringValue;
 import blossom.value.Value;
 
-/** Legge il predicato scritto in un argomento comando ({@code stone[facing=north]}). */
+/** Reads the predicate written in a command argument ({@code stone[facing=north]}). */
 @Mixin(targets = "net.minecraft.commands.arguments.blocks.BlockPredicateArgument$BlockPredicate")
 public class BlockPredicate_blossomAccessMixin implements Access.BlockPredicate
 {

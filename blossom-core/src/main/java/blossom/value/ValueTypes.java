@@ -8,27 +8,27 @@ import java.util.Set;
 import org.jspecify.annotations.Nullable;
 
 /**
- * I nomi di tipo che si possono scrivere nella firma di una funzione.
+ * The type names that can be written in a function's signature.
  *
- * <p>Un tipo qui è solo un nome, e il confronto avviene contro {@link Value#getTypeString()}. Non è
- * una scorciatoia: è quello che permette al layer di gioco di aggiungere i propri tipi
- * ({@code entity}, {@code block}, {@code item}) senza che il core sappia che esistono — registra il
- * nome, e le firme lo accettano.
+ * <p>A type here is just a name, and matching is done against {@link Value#getTypeString()}. This
+ * isn't a shortcut: it's what lets the game layer add its own types ({@code entity}, {@code block},
+ * {@code item}) without the core knowing they exist, it just registers the name, and signatures
+ * accept it.
  *
- * <p>Gli alias esistono perché i nomi interni sono più lunghi di quelli che uno scrive: si dichiara
- * {@code num} e non {@code number}. Il tipo funzione si chiama {@code func} e non {@code fn} perché
- * {@code fn} è la parola chiave con cui una funzione si dichiara, e il tokenizer la riconosce come
- * tale anche dentro una firma.
+ * <p>Aliases exist because internal names are longer than what you'd want to type: you write
+ * {@code num}, not {@code number}. The function type is called {@code func}, not {@code fn},
+ * because {@code fn} is the keyword a function is declared with, and the tokenizer recognizes it as
+ * such even inside a signature.
  *
- * <p>Un nome non registrato è un errore <em>alla definizione</em> della funzione, non alla prima
- * chiamata: un tipo scritto male è un errore di battitura, e va detto subito.
+ * <p>An unregistered name is an error <em>at the function's definition</em>, not on its first call:
+ * a misspelled type is a typo, and it should be reported right away.
  */
 public final class ValueTypes
 {
-    /** nome scrivibile → tipo canonico, cioè quello che {@code getTypeString()} restituisce */
+    /** writable name → canonical type, i.e. what {@code getTypeString()} returns */
     private static final Map<String, String> BY_NAME = new LinkedHashMap<>();
 
-    /** accetta qualunque cosa: serve a documentare un parametro senza vincolarlo */
+    /** accepts anything: used to document a parameter without constraining it */
     public static final String ANY = "any";
 
     static
@@ -38,13 +38,13 @@ public final class ValueTypes
         register("bool", "boolean");
         register("list", "list");
         register("map", "map");
-        // 'func' e non 'fn': 'fn' e' la parola chiave con cui si dichiara una funzione, e il
-        // tokenizer la riconosce come tale anche dentro una firma
+        // 'func' and not 'fn': 'fn' is the keyword a function is declared with, and the
+        // tokenizer recognizes it as such even inside a signature
         register("func", "function");
         register("null", "null");
         BY_NAME.put(ANY, ANY);
-        // i nomi canonici valgono anche come nomi scrivibili: chi preferisce 'number' a 'num' non
-        // deve ricordarsi quale dei due e' quello giusto
+        // canonical names are also valid writable names: whoever prefers 'number' to 'num'
+        // doesn't have to remember which of the two is the right one
         register("number", "number");
         register("string", "string");
         register("boolean", "boolean");
@@ -56,17 +56,17 @@ public final class ValueTypes
     }
 
     /**
-     * Dichiara un nome di tipo usabile nelle firme.
+     * Declares a type name usable in signatures.
      *
-     * @param name      come lo si scrive
-     * @param canonical quello che {@link Value#getTypeString()} restituisce per quei valori
+     * @param name      how it is written
+     * @param canonical what {@link Value#getTypeString()} returns for those values
      */
     public static void register(String name, String canonical)
     {
         BY_NAME.put(name, canonical);
     }
 
-    /** Il tipo canonico dietro un nome scritto in una firma, o {@code null} se non esiste. */
+    /** The canonical type behind a name written in a signature, or {@code null} if it doesn't exist. */
     public static @Nullable String canonical(String name)
     {
         return BY_NAME.get(name);
@@ -78,7 +78,7 @@ public final class ValueTypes
     }
 
     /**
-     * @return se {@code value} è accettabile per il tipo canonico {@code canonical}
+     * @return whether {@code value} is acceptable for the canonical type {@code canonical}
      */
     public static boolean matches(String canonical, Value value)
     {

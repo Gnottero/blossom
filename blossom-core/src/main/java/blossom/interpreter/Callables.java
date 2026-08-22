@@ -11,11 +11,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Le forme che può avere una cosa chiamabile dall'interprete: funzioni e operatori, ciascuno nella
- * variante che riceve gli argomenti già valutati e in quella che se li valuta da sé.
+ * The shapes a thing callable by the interpreter can take: functions and operators, each in the
+ * variant that receives its arguments already evaluated and in the one that evaluates them itself.
  *
- * <p>Un solo file perché sono un insieme chiuso e si riferiscono l'un l'altro: chi implementa una
- * funzione built-in deriva da una di queste classi e non guarda altrove.
+ * <p>A single file because they form a closed set and reference one another: whoever implements a
+ * built-in function derives from one of these classes and looks nowhere else.
  */
 public abstract class Callables
 {
@@ -169,7 +169,7 @@ public abstract class Callables
 
         public static List<LazyValue> lazify(List<Value> args)
         {
-            // un valore e' gia' un LazyValue che restituisce se stesso: niente da avvolgere
+            // A value is already a LazyValue that returns itself: nothing to wrap
             return new ArrayList<>(args);
         }
     }

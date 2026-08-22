@@ -2,7 +2,7 @@
   "name": "blossom",
   "displayName": "Blossom",
   "description": "Support for the Blossom language: highlighting, completion on the real API, preamble and import errors.",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "publisher": "gnottero",
   "license": "MIT",
   "engines": {

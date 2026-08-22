@@ -27,7 +27,7 @@
     "params": [
       [
         "key",
-        "optional: which piece — memory, threads, version, loaded mods, uptime, worlds, apps; without it, the list keys"
+        "optional: which piece: memory, threads, version, loaded mods, uptime, worlds, apps; without it, the list keys"
       ]
     ],
     "returns": "`list` of the keys, or the value asked for.",

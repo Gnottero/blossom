@@ -3,15 +3,15 @@ package blossom.exception;
 import org.jspecify.annotations.Nullable;
 
 /**
- * L'app e quello che ha intorno non vanno d'accordo: livello di API sbagliato, dipendenza a una
- * versione che non soddisfa il vincolo dichiarato, integrità del lock che non torna.
+ * The app and its surroundings don't agree: wrong API level, a dependency on a version that
+ * doesn't satisfy the declared constraint, lock integrity that doesn't check out.
  *
- * <p>Categoria a sé e non un {@code RuntimeError} generico perché è l'unico errore che non riguarda
- * il codice: il programma può essere perfetto e fallire lo stesso, e chi lo legge deve capire subito
- * che deve andare a guardare il manifesto e non i sorgenti.
+ * <p>Its own category rather than a generic {@code RuntimeError} because it's the one error that
+ * has nothing to do with the code: the program can be perfectly correct and still fail, and whoever
+ * reads it needs to understand right away that they should look at the manifest, not the source.
  *
- * <p>Nasce sempre a caricamento, mai a runtime: se una versione non torna, lo si scopre prima che
- * una riga venga eseguita.
+ * <p>Always raised at load time, never at runtime: if a version doesn't check out, it's discovered
+ * before a single line is executed.
  */
 public class CompatibilityError extends BlossomError
 {

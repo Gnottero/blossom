@@ -16,7 +16,7 @@
     "signatures": [
       "unix_time()"
     ],
-    "summary": "Absolute time in milliseconds since the find of January 1970.",
+    "summary": "Absolute time in milliseconds since the first of January 1970.",
     "params": [],
     "returns": "`num` — milliseconds since the epoch.",
     "examples": [
@@ -36,11 +36,13 @@
         "milliseconds since the epoch, or a list `[year, month, day, hour, minute, second]` to go the other way"
       ]
     ],
-    "returns": "`list` — `[year, month, day, hour, minute, second, weekday, day_of_year]`, or `num` when given a list.",
+    "returns": "`list` — `[year, month, day, hour, minute, second, weekday, day_of_year, week_of_year]`, nine elements, or `num` when given a list.",
     "examples": [
-      "system.convert_date(system.unix_time());\n// [2026, 8, 16, 14, 30, 12, 7, 228]",
-      "system.convert_date([2026, 1, 1, 0, 0, 0]);   // back to a timestamp"
-    ]
+      "system.convert_date(system.unix_time());\n// [2026, 8, 16, 14, 30, 12, 7, 228, 34]",
+      "system.convert_date([2026, 1, 1]);            // back to a timestamp",
+      "system.convert_date([2026, 1, 1, 0, 0, 0]);   // with a time of day"
+    ],
+    "note": "Going the other way takes three elements (year, month, day) or six (with hour, minute, second); any other count is an `ArityError`. The pieces are in the server's own time zone."
   },
   "type": {
     "signatures": [

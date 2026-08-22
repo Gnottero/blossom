@@ -20,10 +20,10 @@ import blossom.interpreter.Interpreter;
 import blossom.language.IoRoots;
 
 /**
- * {@code core.io}: il disco fuori dalla cartella dell'app, dentro confini dichiarati.
+ * {@code core.io}: disk access outside the app's folder, within declared boundaries.
  *
- * <p>Metà dei test riguarda quello che <em>non</em> deve funzionare, che è il punto della feature:
- * l'accesso al disco senza confini è la cosa che nessuno vuole su un server.
+ * <p>Half the tests cover what must <em>not</em> work, which is the whole point of the feature:
+ * unbounded disk access is the thing nobody wants on a server.
  */
 class IoTest
 {
@@ -107,12 +107,12 @@ class IoTest
         }
         catch (IOException | UnsupportedOperationException e)
         {
-            return; // niente link simbolici su questo sistema: il caso non si puo' provare qui
+            return; // no symbolic links on this system: this case can't be tested here
         }
         Interpreter interpreter = withRoots(tmp, Map.of("dati", data), Set.of("dati"));
 
-        // il confronto testuale sul percorso normalizzato non basta: un link dentro la radice punta
-        // fuori senza nessun '..'
+        // a textual comparison on the normalized path isn't enough: a link inside the root can
+        // point outside without any '..'
         BlossomRuntimeError error = assertThrows(BlossomRuntimeError.class,
                 () -> interpreter.eval(IMPORT + "io.read_text('dati', 'scorciatoia.txt')"));
         assertTrue(error.getMessage().contains("symbolic link"), error.getMessage());
@@ -135,7 +135,7 @@ class IoTest
         Path data = Files.createDirectories(tmp.resolve("dati"));
         Interpreter interpreter = withRoots(tmp, Map.of("dati", data), Set.of("dati"));
 
-        // un file che non c'e' e' una cosa che uno script puo' ragionevolmente voler gestire
+        // a missing file is something a script might reasonably want to handle
         assertEquals("assente", interpreter.eval(
                 IMPORT + "try(io.read_text('dati', 'manca.txt'), 'io_exception', 'assente')").getString());
     }
@@ -153,8 +153,8 @@ class IoTest
     @Test
     void aRootOutsideTheConfinementOpensNothing(@TempDir Path tmp) throws IOException
     {
-        // sul mod il confine e' la cartella del mondo: una radice dichiarata altrove nel disco del
-        // server viene comunque fermata qui, che e' l'ultima linea prima del filesystem
+        // in the mod the boundary is the world's folder: a root declared elsewhere on the
+        // server's disk still gets stopped here, which is the last line before the filesystem
         Path world = Files.createDirectories(tmp.resolve("mondo"));
         Path outside = Files.createDirectories(tmp.resolve("fuori"));
         Files.writeString(outside.resolve("segreto.txt"), "non si legge");
@@ -183,9 +183,8 @@ class IoTest
     @Test
     void noBuiltinNameIsRegisteredTwice()
     {
-        // core.io ha dovuto chiamarsi 'delete_file' e non 'delete' proprio per questo: le
-        // implementazioni stanno in una mappa piatta, e la seconda registrazione vincerebbe in
-        // silenzio
+        // core.io had to be called 'delete_file' and not 'delete' for exactly this reason: the
+        // implementations live in a flat map, and the second registration would silently win
         Expression expression = new Expression("0");
         assertEquals(Set.of(), expression.redefinedBuiltins());
     }

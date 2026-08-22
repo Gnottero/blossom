@@ -13,8 +13,8 @@ import net.minecraft.util.TaskChainer;
 import com.gnottero.blossom.access.Access;
 
 /**
- * Permette di costruire una sorgente comando "silenziosa": {@code run()} esegue un comando e ne
- * raccoglie l'output invece di stamparlo in chat.
+ * Allows building a "silent" command source: {@code run()} executes a command and collects its
+ * output instead of printing it to chat.
  */
 @Mixin(CommandSourceStack.class)
 public class CommandSourceStack_blossomAccessMixin implements Access.Source

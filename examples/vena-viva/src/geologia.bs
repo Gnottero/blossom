@@ -3,12 +3,12 @@ module geologia;
 import "core.list" as list;
 import "core.string" as string;
 
-// La parte che pensa. Non tocca il mondo, non stampa niente, non ascolta eventi: prende una lista
-// di letture [posizione, blocco] e risponde a delle domande. E' il modulo che si prova con
+// The part that thinks. Doesn't touch the world, doesn't print anything, doesn't listen to events:
+// it takes a list of readings [position, block] and answers questions. It's the module you test with
 //
 //     /blossom script in vena-viva geologia.conta([[[0, 0, 0], 'diamond_ore']], 'diamond_ore')
 //
-// senza dover rompere un blocco vero.
+// without having to break a real block.
 
 pub let MINERALI = [
     'coal_ore', 'deepslate_coal_ore',
@@ -22,29 +22,29 @@ pub let MINERALI = [
     'nether_gold_ore', 'nether_quartz_ore', 'ancient_debris'
 ];
 
-// 'minecraft:diamond_ore' e 'diamond_ore' sono lo stesso blocco scritto in due modi: un valore
-// blocco si stampa con lo spazio dei nomi, chi scrive uno script usa la forma corta
+// 'minecraft:diamond_ore' and 'diamond_ore' are the same block written two ways: a block value
+// prints with the namespace, whoever writes a script uses the short form
 pub fn nome_corto(blocco) -> (
     pezzi = string.split(':', blocco + '');
     pezzi:(list.size(pezzi) - 1)
 );
 
-// '~' su una lista restituisce l'indice, o null se non c'e': il confronto con null e' obbligatorio,
-// perche' l'indice 0 e' un valore falso. 'list.has' non c'entra: quella chiede se esiste l'indice.
+// '~' on a list returns the index, or null if it's not there: comparing with null is mandatory,
+// because index 0 is a falsy value. 'list.has' is unrelated: that one asks whether the index exists.
 pub fn e_minerale(blocco) -> (MINERALI ~ nome_corto(blocco)) != null;
 
-// Quante letture sono del tipo dato. 'for' restituisce quante volte il corpo e' risultato vero,
-// quindi contare non richiede un accumulatore.
+// How many readings are of the given type. 'for' returns how many times the body evaluated true,
+// so counting doesn't need an accumulator.
 pub fn conta(letture: list, tipo: str) -> for(letture, nome_corto(_:1) == tipo);
 
-// Le posizioni delle letture di quel tipo.
+// The positions of the readings of that type.
 pub fn posizioni(letture: list, tipo: str) -> list.map(
     list.filter(letture, nome_corto(_:1) == tipo),
     _:0
 );
 
-// Gli angoli del parallelepipedo che contiene tutte le posizioni date, o null se la lista e' vuota.
-// Serve a disegnare il riquadro attorno alla vena.
+// The corners of the box that contains all the given positions, or null if the list is empty.
+// Used to draw the box around the vein.
 pub fn riquadro(punti: list) -> (
     if(list.size(punti) == 0, return(null));
     [
@@ -53,13 +53,13 @@ pub fn riquadro(punti: list) -> (
     ]
 );
 
-// privata: e' un dettaglio di 'riquadro', e nessun altro modulo deve dipenderne
+// private: it's a detail of 'riquadro', and no other module should depend on it
 fn estremo(punti, asse, massimo) -> (
     ordinati = list.sort(list.map(punti, _:asse));
     if(massimo, ordinati:(list.size(ordinati) - 1), ordinati:0)
 );
 
-// Il giudizio sulla vena in una parola: e' quello che il resto dell'app mostra a chi gioca.
+// The verdict on the vein in one word: it's what the rest of the app shows to the player.
 pub fn giudizio(rimasti: num) -> if(
     rimasti == 0, 'esaurita',
     rimasti <= 2, 'agli sgoccioli',

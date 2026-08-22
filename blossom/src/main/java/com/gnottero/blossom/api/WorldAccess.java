@@ -539,18 +539,18 @@ public class WorldAccess
         expression.addContextFunction("opacity", -1, (c, t, lv) ->
                 genericStateTest(c, "opacity", lv, (s, p, w) -> new NumericValue(s.getLightDampening())));
 
-        // 'blocks_daylight' e' la negazione di 'propagatesSkylightDown': il nome dice cosa il blocco
-        // fa alla luce, non cosa la luce fa a lui - ed e' la domanda che si fa chi scrive uno script
+        // 'blocks_daylight' is the negation of 'propagatesSkylightDown': the name says what the block
+        // does to the light, not what the light does to it, which is the question a script author asks
         expression.addContextFunction("blocks_daylight", -1, (c, t, lv) ->
                 booleanStateTest(c, "blocks_daylight", lv, (s, p) -> !s.propagatesSkylightDown()));
 
         /*
-         * light(pos) - la luce che c'e' li'; light(pos, tipo) - una delle sue componenti.
+         * light(pos): the light present there; light(pos, kind): one of its components.
          *
-         * Erano sei funzioni per la stessa domanda, e la risposta cambiava solo per quale strato si
-         * guarda. Il tipo va in coda, dopo la posizione, e la posizione puo' essere una lista o tre
-         * numeri sciolti come dappertutto: quanti argomenti abbia consumato lo dice il locator,
-         * quindi le due forme non si confondono.
+         * These used to be six functions for the same question, with the answer only changing
+         * based on which layer is looked at. The kind comes last, after the position, and the
+         * position can be a list or three separate numbers like everywhere else: the locator tells
+         * how many arguments it consumed, so the two forms never get confused.
          */
         expression.addContextFunction("light", -1, (c, t, lv) ->
         {

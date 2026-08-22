@@ -3,15 +3,19 @@ package blossom.language;
 import blossom.exception.BlossomRuntimeError;
 import blossom.exception.SourcePosition;
 import blossom.exception.ArityError;
+import blossom.exception.TypeMismatchError;
 import blossom.interpreter.Context;
 import blossom.interpreter.Expression;
 import blossom.interpreter.LazyValue;
 import blossom.utils.PerlinNoiseSampler;
 import blossom.utils.SimplexNoiseSampler;
+import blossom.value.AbstractListValue;
 import blossom.value.BooleanValue;
 import blossom.value.FunctionValue;
+import blossom.value.LazyListValue;
 import blossom.value.ListValue;
 import blossom.value.MapValue;
+import blossom.value.NullValue;
 import blossom.value.NumericValue;
 import blossom.value.StringValue;
 import blossom.value.Value;
@@ -225,7 +229,25 @@ public class Sys
         });
 
         expression.addUnaryFunction("type", v -> new StringValue(v.getTypeString()));
-        expression.addUnaryFunction("length", v -> new NumericValue(v.length()));
+        expression.addUnaryFunction("length", v ->
+        {
+            // 'size' risponde su cio' che ha una dimensione. Su tutto il resto rispondeva comunque,
+            // contando le cifre del numero o i caratteri della rappresentazione, che e' un numero
+            // plausibile e sbagliato: il modo peggiore di fallire
+            if (v instanceof LazyListValue)
+            {
+                throw new TypeMismatchError(SourcePosition.UNKNOWN,
+                        "'size' cannot measure a lazy list: it produces its elements as it goes and"
+                                + " may not end. Materialise it first, e.g. list.slice(l, 0, n).");
+            }
+            if (!(v instanceof AbstractListValue || v instanceof MapValue || v instanceof StringValue
+                    || v instanceof NullValue))
+            {
+                throw new TypeMismatchError(SourcePosition.UNKNOWN,
+                        "'size' wants a list, a map or a string, but got a " + v.getTypeString() + ".");
+            }
+            return new NumericValue(v.length());
+        });
         expression.addContextFunction("rand", -1, (c, t, lv) ->
         {
             int argsize = lv.size();

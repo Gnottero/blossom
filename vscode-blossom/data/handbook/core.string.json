@@ -61,7 +61,7 @@
     "signatures": [
       "title(s)"
     ],
-    "summary": "The string with the find letter of every word in upper case and the rest in lower case.",
+    "summary": "The string with the first letter of every word in upper case and the rest in lower case.",
     "params": [
       [
         "s",

@@ -15,9 +15,9 @@ public class Arithmetic
 
     public static void apply(Expression expression)
     {
-        // 'not' non si registra qui: e' gia' il nome funzionale dell'operatore '!' (vedi
-        // Operators), e registrarlo due volte significava che la seconda registrazione sostituiva
-        // la prima in silenzio
+        // 'not' is not registered here: it is already the functional name of the '!' operator (see
+        // Operators), and registering it twice meant the second registration silently replaced
+        // the first
         expression.addUnaryFunction("fact", v ->
         {
             long number = NumericValue.asNumber(v).getLong();
@@ -144,8 +144,8 @@ public class Arithmetic
         });
 
         expression.addUnaryFunction("relu", v -> v.compareTo(Value.ZERO) < 0 ? Value.ZERO : v);
-        // 'sign' ed 'exp' erano dichiarati da core.math ma non registrati: chiamarli dava "not
-        // defined yet" invece del risultato
+        // 'sign' and 'exp' were declared by core.math but never registered: calling them gave
+        // "not defined yet" instead of a result
         expression.addMathematicalUnaryFunction("exp", Math::exp);
         expression.addUnaryFunction("sign", v -> NumericValue.of(Math.signum(NumericValue.asNumber(v).getDouble())));
     }

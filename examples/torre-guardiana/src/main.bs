@@ -9,8 +9,8 @@ import "core.mc.text" as text;
 import "core.mc.event" as event;
 import "core.list" as list;
 
-// Costruisce una torre illuminata dove una campana viene suonata, e tiene il conto di quelle
-// costruite. Mostra: piu' moduli, simboli privati, un evento annullabile, e un try/catch.
+// Builds a lit tower where a bell is rung, and keeps count of the ones
+// built. Shows: multiple modules, private symbols, a cancellable event, and a try/catch.
 
 fn su_campana(pos, direzione, chi) -> (
     luce = block.light(pos);
@@ -20,20 +20,20 @@ fn su_campana(pos, direzione, chi) -> (
         registro.aggiungi(pos, altezza);
         for(entity.player('all'), text.send(_, 'torre numero ' + registro.quante() + ' a ' + pos)),
 
-        // 'exception' e non la forma corta: senza filtro, try cattura solo cio' che lancia throw(),
-        // e un blocco inesistente o una posizione fuori dal mondo non passerebbero di li'.
+        // 'exception' and not the short form: without a filter, try only catches what throw() raises,
+        // and a nonexistent block or a position outside the loaded world wouldn't pass through it.
         'exception',
 
-        // Se la costruzione fallisce - per esempio perche' la posizione e' fuori dal mondo caricato -
-        // l'evento non deve annullare il suono della campana ne' interrompere le altre app.
-        // Il valore lanciato sta in '_', e va copiato subito: dentro il 'for' quel nome e' gia'
-        // preso dall'elemento corrente.
+        // If the construction fails, for example because the position is outside the loaded world,
+        // the event must not cancel the bell sound nor interrupt the other apps.
+        // The thrown value is in '_', and must be copied right away: inside the 'for' that name is
+        // already taken by the current element.
         (
             motivo = _;
             for(entity.player('all'), text.send(_, 'non sono riuscito a costruire: ' + motivo))
         )
     );
-    false   // false = il suono della campana va avanti normalmente
+    false   // false = the bell sound proceeds normally
 );
 
 pub fn quante_torri() -> registro.quante();

@@ -26,7 +26,7 @@ Four things are decided at registration time, not three hours later in a log fil
 - **the arity.** A handler whose signature does not match `event arity + fixed arguments` is a load
   error. `event.describe(name)` gives you the arity without opening this page.
 - **the app.** Handlers belong to the app that registered them and disappear when it is reloaded or
-  unloaded. That is why registration goes in the **body of a module** — the part that runs on load —
+  unloaded. That is why registration goes in the **body of a module** (the part that runs on load)
   and not inside another handler, which ends with ten listeners where one was wanted.
 - **the source.** The handler is called with the command source of whatever raised the event: the
   player for a player event, the level for a world event, the server for a lifecycle event. That is
@@ -35,7 +35,7 @@ Four things are decided at registration time, not three hours later in a log fil
 ## Cancelling
 
 A handler that returns a **true** value cancels the action, if the event is cancellable. No magic
-string needed — the returned value is already an answer.
+string needed: the returned value is already an answer.
 
 ```
 fn no_obsidian(player, block) -> block == 'obsidian';
@@ -58,7 +58,7 @@ Two more properties of cancellation:
 ## Cost
 
 Every event keeps its own list of handlers, and every firing site asks `isListened()` **before**
-building the arguments — which is the expensive half. An event nobody listens to costs a field read.
+building the arguments, which is the expensive half. An event nobody listens to costs a field read.
 
 That is also why the frequent events deserve care: `tick` fires twenty times a second per dimension,
 `player_rides` on every input packet of a mounted player, `entity_loads` for every entity that
@@ -66,7 +66,7 @@ appears anywhere in the world. Whatever you put in them, you pay at that rate.
 
 ## Functions
 
-### `on(event, function)` · `on(event, function, fixed_arguments)` · `on(event, function, fixed_arguments, player)`
+### `event.on(event, function)` · `event.on(event, function, fixed_arguments)` · `event.on(event, function, fixed_arguments, player)`
 Registers a handler and returns the event name.
 
 `fixed_arguments` is a **list**, and its items arrive *after* the arguments of the event, so the
@@ -81,30 +81,30 @@ event.on('player_jumps', count_jumps_for, ['group-a']);   // fn(player, group)
 event.on('player_jumps', only_for_her, null, 'ada');
 ```
 
-### `off()` · `off(event)`
+### `event.off()` · `event.off(event)`
 Removes every handler of this app, or only the ones it registered on that event. Reloading the app
 does this for you.
 
-### `list()`
+### `event.list()`
 The names of every event in the catalogue, application events included once somebody has declared
 them.
 
-### `listeners(event)`
+### `event.listeners(event)`
 How many handlers are registered on it, across all apps. `0` for an event nobody knows.
 
-### `describe(event)`
+### `event.describe(event)`
 The card of an event: `{'name' -> ..., 'arity' -> ..., 'cancellable' -> ..., 'listeners' -> ...}`.
 Unknown name is a load error, like everywhere else.
 
-### `declare(event, function, fixed_arguments...)`
+### `event.declare(event, function, fixed_arguments...)`
 Like `on`, but it also accepts a name the game does not know: that becomes an **application event**,
 declared by the first app that listens to it, with the arity of the function that declared it. Here
 the fixed arguments are passed loose, not in a list.
 
 Passing `null` as the function removes this app's handlers for that event.
 
-### `emit(event, player_or_null, arguments...)`
-Raises an event — an application one, normally. Returns how many handlers were listening, or `null`
+### `event.emit(event, player_or_null, arguments...)`
+Raises an event, an application one normally. Returns how many handlers were listening, or `null`
 when no such event exists, which is also the cheap way for the sender to skip the work entirely.
 
 With a player, the handlers run with that player's source; with `null`, with the source of the
@@ -121,7 +121,7 @@ heard = event.emit('vein_exhausted', null, pos, how_many);
 It is the intended way to couple two apps without either knowing the functions of the other, and
 without load order mattering.
 
-### `schedule(delay_in_ticks, function, arguments...)`
+### `event.schedule(delay_in_ticks, function, arguments...)`
 Calls a function N ticks from now, on the server thread. Times are in ticks and not in milliseconds:
 a script waiting twenty ticks waits the same amount of *game* time even when the server slows down.
 
@@ -152,7 +152,7 @@ it arrives.
 #### `server_shuts_down()`
 The server is closing. It is the last useful moment to save; nothing after it is guaranteed to run.
 It does **not** fire when the process is killed, so an app that only saves here loses everything on a
-crash — save periodically as well.
+crash: save periodically as well.
 
 #### `app_reloading(app)`
 An app is about to be reloaded, and has not been torn down yet. `app` is its name.
@@ -168,8 +168,8 @@ fn save_before_reload(app) -> (
 event.on('app_reloading', save_before_reload);
 ```
 
-It fires for **every** app being reloaded, not only for yours — that is what makes it useful to a
-supervising app — so a handler that only cares about itself compares the name, as above.
+It fires for **every** app being reloaded, not only for yours (that is what makes it useful to a
+supervising app), so a handler that only cares about itself compares the name, as above.
 
 A **first** load fires nothing: there is no previous version to speak of. Only a `load` of an app
 that is already loaded is a reload. `/blossom script unload` does not fire it either; unloading is
@@ -197,7 +197,7 @@ whose code throws on load is removed instead, and `app_reloaded` never comes. So
 tell those two apart.
 
 #### `tick()` · `tick_nether()` · `tick_ender()`
-One server tick — twenty times a second. The three differ only in the source handed to the handler:
+One server tick, twenty times a second. The three differ only in the source handed to the handler:
 the overworld, the nether, the end. They are three events and not one with a dimension argument
 because most apps want exactly one of them, and the other two should cost nothing.
 
