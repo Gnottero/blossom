@@ -15,7 +15,8 @@
     "examples": [
       "json.encode({'name' -> 'blossom', 'version' -> 1});\n// '{\"name\":\"blossom\",\"version\":1}'",
       "io.write_text('shared', 'state.json', json.encode(state));"
-    ]
+    ],
+    "note": "`NaN` and infinity have no way of being written in json: encoding one raises a `json_error`, instead of producing a text no reader would accept back."
   },
   "decode": {
     "signatures": [

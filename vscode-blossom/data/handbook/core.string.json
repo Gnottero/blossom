@@ -22,7 +22,7 @@
       "string.str('%s has %d points', name, 12);     // 'ada has 12 points'",
       "string.str('%.2f%%', ratio * 100);            // '12.50%'"
     ],
-    "note": "It is the readable way to build a message: `'x: ' + x + ', y: ' + y` grows one concatenation per value, `str('x: %d, y: %d', x, y)` stays one line."
+    "note": "It is the readable way to build a message: `'x: ' + x + ', y: ' + y` grows one concatenation per value, `str('x: %d, y: %d', x, y)` stays one line. The numeric specifiers want a number: given anything else they say so, instead of writing a `0` nobody asked for — a string written like a number still passes. Arguments left over at the end are an error too."
   },
   "lower": {
     "signatures": [

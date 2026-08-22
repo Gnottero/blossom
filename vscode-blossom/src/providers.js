@@ -26,6 +26,17 @@ const CONSTANTS = {
 };
 
 /*
+ * The names a loop binds by itself. Outside a loop they are worth zero rather than being an error,
+ * so writing one where no loop ever runs is quiet: the hover says what it is, which is the only
+ * warning there is going to be.
+ */
+const LOOP_VARIABLES = {
+    _: 'The element the loop is on — the index in `loop`, the item in `for` and `map`. Zero outside a loop.',
+    _i: 'The position of `_`, counting from zero. Zero outside a loop.',
+    _a: 'The accumulator carried from one round to the next, in the functions that fold. Zero outside a loop.'
+};
+
+/*
  * The card of a function: signatures, what it does, its parameters, what it gives back, and an
  * example. The example is the part that is worth the space - a signature says the shape of a call,
  * a line of real code says what it is for - so it is always there and always last, right above the
@@ -260,6 +271,15 @@ const hover = {
         // a function of the prelude: it wins over the modules, because here it needs no import
         const preludeCard = preludeMarkdown(word);
         if (preludeCard) return new vscode.Hover(preludeCard, range);
+
+        // a name the loop binds
+        const loopVariable = LOOP_VARIABLES[word];
+        if (loopVariable) {
+            const markdown = new vscode.MarkdownString();
+            markdown.appendCodeblock(word, 'blossom');
+            markdown.appendMarkdown('\n' + loopVariable);
+            return new vscode.Hover(markdown, range);
+        }
 
         // a constant of the language
         const constant = CONSTANTS[word];

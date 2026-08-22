@@ -260,6 +260,38 @@ test('a function of the user is not a missing import', () => {
     assert.deepStrictEqual(codes('module a;\nfn mine() -> 1;\nfn other() -> mine();\n'), []);
 });
 
+test('a name of the language is not a variable, a parameter or a function', () => {
+    const variable = diagnostics.analyzeDocument(document('module a;\nlet match = 1;\n'));
+    assert.ok(variable.some((d) => d.code === 'reserved-name' && /a variable/.test(d.message)));
+
+    const parameter = diagnostics.analyzeDocument(document('module a;\nfn f(print) -> print;\n'));
+    assert.ok(parameter.some((d) => d.code === 'reserved-name' && /a parameter/.test(d.message)));
+
+    const lambda = diagnostics.analyzeDocument(document('module a;\nlet f = fn(loop) -> loop;\n'));
+    assert.ok(lambda.some((d) => d.code === 'reserved-name' && /a parameter/.test(d.message)));
+});
+
+test('the names the tokenizer builds stay free', () => {
+    // `l`, `m` and `concat` are in the prelude but nobody writes them: they remain usable as names
+    assert.deepStrictEqual(codes('module a;\nlet concat = 1;\nfn f(l, m) -> l;\n'), []);
+});
+
+test('the same parameter twice is reported once, on the second', () => {
+    const found = diagnostics.analyzeDocument(document('module a;\nfn f(x, x) -> x;\n'))
+        .filter((d) => d.code === 'duplicate-parameter');
+    assert.strictEqual(found.length, 1);
+    assert.strictEqual(found[0].range.start.character, 8);
+});
+
+test('a call written after a value, and a lambda after a pipe, say nothing', () => {
+    // `f(1)(2)` is a call on what `f(1)` gave back, and `x |> fn(a) -> a` needs no parentheses
+    assert.deepStrictEqual(codes('module a;\nfn add(a) -> fn(b) -> a + b;\nfn f() -> add(1)(2);\n'), []);
+    assert.deepStrictEqual(
+        codes('module a;\nimport "core.list" as list;\nfn f(xs) -> xs |> list.map(fn(x) -> x * 2);\n'),
+        []
+    );
+});
+
 test('a parameter shadowing a library name is not reported', () => {
     assert.deepStrictEqual(codes('module a;\nfn f(min) -> min(1);\n'), []);
 });
@@ -402,6 +434,12 @@ test('hovering a constant of the language says what it is', () => {
     const doc = document('module a;\nlet x = pi;\n');
     const card = requireHover(doc, new stub.Position(1, 9)).contents.value;
     assert.ok(card.includes('3.141592653589793'));
+});
+
+test('hovering a name the loop binds says it is zero outside a loop', () => {
+    const doc = document('module a;\nlet x = _i;\n');
+    const card = requireHover(doc, new stub.Position(1, 9)).contents.value;
+    assert.ok(/Zero outside a loop/.test(card));
 });
 
 test('hovering an event shows the handler to write', () => {

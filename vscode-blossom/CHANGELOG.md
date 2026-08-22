@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.7.2
+
+The extension follows the nine corrections the core received after 1.0.
+
+- **a name of the language is reported where it cannot go**: `let match = 1`, `fn f(print) -> ...`
+  and `fn(loop) -> ...` are refused by the parser as soon as it reads the line, and the squiggle
+  now says so first. The set is the one of `StdLib.isReservedAsAName` — the prelude minus `l`, `m`
+  and `concat`, which the tokenizer builds on its own and which stay free as names
+- **the same parameter declared twice** is reported on the second one
+- **`_`, `_i` and `_a` have a hover**: what each one is, and that outside a loop they are worth
+  zero rather than being an error
+- `f(1)(2)` and `x |> fn(a) -> a` — a call written after a value, and a lambda after a pipe without
+  parentheses — pass the analysis without a word, with a test that keeps it that way
+- the generator reads `TOKENIZER_BUILT` from `StdLib.java` instead of listing the exceptions by
+  hand, and writes the reserved names into `data/api.json`
+- the handbook follows the prose of `docs/api/`, translated to english
+
 ## 0.7.1
 
 The handbook follows the corrections made to `docs/`, where several entries described behaviour the

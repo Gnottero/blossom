@@ -67,6 +67,15 @@ function prelude() {
     return load().prelude;
 }
 
+/**
+ * The names of the language that cannot become a variable, a parameter or a function of the user:
+ * the prelude minus what the tokenizer builds on its own, the same set as
+ * `StdLib.isReservedAsAName`.
+ */
+function reserved() {
+    return load().reserved || [];
+}
+
 /** The documentation of a function of the prelude, or null when the name is not one of them. */
 function preludeInfo(name) {
     const symbols = load().preludeSymbols || {};
@@ -137,6 +146,7 @@ module.exports = {
     events,
     eventInfo,
     prelude,
+    reserved,
     preludeInfo,
     keywords,
     constants,

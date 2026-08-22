@@ -141,6 +141,63 @@ function analyzeDocument(document) {
         }
     }
 
+    // --- names of the language ------------------------------------------
+    //
+    // `print`, `if`, `match` and the rest cannot become a name of the author: the parser refuses
+    // `let match = 1` and `fn f(print) -> ...` the moment it reads the line. Reporting it here says
+    // it before the load does, and the rule is exactly the one of `StdLib.isReservedAsAName`.
+
+    const reservedSet = new Set(api.reserved());
+    const reservedWhat = (name, what) => `'${name}' is part of the language and cannot be the name ` +
+        `of ${what}. Pick another one.`;
+
+    for (const declaration of index.functions) {
+        if (reservedSet.has(declaration.name)) {
+            diagnostics.push(make(
+                rangeOf(declaration.start, declaration.length),
+                reservedWhat(declaration.name, 'a function'),
+                vscode.DiagnosticSeverity.Error,
+                'reserved-name'
+            ));
+        }
+    }
+
+    for (const binding of index.bindings) {
+        if (reservedSet.has(binding.name)) {
+            diagnostics.push(make(
+                rangeOf(binding.start, binding.length),
+                reservedWhat(binding.name, 'a variable'),
+                vscode.DiagnosticSeverity.Error,
+                'reserved-name'
+            ));
+        }
+    }
+
+    for (const signature of [...index.functions, ...index.lambdas]) {
+        const seen = new Set();
+        for (const param of signature.params) {
+            if (reservedSet.has(param.name)) {
+                diagnostics.push(make(
+                    rangeOf(param.start, param.length),
+                    reservedWhat(param.name, 'a parameter'),
+                    vscode.DiagnosticSeverity.Error,
+                    'reserved-name'
+                ));
+                continue;
+            }
+            // a parameter declared twice binds the argument to one name only: the parser refuses it
+            if (seen.has(param.name)) {
+                diagnostics.push(make(
+                    rangeOf(param.start, param.length),
+                    `Parameter '${param.name}' is declared twice in the same signature.`,
+                    vscode.DiagnosticSeverity.Error,
+                    'duplicate-parameter'
+                ));
+            }
+            seen.add(param.name);
+        }
+    }
+
     const preludeSet = new Set(api.prelude());
     for (const call of index.bareCalls) {
         if (preludeSet.has(call.name) || index.defined.has(call.name)) continue;

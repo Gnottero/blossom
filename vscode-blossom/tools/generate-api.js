@@ -147,7 +147,7 @@ function resolveSymbols(expression, seen = new Set()) {
 
 const stdlib = readJava(path.join(REPO, 'blossom-core/src/main/java/blossom/language/StdLib.java'));
 
-/** nome modulo → Set di simboli */
+/** module name to set of symbols */
 const modules = new Map();
 
 for (const match of stdlib.matchAll(/\bmodule\("([^"]+)"\s*,([\s\S]*?)\);/g)) {
@@ -165,7 +165,17 @@ if (modules.size === 0) fail('no core.* module found in StdLib.java');
 
 const preludeMatch = stdlib.match(/PRELUDE\s*=\s*Set\.of\(([\s\S]*?)\);/);
 if (!preludeMatch) fail('PRELUDE not found in StdLib.java');
+
+// the names the tokenizer builds on its own for `[...]`, `{...}` and the interpolated strings:
+// nobody writes them as a call, and the language leaves them free as names of a variable. They stay
+// out of the prelude the editor offers, and out of the names it reports as reserved
+const builtMatch = stdlib.match(/TOKENIZER_BUILT\s*=\s*Set\.of\(([\s\S]*?)\);/);
+if (!builtMatch) fail('TOKENIZER_BUILT not found in StdLib.java');
+const tokenizerBuilt = new Set((builtMatch[1].match(/"([^"\\]*)"/g) || []).map((l) => l.slice(1, -1)));
+
 const prelude = [...resolveSymbols(preludeMatch[1])].filter((name) => name !== 'l' && name !== 'm');
+// `StdLib.isReservedAsAName`: a name of the language that cannot become a variable or a parameter
+const reserved = [...resolveSymbols(preludeMatch[1])].filter((name) => !tokenizerBuilt.has(name)).sort();
 
 const apiFile = path.join(REPO, 'blossom/src/main/java/com/gnottero/blossom/BlossomApi.java');
 if (fs.existsSync(apiFile)) {
@@ -351,6 +361,7 @@ const data = {
     generated: new Date().toISOString().slice(0, 10),
     prelude,
     preludeSymbols,
+    reserved,
     constants: ['true', 'false', 'null', 'pi', 'euler'],
     types: ['num', 'str', 'bool', 'list', 'map', 'func', 'null', 'any', 'entity', 'block', 'text', 'nbt', 'screen'],
     keywords: ['module', 'import', 'as', 'pub', 'fn', 'let', 'mut', 'else'],

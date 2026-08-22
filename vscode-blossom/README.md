@@ -10,12 +10,12 @@ modules and symbols that do not exist, wrong events, module names that do not ma
 | --- | --- |
 | **Highlighting** | preamble, `fn`/`let`/`pub`, lambdas (`fn(x) -> …`), `match` and its arms, the pipe `\|>`, parameter types, `_`/`_i`/`_a`, strings — with the code inside `${…}` highlighted as code — comments |
 | **Completion** | the modules inside `import "…"`, the symbols after `alias.`, the event names inside `event.on('…')` — `declare` and `emit` included, for application events — the functions and bindings of the file |
-| **Hover** | the full card of every library function: signatures, what it does, every parameter, what it gives back, at least one example, and the module it comes from — and, for what the file declares, its own `///` doc |
+| **Hover** | `_`, `_i` and `_a`, which are worth zero outside a loop; the full card of every library function: signatures, what it does, every parameter, what it gives back, at least one example, and the module it comes from — and, for what the file declares, its own `///` doc |
 | **Doc comments** | `///` above a `fn`, a `let` or the `module` line, with `@param`, `@returns`, `@throws`, `@example`, `@see`, `@deprecated`; a command and a lightbulb write the template |
 | **Signature help** | the parameters of the function being written, library or your own, each with its own description; through a pipe the highlighted parameter is the one being typed, not the one the value fills |
 | **Go to definition** | on the functions of the file, and across imports inside `src/` |
 | **File outline** | module, functions (`pub` marked), bindings |
-| **Diagnostics** | import without an alias, duplicate alias, unused import, `core.*` module that does not exist, symbol not exported, library function used without importing it, unknown event, module name different from the path |
+| **Diagnostics** | import without an alias, duplicate alias, unused import, `core.*` module that does not exist, symbol not exported, library function used without importing it, unknown event, module name different from the path, a name of the language used as a variable or a parameter, the same parameter declared twice |
 | **Quick fixes** | add the missing import, remove the unused import, replace with the suggested name, rename the module |
 | **`blossom.json`** | full schema: fields, semver, dependency forms, `watchdog` |
 | **`blossomscript.json`** | full schema of the server configuration: registry, `io` roots, `http` hosts, watchdog |

@@ -154,6 +154,38 @@ const MEMBER_RE = /\b([A-Za-z_]\w*)[ \t]*\.[ \t]*([A-Za-z_]\w*)/g;
 const BARE_CALL_RE = /(^|[^\w.:'"])([a-z_]\w*)[ \t]*\(/g;
 const IDENTIFIER_RE = /[A-Za-z_]\w*/g;
 
+/**
+ * The parameters written between the parentheses of a signature, each one with the position of its
+ * name: the diagnostics have to point at the name and not at the whole list.
+ *
+ * `from` is the offset, in the file, of the first character after the open parenthesis.
+ */
+function splitParams(inside, from, at) {
+    const params = [];
+    let cursor = 0;
+    for (const raw of inside.split(',')) {
+        const piece = raw;
+        const trimmed = piece.trim();
+        if (trimmed) {
+            const variadic = trimmed.startsWith('...');
+            const [rawName, type] = trimmed.split(':').map((part) => part.trim());
+            const name = rawName.replace(/^\.\.\./, '').split('=')[0].trim();
+            if (/^[A-Za-z_]\w*$/.test(name)) {
+                const offset = from + cursor + piece.indexOf(name, piece.indexOf(trimmed));
+                params.push({
+                    name,
+                    type: type ? type.split('=')[0].trim() : null,
+                    variadic,
+                    start: at(offset),
+                    length: name.length
+                });
+            }
+        }
+        cursor += piece.length + 1;
+    }
+    return params;
+}
+
 /** Analyzes `text` and returns the index. */
 function analyze(text) {
     const masked = mask(text);
@@ -171,6 +203,7 @@ function analyze(text) {
         imports: new Map(),
         duplicateAliases: [],
         functions: [],
+        lambdas: [],
         bindings: [],
         defined: new Set(),
         members: [],
@@ -227,14 +260,7 @@ function analyze(text) {
     while ((match = FUNCTION_RE.exec(masked)) !== null) {
         const name = match[3];
         const nameOffset = match.index + match[0].indexOf(name, match[1].length);
-        const params = match[4]
-            .split(',')
-            .map((raw) => raw.trim())
-            .filter(Boolean)
-            .map((raw) => {
-                const [paramName, type] = raw.split(':').map((part) => part.trim());
-                return { name: paramName.replace(/^\.\.\./, ''), type: type || null, variadic: raw.startsWith('...') };
-            });
+        const params = splitParams(match[4], match.index + match[0].lastIndexOf('(' + match[4]) + 1, at);
         const start = at(nameOffset);
         const block = documentation(start);
         index.functions.push({
@@ -252,10 +278,9 @@ function analyze(text) {
 
     LAMBDA_RE.lastIndex = 0;
     while ((match = LAMBDA_RE.exec(masked)) !== null) {
-        for (const raw of match[2].split(',')) {
-            const name = raw.trim().replace(/^\.\.\./, '').split(/[:=]/)[0].trim();
-            if (/^[A-Za-z_]\w*$/.test(name)) index.defined.add(name);
-        }
+        const params = splitParams(match[2], match.index + match[0].lastIndexOf('(' + match[2]) + 1, at);
+        index.lambdas.push({ params, start: at(match.index + match[1].length) });
+        for (const param of params) index.defined.add(param.name);
     }
 
     ARROW_RE.lastIndex = 0;
