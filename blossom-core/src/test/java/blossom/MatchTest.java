@@ -4,7 +4,7 @@ import blossom.interpreter.Interpreter;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-/** C.4 - il costrutto match. */
+/** C.4: the match construct. */
 class MatchTest
 {
     private static String eval(String code)
@@ -53,7 +53,7 @@ class MatchTest
     @Test
     void ilSoggettoSiValutaUnaVoltaSola()
     {
-        // una lista passa per riferimento, quindi la funzione la vede davvero
+        // a list is passed by reference, so the function really sees it
         assertEquals("2", eval("import 'core.list' as list; "
                 + "let visite = []; fn conta() -> (list.put(visite, null, 1); 5); "
                 + "match(conta(), 5 -> conta(), else -> 0); list.size(visite)"));

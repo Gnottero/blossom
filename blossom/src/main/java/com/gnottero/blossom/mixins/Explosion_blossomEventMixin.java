@@ -27,10 +27,10 @@ import com.gnottero.blossom.event.Event;
 import com.gnottero.blossom.event.Fire;
 
 /**
- * {@code explosion_outcome}: cosa lo scoppio ha davvero rotto e colpito.
+ * {@code explosion_outcome}: what the blast really broke and hit.
  *
- * <p>Le entita' colpite non sono note in anticipo, quindi vengono raccolte mentre il gioco le
- * ferisce e passate all'evento alla fine.
+ * <p>The entities hit are not known in advance, so they are collected while the game hurts them and
+ * handed to the event at the end.
  */
 @Mixin(value = ServerExplosion.class, priority = 990)
 public abstract class Explosion_blossomEventMixin

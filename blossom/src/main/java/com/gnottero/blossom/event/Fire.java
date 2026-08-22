@@ -154,7 +154,7 @@ public final class Fire
                 new BlockValue(null, (ServerLevel) player.level(), pos)));
     }
 
-    /** {@code (player, block)} - il blocco e' ancora quello di prima della rottura */
+    /** {@code (player, block)}: the block is still the one from before it broke. */
     public static boolean blockBroken(Event event, ServerPlayer player, BlockPos pos, BlockState previous)
     {
         if (!event.isListened())
@@ -166,7 +166,7 @@ public final class Fire
                 new BlockValue(previous, (ServerLevel) player.level(), pos)));
     }
 
-    /** {@code (player, entity, hand)} oppure {@code (player, entity)} se la mano non c'entra */
+    /** {@code (player, entity, hand)}, or {@code (player, entity)} when the hand is irrelevant. */
     public static boolean entity(Event event, ServerPlayer player, Entity entity, @Nullable InteractionHand hand)
     {
         if (!event.isListened())
@@ -192,7 +192,7 @@ public final class Fire
                 source.getEntity() == null ? Value.NULL : new EntityValue(source.getEntity())));
     }
 
-    /** {@code (player, amount, entity)} - danno inflitto da un giocatore */
+    /** {@code (player, amount, entity)}: damage dealt by a player. */
     public static boolean dealsDamage(Event event, Entity target, float amount, DamageSource source)
     {
         if (!event.isListened() || !(source.getEntity() instanceof final ServerPlayer player))
@@ -321,18 +321,18 @@ public final class Fire
         event.fireInLevel(level, () -> List.of(new NumericValue(pos.x()), new NumericValue(pos.z())));
     }
 
-    /** {@code (entity)} - un'entita' e' comparsa nel mondo. */
+    /** {@code (entity)}: an entity appeared in the world. */
     public static void entityLoads(ServerLevel level, Entity entity)
     {
         Event.ENTITY_LOADS.fireInLevel(level, () -> List.of(new EntityValue(entity)));
     }
 
     /**
-     * Un chunk e' diventato un chunk vero: {@code chunk_generated} se e' nato adesso,
-     * {@code chunk_loaded} in ogni caso.
+     * A chunk became a real chunk: {@code chunk_generated} if it was just born,
+     * {@code chunk_loaded} in every case.
      *
-     * <p>Vanno insieme perche' nascono dallo stesso momento e dalla stessa informazione: separarli
-     * vorrebbe dire agganciare due volte lo stesso punto.
+     * <p>They go together because they come from the same moment and the same information:
+     * separating them would mean hooking the same spot twice.
      */
     public static void chunkBecameFull(ServerLevel level, ChunkPos pos, boolean generated)
     {
@@ -350,10 +350,10 @@ public final class Fire
     }
 
     /**
-     * {@code (piston, facing, blocks)} - un pistone sta per muovere dei blocchi.
+     * {@code (piston, facing, blocks)}: a piston is about to move blocks.
      *
-     * <p>L'elenco viene costruito solo se qualcuno ascolta: e' una lista di blocchi lunga quanto la
-     * struttura spinta, e in una macchina a pistoni questo succede molte volte al secondo.
+     * <p>The list is built only if someone is listening: it is a block list as long as the pushed
+     * structure, and in a piston machine this happens many times per second.
      */
     public static boolean piston(Event event, ServerLevel level, BlockPos pistonPos, Direction facing,
             List<BlockPos> toMove)
@@ -369,10 +369,10 @@ public final class Fire
     }
 
     /**
-     * {@code (previous_block, new_block)} - un blocco sta per formarsene un altro.
+     * {@code (previous_block, new_block)}: a block is about to turn into another one.
      *
-     * <p>Le due posizioni sono la stessa: quello che cambia e' lo stato, e passarli come due blocchi
-     * completi evita all'handler di doversi ricordare che il secondo argomento vale "li'".
+     * <p>The two positions are the same: what changes is the state, and passing them as two complete
+     * blocks spares the handler from remembering that the second argument means "there".
      */
     public static boolean blockForms(ServerLevel level, BlockPos pos, BlockState previous, BlockState formed)
     {
@@ -385,7 +385,7 @@ public final class Fire
                 new BlockValue(formed, level, pos)));
     }
 
-    /** {@code (pos, power, source, attacker, block_interaction, create_fire)} - prima dello scoppio */
+    /** {@code (pos, power, source, attacker, block_interaction, create_fire)}: before the blast. */
     public static boolean explosion(ServerLevel level, @Nullable Entity source, @Nullable Entity attacker, Vec3 center,
             float power, boolean createFire, String blockInteraction)
     {
@@ -403,7 +403,7 @@ public final class Fire
                 blossom.value.BooleanValue.of(createFire)));
     }
 
-    /** Come sopra, piu' {@code (blocks, entities)}: cosa lo scoppio ha effettivamente colpito. */
+    /** As above, plus {@code (blocks, entities)}: what the blast actually hit. */
     public static void explosionOutcome(ServerLevel level, @Nullable Entity source, @Nullable Entity attacker,
             Vec3 center, float power, boolean createFire, String blockInteraction, List<BlockPos> blocks,
             List<Entity> entities)
@@ -427,7 +427,7 @@ public final class Fire
                 ListValue.wrap(entities.stream().map(entity -> (Value) new EntityValue(entity)).toList())));
     }
 
-    /** {@code (pos, entity)} - il fulmine, e il cavallo scheletro che ha evocato se l'ha evocato */
+    /** {@code (pos, entity)}: the lightning, and the skeleton horse it summoned, if it summoned one. */
     public static void lightning(ServerLevel level, BlockPos pos, boolean skeletonHorse)
     {
         Event event = Event.LIGHTNING;

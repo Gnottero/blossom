@@ -159,7 +159,7 @@ public final class BlossomApi
             "property", "scoreboard_property",
             "display", "scoreboard_display");
 
-    /** {@code core.mc.team} - le squadre */
+    /** {@code core.mc.team}: teams. */
     public static final java.util.Map<String, String> TEAM = java.util.Map.of(
             "list", "team_list",
             "add", "team_add",
@@ -167,10 +167,10 @@ public final class BlossomApi
             "leave", "team_leave",
             "property", "team_property");
 
-    /** {@code core.mc.bossbar} - le barre del boss */
+    /** {@code core.mc.bossbar}: boss bars. */
     public static final java.util.Map<String, String> BOSSBAR = java.util.Map.of("bar", "bossbar");
 
-    /** {@code core.mc.nbt} - leggere e scrivere i dati grezzi del gioco */
+    /** {@code core.mc.nbt}: reading and writing the raw data of the game. */
     public static final java.util.Map<String, String> NBT = java.util.Map.of(
             "nbt", "nbt",
             "encode", "encode_nbt",
@@ -179,14 +179,14 @@ public final class BlossomApi
             "matches", "tag_matches",
             "storage", "nbt_storage");
 
-    /** {@code core.mc.text} - parlare a chi gioca */
+    /** {@code core.mc.text}: talking to the players. */
     public static final java.util.Map<String, String> TEXT = java.util.Map.of(
             "send", "print",
             "title", "display_title",
             "format", "format",
             "hud", "hud");
 
-    /** {@code core.mc.effect} - suoni e particelle */
+    /** {@code core.mc.effect}: sounds and particles. */
     public static final java.util.Map<String, String> EFFECT = java.util.Map.of(
             "sound", "sound",
             "particle", "particle",
@@ -194,16 +194,14 @@ public final class BlossomApi
             "particle_box", "particle_box",
             "post", "post_effect");
 
-    /** {@code core.mc.event} - reagire a quello che succede, e farlo succedere fra app */
     /**
-     * {@code core.mc.event} - reagire a quello che succede, e farlo succedere fra app.
+     * {@code core.mc.event}: reacting to what happens, and making it happen between apps.
      *
-     * <p>{@code on} e {@code declare} restano due funzioni e non una: {@code on} ascolta un evento
-     * del gioco, e il suo catalogo e' chiuso apposta - un nome scritto male e' un errore di
-     * caricamento con il suggerimento, invece di un handler che non scatta mai. {@code declare}
-     * fa nascere un evento dell'applicazione, che per definizione un catalogo non ce l'ha, e fa
-     * coppia con {@code emit}. Fonderle vorrebbe dire perdere il controllo sui nomi, che e' la cosa
-     * piu' utile delle due.
+     * <p>{@code on} and {@code declare} stay two functions and not one: {@code on} listens to a game
+     * event, and its catalog is closed on purpose, so a misspelled name is a load error with a
+     * suggestion instead of a handler that never fires. {@code declare} brings an application event
+     * into existence, which by definition has no catalog, and pairs with {@code emit}. Merging them
+     * would mean losing the control over names, which is the more useful half of the two.
      */
     public static final java.util.Map<String, String> EVENT = java.util.Map.of(
             "on", "on",
@@ -216,25 +214,26 @@ public final class BlossomApi
             "schedule", "schedule");
 
     /**
-     * I simboli che il layer di gioco aggiunge a {@code core.io}.
+     * The symbols the game layer adds to {@code core.io}.
      *
-     * <p>Non e' un modulo suo: leggere e scrivere file e' un lavoro solo, e chi lo fa lo importa da
-     * un posto solo. Queste tre stanno qui e non in {@code blossom-core} perche' NBT e' un formato
-     * binario di Minecraft e un datapack e' un concetto del gioco - non perche' siano un'altra
-     * categoria di operazione. C'era un {@code core.mc.file} e non c'e' piu': era un secondo modo di
-     * aprire un file, e un secondo modo di aprire un file e' una domanda in piu' ad ogni chiamata.
+     * <p>Not a module of its own: reading and writing files is one job, and whoever does it imports
+     * it from one place. These three live here and not in {@code blossom-core} because NBT is a
+     * Minecraft binary format and a datapack is a game concept, not because they are another
+     * category of operation. There used to be a {@code core.mc.file} and there is not any more: it
+     * was a second way to open a file, and a second way to open a file is one more question at every
+     * call.
      */
     public static final java.util.Map<String, String> IO = java.util.Map.of(
             "read_nbt", "read_nbt",
             "write_nbt", "write_nbt",
             "create_datapack", "create_datapack");
 
-    /** {@code core.mc.data} - scrivere il contenuto di gioco di un pack, generandolo */
+    /** {@code core.mc.data}: writing the game content of a pack by generating it. */
     public static final java.util.Map<String, String> DATA = java.util.Map.of(
             "write", "data_write",
             "write_text", "data_write_text");
 
-    /** {@code core.mc.system} - il server visto da fuori: comandi, statistiche, diagnostica */
+    /** {@code core.mc.system}: the server seen from outside: commands, statistics, diagnostics. */
     public static final java.util.Map<String, String> SYSTEM = java.util.Map.of(
             "info", "system_info",
             "mob_counts", "get_mob_counts",
@@ -247,10 +246,10 @@ public final class BlossomApi
     }
 
     /**
-     * Dichiara i moduli del layer di gioco al catalogo del core.
+     * Declares the modules of the game layer to the core catalog.
      *
-     * <p>Va chiamata all'avvio, prima che qualunque script venga caricato: il resolver degli import
-     * consulta il catalogo mentre legge il preambolo, cioe' prima che le funzioni vengano registrate.
+     * <p>To be called at startup, before any script is loaded: the import resolver consults the
+     * catalog while reading the preamble, that is before the functions get registered.
      */
     public static void declareModules()
     {
@@ -272,30 +271,29 @@ public final class BlossomApi
         StdLib.registerModule("core.mc.event", EVENT);
         StdLib.registerModule("core.mc.system", SYSTEM);
         StdLib.registerModule("core.mc.data", DATA);
-        // non un modulo nuovo: i file si aprono da 'core.io', anche quando l'implementazione
-        // ha bisogno di Minecraft
+        // not a new module: files are opened from 'core.io', even when the implementation needs
+        // Minecraft
         StdLib.extendModule("core.io", IO);
         declareValueTypes();
     }
 
     /**
-     * Rende i tipi del gioco scrivibili nelle firme, es. {@code fn colpisci(e: entity, p: block)}.
+     * Makes the game types writable in signatures, e.g. {@code fn hit(e: entity, p: block)}.
      *
-     * <p>Il core non sa che esistono: sa solo confrontare un nome con quello che il valore dice di
-     * essere. Registrarli qui è tutto quello che serve perché il controllo dei parametri valga anche
-     * per loro.
+     * <p>The core does not know they exist: it only compares a name with what the value says it is.
+     * Registering them here is all it takes for parameter checking to cover them too.
      */
     private static void declareValueTypes()
     {
-        // solo i tipi che esistono davvero: dichiarare un nome che nessun valore restituisce
-        // significherebbe offrire un vincolo che non passa mai
+        // only the types that really exist: declaring a name no value ever returns would offer a
+        // constraint that never passes
         for (String type : new String[] {"entity", "block", "text", "nbt", "screen"})
         {
             blossom.value.ValueTypes.register(type, type);
         }
     }
 
-    /** Registra su {@code expression} tutta l'API di gioco, per conto dell'app {@code appName}. */
+    /** Registers the whole game API on {@code expression}, on behalf of app {@code appName}. */
     public static Expression apply(Expression expression, String appName)
     {
         com.gnottero.blossom.api.WorldAccess.apply(expression);

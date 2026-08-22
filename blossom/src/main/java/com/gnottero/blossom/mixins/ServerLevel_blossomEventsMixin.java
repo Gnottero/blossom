@@ -38,7 +38,7 @@ import net.minecraft.world.phys.Vec3;
 import com.gnottero.blossom.event.Event;
 import com.gnottero.blossom.event.Fire;
 
-/** Gli eventi che appartengono al mondo: fulmini, esplosioni e chunk scaricati. */
+/** The events belonging to the world: lightning, explosions and unloaded chunks. */
 @Mixin(ServerLevel.class)
 public abstract class ServerLevel_blossomEventsMixin extends Level
 {

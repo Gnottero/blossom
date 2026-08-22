@@ -8,7 +8,7 @@ public class Token implements Comparable<Token> {
         FUNCTION(true, false), OPERATOR(true, false), UNARY_OPERATOR(true, false),
         VARIABLE(false, false), CONSTANT(false, true),
         LITERAL(false, true), HEX_LITERAL(false, true), STRINGPARAM(false, true),
-        /** una stringa fra doppi apici, che il tokenizer espande nei pezzi che la compongono */
+        /** a double quoted string, which the tokenizer expands into the pieces it is made of */
         INTERPOLATION(false, true),
         OPEN_PAREN(false, true), COMMA(false, true), CLOSE_PAREN(false, true), MARKER(false, true);
 
@@ -41,11 +41,11 @@ public class Token implements Comparable<Token> {
     public Expression.@Nullable ExpressionNode node = null;
 
     /**
-     * Se questa e' la chiamata scritta dopo un valore, {@code f()(2)} o {@code (fn(x) -> x)(2)}.
+     * Whether this is the call written after a value, {@code f()(2)} or {@code (fn(x) -> x)(2)}.
      *
-     * <p>Il token e' un {@code call} sintetico, ma i suoi argomenti non sono tutti scritti fra le
-     * parentesi: il primo - la funzione da chiamare - e' il valore che sta prima, e va ripescato
-     * dallo stack invece che dalla lista dei parametri.
+     * <p>The token is a synthetic {@code call}, but its arguments are not all written between the
+     * parentheses: the first one, the function to call, is the value sitting before it, and has to
+     * be pulled off the stack instead of the parameter list.
      */
     public boolean postfixCall = false;
 

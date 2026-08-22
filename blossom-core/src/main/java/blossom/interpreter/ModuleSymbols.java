@@ -7,20 +7,21 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.jspecify.annotations.Nullable;
 
 /**
- * La tabella dei simboli di un modulo: cosa dichiara, cosa esporta, e con che alias vede gli altri.
+ * The symbol table of a module: what it declares, what it exports, and the aliases it sees the
+ * others under.
  *
- * <p>Sta accanto ai valori (che vivono in {@code ModuleData}) e non dentro di essi perché risponde a
- * domande diverse: non "quanto vale {@code count}" ma "{@code count} è pubblico? è riassegnabile?
- * l'alias {@code vec} a che modulo punta?". Sono domande che si fanno a caricamento, una volta, e le
- * risposte non cambiano più - quindi qui non c'è nessun costo per chiamata a runtime.
+ * <p>It sits beside the values (which live in {@code ModuleData}) and not inside them because it
+ * answers different questions: not "what is {@code count} worth" but "is {@code count} public? is it
+ * reassignable? which module does the alias {@code vec} point to?". Those are load time questions,
+ * asked once, and the answers never change, so there is no per call run time cost here.
  */
 public final class ModuleSymbols
 {
-    /** alias dichiarato negli import → nome del modulo di destinazione */
+    /** alias declared in the imports to the name of the target module */
     private final Map<String, String> aliases = new ConcurrentHashMap<>();
-    /** i simboli marcati {@code pub}: funzioni e binding insieme, perché lo spazio dei nomi è uno solo */
+    /** the symbols marked {@code pub}: functions and bindings together, since the namespace is one */
     private final Set<String> exported = ConcurrentHashMap.newKeySet();
-    /** i binding di modulo dichiarati con {@code let}, e se sono {@code mut} */
+    /** the module bindings declared with {@code let}, and whether they are {@code mut} */
     private final Map<String, Boolean> bindings = new ConcurrentHashMap<>();
 
     public void declareAlias(String alias, String moduleName)
@@ -54,9 +55,9 @@ public final class ModuleSymbols
     }
 
     /**
-     * Registra un binding di modulo.
+     * Registers a module binding.
      *
-     * @param mutable se dichiarato {@code let mut}, cioè riassegnabile dopo l'inizializzazione
+     * @param mutable whether declared {@code let mut}, that is reassignable after initialization
      */
     public void declareBinding(String name, boolean mutable)
     {
@@ -68,7 +69,7 @@ public final class ModuleSymbols
         return bindings.containsKey(name);
     }
 
-    /** @return {@code true} se il binding esiste ed è riassegnabile */
+    /** @return {@code true} if the binding exists and is reassignable */
     public boolean isMutableBinding(String name)
     {
         return Boolean.TRUE.equals(bindings.get(name));

@@ -29,8 +29,8 @@ import com.gnottero.blossom.event.Fire;
 import blossom.value.StringValue;
 
 /**
- * Gli eventi che nascono da un pacchetto del client: salti, sneak, sprint, click, oggetti lasciati
- * cadere, ricette scelte, comandi scritti.
+ * The events born from a client packet: jumps, sneaking, sprinting, clicks, dropped items, chosen
+ * recipes, typed commands.
  */
 @Mixin(ServerGamePacketListenerImpl.class)
 public class ServerGamePacketListenerImpl_blossomEventsMixin

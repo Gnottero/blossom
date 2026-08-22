@@ -21,42 +21,42 @@ import blossom.interpreter.ScriptHost;
 import blossom.value.Value;
 
 /**
- * Gli script caricati su un server, e la cartella da cui vengono.
+ * The scripts loaded on a server, and the directory they come from.
  *
- * <p>Un'app è un file sotto {@code <mondo>/blossom/}, caricato in un proprio {@link Interpreter}:
- * due app non condividono nulla, che è il punto di partenza del sistema a moduli della Fase 3.
+ * <p>An app is a file under {@code <world>/blossom/}, loaded in its own {@link Interpreter}: two
+ * apps share nothing, which is the starting point of the module system.
  */
 public class ScriptRuntime
 {
-    /** lo stesso logger del mod: le classi del core lo cercano qui */
+    /** the same logger as the mod: core classes look for it here */
     public static final org.slf4j.Logger LOG = BlossomMod.LOG;
 
-    /** dove vivono gli script di un mondo */
+    /** where the scripts of a world live */
     public static final String SCRIPT_DIRECTORY = "blossom";
-    /** un'app in un file solo */
+    /** an app in a single file */
     private static final String SCRIPT_EXTENSION = blossom.project.ModuleName.EXTENSION;
-    /** una libreria in un file solo: si importa, non si carica */
+    /** a library in a single file: it is imported, not loaded */
     private static final String LIBRARY_EXTENSION = blossom.project.ModuleName.LIBRARY_EXTENSION;
 
     /**
-     * Lo stato del tick forzato da {@code game_tick()}: quando e' partito il tick corrente e quanto
-     * a fondo e' annidata la ricorsione. Sono qui e non in una variabile locale perche' un tick
-     * forzato puo' eseguire codice che ne forza un altro.
+     * The state of the tick forced by {@code game_tick()}: when the current tick started and how
+     * deep the recursion is nested. They live here and not in a local variable because a forced
+     * tick can run code that forces another one.
      */
     public long tickStart = 0L;
     public int tickDepth = 0;
-    /** alzato quando il server sta chiudendo: gli script in corso devono fermarsi */
+    /** raised when the server is shutting down: running scripts have to stop */
     public volatile boolean stopAll = false;
 
     /**
-     * I limiti di esecuzione applicati alle app che non ne dichiarano di propri
-     * (PIANO_LINGUAGGIO.md §9). È il watchdog: senza, uno script che cicla dentro un evento ferma il
-     * tick e con lui il server.
+     * The execution limits applied to apps that declare none of their own
+     * (PIANO_LINGUAGGIO.md §9). This is the watchdog: without it, a script looping inside an event
+     * stops the tick and the server with it.
      */
     public volatile blossom.interpreter.ExecutionBudget.Policy defaultWatchdog =
             blossom.interpreter.ExecutionBudget.Policy.DEFAULT;
 
-    /** le chiamate rimandate a un tick futuro da {@code schedule} */
+    /** the calls deferred to a future tick by {@code schedule} */
     public final com.gnottero.blossom.event.Scheduler scheduler = new com.gnottero.blossom.event.Scheduler();
 
     private final MinecraftServer server;
@@ -77,11 +77,11 @@ public class ScriptRuntime
     }
 
     /**
-     * Crea le cartelle delle radici scrivibili di {@code core.io}.
+     * Creates the directories of the writable roots of {@code core.io}.
      *
-     * <p>Una radice che non esiste non e' "vuota": il controllo sui link simbolici deve risolvere il
-     * percorso reale della radice, e su una cartella che non c'e' fallisce. Le radici di default -
-     * {@code data} e {@code shared} - non le crea nessuno prima del primo avvio, quindi le crea qui.
+     * <p>A root that does not exist is not "empty": the symlink check has to resolve the real path
+     * of the root, and that fails on a missing directory. Nobody creates the default roots,
+     * {@code data} and {@code shared}, before the first start, so they are created here.
      */
     private void createWritableRoots()
     {
@@ -103,47 +103,47 @@ public class ScriptRuntime
     }
 
     /**
-     * Il registry da cui prendere le dipendenze che non stanno già su disco, o {@code null} se su
-     * questo server non ne è configurato nessuno.
+     * The registry to fetch dependencies that are not already on disk from, or {@code null} when
+     * none is configured on this server.
      *
-     * <p>Spento per default apposta: è l'unico pezzo del sistema che può parlare con la rete e far
-     * girare su un server codice che nessuno ha copiato lì a mano. Accenderlo è una scelta
-     * dell'amministratore, non un default.
+     * <p>Off by default on purpose: it is the only part of the system that can talk to the network
+     * and run code on a server that nobody copied there by hand. Turning it on is an administrator
+     * decision, not a default.
      */
     public volatile blossom.project.@org.jspecify.annotations.Nullable PackRegistry registry = null;
 
-    /** la configurazione del server: registry, confini di {@code core.io} e {@code core.http}, watchdog */
+    /** the server configuration: registry, {@code core.io} and {@code core.http} boundaries, watchdog */
     private final ServerConfig config;
 
-    /** Le cartelle del mondo a cui {@code core.io} puo' arrivare su questo server. */
+    /** The world directories {@code core.io} can reach on this server. */
     public blossom.language.IoRoots ioRoots()
     {
         return config.ioRoots();
     }
 
-    /** Gli host a cui {@code core.http} puo' parlare su questo server. */
+    /** The hosts {@code core.http} can talk to on this server. */
     public blossom.language.HttpAccess httpAccess()
     {
         return config.httpAccess();
     }
 
-    /** Cosa c'è intorno a un pack: gli altri pack del mondo e, se configurato, il registry. */
+    /** What surrounds a pack: the other packs of the world and, if configured, the registry. */
     public blossom.project.PackEnvironment packEnvironment()
     {
         return new WorldPacks(scriptDirectory(), registry);
     }
 
-    /** Il server su cui gira questo runtime. */
+    /** The server this runtime runs on. */
     public MinecraftServer server()
     {
         return server;
     }
 
     /**
-     * La cartella degli script, creata alla prima richiesta.
+     * The script directory, created on first request.
      *
-     * <p>È {@code <mondo>/blossom/}, a meno che la configurazione del server non dichiari una
-     * {@code root} propria: in quel caso comanda quella (vedi {@link ServerConfig}).
+     * <p>It is {@code <world>/blossom/}, unless the server configuration declares a {@code root} of
+     * its own: in that case that one wins (see {@link ServerConfig}).
      */
     public Path scriptDirectory()
     {
@@ -160,8 +160,8 @@ public class ScriptRuntime
     }
 
     /**
-     * Valuta del codice al volo, senza caricarlo come app: ogni chiamata parte da un interprete
-     * pulito, perché non c'è nessuno stato che abbia senso conservare tra due comandi diversi.
+     * Evaluates code on the fly, without loading it as an app: every call starts from a clean
+     * interpreter, because no state is worth keeping between two different commands.
      */
     public Value runOneShot(CommandSourceStack source, String code)
     {
@@ -170,7 +170,7 @@ public class ScriptRuntime
     }
 
     /**
-     * Carica (o ricarica) l'app {@code name} dal file {@code <mondo>/blossom/<name>.bs}, eseguendone
+     * Loads (or reloads) app {@code name} from file {@code <world>/blossom/<name>.bs}, running its
      * il codice a livello di modulo.
      */
     public Value load(CommandSourceStack source, String name) throws IOException
@@ -190,8 +190,8 @@ public class ScriptRuntime
         }
         Module module = Module.fromPath(file);
         boolean reloading = fireReloading(module.name());
-        // un ricaricamento parte pulito: gli handler e i task della versione precedente non devono
-        // sopravvivere alla loro app
+        // a reload starts clean: handlers and tasks of the previous version must not outlive their
+        // app
         com.gnottero.blossom.event.EventBus.unregisterApp(module.name());
         scheduler.unregisterApp(module.name());
         Interpreter interpreter = newInterpreter(module);
@@ -211,13 +211,13 @@ public class ScriptRuntime
     }
 
     /**
-     * Genera {@code app_reloading} se quell'app e' gia' caricata, prima di smontarla.
+     * Fires {@code app_reloading} if that app is already loaded, before tearing it down.
      *
-     * <p>Va chiamata mentre gli handler della versione vecchia ci sono ancora: e' l'unico momento in
-     * cui l'app che sta per sparire puo' salvare qualcosa. Un primo caricamento non e' un
-     * ricaricamento e non genera niente: non c'e' nessuna versione precedente di cui parlare.
+     * <p>It has to be called while the handlers of the old version are still there: that is the only
+     * moment the app about to disappear can save anything. A first load is not a reload and fires
+     * nothing, because there is no previous version to talk about.
      *
-     * @return se era davvero un ricaricamento, cioe' se anche {@code app_reloaded} andra' generato
+     * @return whether it really was a reload, that is whether {@code app_reloaded} will fire too
      */
     private boolean fireReloading(String appName)
     {
@@ -230,7 +230,7 @@ public class ScriptRuntime
         return true;
     }
 
-    /** Genera {@code app_reloaded} dopo che il codice nuovo ha girato, se era un ricaricamento. */
+    /** Fires {@code app_reloaded} after the new code has run, if it was a reload. */
     private void fireReloaded(String appName, boolean reloading)
     {
         if (reloading)
@@ -241,8 +241,8 @@ public class ScriptRuntime
     }
 
     /**
-     * Come {@link #load}, ma rifacendo la scelta delle versioni delle dipendenze invece di riusare
-     * quella scritta in {@code blossom.lock}.
+     * Like {@link #load}, but redoing the dependency version resolution instead of reusing the one
+     * written in {@code blossom.lock}.
      */
     public Value update(CommandSourceStack source, String name) throws IOException
     {
@@ -257,11 +257,11 @@ public class ScriptRuntime
     }
 
     /**
-     * Carica un pack: una cartella con dentro {@code blossom.json}, il suo {@code src/} e tutti i
-     * moduli che l'entrypoint importa.
+     * Loads a pack: a directory holding {@code blossom.json}, its {@code src/} and every module the
+     * entrypoint imports.
      *
-     * <p>Manifesto mancante, modulo mancante, nome che non combacia col percorso e import ciclico
-     * sono errori di caricamento: l'app o entra intera o non entra.
+     * <p>A missing manifest, a missing module, a name that does not match its path and a cyclic
+     * import are load errors: the app either enters whole or not at all.
      */
     private Value loadPack(CommandSourceStack source, String appName, Path root, boolean refreshLock) throws IOException
     {
@@ -270,20 +270,20 @@ public class ScriptRuntime
         scheduler.unregisterApp(appName);
         try
         {
-            // l'app entra nell'elenco prima di girare: il codice a livello di modulo puo' gia'
-            // registrare eventi, e chi li registra deve trovare la propria app.
+            // the app enters the list before running: module level code can already register
+            // events, and whoever registers them has to find their own app.
             //
-            // Va messa con 'put' e non con 'putIfAbsent': a un ricaricamento la voce c'e' gia', ed e'
-            // quella dell'app vecchia. Con 'putIfAbsent' gli event.on(...) del preambolo avrebbero
-            // legato i loro handler all'interprete di prima, mentre la funzione registrata viene dai
-            // moduli nuovi: al primo evento il vecchio host non riconosce il modulo e la chiamata
-            // muore con "Module structure changed for the app".
+            // It goes in with 'put' and not 'putIfAbsent': on a reload the entry is already there,
+            // and it is the old app's. With 'putIfAbsent' the event.on(...) calls of the preamble
+            // would bind their handlers to the previous interpreter, while the registered function
+            // comes from the new modules: on the first event the old host does not recognise the
+            // module and the call dies with "Module structure changed for the app".
             Interpreter interpreter = Interpreter.forProject(root,
                     expression -> BlossomApi.apply(expression, appName),
                     host ->
                     {
                         apps.put(appName, Interpreter.of(host));
-                        // i default del server; se il manifesto dichiara i suoi, li sovrascrive subito dopo
+                        // the server defaults; if the manifest declares its own, it overrides them right after
                         host.setWatchdog(defaultWatchdog);
                         applyAccess(host);
                         return new ScriptContext(host, source);
@@ -302,16 +302,16 @@ public class ScriptRuntime
     }
 
     /**
-     * Carica i pack che nel loro manifesto hanno {@code "autoload": true}.
+     * Loads the packs whose manifest says {@code "autoload": true}.
      *
-     * <p>Viene chiamata appena il mondo è aperto e prima che {@code server_starts} venga generato:
-     * un'app che parte da sola deve poter ascoltare anche quell'evento, che altrimenti sarebbe già
-     * passato quando lei arriva.
+     * <p>Called as soon as the world is open and before {@code server_starts} fires: an app that
+     * starts on its own must be able to listen to that event too, which would otherwise be gone by
+     * the time it arrives.
      *
-     * <p>Un pack che non carica non ferma gli altri: l'errore va nel log e in chat come qualunque
-     * altro errore di un'app, e il resto del mondo parte lo stesso.
+     * <p>A pack that fails to load does not stop the others: the error goes to the log and to chat
+     * like any other app error, and the rest of the world starts anyway.
      *
-     * @return i nomi delle app caricate
+     * @return the names of the loaded apps
      */
     public List<String> loadAutoloadApps(CommandSourceStack source)
     {
@@ -321,7 +321,7 @@ public class ScriptRuntime
             Path pack = scriptDirectory().resolve(name);
             if (!Files.isRegularFile(pack.resolve(blossom.project.ProjectManifest.FILE_NAME)))
             {
-                // un'app in un file solo non ha manifesto, quindi non ha modo di chiedere l'autoload
+                // a single file app has no manifest, so it has no way to ask for autoload
                 continue;
             }
             try
@@ -351,7 +351,7 @@ public class ScriptRuntime
         return loaded;
     }
 
-    /** Esegue {@code code} dentro l'app già caricata {@code name}, che ne vede funzioni e globali. */
+    /** Runs {@code code} inside the loaded app {@code name}, seeing its functions and globals. */
     public Value runIn(CommandSourceStack source, String name, String code)
     {
         Interpreter interpreter = apps.get(name.toLowerCase(Locale.ROOT));
@@ -365,9 +365,9 @@ public class ScriptRuntime
     // --- profiling (PIANO_LINGUAGGIO.md §9) ---
 
     /**
-     * Esegue {@code code} misurando dove va il tempo, funzione per funzione.
+     * Runs {@code code} measuring where the time goes, function by function.
      *
-     * @param name l'app in cui eseguire, o {@code null} per un interprete pulito
+     * @param name the app to run in, or {@code null} for a clean interpreter
      */
     public blossom.interpreter.Profiler profileRun(CommandSourceStack source, @org.jspecify.annotations.Nullable String name, String code)
     {
@@ -398,15 +398,15 @@ public class ScriptRuntime
     }
 
     /**
-     * Accende la misura su un'app già caricata: da qui in poi conta anche quello che l'app fa da
-     * sola, cioè i suoi handler di evento, che sono il motivo per cui questo comando esiste.
+     * Turns measurement on for an app already loaded: from here on it also counts what the app does
+     * on its own, that is its event handlers, which are the reason this command exists.
      */
     public blossom.interpreter.Profiler startProfiling(String name)
     {
         return requireApp(name).host().startProfiling();
     }
 
-    /** Chiude la misura aperta da {@link #startProfiling} e restituisce cosa ha visto. */
+    /** Closes the measurement opened by {@link #startProfiling} and returns what it saw. */
     public blossom.interpreter.Profiler stopProfiling(String name)
     {
         ScriptHost host = requireApp(name).host();
@@ -442,11 +442,11 @@ public class ScriptRuntime
     }
 
     /**
-     * I nomi delle app presenti su disco, caricate o no: sia i file singoli {@code <nome>.bs} sia i
-     * pack, cioè le cartelle con dentro un {@code blossom.json}.
+     * The names of the apps on disk, loaded or not: both single files {@code <name>.bs} and packs,
+     * that is directories holding a {@code blossom.json}.
      *
-     * <p>La cartella viene riletta ad ogni chiamata apposta: un pack copiato nel mondo a server
-     * acceso dev'essere caricabile subito, senza riavvii.
+     * <p>The directory is reread on every call on purpose: a pack copied into the world while the
+     * server runs has to be loadable right away, with no restart.
      */
     public List<String> availableApps()
     {
@@ -465,7 +465,7 @@ public class ScriptRuntime
         }
     }
 
-    /** @return il nome dell'app che sta in {@code entry}, o {@code null} se non è un'app */
+    /** @return the name of the app living in {@code entry}, or {@code null} if it is not an app */
     private @org.jspecify.annotations.Nullable String appNameOf(Path entry)
     {
         String fileName = entry.getFileName().toString();
@@ -473,7 +473,7 @@ public class ScriptRuntime
         {
             return Files.isRegularFile(entry.resolve(blossom.project.ProjectManifest.FILE_NAME)) ? fileName : null;
         }
-        // le librerie (.bsl) si importano, non si caricano: non sono app
+        // libraries (.bsl) are imported, not loaded: they are not apps
         if (fileName.endsWith(LIBRARY_EXTENSION) || !fileName.endsWith(SCRIPT_EXTENSION))
         {
             return null;
@@ -489,7 +489,7 @@ public class ScriptRuntime
         apps.clear();
     }
 
-    /** L'interprete di un'app caricata, o {@code null} se non e' caricata. */
+    /** The interpreter of a loaded app, or {@code null} if it is not loaded. */
     public Interpreter interpreterOf(String name)
     {
         return apps.get(name.toLowerCase(Locale.ROOT));
@@ -511,7 +511,7 @@ public class ScriptRuntime
         return interpreter;
     }
 
-    /** Dichiara all'host i confini di questo server: cartelle per {@code core.io}, host per {@code core.http}. */
+    /** Declares this server's boundaries to the host: directories for {@code core.io}, hosts for {@code core.http}. */
     private void applyAccess(ScriptHost host)
     {
         blossom.interpreter.BlossomServer scriptServer = (blossom.interpreter.BlossomServer) host.scriptServer();
@@ -527,12 +527,12 @@ public class ScriptRuntime
     }
 
     /**
-     * I limiti per il codice che un utente ha lanciato a mano.
+     * The limits for code a user launched by hand.
      *
-     * <p>Un comando o un caricamento possono legittimamente macinare a lungo - chi ha premuto invio
-     * sta aspettando, non c'è nessun evento di gioco che resta appeso - quindi la soglia è molto più
-     * larga di quella dentro il tick. Un'app che ha dichiarato i propri limiti però comanda: se li ha
-     * scritti nel manifesto, li vuole anche qui.
+     * <p>A command or a load may legitimately grind for a while, since whoever pressed enter is
+     * waiting and no game event is left hanging, so the threshold is much wider than the one inside
+     * the tick. An app that declared its own limits wins though: if it wrote them in the manifest,
+     * it wants them here too.
      */
     private blossom.interpreter.ExecutionBudget.Policy interactiveWatchdog(ScriptHost host)
     {

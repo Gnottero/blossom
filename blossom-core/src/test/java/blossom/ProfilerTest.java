@@ -14,12 +14,11 @@ import blossom.interpreter.Interpreter;
 import blossom.interpreter.Profiler;
 
 /**
- * Il profiler per funzione (PIANO_LINGUAGGIO.md §9): quello che sta dietro
- * {@code /blossom profile}.
+ * The per function profiler (PIANO_LINGUAGGIO.md §9): what sits behind {@code /blossom profile}.
  *
- * <p>I test verificano cosa il profiler <em>attribuisce</em>, non quanti millisecondi misura: i
- * tempi assoluti dipendono dalla macchina e un test che li controlla è un test che fallisce a caso.
- * L'unica relazione fra tempi che si può affermare sempre è che il proprio non supera il totale.
+ * <p>The tests check what the profiler <em>attributes</em>, not how many milliseconds it measures:
+ * absolute times depend on the machine and a test checking them is a test that fails at random. The
+ * only relation between times that always holds is that self time never exceeds total time.
  */
 class ProfilerTest
 {
@@ -45,7 +44,7 @@ class ProfilerTest
     {
         Interpreter interpreter = Interpreter.standalone();
         Profiler profiler = interpreter.host().startProfiling();
-        // 'wrapper' non fa nulla di suo: tutto il suo tempo e' quello di 'work'
+        // 'wrapper' does nothing of its own: all of its time is 'work' time
         interpreter.eval("work() -> c_for(i = 0, i < 20000, i += 1, null);"
                 + "wrapper() -> work();"
                 + "wrapper()");
@@ -69,8 +68,8 @@ class ProfilerTest
 
         Profiler.Entry entry = entryFor(profiler, "f").orElseThrow();
         assertEquals(51, entry.calls());
-        // il totale di una funzione ricorsiva somma frame annidati, quindi puo' superare la durata
-        // della misura; il tempo proprio no, ed e' per questo che il rapporto si ordina su quello
+        // the total of a recursive function sums nested frames, so it can exceed the measurement
+        // duration; self time cannot, which is why the report is sorted on it
         assertTrue(entry.selfNanos() <= profiler.elapsedNanos(),
                 entry.selfNanos() + " > " + profiler.elapsedNanos());
     }

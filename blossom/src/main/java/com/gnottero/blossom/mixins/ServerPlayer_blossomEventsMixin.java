@@ -28,7 +28,7 @@ import com.gnottero.blossom.event.EntityEvents;
 import com.gnottero.blossom.event.Event;
 import com.gnottero.blossom.event.Fire;
 
-/** Statistiche, morte, cambio dimensione e fine dell'uso di un oggetto. */
+/** Statistics, death, dimension change and the end of using an item. */
 @Mixin(ServerPlayer.class)
 public abstract class ServerPlayer_blossomEventsMixin extends Player
 {
@@ -90,7 +90,7 @@ public abstract class ServerPlayer_blossomEventsMixin extends Player
             return;
         }
         ServerLevel destination = transition.newLevel();
-        // finire la partita porta all'overworld senza una posizione di arrivo sensata
+        // finishing the game leads to the overworld with no sensible arrival position
         Vec3 to = wonGame && blossom$previousDimension == Level.END && destination.dimension() == Level.OVERWORLD
                 ? null
                 : position();

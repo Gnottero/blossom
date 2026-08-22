@@ -23,7 +23,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import com.gnottero.blossom.event.Event;
 import com.gnottero.blossom.event.Fire;
 
-/** Rottura di un blocco e interazione con un blocco, dal lato del gioco che decide davvero. */
+/** Breaking a block and interacting with a block, from the game side that really decides. */
 @Mixin(ServerPlayerGameMode.class)
 public abstract class ServerPlayerGameMode_blossomEventsMixin
 {
@@ -42,7 +42,7 @@ public abstract class ServerPlayerGameMode_blossomEventsMixin
     {
         if (Fire.blockBroken(Event.PLAYER_BREAKS_BLOCK, player, pos, state))
         {
-            // il client crede gia' di averlo rotto: va rimandato indietro lo stato vero
+            // the client already believes it broke: the real state has to be sent back
             this.level.sendBlockUpdated(pos, state, state, 3);
             cir.setReturnValue(false);
         }

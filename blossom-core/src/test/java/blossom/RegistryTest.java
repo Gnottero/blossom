@@ -34,7 +34,7 @@ import blossom.project.PackEnvironment;
 import blossom.project.PackRegistry;
 import blossom.project.Version;
 
-/** Registry (cartella e http), lock file e integrità. */
+/** Registry (directory and http), lock file and integrity. */
 class RegistryTest
 {
     private record Env(@Nullable PackRegistry registry) implements PackEnvironment
@@ -61,8 +61,8 @@ class RegistryTest
     }
 
     /**
-     * @param mainImports quello che l'entrypoint importa: un modulo che nessuno importa non viene
-     *                    caricato, quindi una dipendenza va nominata da qualche parte per esistere
+     * @param mainImports what the entrypoint imports: a module nobody imports is not loaded, so a
+     *                    dependency has to be named somewhere to exist
      */
     private static void writeProject(Path root, String name, String version, String extra, String moduleBody,
             String mainImports) throws IOException
@@ -124,7 +124,7 @@ class RegistryTest
         assertEquals(Version.parse("1.0.0"), lock.of("vector").version());
         assertEquals("registry", lock.of("vector").source());
 
-        // esce una 1.4.0, ma il lock ha gia' deciso: senza aggiornarlo, l'app non cambia da sola
+        // a 1.4.0 comes out, but the lock already decided: without updating it, the app stays put
         writeProject(registryRoot.resolve("vector/1.4.0"), "vector", "1.4.0", "", "pub fn value() -> 140;\n");
         assertEquals("100", load(app, registry).eval("import \"vector/v\" as v; v.value()").getString());
     }
@@ -157,7 +157,7 @@ class RegistryTest
         writeProject(app, "app", "0.1.0", ", \"dependencies\": {\"vector\": {\"version\": \"^1.0.0\"}}", "", VECTOR_IMPORT);
         load(app, registry);
 
-        // il vincolo cambia apposta: il lock non deve impedire il cambiamento voluto
+        // the constraint changes deliberately: the lock must not prevent the intended change
         writeProject(app, "app", "0.1.0", ", \"dependencies\": {\"vector\": {\"version\": \"^2.0.0\"}}", "", VECTOR_IMPORT);
         assertEquals("200", load(app, registry).eval("import \"vector/v\" as v; v.value()").getString());
         assertEquals(Version.parse("2.0.0"), LockFile.read(app).of("vector").version());
@@ -175,8 +175,8 @@ class RegistryTest
         writeProject(app, "app", "0.1.0", ", \"dependencies\": {\"vector\": {\"version\": \"^1.0.0\"}}", "", VECTOR_IMPORT);
         load(app, registry);
 
-        // qualcuno tocca la copia pubblicata senza cambiare la versione: e' esattamente quello che
-        // l'impronta serve a vedere
+        // someone touches the published copy without changing the version: exactly what the
+        // fingerprint is there to catch
         Files.writeString(published.resolve("src/v.bs"), "module v;\n\npub fn value() -> 666;\n");
         CompatibilityError error = assertThrows(CompatibilityError.class, () -> load(app, registry));
         assertTrue(error.getMessage().contains("content changed"), error.getMessage());
@@ -185,7 +185,7 @@ class RegistryTest
     @Test
     void aPathDependencyIsNotLocked(@TempDir Path tmp) throws IOException
     {
-        // bloccarla vorrebbe dire far fallire il progetto ad ogni salvataggio della cartella accanto
+        // locking it would make the project fail on every save of the directory next door
         writeProject(tmp.resolve("utils"), "utils", "1.0.0", "", "pub fn value() -> 1;\n");
         Path app = tmp.resolve("app");
         writeProject(app, "app", "0.1.0", ", \"dependencies\": {\"utils\": {\"path\": \"../utils\"}}", "",
@@ -249,8 +249,8 @@ class RegistryTest
         HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         server.createContext("/index.json", exchange ->
         {
-            // l'impronta dichiarata non e' quella dell'archivio servito: e' il caso di chi sta in
-            // mezzo alla connessione e sostituisce il file
+            // the declared fingerprint is not the served archive's: the case of someone sitting in
+            // the middle of the connection and swapping the file
             byte[] body = ("{\"vector\": {\"1.0.0\": {\"url\": \"v.zip\", \"sha256\": \"" + "00".repeat(32) + "\"}}}")
                     .getBytes(StandardCharsets.UTF_8);
             exchange.sendResponseHeaders(200, body.length);
@@ -308,7 +308,7 @@ class RegistryTest
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try (ZipOutputStream zip = new ZipOutputStream(out))
         {
-            // ordinati: uno zip che cambia ordine ad ogni build cambia impronta senza motivo
+            // sorted: a zip changing order on every build changes fingerprint for no reason
             for (String name : new java.util.TreeSet<>(entries.keySet()))
             {
                 zip.putNextEntry(new ZipEntry(name));

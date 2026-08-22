@@ -4,7 +4,7 @@ import blossom.interpreter.Interpreter;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-/** C.5 - l'operatore |>. */
+/** C.5: the |> operator. */
 class PipeTest
 {
     private static String eval(String code)
@@ -22,9 +22,9 @@ class PipeTest
     @Test
     void treTrasformazioniInFila()
     {
-        // nota: oggi 'join' e' join(separatore, lista), quindi il soggetto non e' il primo
-        // argomento e non si incatena. E' esattamente il caso che la regola R2 della rinomina
-        // sistema; qui si misura la catena con le funzioni che il soggetto ce l'hanno gia' davanti
+        // note: today 'join' is join(separator, list), so the subject is not the first argument and
+        // does not chain. It is exactly the case rule R2 of the renaming fixes; here the chain is
+        // measured with the functions that already take the subject first
         assertEquals("[4, 8]",
                 eval("import 'core.list' as list; "
                         + "[1,2,3,4] |> list.filter(fn(x) -> x % 2 == 0) |> list.map(fn(x) -> x * 2)"));

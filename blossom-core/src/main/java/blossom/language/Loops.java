@@ -44,9 +44,9 @@ public class Loops
         }
         FunctionValue function = (FunctionValue) expr.evalValue(c, Context.NONE);
         int arity = function.getArguments().size();
-        // qui dentro ci sono esattamente due valori impliciti da passare, e un parametro in piu' o in
-        // meno non e' un dettaglio: prima si riempiva di null quello che avanzava e si lasciava fuori
-        // quello che mancava, cioe' si rispondeva un numero sbagliato invece di dire cos'era storto
+        // there are exactly two implicit values to pass here, and one parameter more or less is not
+        // a detail: leftovers used to be filled with null and missing ones left out, that is a wrong
+        // number was answered instead of saying what was crooked
         String shape = accumulatorFirst ? "(accumulator, element)" : "(element, index)";
         if (arity > 2 && function.getVarArgs() == null)
         {

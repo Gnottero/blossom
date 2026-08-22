@@ -270,14 +270,15 @@ public class Functions
     }
 
     /**
-     * Controlla una firma prima che diventi una funzione.
+     * Checks a signature before it becomes a function.
      *
-     * <p>Sono errori che si vedono guardando la riga, quindi vanno detti quando la riga si legge:
-     * lasciarli passare non produce un errore piu' tardi, produce una funzione che lega gli
-     * argomenti a nomi diversi da quelli che c'e' scritto.
+     * <p>These are errors visible by looking at the line, so they have to be reported when the line
+     * is read: letting them through does not produce an error later, it produces a function that
+     * binds arguments to names other than the ones written.
      *
-     * @param varArgsAt quanti parametri normali c'erano quando e' comparso {@code ...rest}: se non
-     *                  sono tutti, il resto della firma sta dopo qualcosa che prende tutto il resto
+     * @param varArgsAt how many normal parameters there were when {@code ...rest} appeared: if that
+     *                  is not all of them, the rest of the signature sits after something that takes
+     *                  everything else
      */
     private static void validateSignature(String name, List<String> args, @Nullable String varArgs,
             int varArgsAt, List<String> globals)

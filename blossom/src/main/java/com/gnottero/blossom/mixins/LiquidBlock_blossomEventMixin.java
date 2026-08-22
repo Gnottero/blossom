@@ -15,11 +15,11 @@ import com.gnottero.blossom.event.Event;
 import com.gnottero.blossom.event.Fire;
 
 /**
- * La parte di {@code block_forms} che nasce dal blocco di liquido (voce BE-3 dell'inventario):
- * ostruzione o pietrisco dove l'acqua incontra la lava, e basalto sul soul soil.
+ * The part of {@code block_forms} that comes from the liquid block (inventory entry BE-3):
+ * obsidian or cobblestone where water meets lava, and basalt over soul soil.
  *
- * <p>Due scritture nello stesso metodo, distinte solo dall'ordine: sono due formazioni diverse per
- * il gioco, ma la stessa cosa per chi ascolta l'evento, quindi passano dallo stesso punto.
+ * <p>Two writes in the same method, told apart only by order: they are two different formations for
+ * the game, but the same thing for whoever listens to the event, so they go through the same point.
  */
 @Mixin(LiquidBlock.class)
 public abstract class LiquidBlock_blossomEventMixin

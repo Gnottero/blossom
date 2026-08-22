@@ -27,7 +27,7 @@ import com.gnottero.blossom.net.BlossomPayloads;
 @Mixin(CustomPacketPayload.class)
 public interface CustomPacketPayload_blossomNetworkMixin
 {
-    /** una {@link ArrayList} qualunque, ma riconoscibile: è l'unico scopo di questa classe */
+    /** an ordinary {@link ArrayList}, but recognizable: the only purpose of this class */
     final class BlossomExtendedList<E> extends ArrayList<E>
     {
         BlossomExtendedList(List<? extends E> source)

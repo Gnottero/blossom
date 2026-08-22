@@ -24,40 +24,39 @@ import blossom.project.HttpRegistry;
 import blossom.project.PackRegistry;
 
 /**
- * La configurazione del mod sul server: {@code config/blossomscript.json}.
+ * The mod configuration on the server: {@code config/blossomscript.json}.
  *
- * <p>Contiene quello che decide un amministratore e non chi scrive un'app: da dove si prendono i
- * pack che non sono già su disco, a quali cartelle del mondo {@code core.io} può arrivare, quali
- * host può contattare {@code core.http}, e quanto a lungo può girare uno script prima che il
- * watchdog lo fermi.
+ * <p>It holds what an administrator decides and not what an app author does: where the packs that
+ * are not already on disk come from, which world directories {@code core.io} can reach, which hosts
+ * {@code core.http} can contact, and how long a script may run before the watchdog stops it.
  *
  * <pre>
  * {
  *   "root": "/srv/blossom-scripts",
  *   "registry": { "directory": "/srv/blossom-packs" },
- *   "io": { "roots": { "condiviso": "dati/condiviso" }, "writable": ["condiviso"] },
+ *   "io": { "roots": { "extra": "data/extra" }, "writable": ["extra"] },
  *   "http": { "hosts": ["api.example.com"], "timeout_ms": 5000 },
  *   "watchdog": { "timeout_ms": 2000, "max_depth": 256 }
  * }
  * </pre>
  *
- * <p>Ogni sezione è facoltativa e, quando manca, quella parte è spenta: una dipendenza dal registry
- * fallisce dicendolo, {@code core.io} non apre niente, {@code core.http} non raggiunge niente. Sono i
- * pezzi che escono dal processo - verso il disco e verso la rete - e quella è una decisione da
- * prendere, non da subire.
+ * <p>Every section is optional and, when missing, that part is off: a registry dependency fails
+ * saying so, {@code core.io} opens nothing, {@code core.http} reaches nothing. These are the parts
+ * that leave the process, towards the disk and towards the network, and that is a decision to be
+ * taken rather than suffered.
  *
- * @see #read documentazione completa delle chiavi in {@code docs/guide/12-configurazione.md}
+ * @see #read full key documentation in {@code docs/guide/12-configurazione.md}
  */
 public record ServerConfig(Path scriptRoot, @Nullable PackRegistry registry, IoRoots ioRoots, HttpAccess httpAccess,
                            ExecutionBudget.Policy watchdog)
 {
     private static final String FILE_NAME = BlossomMod.MOD_ID + ".json";
-    /** dove il registry tiene quello che ha scaricato: dentro la cartella degli script, come tutto il resto */
+    /** where the registry keeps what it downloaded: inside the script directory, like everything else */
     private static final String REGISTRY_CACHE_DIRECTORY = ".cache";
 
     /**
-     * La configurazione di un server che non ha il file: la cartella degli script di default e le
-     * radici di {@code core.io} che ogni app ha comunque.
+     * The configuration of a server without the file: the default script directory and the
+     * {@code core.io} roots every app has anyway.
      */
     public static ServerConfig defaults(Path scriptRoot, Path worldDirectory)
     {
@@ -66,19 +65,18 @@ public record ServerConfig(Path scriptRoot, @Nullable PackRegistry registry, IoR
     }
 
     /**
-     * Le due radici che esistono sempre, senza che nessuno le dichiari.
+     * The two roots that always exist, without anyone declaring them.
      *
-     * <p>Un tempo ogni app scriveva in una cartella sua, {@code <mondo>/blossom/<app>.data/}, che
-     * solo lei vedeva e che solo un modulo a parte sapeva raggiungere. Quella cartella non c'è
-     * più: c'è un posto solo dove gli script scrivono - {@code data} - e uno dove si scambiano roba -
-     * {@code shared} - e ci si arriva con {@code core.io} come a qualunque altra radice. Un'app che
-     * vuole i suoi dati per sé usa una sottocartella col suo nome, che è quello che
-     * {@code <app>.data} faceva, ma scritto nel punto della chiamata invece che nascosto dentro il
-     * mod.
+     * <p>Once every app wrote into a directory of its own, {@code <world>/blossom/<app>.data/}, that
+     * only it could see and only a separate module could reach. That directory is gone: there is one
+     * place where scripts write, {@code data}, and one where they exchange things, {@code shared},
+     * and both are reached with {@code core.io} like any other root. An app that wants its data to
+     * itself uses a subdirectory named after it, which is what {@code <app>.data} did, but written
+     * at the call site instead of hidden inside the mod.
      *
-     * <p>Sono entrambe scrivibili: sono dentro la cartella del mondo, le crea il mod, e una radice
-     * di sola lettura che nessuno può riempire non servirebbe a niente. Se il file di
-     * configurazione dichiara una radice con lo stesso nome, vince la sua.
+     * <p>Both are writable: they live inside the world directory, the mod creates them, and a read
+     * only root nobody can fill would be useless. If the configuration file declares a root with the
+     * same name, that one wins.
      */
     private static IoRoots defaultIoRoots(Path worldDirectory)
     {
@@ -91,15 +89,15 @@ public record ServerConfig(Path scriptRoot, @Nullable PackRegistry registry, IoR
     }
 
     /**
-     * Legge la configurazione da {@code configDirectory}.
+     * Reads the configuration from {@code configDirectory}.
      *
-     * <p>Un file illeggibile o malformato non impedisce l'avvio: viene segnalato nel log e si parte
-     * con i default. Un mod che si rifiuta di caricare per una virgola di troppo in un file
-     * facoltativo è un mod che rompe un server per una cosa che non stava usando.
+     * <p>An unreadable or malformed file does not prevent startup: it is reported in the log and the
+     * defaults are used. A mod that refuses to load over one comma too many in an optional file is a
+     * mod that breaks a server over something it was not using.
      *
-     * @param worldDirectory la cartella del mondo: le radici di {@code core.io} si risolvono lì
-     *     dentro e non possono uscirne
-     * @param defaultScriptRoot la cartella degli script da usare se il file non ne dichiara un'altra
+     * @param worldDirectory the world directory: {@code core.io} roots resolve inside it and cannot
+     *     leave it
+     * @param defaultScriptRoot the script directory to use if the file declares no other one
      */
     public static ServerConfig read(Path configDirectory, Path worldDirectory, Path defaultScriptRoot)
     {
@@ -127,13 +125,14 @@ public record ServerConfig(Path scriptRoot, @Nullable PackRegistry registry, IoR
     }
 
     /**
-     * La cartella da cui si caricano le app: {@code "root"} se c'è, altrimenti {@code <mondo>/blossom/}.
+     * The directory apps are loaded from: {@code "root"} if present, otherwise
+     * {@code <world>/blossom/}.
      *
-     * <p>Un percorso relativo si risolve dentro il mondo; uno assoluto vale com'è, anche fuori dal
-     * mondo. È voluto: una cartella di script condivisa fra più mondi è esattamente il caso per cui
-     * questa chiave esiste, e chi scrive il file di configurazione del server è già l'amministratore
-     * del disco. Il confine dentro il mondo resta invece su {@code io.roots}, che è quello che gli
-     * script possono aprire da soli.
+     * <p>A relative path resolves inside the world; an absolute one is taken as written, even
+     * outside the world. That is intended: a script directory shared between several worlds is
+     * exactly the case this key exists for, and whoever writes the server configuration file is
+     * already the administrator of the disk. The boundary inside the world stays on
+     * {@code io.roots} instead, which is what scripts can open on their own.
      */
     private static Path readScriptRoot(JsonObject root, Path worldDirectory, Path defaultScriptRoot)
     {
@@ -169,16 +168,16 @@ public record ServerConfig(Path scriptRoot, @Nullable PackRegistry registry, IoR
     }
 
     /**
-     * Le radici di {@code core.io}: un nome per cartella, tutte dentro la cartella del mondo.
+     * The {@code core.io} roots: one name per directory, all inside the world directory.
      *
-     * <p>I percorsi si scrivono relativi al mondo. Uno assoluto vale solo se punta comunque dentro,
-     * ed è l'unico modo di sbagliarsi che viene segnalato invece che accettato in silenzio: fuori dal
-     * mondo c'è il resto del disco del server, che gli script non devono poter leggere in nessuna
-     * configurazione.
+     * <p>Paths are written relative to the world. An absolute one is valid only if it still points
+     * inside, and it is the only mistake reported instead of silently accepted: outside the world
+     * lies the rest of the server disk, which scripts must not be able to read under any
+     * configuration.
      *
-     * <p>Una radice nominata in {@code writable} ma non dichiarata in {@code roots} è quasi sempre un
-     * refuso e viene segnalata; il contrario - dichiarare una cartella e dimenticarsi di renderla
-     * scrivibile - fallisce da solo alla prima scrittura.
+     * <p>A root named in {@code writable} but not declared in {@code roots} is almost always a typo
+     * and is reported; the opposite, declaring a directory and forgetting to make it writable, fails
+     * on its own at the first write.
      */
     private static IoRoots readIoRoots(JsonObject root, Path file, Path worldDirectory)
     {
@@ -188,7 +187,7 @@ public record ServerConfig(Path scriptRoot, @Nullable PackRegistry registry, IoR
             return defaultIoRoots(worldDirectory);
         }
         Path world = worldDirectory.toAbsolutePath().normalize();
-        // 'data' e 'shared' ci sono sempre; una dichiarazione con lo stesso nome le rimpiazza
+        // 'data' and 'shared' are always there; a declaration with the same name replaces them
         Map<String, Path> roots = new LinkedHashMap<>(defaultIoRoots(world).paths());
         if (io.has("roots") && io.get("roots").isJsonObject())
         {
@@ -215,10 +214,10 @@ public record ServerConfig(Path scriptRoot, @Nullable PackRegistry registry, IoR
     }
 
     /**
-     * Gli host di {@code core.http}, con i limiti che valgono per tutte le richieste.
+     * The {@code core.http} hosts, with the limits that apply to every request.
      *
-     * <p>Senza {@code hosts} la sezione non serve a niente e la rete resta chiusa: è la stessa forma
-     * delle radici di {@code core.io}, dove il permesso si concede per nome e mai in blocco.
+     * <p>Without {@code hosts} the section is useless and the network stays closed: it is the same
+     * shape as the {@code core.io} roots, where permission is granted by name and never wholesale.
      */
     private static HttpAccess readHttpAccess(JsonObject root, Path file)
     {
@@ -258,10 +257,10 @@ public record ServerConfig(Path scriptRoot, @Nullable PackRegistry registry, IoR
     }
 
     /**
-     * I limiti di esecuzione per le app che non ne dichiarano di propri.
+     * The execution limits for apps that declare none of their own.
      *
-     * <p>{@code timeout_ms} a zero toglie il limite di tempo: serve a chi sta profilando, ed è
-     * segnalato perché su un server è il modo di far sparire un tick senza capire perché.
+     * <p>{@code timeout_ms} set to zero removes the time limit: it is meant for profiling, and it is
+     * reported because on a server it is the way to lose a tick without understanding why.
      */
     private static ExecutionBudget.Policy readWatchdog(JsonObject root, Path file)
     {
@@ -280,7 +279,7 @@ public record ServerConfig(Path scriptRoot, @Nullable PackRegistry registry, IoR
         return new ExecutionBudget.Policy(timeout, depth);
     }
 
-    /** @return la sezione {@code name}, o {@code null} se manca o non è un oggetto */
+    /** @return section {@code name}, or {@code null} if missing or not an object */
     private static @Nullable JsonObject section(JsonObject root, String name)
     {
         return root.has(name) && root.get(name).isJsonObject() ? root.getAsJsonObject(name) : null;

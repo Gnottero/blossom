@@ -21,11 +21,11 @@ import blossom.interpreter.Interpreter;
 import blossom.project.ApiLevel;
 
 /**
- * I casi che una volta sbagliavano.
+ * The cases that used to be wrong.
  *
- * <p>Ognuno e' un bug trovato provando il linguaggio a mano, non una funzione nuova: stanno insieme
- * perche' quello che li lega e' proprio quello - la suite era verde mentre tutti e dodici erano
- * rotti, e senza questi test tornerebbero senza che nessuno se ne accorga.
+ * <p>Each one is a bug found by trying the language by hand, not a new feature: they sit together
+ * because that is exactly what ties them, since the suite was green while all twelve were broken,
+ * and without these tests they would come back unnoticed.
  */
 class RegressionsTest
 {
@@ -34,13 +34,13 @@ class RegressionsTest
         return Interpreter.standalone().eval(code).getString();
     }
 
-    // --- i nomi delle funzioni dell'utente non sono quelli delle built-in ---
+    // --- user function names are not built-in names ---
 
     @Test
     void aUserFunctionMayCarryTheNameOfALibrarySymbol()
     {
-        // 'sum', 'map', 'get', 'size' sono nomi dell'elenco piatto delle implementazioni: la
-        // libreria si raggiunge per alias, quindi qui non mascherano niente
+        // 'sum', 'map', 'get', 'size' are names of the flat implementation list: the library is
+        // reached through an alias, so here they hide nothing
         assertEquals("3", eval("fn sum(a, b) -> a + b; sum(1, 2)"));
         assertEquals("42", eval("fn get(a) -> a * 2; get(21)"));
         assertEquals("7", eval("fn size(a) -> 7; size(1)"));
@@ -73,7 +73,7 @@ class RegressionsTest
         assertTrue(error.getMessage().contains("part of the language"), error.getMessage());
     }
 
-    // --- il tokenizer non esce dalla stringa ---
+    // --- the tokenizer does not walk out of the string ---
 
     @Test
     void aPlaceholderMayEndWithWhitespaceOrHoldAMap()
@@ -89,7 +89,7 @@ class RegressionsTest
         assertEquals("esc ${x}", eval("\"esc \\${x}\""));
     }
 
-    // --- la costante piegata a parse time non salta il try ---
+    // --- a constant folded at parse time does not skip the try ---
 
     @Test
     void aFailingCallWithConstantArgumentsFailsWhereItIsWritten()
@@ -120,7 +120,7 @@ class RegressionsTest
                 try(json.decode(s), 'json_error', 'caught')"""));
     }
 
-    // --- l'eccezione di un task arriva a chi lo aspetta ---
+    // --- the exception of a task reaches whoever waits for it ---
 
     @Test
     void waitingForAFailedTaskGetsItsException()
@@ -132,7 +132,7 @@ class RegressionsTest
                 try(task.wait(t), 'exception', fn(e) -> 'caught: ' + e)"""));
     }
 
-    // --- firme ---
+    // --- signatures ---
 
     @Test
     void varargsMustBeTheLastParameter()
@@ -166,7 +166,7 @@ class RegressionsTest
         assertEquals("6", eval("import \"core.list\" as list; list.reduce([1, 2, 3], fn(a, x) -> a + x, 0)"));
     }
 
-    // --- 'size' misura quello che ha una dimensione ---
+    // --- 'size' measures what has a size ---
 
     @Test
     void sizeRefusesWhatHasNoSize()
@@ -181,7 +181,7 @@ class RegressionsTest
         assertEquals("5", eval("import \"core.list\" as list; list.size(list.slice(list.range(5), 0, 5))"));
     }
 
-    // --- niente errori interni al posto di errori del linguaggio ---
+    // --- no internal errors in place of language errors ---
 
     @Test
     void swappingTwoPositionsInAListSaysWhatIsWrong()
@@ -200,7 +200,7 @@ class RegressionsTest
         assertTrue(error.getMessage().contains("task.wait"), error.getMessage());
     }
 
-    // --- il livello di API di un manifesto che non lo dichiara ---
+    // --- the API level of a manifest that does not declare one ---
 
     @Test
     void theDefaultApiLevelIsTheOneThisRuntimeProvides()
@@ -224,7 +224,7 @@ class RegressionsTest
         assertEquals("4", Interpreter.forProject(tmp).eval("2 + 2").getString());
     }
 
-    // --- una chiamata scritta dopo un valore e' una chiamata, non una parentesi qualunque ---
+    // --- a call written after a value is a call, not just any parenthesis ---
 
     @Test
     void aCallWrittenAfterAValueIsACall()
@@ -257,13 +257,13 @@ class RegressionsTest
         assertEquals("21", eval("(1 + 2) * (3 + 4)"));
     }
 
-    // --- gli impliciti non valgono zero dove nessuno li ha legati ---
+    // --- implicits are not zero where nobody bound them ---
 
     @Test
     void anImplicitWithNoLoopAroundItIsAnError()
     {
-        // 'fn() -> _ * 2' dava una lista di zeri: la lambda i parametri se li chiama per nome, e
-        // gli impliciti li' non arrivano
+        // 'fn() -> _ * 2' gave a list of zeros: a lambda names its parameters, and implicits do
+        // not reach there
         UndefinedSymbolError error = assertThrows(UndefinedSymbolError.class,
                 () -> eval("import \"core.list\" as list; list.map([1, 2, 3], fn() -> _ * 2)"));
         assertTrue(error.getMessage().contains("'_' has no value here"), error.getMessage());
@@ -282,7 +282,7 @@ class RegressionsTest
         assertEquals("[0, 1]", eval(stdlib + "list.map([10, 20], fn(x, i) -> i)"));
     }
 
-    // --- json scrive solo json ---
+    // --- json writes json only ---
 
     @Test
     void jsonRefusesTheNumbersItCannotWrite()
@@ -294,30 +294,30 @@ class RegressionsTest
         assertEquals("{\"a\":1,\"b\":2.5}", eval(json + "json.encode({'a' -> 1, 'b' -> 2.5})"));
     }
 
-    // --- un segnaposto numerico vuole un numero ---
+    // --- a numeric placeholder wants a number ---
 
     @Test
     void aNumericPlaceholderSaysWhatItWasGiven()
     {
         String string = "import \"core.string\" as string; ";
-        // 'str(\'%d\', \'x\')' rispondeva '0'
+        // 'str(\'%d\', \'x\')' used to answer '0'
         TypeMismatchError error = assertThrows(TypeMismatchError.class,
                 () -> eval(string + "string.str('%d', 'x')"));
         assertTrue(error.getMessage().contains("wants a number"), error.getMessage());
         assertThrows(TypeMismatchError.class, () -> eval(string + "string.str('%.2f', 'abc')"));
-        // gli argomenti che avanzano non si buttano via in silenzio
+        // leftover arguments are not thrown away silently
         assertThrows(ArityError.class, () -> eval(string + "string.str('%d', 1, 2)"));
-        // un testo scritto come un numero passa, come per gli operatori aritmetici
+        // text written like a number is accepted, as with the arithmetic operators
         assertEquals("5", eval(string + "string.str('%d', '5')"));
         assertEquals("3 apples", eval(string + "string.str('%d apples', 3)"));
     }
 
-    // --- il tubo e la lambda scritta subito dopo ---
+    // --- the pipe and the lambda written right after it ---
 
     @Test
     void aPipeIntoALambdaWrittenOnTheSpot()
     {
-        // '|>' lega piu' stretto di '->': il soggetto finiva fra i parametri della firma
+        // '|>' binds tighter than '->': the subject ended up among the signature parameters
         assertEquals("10", eval("5 |> fn(x) -> x * 2"));
         assertEquals("6", eval("x = 5 |> fn(v) -> v + 1; x"));
         assertEquals("10", eval("5 |> (fn(x) -> x * 2)"));
@@ -325,7 +325,7 @@ class RegressionsTest
                 "import \"core.list\" as list; [3, 1, 2] |> list.sort() |> list.reverse()"));
     }
 
-    // --- un nome del linguaggio non diventa una variabile ---
+    // --- a language name does not become a variable ---
 
     @Test
     void aLanguageNameCannotBeAVariable()
@@ -335,32 +335,32 @@ class RegressionsTest
         assertThrows(ParseError.class, () -> eval("if = 1"));
         assertThrows(ParseError.class, () -> eval("for += 1"));
         assertThrows(ParseError.class, () -> eval("fn f(if) -> if"));
-        // 'l' e 'm' li costruisce il tokenizer, non li scrive nessuno: restano nomi liberi
+        // 'l' and 'm' are built by the tokenizer and written by nobody: they stay free names
         assertEquals("[1, 2]", eval("l = [1, 2]; l"));
         assertEquals("{a: 1}", eval("m = {'a' -> 1}; m"));
     }
 
-    // --- gli spostamenti di bit contano i bit, non quelli che la JVM tiene ---
+    // --- bit shifts count bits, not the ones the JVM keeps ---
 
     @Test
     void aShiftBeyondTheWidthEmptiesTheNumber()
     {
         String math = "import \"core.math\" as math; ";
-        // Java maschera l'ampiezza sui 6 bit bassi: '1 << 64' rispondeva 1, '1 << 200' rispondeva 256
+        // Java masks the width to the low 6 bits: '1 << 64' used to answer 1, '1 << 200' answered 256
         assertEquals("0", eval(math + "math.bitwise_shift_left(1, 64)"));
         assertEquals("0", eval(math + "math.bitwise_shift_left(1, 200)"));
         assertEquals("0", eval(math + "math.bitwise_shift_right(8, 64)"));
         assertEquals("-1", eval(math + "math.bitwise_arithmetic_shift_right(-8, 64)"));
         assertEquals("0", eval(math + "math.bitwise_arithmetic_shift_right(8, 64)"));
         assertThrows(BlossomRuntimeError.class, () -> eval(math + "math.bitwise_shift_left(1, -1)"));
-        // dentro i 64 bit non cambia niente
+        // within 64 bits nothing changes
         assertEquals("256", eval(math + "math.bitwise_shift_left(1, 8)"));
         assertEquals("2", eval(math + "math.bitwise_shift_right(8, 2)"));
-        // una rotazione e' definita modulo la larghezza: quella resta com'era
+        // a rotation is defined modulo the width: that one stays as it was
         assertEquals("2", eval(math + "math.bitwise_roll_left(1, 65)"));
     }
 
-    // --- quello che '==' chiama uguale e' la stessa chiave ---
+    // --- what '==' calls equal is the same key ---
 
     @Test
     void whatEqualityCallsEqualIsTheSameKey()
@@ -372,7 +372,7 @@ class RegressionsTest
         assertEquals("true", eval("true == 1"));
         assertEquals("[true, a]", eval(map + "m = {true -> 'a'}; [map.has(m, 1), map.get(m, 1)]"));
         assertEquals("1", eval(map + "m = {}; map.put(m, 1, 'a'); map.put(m, '1', 'b'); map.size(m)"));
-        // e quello che uguale non e' resta una chiave diversa
+        // and what is not equal stays a different key
         assertEquals("false", eval("'1.0' == 1"));
         assertEquals("2", eval(map + "m = {}; map.put(m, 1, 'a'); map.put(m, 'x', 'b'); map.size(m)"));
     }

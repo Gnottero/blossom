@@ -8,23 +8,23 @@ import java.util.function.Predicate;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Le variabili locali di un frame di esecuzione.
+ * The local variables of an execution frame.
  *
- * <p>Non una {@link HashMap}, perché un frame è quasi sempre minuscolo: i parametri di una funzione
- * più le poche variabili che il corpo si scrive. Su misure di questa dimensione una mappa a hash
- * paga più di quanto rende — l'oggetto, la tabella, e un nodo per ogni voce, allocati ad ogni
- * chiamata — mentre due array paralleli e una scansione lineare stanno tutti in una riga di cache.
+ * <p>Not a {@link HashMap}, because a frame is almost always tiny: the parameters of a function plus
+ * the few variables the body writes. At that size a hash map costs more than it returns, since the
+ * object, the table and one node per entry are allocated on every call, while two parallel arrays
+ * and a linear scan all fit in one cache line.
  *
- * <p>Sopra {@link #SPILL_THRESHOLD} voci la scansione lineare comincia a costare più dell'hash, e a
- * quel punto il frame passa a una {@link HashMap}. Succede al corpo di un modulo lungo, non alle
- * chiamate: è il caso raro che non deve degradare, non quello da ottimizzare.
+ * <p>Above {@link #SPILL_THRESHOLD} entries the linear scan starts costing more than hashing, and at
+ * that point the frame switches to a {@link HashMap}. That happens to the body of a long module and
+ * not to calls: it is the rare case that must not degrade, not the one to optimise.
  *
- * <p>Gli array nascono alla prima scrittura: un frame che non dichiara niente - il caso di una
- * funzione senza parametri - non alloca nulla.
+ * <p>The arrays are born on the first write: a frame that declares nothing, the case of a function
+ * without parameters, allocates nothing.
  */
 final class VariableFrame
 {
-    /** Oltre questo numero di variabili si passa alla mappa a hash. */
+    /** Above this number of variables the frame switches to the hash map. */
     private static final int SPILL_THRESHOLD = 16;
 
     private static final int INITIAL_CAPACITY = 4;
@@ -33,7 +33,7 @@ final class VariableFrame
     private LazyValue @Nullable [] values;
     private int size;
 
-    /** non nulla solo dopo lo spill: da lì in poi è lei la sola depositaria delle variabili */
+    /** non null only after the spill: from then on it is the sole holder of the variables */
     private @Nullable Map<String, LazyValue> spilled;
 
     @Nullable
@@ -47,8 +47,8 @@ final class VariableFrame
         String[] keys = names;
         for (int i = 0; i < size; i++)
         {
-            // i nomi arrivano dai token, che sono internati al parsing: il confronto per identità
-            // decide quasi sempre, e equals resta per chi costruisce un nome a runtime (var(...))
+            // the names come from the tokens, interned while parsing: identity comparison decides
+            // almost always, and equals stays for names built at run time (var(...))
             String key = keys[i];
             if (key == name || key.equals(name))
             {
@@ -109,7 +109,7 @@ final class VariableFrame
             String key = keys[i];
             if (key == name || key.equals(name))
             {
-                // l'ordine non conta: al posto liberato va l'ultima voce
+                // order does not matter: the last entry takes the freed slot
                 size--;
                 names[i] = names[size];
                 values[i] = values[size];

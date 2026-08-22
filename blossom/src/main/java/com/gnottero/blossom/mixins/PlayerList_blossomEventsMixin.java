@@ -21,15 +21,15 @@ import com.gnottero.blossom.value.EntityValue;
 import blossom.value.StringValue;
 import blossom.value.Value;
 
-/** Genera gli eventi di sessione: connessione, uscita, respawn e chat. */
+/** Fires the session events: connecting, leaving, respawning and chatting. */
 @Mixin(PlayerList.class)
 public abstract class PlayerList_blossomEventsMixin
 {
     @Inject(method = "placeNewPlayer", at = @At("RETURN"))
     private void blossom$onJoin(Connection connection, ServerPlayer player, CommonListenerCookie cookie, CallbackInfo ci)
     {
-        // il saluto va mandato comunque, anche se nessuna app ascolta la connessione: e' cosi'
-        // che si scopre chi ha il client, molto prima che qualcuno provi a disegnare
+        // the greeting is sent regardless, even if no app listens to the connection: that is how
+        // it is discovered who has the client, long before anyone tries to draw
         com.gnottero.blossom.net.ServerNetwork.onPlayerJoin(player);
         Event.PLAYER_CONNECTS.fireForPlayer(player, () -> List.of(new EntityValue(player)));
     }

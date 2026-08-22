@@ -14,8 +14,8 @@ import com.gnottero.blossom.event.Event;
 import com.gnottero.blossom.event.Fire;
 
 /**
- * La parte di {@code block_forms} in cui e' la lava a diffondersi (voce BE-3 dell'inventario):
- * pietra, ossidiana o basalto formati dove la lava incontra l'acqua.
+ * The part of {@code block_forms} where lava is the one spreading (inventory entry BE-3): stone,
+ * obsidian or basalt formed where lava meets water.
  */
 @Mixin(LavaFluid.class)
 public abstract class LavaFluid_blossomEventMixin

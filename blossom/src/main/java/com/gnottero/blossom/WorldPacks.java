@@ -14,17 +14,17 @@ import blossom.project.PackRegistry;
 import blossom.project.ProjectManifest;
 
 /**
- * Cosa c'è intorno a un pack, visto dal mondo: gli altri pack installati sotto
- * {@code <mondo>/blossom/}, e il registry se il server ne ha uno configurato.
+ * What surrounds a pack, seen from the world: the other packs installed under
+ * {@code <world>/blossom/}, and the registry when the server has one configured.
  *
- * <p>È la risposta alla voce "dipendenze fra pack" della roadmap. Prima un pack poteva dipendere solo
- * da un percorso relativo, il che funziona per due progetti che vivono nella stessa cartella dello
- * sviluppatore e non per due pack installati da un amministratore, che stanno l'uno accanto
- * all'altro ma non sanno niente uno dell'altro. Con {@code {"pack": "nome"}} la dipendenza si
- * dichiara per nome, e chi installa non deve inventarsi percorsi.
+ * <p>It is the answer to the "dependencies between packs" roadmap entry. A pack used to be able to
+ * depend only on a relative path, which works for two projects living in the same developer
+ * directory and not for two packs installed by an administrator, which sit next to each other but
+ * know nothing about each other. With {@code {"pack": "name"}} the dependency is declared by name,
+ * and whoever installs it does not have to invent paths.
  *
- * <p>Un pack è una cartella con dentro un {@code blossom.json}: la stessa definizione che usa
- * {@code /blossom script load}, così non ci sono due idee diverse di cosa sia un pack.
+ * <p>A pack is a directory holding a {@code blossom.json}: the same definition
+ * {@code /blossom script load} uses, so there are not two different ideas of what a pack is.
  */
 public record WorldPacks(Path scriptDirectory, @Nullable PackRegistry registry) implements PackEnvironment
 {
@@ -32,8 +32,8 @@ public record WorldPacks(Path scriptDirectory, @Nullable PackRegistry registry) 
     public Optional<Path> installedPack(String name)
     {
         Path candidate = scriptDirectory.resolve(name.toLowerCase(java.util.Locale.ROOT));
-        // resolve() con un nome tipo "../altro" uscirebbe dalla cartella degli script: un pack puo'
-        // dipendere da un altro pack del mondo, non da una cartella qualunque del disco del server
+        // resolve() with a name like "../other" would leave the script directory: a pack can depend
+        // on another pack of the world, not on any directory of the server disk
         if (!candidate.normalize().startsWith(scriptDirectory.normalize()))
         {
             return Optional.empty();

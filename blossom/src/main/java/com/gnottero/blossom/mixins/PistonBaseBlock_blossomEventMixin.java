@@ -27,15 +27,15 @@ import com.gnottero.blossom.event.Event;
 import com.gnottero.blossom.event.Fire;
 
 /**
- * Genera {@code piston_extends} e {@code piston_retracts}, portati dal fork (voci BE-1 e BE-2).
+ * Fires {@code piston_extends} and {@code piston_retracts}, carried over from the fork (entries BE-1
+ * and BE-2).
  *
- * <p>Entrambi arrivano <b>prima</b> che i blocchi si muovano e passano l'elenco di quelli che si
- * muoverebbero, cosi' che un handler possa decidere sapendo cosa sta per succedere. Restituire un
- * valore vero annulla il movimento.
+ * <p>Both arrive <b>before</b> the blocks move and pass the list of the ones that would move, so a
+ * handler can decide knowing what is about to happen. Returning a true value cancels the movement.
  *
- * <p>I due agganci sono asimmetrici perche' lo e' il gioco: in estensione il risolutore ha gia'
- * calcolato i blocchi e basta leggerlo, in retrazione la decisione arriva prima che il risolutore
- * esista, quindi l'elenco va ricostruito - vedi {@link #blossom$previewPulledBlocks}.
+ * <p>The two hooks are asymmetric because the game is: on extension the resolver has already
+ * computed the blocks and it is enough to read it, on retraction the decision comes before the
+ * resolver exists, so the list has to be rebuilt, see {@link #blossom$previewPulledBlocks}.
  */
 @Mixin(PistonBaseBlock.class)
 public abstract class PistonBaseBlock_blossomEventMixin extends DirectionalBlock
@@ -89,12 +89,12 @@ public abstract class PistonBaseBlock_blossomEventMixin extends DirectionalBlock
     }
 
     /**
-     * Rispecchia la condizione con cui {@code triggerEvent}, nel ramo di retrazione, arriva davvero a
-     * chiamare {@code moveBlocks}: pistone appiccicoso, segnale di sola retrazione, blocco attaccato
-     * non vuoto e tirabile, e nessuna estensione gia' in corso.
+     * Mirrors the condition under which {@code triggerEvent}, on the retraction branch, really ends
+     * up calling {@code moveBlocks}: sticky piston, retract only signal, attached block non empty
+     * and pullable, and no extension already in progress.
      *
-     * <p>Senza questo controllo l'evento scatterebbe anche sulle retrazioni che non muovono niente, e
-     * l'elenco dei blocchi sarebbe una bugia.
+     * <p>Without this check the event would fire on retractions that move nothing too, and the block
+     * list would be a lie.
      */
     @Unique
     private boolean blossom$willPullBlocks(Level level, BlockPos pos, Direction direction, int b0)
@@ -118,11 +118,11 @@ public abstract class PistonBaseBlock_blossomEventMixin extends DirectionalBlock
     }
 
     /**
-     * Calcola i blocchi che la retrazione tirerebbe, prima che il gioco lo faccia.
+     * Computes the blocks the retraction would pull, before the game does it.
      *
-     * <p>La testa del pistone ostruirebbe il risolutore: {@code moveBlocks} la toglie prima di
-     * risolvere, e qui si fa lo stesso, con gli stessi flag silenziosi, rimettendola subito dopo.
-     * E' l'unico modo di passare all'handler un elenco vero invece di una lista vuota.
+     * <p>The piston head would obstruct the resolver: {@code moveBlocks} removes it before
+     * resolving, and the same is done here, with the same silent flags, putting it straight back.
+     * It is the only way to hand the handler a real list instead of an empty one.
      */
     @Unique
     private List<BlockPos> blossom$previewPulledBlocks(Level level, BlockPos pos, Direction direction)

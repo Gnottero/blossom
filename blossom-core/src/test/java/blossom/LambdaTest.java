@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-/** C.1 - funzioni scritte senza nome. */
+/** C.1: functions written without a name. */
 class LambdaTest
 {
     private static String eval(String code)
@@ -34,7 +34,7 @@ class LambdaTest
     @Test
     void unaLambdaNonEntraNellaTabellaDeiSimboli()
     {
-        // due lambda con la stessa forma non si mascherano a vicenda
+        // two lambdas with the same shape do not shadow each other
         assertEquals("9", eval("a = fn(x) -> x * 2; b = fn(x) -> x * 3; a(3) + b(1)"));
     }
 
@@ -78,7 +78,7 @@ class LambdaTest
     @Test
     void unCatchConNomeSopravviveAUnCicloDentro()
     {
-        // con '_' il valore dell'eccezione sparisce dentro il for: con un nome no
+        // with '_' the exception value disappears inside the for: with a name it does not
         assertEquals("[rotto, rotto]",
                 eval("import 'core.list' as list; try(throw('rotto'), fn(e) -> list.map([1,2], e))"));
     }

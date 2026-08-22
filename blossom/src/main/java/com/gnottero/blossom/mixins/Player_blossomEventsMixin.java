@@ -26,7 +26,7 @@ import com.gnottero.blossom.event.EntityEvents;
 import com.gnottero.blossom.event.Event;
 import com.gnottero.blossom.event.Fire;
 
-/** Gli eventi che nascono da quello che un giocatore fa a qualcun altro, o che gli viene fatto. */
+/** The events born from what a player does to someone else, or has done to them. */
 @Mixin(Player.class)
 public abstract class Player_blossomEventsMixin extends LivingEntity
 {
@@ -81,7 +81,7 @@ public abstract class Player_blossomEventsMixin extends LivingEntity
         }
     }
 
-    /** Una cavalcatura marcata come permanente da uno script non si lascia smontare. */
+    /** A mount marked permanent by a script does not let itself be dismounted. */
     @ModifyReturnValue(method = "wantsToStopRiding", at = @At("TAIL"))
     private boolean blossom$keepPermanentVehicle(boolean original)
     {

@@ -38,12 +38,12 @@ public class Sys
     private static final Pattern formatPattern = Pattern.compile("%(\\d+\\$)?([-#+ 0,(<]*)?(\\d+)?(\\.\\d+)?([tT])?([a-zA-Z%])");
 
     /**
-     * Il numero che un segnaposto numerico vuole, o l'errore che dice cosa e' arrivato al suo posto.
+     * The number a numeric placeholder wants, or the error saying what arrived in its place.
      *
-     * <p>Prima si passava per {@code readInteger}, che su qualunque cosa non fosse un numero
-     * rispondeva zero: {@code str('%d', 'x')} dava {@code '0'}, un risultato sbagliato senza una
-     * riga di avviso. Una stringa che e' scritta come un numero continua a passare, perche' e' la
-     * stessa indulgenza che hanno gli operatori aritmetici.
+     * <p>It used to go through {@code readInteger}, which answered zero for anything that was not a
+     * number: {@code str('%d', 'x')} gave {@code '0'}, a wrong result without a line of warning. A
+     * string written like a number still passes, because that is the same leniency the arithmetic
+     * operators have.
      */
     private static Number numberFor(Value value, String specifier)
     {
@@ -59,7 +59,7 @@ public class Sys
             }
             catch (NumberFormatException ignored)
             {
-                // cade nell'errore qui sotto, con il testo che non era un numero
+                // falls into the error below, with the text that was not a number
             }
         }
         throw new TypeMismatchError(SourcePosition.UNKNOWN, "'" + specifier + "' wants a number, but it was given "
@@ -107,10 +107,10 @@ public class Sys
         });
 
         /*
-         * I pezzi di una stringa interpolata, gia' separati dal tokenizer.
+         * The pieces of an interpolated string, already split by the tokenizer.
          *
-         * Non si scrive a mano: "a${b}c" e' la sua sola forma. Uno StringBuilder invece di n
-         * concatenazioni binarie, perche' con quattro o cinque segnaposti la differenza si vede.
+         * Never written by hand: "a${b}c" is its only form. A StringBuilder instead of n binary
+         * concatenations, because with four or five placeholders the difference shows.
          */
         expression.addFunction("concat", lv ->
         {
@@ -225,11 +225,11 @@ public class Sys
         expression.addUnaryFunction("title", v -> new StringValue(titleCase(v.getString())));
 
         /*
-         * replace(testo, regex, con) - tutte le occorrenze
-         * replace(testo, regex, con, quante) - solo le prime 'quante'
+         * replace(text, regex, with) replaces every occurrence
+         * replace(text, regex, with, count) replaces the first 'count' ones
          *
-         * Erano due funzioni, e la seconda diceva "first" per dire "una". Con un numero in coda si
-         * dice quante, e "una" e' il caso in cui quel numero e' 1.
+         * They were two functions, and the second said "first" to mean "one". A trailing number says
+         * how many, and "one" is the case where that number is 1.
          */
         expression.addFunction("replace", lv ->
         {
@@ -266,9 +266,9 @@ public class Sys
         expression.addUnaryFunction("type", v -> new StringValue(v.getTypeString()));
         expression.addUnaryFunction("length", v ->
         {
-            // 'size' risponde su cio' che ha una dimensione. Su tutto il resto rispondeva comunque,
-            // contando le cifre del numero o i caratteri della rappresentazione, che e' un numero
-            // plausibile e sbagliato: il modo peggiore di fallire
+            // 'size' answers about what has a size. On everything else it used to answer anyway,
+            // counting the digits of the number or the characters of its representation, which is a
+            // plausible and wrong number: the worst way to fail
             if (v instanceof LazyListValue)
             {
                 throw new TypeMismatchError(SourcePosition.UNKNOWN,

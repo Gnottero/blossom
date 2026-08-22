@@ -57,11 +57,11 @@ public class Operators
     }};
 
     /**
-     * Lo spostamento di un bitwise_shift_*, se e' un numero di bit che ha senso.
+     * The shift amount of a bitwise_shift_*, if it is a sensible number of bits.
      *
-     * <p>Restituisce l'ampiezza cosi' com'e' - il chiamante decide cosa farne quando supera i 64
-     * bit - e si ferma solo su un numero negativo, che non e' uno spostamento piu' corto ma la
-     * direzione opposta scritta male.
+     * <p>It returns the width as it is, leaving the caller to decide what to do beyond 64 bits, and
+     * stops only on a negative number, which is not a shorter shift but the opposite direction
+     * written badly.
      */
     private static long shiftAmount(String function, long amount)
     {
@@ -339,10 +339,10 @@ public class Operators
             return Value.TRUE;
         });
 
-        // Java maschera lo spostamento sui 6 bit bassi, quindi '1 << 64' vale 1 e '1 << 200' vale
-        // 256: e' il comportamento della JVM che si vede attraverso, non quello che dice il nome
-        // della funzione. Qui uno spostamento oltre i 64 bit svuota il numero, come ci si aspetta,
-        // e uno spostamento negativo e' un errore invece di diventare uno spostamento enorme
+        // Java masks the shift to the low 6 bits, so '1 << 64' is 1 and '1 << 200' is 256: that is
+        // the JVM behaviour showing through, not what the function name says. Here a shift beyond 64
+        // bits empties the number, as one expects, and a negative shift is an error instead of
+        // turning into a huge shift
         expression.addMathematicalBinaryIntFunction("bitwise_shift_left",
                 (num, amount) -> shiftAmount("bitwise_shift_left", amount) >= Long.SIZE ? 0L : num << amount);
         expression.addMathematicalBinaryIntFunction("bitwise_shift_right",

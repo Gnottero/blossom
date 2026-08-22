@@ -19,15 +19,15 @@ import blossom.exception.SourcePosition;
 import blossom.interpreter.ExecutionBudget;
 
 /**
- * Il manifesto {@code blossom.json} di un progetto (PIANO_LINGUAGGIO.md §7).
+ * The {@code blossom.json} manifest of a project (PIANO_LINGUAGGIO.md §7).
  *
- * <p>È l'unico posto in cui stanno nome, versione, entrypoint, dipendenze e limiti di esecuzione:
- * nessuna di queste informazioni va dedotta dal nome di un file o da una convenzione implicita.
+ * <p>It is the only place name, version, entrypoint, dependencies and execution limits live: none of
+ * that information is inferred from a file name or an implicit convention.
  *
- * <p>La versione del progetto e i vincoli sulle dipendenze sono semver ({@link Version},
- * {@link VersionRange}); {@code api_level} è invece {@code MAJOR.MINOR} e descrive l'API di Blossom,
- * non l'app (vedi {@link ApiLevel}). Sono due numerazioni diverse apposta: una dice "che cosa sono
- * io", l'altra "di che cosa ho bisogno".
+ * <p>The project version and the dependency constraints are semver ({@link Version},
+ * {@link VersionRange}); {@code api_level} instead is {@code MAJOR.MINOR} and describes the Blossom
+ * API, not the app (see {@link ApiLevel}). They are two different numberings on purpose: one says
+ * "what I am", the other "what I need".
  */
 public record ProjectManifest(
         String name,
@@ -40,7 +40,7 @@ public record ProjectManifest(
 {
     public static final String FILE_NAME = "blossom.json";
 
-    /** Il manifesto di un progetto la cui radice è {@code root}. */
+    /** The manifest of a project whose root is {@code root}. */
     public static ProjectManifest read(Path root) throws IOException
     {
         Path file = root.resolve(FILE_NAME);
@@ -85,7 +85,7 @@ public record ProjectManifest(
     {
         if (!object.has("api_level"))
         {
-            // non dichiararlo significa "non uso niente di recente", cioè il livello più basso
+            // not declaring it means "I use nothing recent", that is the lowest level
             return ApiLevel.DEFAULT;
         }
         try
@@ -99,13 +99,13 @@ public record ProjectManifest(
     }
 
     /**
-     * Il campo {@code "autoload"}: se vero, il pack viene caricato da solo appena il mondo è aperto,
-     * senza che nessuno dia {@code /blossom script load}.
+     * The {@code "autoload"} field: when true, the pack loads on its own as soon as the world is
+     * open, without anyone running {@code /blossom script load}.
      *
-     * <p>È una dichiarazione del pack e non una lista nella configurazione del server apposta: chi
-     * copia una cartella dentro <code>&lt;mondo&gt;/blossom/</code> ha già detto tutto quello che
-     * serve, e un'app che deve partire da sola lo sa di se stessa. Assente significa {@code false}:
-     * un pack che non lo dichiara non parte mai senza che qualcuno lo chieda.
+     * <p>It is a declaration of the pack and not a list in the server configuration, on purpose:
+     * whoever copies a directory into <code>&lt;world&gt;/blossom/</code> has already said all that
+     * is needed, and an app that has to start on its own knows that about itself. Absent means
+     * {@code false}: a pack that does not declare it never starts unless someone asks.
      */
     private static boolean readAutoload(JsonObject object, SourcePosition where)
     {
@@ -192,7 +192,7 @@ public record ProjectManifest(
         }
     }
 
-    /** La cartella dei sorgenti, cioè quella che contiene l'entrypoint dichiarato. */
+    /** The source directory, that is the one holding the declared entrypoint. */
     public Path sourceRoot(Path root)
     {
         Path parent = entrypoint.getParent();
@@ -200,16 +200,16 @@ public record ProjectManifest(
     }
 
     /**
-     * La sezione {@code "watchdog"}: i limiti di esecuzione dell'app (PIANO_LINGUAGGIO.md §9).
+     * The {@code "watchdog"} section: the execution limits of the app (PIANO_LINGUAGGIO.md §9).
      *
      * <pre>
-     * "watchdog": { "timeout_ms": 2000, "max_depth": 256 }   // limiti espliciti
-     * "watchdog": false                                       // nessun limite, scelta consapevole
+     * "watchdog": { "timeout_ms": 2000, "max_depth": 256 }   // explicit limits
+     * "watchdog": false                                       // no limit, a deliberate choice
      * </pre>
      *
-     * <p>Assente significa "quelli del server": la stragrande maggioranza delle app non ha motivo di
-     * saperne niente, e chi li tocca lo sta facendo apposta. {@code null} qui vuol dire proprio
-     * "non dichiarato", che è diverso da "nessun limite".
+     * <p>Absent means "the server ones": the vast majority of apps has no reason to know anything
+     * about them, and whoever touches them is doing it deliberately. {@code null} here means exactly
+     * "not declared", which differs from "no limit".
      */
     private static ExecutionBudget.@Nullable Policy readWatchdog(JsonObject object, SourcePosition where)
     {

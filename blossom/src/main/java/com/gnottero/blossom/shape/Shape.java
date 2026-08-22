@@ -64,7 +64,7 @@ public abstract class Shape
         this.type = type;
         this.common = common;
         String snap = common.snap() == null ? "xyz" : common.snap().toLowerCase(Locale.ROOT);
-        // 'dx' e' 'x' arrotondato al blocco: l'arrotondamento implica il seguire, non lo sostituisce
+        // 'dx' is 'x' rounded to the block: rounding implies following, it does not replace it
         this.snapX = snap.contains("x");
         this.snapY = snap.contains("y");
         this.snapZ = snap.contains("z");
@@ -93,15 +93,15 @@ public abstract class Shape
         return common.fillColor();
     }
 
-    /** @return se il riempimento è visibile: alfa zero vuol dire che non c'è */
+    /** @return whether the fill is visible: zero alpha means there is none */
     public boolean hasFill()
     {
         return (common.fillColor() & 0xFF) != 0;
     }
 
     /**
-     * @return se il riempimento è opaco, cioè copre quello che ha dietro invece di lasciarlo
-     *         trasparire
+     * @return whether the fill is opaque, that is it covers what is behind it instead of letting it
+     *         show through
      */
     public boolean hasOpaqueFill()
     {
@@ -109,8 +109,8 @@ public abstract class Shape
     }
 
     /**
-     * @return se il reticolo si vede: alfa zero nel colore vuol dire "solo il riempimento", ed è il
-     *         modo di chiedere una forma piena senza spigoli
+     * @return whether the wireframe is visible: zero alpha in the color means "fill only", and is
+     *         the way to ask for a solid shape without edges
      */
     public boolean hasLines()
     {
@@ -122,7 +122,7 @@ public abstract class Shape
         return common.expiresAtTick();
     }
 
-    /** l'id dell'entità a cui la forma è ancorata, {@code -1} se la forma sta ferma nel mondo */
+    /** the id of the entity the shape is anchored to, {@code -1} if it stands still in the world */
     public int follow()
     {
         return common.follow();
@@ -139,10 +139,11 @@ public abstract class Shape
     }
 
     /**
-     * Il punto assoluto di un punto della forma.
+     * The absolute position of a point of the shape.
      *
-     * @param followPos la posizione dell'entità seguita, o {@code null} se non c'è (o è sparita:
-     *                  in quel caso la forma resta dov'è invece di collassare sull'origine)
+     * @param followPos the position of the followed entity, or {@code null} if there is none (or it
+     *                  is gone: in that case the shape stays where it is instead of collapsing onto
+     *                  the origin)
      */
     public Vec3 anchored(Vec3 point, @org.jspecify.annotations.Nullable Vec3 followPos)
     {
@@ -157,22 +158,22 @@ public abstract class Shape
     }
 
     /**
-     * I segmenti di cui la forma è fatta, in coordinate non ancorate.
+     * The segments the shape is made of, in unanchored coordinates.
      *
-     * <p>Una sfera e un cilindro non sono fatti di segmenti: quello che restituiscono sono i loro
-     * cerchi spezzati in corde. È il compromesso di disegnare per linee, ed è meglio dichiararlo qui
-     * che fingere altrove.
+     * <p>A sphere and a cylinder are not made of segments: what they return are their circles
+     * broken into chords. That is the compromise of drawing with lines, and it is better stated
+     * here than pretended elsewhere.
      */
     public abstract List<Segment> segments();
 
     /**
-     * I segmenti da approssimare con le particelle, in coordinate non ancorate.
+     * The segments to approximate with particles, in unanchored coordinates.
      *
-     * <p>Di solito sono gli stessi di {@link #segments()}, ma non per le forme tonde: il reticolo di
-     * una sfera con un {@code level} alto sono migliaia di segmenti, e una particella ogni mezzo
-     * blocco lungo ognuno vorrebbe dire seppellire il server di pacchetti per disegnare una cosa che
-     * a quella risoluzione le particelle non sanno comunque rendere. Chi non ha il client vede la
-     * sagoma - i cerchi principali - e chi ce l'ha vede il reticolo intero.
+     * <p>Usually the same as {@link #segments()}, but not for round shapes: the wireframe of a
+     * sphere with a high {@code level} is thousands of segments, and one particle every half block
+     * along each of them would bury the server in packets to draw something particles cannot render
+     * at that resolution anyway. Whoever lacks the client sees the outline, that is the main
+     * circles, and whoever has it sees the whole wireframe.
      */
     public List<Segment> particleOutline()
     {
@@ -180,29 +181,29 @@ public abstract class Shape
     }
 
     /**
-     * Le facce di cui la forma è fatta, per il riempimento. Vuoto se la forma non ha un dentro.
+     * The faces the shape is made of, for the fill. Empty if the shape has no inside.
      *
-     * <p>Ogni faccia è un poligono convesso, con i vertici in ordine: quattro punti sono un quad,
-     * di più è un ventaglio di triangoli. Non c'è nessuna faccia se {@code fill} è trasparente, ma
-     * quel controllo lo fa chi disegna: qui si dichiara solo la geometria.
+     * <p>Every face is a convex polygon with its vertices in order: four points are a quad, more
+     * are a triangle fan. There is no face when {@code fill} is transparent, but that check belongs
+     * to whoever draws: here only the geometry is declared.
      */
     public List<Vec3[]> faces()
     {
         return List.of();
     }
 
-    /** Un segmento fra due punti: l'unica primitiva che le particelle sanno disegnare. */
+    /** A segment between two points: the only primitive particles can draw. */
     public record Segment(Vec3 from, Vec3 to)
     {
     }
 
     /**
-     * La forma come NBT, per il client.
+     * The shape as NBT, for the client.
      *
-     * <p>Sulla rete viaggia la <em>durata rimasta</em> e non l'istante di scadenza: server e client
-     * contano i tick da momenti diversi, e mandare un numero assoluto vorrebbe dire chiedere ai due
-     * orologi di essere d'accordo. La durata invece si conta da quando arriva, e sbaglia al massimo
-     * del tempo di volo del pacchetto.
+     * <p>What travels over the network is the <em>remaining duration</em> and not the expiry
+     * instant: server and client count ticks from different moments, and sending an absolute number
+     * would mean asking the two clocks to agree. The duration is counted from arrival instead, and
+     * is off by the packet flight time at most.
      */
     public CompoundTag toTag(long nowTick)
     {
@@ -222,15 +223,15 @@ public abstract class Shape
     protected abstract void writeGeometry(CompoundTag tag);
 
     /**
-     * Ricostruisce una forma dal suo NBT.
+     * Rebuilds a shape from its NBT.
      *
-     * <p>È il client a chiamarla, e riusa esattamente le classi che il server ha usato per costruire
-     * la forma: le due parti non possono divergere su cosa sia una sfera, perché è la stessa classe.
-     * È anche il motivo per cui il disegno lato client è corto — la geometria è già qui, in
-     * {@link #segments()} e {@link #faces()}.
+     * <p>The client calls it, and it reuses exactly the classes the server used to build the shape:
+     * the two sides cannot diverge on what a sphere is, because it is the same class. It is also
+     * why the client side drawing is short, since the geometry already lives here, in
+     * {@link #segments()} and {@link #faces()}.
      *
-     * @param nowTick il tick del client in cui la forma arriva: da lì si conta la durata
-     * @return la forma, o {@code null} se il tipo non è conosciuto (un server più nuovo del client)
+     * @param nowTick the client tick the shape arrives at: the duration is counted from there
+     * @return the shape, or {@code null} if the type is unknown (a server newer than the client)
      */
     public static @org.jspecify.annotations.Nullable Shape fromTag(CompoundTag tag, long nowTick)
     {
@@ -304,9 +305,9 @@ public abstract class Shape
         tag.put(key, list);
     }
 
-    // --- le forme ---
+    // --- the shapes ---
 
-    /** Un segmento fra due punti. */
+    /** A segment between two points. */
     public static final class Line extends Shape
     {
         private final Vec3 from;
@@ -333,7 +334,7 @@ public abstract class Shape
         }
     }
 
-    /** Il parallelepipedo fra due angoli: dodici spigoli, e sei facce se c'è un riempimento. */
+    /** The box between two corners: twelve edges, and six faces when there is a fill. */
     public static final class Box extends Shape
     {
         private final Vec3 from;
@@ -411,18 +412,18 @@ public abstract class Shape
     }
 
     /**
-     * Quanti lati per cerchio, quando chi scrive non lo dice.
+     * How many sides per circle, when the script does not say.
      *
-     * <p>Cresce con la radice del raggio: una sfera grande vista da vicino ha bisogno di più lati
-     * per non sembrare un poligono, una piccola no e non vale la pena pagarli. Il numero si può
-     * sempre imporre con {@code level}.
+     * <p>Grows with the square root of the radius: a large sphere seen up close needs more sides
+     * not to look like a polygon, a small one does not and they are not worth paying for. The
+     * number can always be forced with {@code level}.
      */
     static int subdivisionsFor(int level, double radius)
     {
         return level > 0 ? level : Math.max(10, (int) (10 * Math.sqrt(radius)));
     }
 
-    /** Una sfera attorno a un centro: un reticolo di meridiani e paralleli, e la stessa buccia piena. */
+    /** A sphere around a center: a wireframe of meridians and parallels, and the same solid skin. */
     public static final class Sphere extends Shape
     {
         private final Vec3 center;
@@ -442,18 +443,18 @@ public abstract class Shape
             return subdivisionsFor(level, radius);
         }
 
-        /** quanti anelli da polo a polo: è mezzo giro invece di uno intero, quindi metà dei lati */
+        /** how many rings from pole to pole: half a turn instead of a full one, so half the sides */
         private static int rings(int sides)
         {
             return Math.max(3, sides / 2);
         }
 
         /**
-         * Il reticolo: un meridiano per lato, e i paralleli fra un anello e l'altro.
+         * The wireframe: one meridian per side, and the parallels between one ring and the next.
          *
-         * <p>È la stessa suddivisione delle facce, e non un caso: {@code level} decide quanto è fitta
-         * la sfera, e reticolo e riempimento devono essere la stessa sfera. Tre soli cerchi -
-         * com'era prima - facevano sembrare che {@code level} riguardasse solo il riempimento.
+         * <p>It is the same subdivision as the faces, and not by accident: {@code level} decides how
+         * dense the sphere is, and wireframe and fill have to be the same sphere. Three circles
+         * alone, as it was before, made {@code level} look like it only affected the fill.
          */
         @Override
         public List<Segment> segments()
@@ -475,7 +476,7 @@ public abstract class Shape
                     previous = point;
                 }
             }
-            // i poli sono punti, non cerchi: i paralleli cominciano dal primo anello dopo
+            // the poles are points, not circles: the parallels start from the first ring after
             for (int ring = 1; ring < rings; ring++)
             {
                 double phi = Math.PI * ring / rings - Math.PI / 2;
@@ -493,7 +494,7 @@ public abstract class Shape
             return edges;
         }
 
-        /** La sagoma per le particelle: i tre cerchi massimi, uno per piano. */
+        /** The outline for particles: the three great circles, one per plane. */
         @Override
         public List<Segment> particleOutline()
         {
@@ -508,8 +509,8 @@ public abstract class Shape
         @Override
         public List<Vec3[]> faces()
         {
-            // la buccia a maglie: i paralleli tagliati dai meridiani. Con pochi lati si vede il
-            // poliedro, ed e' giusto cosi' - e' la stessa suddivisione delle linee
+            // the meshed skin: the parallels cut by the meridians. With few sides the polyhedron
+            // shows, and that is right, since it is the same subdivision as the lines
             int sides = sides();
             int rings = rings(sides);
             List<Vec3[]> quads = new ArrayList<>(sides * rings);
@@ -535,7 +536,7 @@ public abstract class Shape
             return center.add(horizontal * Math.cos(theta), Math.sin(phi) * radius, horizontal * Math.sin(theta));
         }
 
-        /** @param plane 0 = xz (orizzontale), 1 = xy, 2 = yz */
+        /** @param plane 0 = xz (horizontal), 1 = xy, 2 = yz */
         private static void addCircle(List<Segment> into, Vec3 center, double radius, int plane, int sides)
         {
             Vec3 previous = null;
@@ -568,10 +569,10 @@ public abstract class Shape
     }
 
     /**
-     * Un cilindro attorno a un asse: due cerchi e quattro montanti.
+     * A cylinder around an axis: two circles and four uprights.
      *
-     * <p>Con altezza zero è un disco — un cerchio pieno su un piano - ed è il modo di disegnare un
-     * raggio a terra senza inventare una sesta forma.
+     * <p>With zero height it is a disc, a filled circle on a plane, which is the way to draw a
+     * radius on the ground without inventing a sixth shape.
      */
     public static final class Cylinder extends Shape
     {
@@ -607,10 +608,10 @@ public abstract class Shape
         }
 
         /**
-         * I due cerchi e i montanti, uno per lato.
+         * The two circles and the uprights, one per side.
          *
-         * <p>Un montante per lato e non quattro fissi: sono gli spigoli delle stesse facce, quindi
-         * {@code level} infittisce il reticolo come infittisce il fianco.
+         * <p>One upright per side rather than four fixed ones: they are the edges of the same
+         * faces, so {@code level} densifies the wireframe the way it densifies the side.
          */
         @Override
         public List<Segment> segments()
@@ -618,14 +619,14 @@ public abstract class Shape
             return uprights(sides());
         }
 
-        /** La sagoma per le particelle: i cerchi, e quattro montanti che bastano a dire dov'è alto. */
+        /** The outline for particles: the circles, plus four uprights that show how tall it is. */
         @Override
         public List<Segment> particleOutline()
         {
             return uprights(4);
         }
 
-        /** @param uprights quanti montanti fra i due cerchi */
+        /** @param uprights how many uprights between the two circles */
         private List<Segment> uprights(int uprights)
         {
             int sides = sides();
@@ -660,7 +661,7 @@ public abstract class Shape
             polygons.add(bottom);
             if (height == 0)
             {
-                return polygons; // un disco: una faccia sola, e nessun fianco
+                return polygons; // a disc: one single face, and no side
             }
             polygons.add(top);
             for (int i = 0; i < sides; i++)
@@ -709,30 +710,30 @@ public abstract class Shape
     }
 
     /**
-     * Del testo che galleggia in un punto.
+     * Text floating at a point.
      *
-     * <p>L'unica forma che le particelle non sanno approssimare: un testo non è fatto di segmenti.
-     * Chi non ha il client vede una particella nel punto - sa che lì c'è qualcosa - e il testo gli
-     * arriva in chat la prima volta, una volta sola.
+     * <p>The only shape particles cannot approximate: text is not made of segments. Whoever lacks
+     * the client sees a particle at the point, so they know something is there, and the text
+     * reaches them in chat the first time, once.
      */
     public static final class Label extends Shape
     {
-        /** il testo è pensato in unità di font, non di blocchi */
+        /** the text is measured in font units, not blocks */
         public static final float DEFAULT_SIZE = 10.0F;
 
         /**
-         * Come sta il testo nello spazio.
+         * How the text sits in space.
          *
-         * @param size        la dimensione del carattere
-         * @param align       {@code 0} centrato, {@code -1} a sinistra, {@code 1} a destra
-         * @param indent      spostamento orizzontale, in unità di font
-         * @param height      spostamento verticale, in unità di font
-         * @param raise       spostamento verso chi guarda, in unità di font
-         * @param tilt        rotazione attorno all'asse di vista, in gradi
-         * @param lean        rotazione attorno all'orizzontale, in gradi
-         * @param turn        rotazione attorno alla verticale, in gradi
-         * @param facing      verso cosa guarda: {@code player}, {@code camera} o una direzione fissa
-         * @param doublesided se si legge anche da dietro
+         * @param size        the font size
+         * @param align       {@code 0} centered, {@code -1} left, {@code 1} right
+         * @param indent      horizontal offset, in font units
+         * @param height      vertical offset, in font units
+         * @param raise       offset towards the viewer, in font units
+         * @param tilt        rotation around the view axis, in degrees
+         * @param lean        rotation around the horizontal axis, in degrees
+         * @param turn        rotation around the vertical axis, in degrees
+         * @param facing      what it faces: {@code player}, {@code camera} or a fixed direction
+         * @param doublesided whether it can be read from behind too
          */
         public record Text(float size, int align, float indent, float height, float raise,
                 float tilt, float lean, float turn, String facing, boolean doublesided)
@@ -763,18 +764,18 @@ public abstract class Shape
             return pos;
         }
 
-        /** il testo senza stile: è quello che arriva in chat a chi non ha il client */
+        /** the unstyled text: what reaches chat for whoever lacks the client */
         public String text()
         {
             return text;
         }
 
         /**
-         * Il testo con il suo stile, come lo serializza {@code core.mc.text}, o {@code null} se chi
-         * ha disegnato l'etichetta ha passato una stringa e basta.
+         * The text with its style, as {@code core.mc.text} serializes it, or {@code null} when
+         * whoever drew the label passed a plain string.
          *
-         * <p>Viaggia serializzato e non già decodificato perché decodificarlo vuole i registri, che
-         * qui non ci sono: è il client a farlo, nel momento in cui deve scriverlo.
+         * <p>It travels serialized rather than decoded because decoding needs the registries, which
+         * are not here: the client does it, at the moment it has to draw it.
          */
         public net.minecraft.nbt.@org.jspecify.annotations.Nullable Tag component()
         {
@@ -815,32 +816,32 @@ public abstract class Shape
     }
 
     /**
-     * Un blocco o un item disegnato a mezz'aria, senza esistere nel mondo.
+     * A block or an item drawn in mid air, without existing in the world.
      *
-     * <p>Come l'etichetta, non è fatta di segmenti: quello che si vede è il modello vero del gioco,
-     * e disegnarlo lo sa fare solo il client. Chi non ce l'ha vede una particella {@code block_marker}
-     * nel punto, che almeno dice che lì c'è qualcosa e di che blocco si tratta.
+     * <p>Like the label, it is not made of segments: what shows is the real game model, and only
+     * the client can draw it. Whoever lacks it sees a {@code block_marker} particle at the point,
+     * which at least says something is there and which block it is.
      *
-     * <p>Quello che viaggia sulla rete è il blocco <em>come si scrive</em>
-     * ({@code minecraft:chest[facing=north]}) e non un identificatore numerico: gli id di registro
-     * cambiano fra un mondo e l'altro, il nome no. Per gli item viaggia l'intero stack in NBT, che è
-     * l'unico modo di portarsi dietro i data component.
+     * <p>What travels over the network is the block <em>as it is written</em>
+     * ({@code minecraft:chest[facing=north]}) and not a numeric identifier: registry ids change
+     * between worlds, the name does not. For items the whole stack travels as NBT, the only way to
+     * carry the data components along.
      */
     public static final class Sprite extends Shape
     {
         /**
-         * Come sta il modello nello spazio.
+         * How the model sits in space.
          *
-         * @param facing     verso cosa guarda: {@code player}, {@code camera} o una direzione fissa
-         * @param tilt       rotazione attorno all'asse di vista, in gradi
-         * @param lean       rotazione attorno all'orizzontale, in gradi
-         * @param turn       rotazione attorno alla verticale, in gradi
-         * @param scaleX     quanto è grande sull'asse x, in blocchi
-         * @param scaleY     quanto è grande sull'asse y, in blocchi
-         * @param scaleZ     quanto è grande sull'asse z, in blocchi
-         * @param blockLight la luce da blocco con cui illuminarlo, {@code -1} per quella del posto
-         * @param skyLight   la luce dal cielo con cui illuminarlo, {@code -1} per quella del posto
-         * @param variant    per gli item, in che posa si disegnano ({@code gui}, {@code ground}, …)
+         * @param facing     what it faces: {@code player}, {@code camera} or a fixed direction
+         * @param tilt       rotation around the view axis, in degrees
+         * @param lean       rotation around the horizontal axis, in degrees
+         * @param turn       rotation around the vertical axis, in degrees
+         * @param scaleX     how big it is on the x axis, in blocks
+         * @param scaleY     how big it is on the y axis, in blocks
+         * @param scaleZ     how big it is on the z axis, in blocks
+         * @param blockLight the block light to light it with, {@code -1} for the one of the place
+         * @param skyLight   the sky light to light it with, {@code -1} for the one of the place
+         * @param variant    for items, the pose they are drawn in ({@code gui}, {@code ground}, …)
          */
         public record Pose(String facing, float tilt, float lean, float turn,
                 float scaleX, float scaleY, float scaleZ,
@@ -858,10 +859,10 @@ public abstract class Shape
         private final Pose pose;
 
         /**
-         * @param type {@code "block"} o {@code "item"}
-         * @param name il blocco con i suoi stati, o l'id dell'item: serve al client per ricostruire
-         *             il modello, e al server per scegliere la particella
-         * @param data i dati della block entity, o l'intero item stack; {@code null} se non servono
+         * @param type {@code "block"} or {@code "item"}
+         * @param name the block with its states, or the item id: the client needs it to rebuild the
+         *             model, the server to pick the particle
+         * @param data the block entity data, or the whole item stack; {@code null} if not needed
          */
         public Sprite(String type, Vec3 pos, String name, @org.jspecify.annotations.Nullable CompoundTag data,
                 Pose pose, Common common)

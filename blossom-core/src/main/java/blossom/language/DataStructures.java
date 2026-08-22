@@ -445,9 +445,9 @@ public class DataStructures
             }
             catch (JsonParseException | NumberFormatException | ArithmeticException jpe)
             {
-                // NumberFormatException arriva da gson su un numero che non entra da nessuna parte
-                // ('1e999999'): e' pur sempre json che non si puo' leggere, e chi chiama deve poterlo
-                // filtrare come tale invece di vedere un errore interno della JVM
+                // NumberFormatException comes from gson on a number that fits nowhere
+                // ('1e999999'): it is still json that cannot be read, and the caller has to be able
+                // to catch it as such instead of seeing an internal JVM error
                 throw new ThrowStatement("Invalid json string: " + v.getString(), Throwables.JSON_ERROR);
             }
         });

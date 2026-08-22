@@ -16,7 +16,7 @@ import net.minecraft.world.item.trading.Merchant;
 
 import com.gnottero.blossom.event.Fire;
 
-/** {@code player_trades}: scatta quando lo scambio viene davvero portato via. */
+/** {@code player_trades}: fires when the trade result is really taken away. */
 @Mixin(MerchantResultSlot.class)
 public abstract class MerchantResultSlot_blossomEventMixin
 {

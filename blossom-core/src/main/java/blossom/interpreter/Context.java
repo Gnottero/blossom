@@ -98,12 +98,12 @@ public class Context
     public LazyValue implicitAccumulator = unbound(IMPLICIT_ACCUMULATOR);
 
     /**
-     * Il valore di {@code _}, {@code _i} e {@code _a} dove nessun ciclo li ha legati.
+     * The value of {@code _}, {@code _i} and {@code _a} where no loop bound them.
      *
-     * <p>Prima era zero, il che rendeva {@code list.map(l, fn() -> _ * 2)} una lista di zeri invece
-     * che un errore: dentro una lambda gli impliciti non arrivano, perche' una lambda i suoi
-     * parametri se li chiama per nome. Un numero sbagliato in silenzio e' il modo peggiore di
-     * fallire, quindi qui si dice cos'e' storto e dove.
+     * <p>It used to be zero, which made {@code list.map(l, fn() -> _ * 2)} a list of zeros instead of
+     * an error: inside a lambda the implicits do not arrive, because a lambda names its own
+     * parameters. A silently wrong number is the worst way to fail, so here it says what is crooked
+     * and where.
      */
     private static LazyValue unbound(String name)
     {

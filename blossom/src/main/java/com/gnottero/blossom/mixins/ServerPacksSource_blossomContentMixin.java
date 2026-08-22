@@ -16,19 +16,19 @@ import net.minecraft.world.level.validation.DirectoryValidator;
 import com.gnottero.blossom.content.BlossomRepositorySource;
 
 /**
- * Mette i pack Blossom fra le sorgenti di contenuto del mondo.
+ * Puts Blossom packs among the content sources of the world.
  *
- * <p>Il repository di un mondo nasce in un posto solo, e ci nasce prima che il server esista: da qui
- * passano sia il caricamento delle risorse ricaricabili sia quello dei registri dinamici e del
- * worldgen, che il gioco congela subito dopo. Aggiungere una sorgente qui vuol dire che il contenuto
- * di un pack Blossom arriva in tempo per tutte e due le cose, senza un aggancio diverso per
- * categoria.
+ * <p>The repository of a world is born in one single place, and it is born there before the server
+ * exists: both the loading of reloadable resources and that of dynamic registries and worldgen,
+ * which the game freezes right after, go through here. Adding a source here means the content of a
+ * Blossom pack arrives in time for both, without a different hook per category.
  *
- * <p>Il percorso serve e non si puo' chiedere: {@code @ModifyArg} vede solo l'argomento che
- * modifica, e su un varargs non accetta la firma estesa con i parametri del metodo. Lo prende quindi
- * un secondo injector all'ingresso, e lo posa dove il primo lo trova. Un {@link ThreadLocal} e non
- * un campo perche' due mondi possono aprirsi insieme - un server dedicato che ne carica uno mentre
- * un client ne apre un altro nello stesso processo - e il valore vive quanto la chiamata.
+ * <p>The path is needed and cannot be asked for: {@code @ModifyArg} only sees the argument it
+ * modifies, and on a varargs it does not accept the extended signature with the method parameters.
+ * So a second injector picks it up at the entry and leaves it where the first one finds it. A
+ * {@link ThreadLocal} and not a field because two worlds can open together, a dedicated server
+ * loading one while a client opens another in the same process, and the value lives as long as the
+ * call.
  */
 @Mixin(ServerPacksSource.class)
 public abstract class ServerPacksSource_blossomContentMixin

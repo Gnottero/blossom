@@ -13,16 +13,16 @@ import blossom.interpreter.ScriptHost;
 import blossom.value.Value;
 
 /**
- * Il contesto di esecuzione dentro il gioco: chi ha lanciato il codice, e da dove.
+ * The execution context inside the game: who launched the code, and from where.
  *
- * <p>Il core non sa cosa sia un mondo o un giocatore: e' questo contesto a portarli, ed e' per
- * questo che ogni funzione dell'API di gioco comincia controllando di averlo. Un'espressione
- * valutata fuori dal gioco non ha una sorgente, e infatti la' quelle funzioni non si possono usare.
+ * <p>The core does not know what a world or a player is: this context carries them, and that is why
+ * every game API function starts by checking it has one. An expression evaluated outside the game
+ * has no source, and indeed those functions cannot be used there.
  */
 public class ScriptContext extends Context
 {
     private CommandSourceStack source;
-    /** l'origine delle coordinate relative: e' il blocco da cui lo script e' stato lanciato */
+    /** the origin of relative coordinates: the block the script was launched from */
     private final BlockPos origin;
 
     public ScriptContext(ScriptHost host, CommandSourceStack source)
@@ -67,7 +67,7 @@ public class ScriptContext extends Context
         return origin;
     }
 
-    /** Cambia chi esegue: serve a {@code run()} e alle funzioni che eseguono per conto di un altro. */
+    /** Changes who executes: used by {@code run()} and by functions running on behalf of another. */
     public void swapSource(CommandSourceStack source)
     {
         this.source = source;
@@ -79,8 +79,8 @@ public class ScriptContext extends Context
         return new ScriptContext(host, source, origin);
     }
 
-    // '_x', '_y' e '_z' non vengono preparate qui. Le scrive 'scan' prima di valutare il corpo, e
-    // fuori da uno scan non vogliono dire niente: seminarle in ogni frame significava tre
-    // inserimenti nella mappa ad ogni chiamata di funzione, per un valore che nessuno legge.
-    // Fuori da uno scan ora sono variabili non definite come tutte le altre, cioe' null.
+    // '_x', '_y' and '_z' are not prepared here. 'scan' writes them before evaluating the body, and
+    // outside a scan they mean nothing: seeding them in every frame meant three map insertions per
+    // function call, for a value nobody reads. Outside a scan they are now undefined variables like
+    // any other, that is null.
 }

@@ -14,22 +14,21 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
 
 /**
- * Il testo formattato di {@code format(...)}.
+ * The formatted text of {@code format(...)}.
  *
- * <p>Ogni pezzo e' una stringa {@code "stile testo"}: le lettere dello stile sono colori e
- * decorazioni, e i pezzi che cominciano con un simbolo attaccano un'azione al pezzo precedente
- * ({@code ^} suggerimento al passaggio del mouse, {@code !} esegue un comando, {@code ?} lo scrive
- * in chat, {@code @} apre un indirizzo, {@code &} copia negli appunti).
+ * <p>Every piece is a string {@code "style text"}: the style letters are colors and decorations, and
+ * pieces starting with a symbol attach an action to the previous piece ({@code ^} a hover tooltip,
+ * {@code !} runs a command, {@code ?} writes it in chat, {@code @} opens an address, {@code &}
+ * copies to the clipboard).
  *
- * <p>La sintassi e' compatta apposta: formattare una riga di chat e' una cosa che si fa spesso e
- * di sfuggita, e non deve costare tre chiamate annidate. I colori si scrivono con la lettera o
- * per esteso.
+ * <p>The syntax is compact on purpose: formatting a chat line is done often and in passing, and must
+ * not cost three nested calls. Colors are written by letter or spelled out.
  */
 public final class Text
 {
     private static final Pattern HEX_COLOR = Pattern.compile("#([0-9a-fA-F]{6})");
 
-    /** le lettere dei colori, piu' i nomi per esteso */
+    /** the color letters, plus the spelled out names */
     private static final Map<Character, ChatFormatting> COLORS = Map.ofEntries(
             Map.entry('w', ChatFormatting.WHITE),
             Map.entry('y', ChatFormatting.YELLOW),
@@ -85,7 +84,7 @@ public final class Text
         return result;
     }
 
-    /** Mette insieme i pezzi in un solo componente. */
+    /** Joins the pieces into one single component. */
     public static Component compose(Object... parts)
     {
         MutableComponent message = Component.literal("");

@@ -122,17 +122,17 @@ public class Tokenizer
     }
 
     /**
-     * Spezza una stringa interpolata nei pezzi che la compongono.
+     * Splits an interpolated string into the pieces it is made of.
      *
-     * <p>{@code "n=${a + 1}!"} diventa {@code concat('n=', (a + 1), '!')}. Succede qui, mentre si
-     * legge il sorgente: a runtime non c'e' nessuna stringa da riesaminare e nessun segnaposto da
-     * cercare, solo una concatenazione gia' scritta. Una stringa senza segnaposti resta una
-     * costante e non costa niente piu' di quanto costava prima.
+     * <p>{@code "n=${a + 1}!"} becomes {@code concat('n=', (a + 1), '!')}. It happens here, while
+     * the source is read: at run time there is no string to scan again and no placeholder to look
+     * for, only a concatenation already written. A string without placeholders stays a constant and
+     * costs nothing more than it did before.
      */
     private static void expandInterpolation(Token token, List<Token> out)
     {
         String raw = token.surface;
-        // ogni elemento e' un argomento di concat, gia' in token
+        // every element is an argument of concat, already tokenized
         List<List<Token>> arguments = new ArrayList<>();
         StringBuilder literal = new StringBuilder();
         int i = 0;
@@ -184,7 +184,7 @@ public class Tokenizer
         out.add(token.morphedInto(Token.TokenType.CLOSE_PAREN, ")"));
     }
 
-    /** L'indice della graffa che chiude un {@code ${...}} aperto a {@code from}. */
+    /** The index of the brace closing a {@code ${...}} opened at {@code from}. */
     private static int endOfPlaceholder(String raw, int from)
     {
         int depth = 1;
@@ -214,15 +214,15 @@ public class Tokenizer
         return raw.length();
     }
 
-    /** I token di una sotto-espressione, fra parentesi perche' non si mescoli con i pezzi accanto. */
+    /** The tokens of a sub expression, parenthesized so it does not mix with the pieces beside it. */
     private static List<Token> placeholderTokens(Token token, String source)
     {
         List<Token> tokens = new ArrayList<>();
         tokens.add(token.morphedInto(Token.TokenType.OPEN_PAREN, "("));
         for (Token sub : Tokenizer.simple(source).parseTokens())
         {
-            // la posizione resta quella della stringa: e' il punto che chi legge un errore deve
-            // andare a guardare, e la sotto-espressione non ha una riga sua
+            // the position stays the string's: that is the spot whoever reads an error has to look
+            // at, and the sub expression has no line of its own
             sub.lineno = token.lineno;
             sub.linepos = token.linepos;
             sub.pos = token.pos;
@@ -268,11 +268,11 @@ public class Tokenizer
     }
 
     /**
-     * Un punto dentro un identificatore lo qualifica: {@code vec.add} e' un simbolo solo, non
-     * {@code vec} seguito da un operatore.
+     * A dot inside an identifier qualifies it: {@code vec.add} is one single symbol, not
+     * {@code vec} followed by an operator.
      *
-     * <p>Vale solo se subito dopo comincia un altro identificatore, cosi' il punto decimale dei
-     * numeri e ogni altro uso del punto restano quello che erano.
+     * <p>It only applies when another identifier starts right after, so the decimal point of numbers
+     * and every other use of the dot stay what they were.
      */
     private boolean isQualifierDot(char ch, int position)
     {
@@ -285,12 +285,12 @@ public class Tokenizer
     }
 
     /**
-     * Trasforma le parole chiave delle dichiarazioni in operatori prefissi.
+     * Turns declaration keywords into prefix operators.
      *
-     * <p>{@code fn}, {@code let}, {@code let mut} e {@code pub} si scrivono come identificatori ma
-     * sono grammatica: senza questo passaggio il parser vedrebbe due simboli affiancati e non
-     * saprebbe cosa farne. Sono quindi nomi riservati, e usarli come variabile e' un errore di
-     * sintassi - che e' esattamente quello che ci si aspetta da una parola chiave.
+     * <p>{@code fn}, {@code let}, {@code let mut} and {@code pub} are written like identifiers but
+     * are grammar: without this pass the parser would see two symbols side by side and would not
+     * know what to do with them. They are therefore reserved names, and using one as a variable is a
+     * syntax error, which is exactly what one expects from a keyword.
      */
     private void morphKeyword(Token token)
     {
@@ -317,9 +317,9 @@ public class Tokenizer
     }
 
     /**
-     * Consuma {@code word} se e' la prossima parola nell'input, spazi a parte.
+     * Consumes {@code word} if it is the next word in the input, whitespace aside.
      *
-     * @return se e' stata consumata
+     * @return whether it was consumed
      */
     private boolean consumeFollowingWord(String word)
     {
@@ -418,9 +418,9 @@ public class Tokenizer
         }
         else if (ch == '"')
         {
-            // stringa interpolata: il testo si conserva grezzo, con i suoi ${...} dentro, e viene
-            // spezzato piu' tardi in parseTokens. Le graffe dentro un apice singolo non contano,
-            // altrimenti "${m:'}'}" finirebbe a meta'
+            // interpolated string: the text is kept raw, with its ${...} inside, and is split
+            // later in parseTokens. Braces inside a single quote do not count, otherwise
+            // "${m:'}'}" would end up cut in half
             pos++;
             linepos++;
             token.type = Token.TokenType.INTERPOLATION;

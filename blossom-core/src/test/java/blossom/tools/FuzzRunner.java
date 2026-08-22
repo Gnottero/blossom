@@ -5,8 +5,8 @@ import blossom.interpreter.Interpreter;
 import blossom.value.Value;
 
 /**
- * Scratch driver, non un test: prova un mucchio di frammenti ed elenca cosa succede.
- * Non fa parte della suite ufficiale.
+ * Scratch driver, not a test: it tries a pile of snippets and lists what happens.
+ * Not part of the official suite.
  */
 public final class FuzzRunner
 {

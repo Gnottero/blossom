@@ -311,9 +311,9 @@ public class NumericValue extends Value
         double d = getDouble();
         if (Double.isNaN(d) || Double.isInfinite(d))
         {
-            // json non ha ne' NaN ne' infinito, e gson li scriverebbe lo stesso, senza apici: ne
-            // uscirebbe un testo che nessun lettore serio rilegge. Meglio dirlo qui, dove si sa
-            // ancora quale numero era
+            // json has neither NaN nor infinity, and gson would write them anyway, unquoted: out
+            // would come text no serious reader parses back. Better to say so here, where it is
+            // still known which number it was
             throw new blossom.exception.ThrowStatement(
                     "json has no way to write " + getString() + ": only finite numbers can be encoded",
                     blossom.exception.Throwables.JSON_ERROR);

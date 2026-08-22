@@ -14,7 +14,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import com.gnottero.blossom.event.Event;
 import com.gnottero.blossom.event.Fire;
 
-/** Piazzamento di un blocco: prima ({@code player_placing_block}) e dopo ({@code player_places_block}). */
+/** Placing a block: before ({@code player_placing_block}) and after ({@code player_places_block}). */
 @Mixin(BlockItem.class)
 public class BlockItem_blossomEventMixin
 {

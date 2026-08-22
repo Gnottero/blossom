@@ -18,7 +18,7 @@ import com.gnottero.blossom.event.EntityEvents;
 import com.gnottero.blossom.event.Event;
 import com.gnottero.blossom.event.Fire;
 
-/** Morte e danno di un'entita' qualsiasi: alimentano gli handler attaccati alla singola entita'. */
+/** Death and damage of any entity: they feed the handlers attached to the single entity. */
 @Mixin(LivingEntity.class)
 public abstract class LivingEntity_blossomEventsMixin extends Entity
 {

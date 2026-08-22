@@ -44,15 +44,15 @@ public class StringValue extends Value
     }
 
     /**
-     * Il codice hash del valore che il testo denota, se ne denota uno.
+     * The hash code of the value the text denotes, if it denotes one.
      *
-     * <p>{@code '1' == 1} risponde vero - lo dice la guida, e' l'indulgenza voluta - ma il codice
-     * hash era quello del testo, quindi in una mappa {@code 1} e {@code '1'} finivano in due
-     * caselle diverse pur essendo lo stesso valore: uguali con hash diversi e' il contratto di
-     * HashMap rotto, e la chiave scritta in un modo non trovava quella scritta nell'altro.
+     * <p>{@code '1' == 1} answers true, as the guide says and as the leniency intends, but the hash
+     * code used to be the text's, so in a map {@code 1} and {@code '1'} landed in two different
+     * buckets while being the same value: equal with different hashes breaks the HashMap contract,
+     * and the key written one way did not find the one written the other.
      *
-     * <p>Si paga il confronto di un carattere sulle chiavi che numeri non sono, che sono la maggior
-     * parte: la conversione si tenta solo quando il testo comincia come un numero.
+     * <p>The price is one character comparison on keys that are not numbers, which are most of them:
+     * the conversion is attempted only when the text starts like a number.
      */
     @Override
     public int hashCode()
@@ -70,8 +70,8 @@ public class StringValue extends Value
             try
             {
                 NumericValue asNumber = new NumericValue(str);
-                // solo se il testo e' esattamente come il numero si riscrive: '1.0' e 1 restano
-                // due valori diversi, e devono restare due chiavi diverse
+                // only when the text is exactly how the number is written back: '1.0' and 1 stay
+                // two different values, and they have to stay two different keys
                 if (str.equals(asNumber.getString()))
                 {
                     return asNumber.hashCode();
@@ -79,7 +79,7 @@ public class StringValue extends Value
             }
             catch (NumberFormatException ignored)
             {
-                // non era un numero: vale il codice hash del testo, qui sotto
+                // it was not a number: the text hash code below applies
             }
         }
         return super.hashCode();

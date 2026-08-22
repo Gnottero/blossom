@@ -40,14 +40,14 @@ public interface LazyValue
 
 
     /**
-     * Il valore di una lambda scritta sul posto, {@code fn(x) -> ...}.
+     * The value of a lambda written in place, {@code fn(x) -> ...}.
      *
-     * <p>Serve a distinguerla, mentre si costruisce l'albero, da un'espressione con {@code _}: i
-     * cicli e le trasformazioni accettano tutte e due le forme, e devono sapere quale hanno davanti
-     * senza valutare niente - valutare per scoprirlo vorrebbe dire eseguire il corpo una volta di
-     * troppo, e un corpo che stampa lo si vedrebbe.
+     * <p>It tells one apart, while the tree is being built, from an expression using {@code _}:
+     * loops and transformations accept both forms, and have to know which one they face without
+     * evaluating anything, since evaluating to find out would run the body one time too many, and a
+     * body that prints would show it.
      *
-     * <p>La distinzione e' statica: la fa il token, quindi non costa niente a runtime.
+     * <p>The distinction is static: the token makes it, so it costs nothing at run time.
      */
     final class Lambda implements LazyValue
     {

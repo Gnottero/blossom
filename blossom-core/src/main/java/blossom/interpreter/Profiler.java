@@ -8,36 +8,33 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Dove va il tempo, per funzione e per modulo (PIANO_LINGUAGGIO.md §9).
+ * Where the time goes, per function and per module (PIANO_LINGUAGGIO.md §9).
  *
- * <p>{@code profile_expr} misura una singola espressione e risponde a "quanto ci mette questo
- * pezzo"; questo risponde a "chi si mangia il tick", che e' la domanda vera quando un'app ha venti
- * handler.
+ * <p>{@code profile_expr} measures a single expression and answers "how long does this piece take";
+ * this answers "who eats the tick", which is the real question once an app has twenty handlers.
  *
- * <p>Di ogni funzione si tengono due numeri: il <em>totale</em> comprende le funzioni chiamate, il
- * <em>proprio</em> e' quello che resta togliendole. Serve la coppia - un totale enorme con un
- * proprio minuscolo vuol solo dire che quella funzione sta in cima, e ottimizzarla non cambia
- * niente.
+ * <p>Two numbers are kept per function: the <em>total</em> includes the functions it called, the
+ * <em>self</em> time is what remains once they are removed. The pair is needed, since a huge total
+ * with a tiny self time only means that function sits on top, and optimising it changes nothing.
  *
- * <p>Spento, {@link #OFF} fa due return: niente orologio, niente mappe, niente allocazioni. Acceso
- * costa due {@code System.nanoTime()} per chiamata, ed e' per questo che e' un comando e non uno
- * stato permanente.
+ * <p>Off, {@link #OFF} does two returns: no clock, no maps, no allocations. On, it costs two
+ * {@code System.nanoTime()} per call, which is why it is a command and not a permanent state.
  */
 public final class Profiler
 {
     /**
-     * Il profiler spento: un singleton che non misura.
+     * The profiler when off: a singleton that measures nothing.
      *
-     * <p>È un'istanza normale con il flag abbassato e non una sottoclasse apposta: con una gerarchia
-     * la chiamata a {@code enter} dal punto più caldo dell'interprete diventa virtuale, e nel
-     * benchmark si vedeva. Così è un campo booleano letto e un salto che il predittore azzecca
-     * sempre.
+     * <p>It is a normal instance with the flag down and not a subclass, on purpose: with a hierarchy
+     * the {@code enter} call from the hottest point of the interpreter becomes virtual, and the
+     * benchmark showed it. This way it is one boolean field read and a branch the predictor always
+     * gets right.
      */
     public static final Profiler OFF = new Profiler(false);
 
     private final boolean recording;
 
-    /** I numeri di una funzione. Mutabile e con contatori atomici: un'app può girare su più thread. */
+    /** The numbers of one function. Mutable with atomic counters: an app can run on many threads. */
     public static final class Entry
     {
         private final String module;
@@ -83,12 +80,12 @@ public final class Profiler
     private volatile long stoppedAtNanos = 0L;
 
     /**
-     * Il tempo delle chiamate annidate, per thread.
+     * The time of nested calls, per thread.
      *
-     * <p>Ogni frame aperto mette a zero un accumulatore; quando si chiude, ci somma il proprio tempo
-     * totale e lo consegna al frame di sopra. Il tempo proprio di una funzione è il suo totale meno
-     * quello che i figli hanno accumulato lì dentro. Per thread perché due task che girano insieme
-     * hanno stack diversi e sommarli darebbe numeri senza senso.
+     * <p>Every frame opened zeroes an accumulator; when it closes, it adds its own total time to it
+     * and hands it to the frame above. The self time of a function is its total minus what the
+     * children accumulated inside it. Per thread because two tasks running together have different
+     * stacks and summing them would give meaningless numbers.
      */
     private static final class Stack
     {
@@ -106,7 +103,7 @@ public final class Profiler
             childNanos[depth++] = 0L;
         }
 
-        /** @return il tempo che i figli di questo frame hanno accumulato */
+        /** @return the time the children of this frame accumulated */
         long pop(long elapsed)
         {
             long children = childNanos[--depth];
@@ -121,10 +118,10 @@ public final class Profiler
     private final ThreadLocal<Stack> stacks = ThreadLocal.withInitial(Stack::new);
 
     /**
-     * Apre un frame.
+     * Opens a frame.
      *
-     * @return l'istante di partenza, da restituire a {@link #exit}: tenerlo sullo stack java del
-     *         chiamante evita di dover allocare un oggetto frame per ogni chiamata
+     * @return the start instant, to be handed back to {@link #exit}: keeping it on the caller's java
+     *         stack avoids allocating a frame object per call
      */
     public long enter()
     {
@@ -137,10 +134,10 @@ public final class Profiler
     }
 
     /**
-     * Chiude il frame aperto da {@link #enter} e contabilizza il tempo.
+     * Closes the frame opened by {@link #enter} and accounts for the time.
      *
-     * <p>I nomi arrivano solo adesso, e non a {@code enter}, perché a profiler spento non devono
-     * nemmeno essere calcolati.
+     * <p>The names arrive only now, and not at {@code enter}, because with the profiler off they
+     * must not even be computed.
      */
     public void exit(String module, String function, long startedAt)
     {
@@ -171,7 +168,7 @@ public final class Profiler
         return recording && stoppedAtNanos == 0L;
     }
 
-    /** Chiude la misura: da qui in poi la durata riportata non cresce più. */
+    /** Closes the measurement: from here on the reported duration stops growing. */
     public void stop()
     {
         if (stoppedAtNanos == 0L)
@@ -180,13 +177,13 @@ public final class Profiler
         }
     }
 
-    /** Quanto è durata la misura, in nanosecondi. */
+    /** How long the measurement lasted, in nanoseconds. */
     public long elapsedNanos()
     {
         return (stoppedAtNanos == 0L ? System.nanoTime() : stoppedAtNanos) - startedAtNanos;
     }
 
-    /** Le funzioni misurate, dalla più costosa in tempo proprio alla meno. */
+    /** The measured functions, from the most expensive in self time to the least. */
     public List<Entry> bySelfTime()
     {
         List<Entry> sorted = new ArrayList<>(entries.values());
@@ -195,10 +192,10 @@ public final class Profiler
     }
 
     /**
-     * Il tempo proprio raggruppato per modulo.
+     * The self time grouped by module.
      *
-     * <p>Si somma il tempo proprio e non il totale apposta: sommare i totali conterebbe due volte
-     * ogni chiamata che un modulo fa a se stesso.
+     * <p>Self time is summed and not total time on purpose: summing totals would count every call a
+     * module makes to itself twice.
      */
     public List<Entry> byModule()
     {

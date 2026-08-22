@@ -13,7 +13,7 @@ import blossom.project.ApiLevel;
 import blossom.project.Version;
 import blossom.project.VersionRange;
 
-/** Semver e vincoli di versione, e la regola di compatibilità dell'{@code api_level}. */
+/** Semver and version constraints, and the compatibility rule of {@code api_level}. */
 class VersionTest
 {
     private static boolean accepts(String range, String version)
@@ -43,7 +43,7 @@ class VersionTest
     {
         assertTrue(Version.parse("1.0.0").compareTo(Version.parse("0.9.9")) > 0);
         assertTrue(Version.parse("1.0.1").compareTo(Version.parse("1.0.0")) > 0);
-        // una release viene dopo il suo pre-release, che e' il punto di avere i pre-release
+        // a release comes after its pre-release, which is the point of having pre-releases
         assertTrue(Version.parse("1.0.0").compareTo(Version.parse("1.0.0-rc1")) > 0);
         assertTrue(Version.parse("1.0.0-alpha").compareTo(Version.parse("1.0.0-beta")) < 0);
         assertTrue(Version.parse("1.0.0-2").compareTo(Version.parse("1.0.0-alpha")) < 0, "numerici prima degli alfanumerici");
@@ -62,7 +62,7 @@ class VersionTest
     @Test
     void belowOneZeroEveryBumpCanBreak()
     {
-        // e' li' che sta quasi tutto quello che e' giovane, quindi non e' un caso limite
+        // almost everything young lives there, so it is not an edge case
         assertTrue(accepts("^0.2.3", "0.2.9"));
         assertFalse(accepts("^0.2.3", "0.3.0"));
         assertTrue(accepts("^0.0.3", "0.0.3"));
@@ -92,7 +92,7 @@ class VersionTest
     @Test
     void aPreReleaseIsNeverPickedUpByAccident()
     {
-        // altrimenti basterebbe pubblicare una beta per installarla a tutti
+        // otherwise publishing a beta would be enough to install it on everyone
         assertFalse(accepts("^1.0.0", "1.5.0-rc1"));
         assertFalse(accepts(">=1.0.0", "2.0.0-beta"));
         assertTrue(accepts(">=1.0.0-rc1", "1.0.0-rc2"));

@@ -18,16 +18,15 @@ import blossom.interpreter.ExecutionBudget;
 import blossom.interpreter.Interpreter;
 
 /**
- * Il watchdog (PIANO_LINGUAGGIO.md §9): uno script che non finisce non deve poter tenere fermo il
+ * The watchdog (PIANO_LINGUAGGIO.md §9): a script that never finishes must not be able to hold up
  * server.
  *
- * <p>Ogni test ha un timeout JUnit più largo di quello dello script: se il watchdog non scatta, il
- * test fallisce per timeout invece di appendere la suite - che è esattamente il modo in cui questo
- * test può rompersi.
+ * <p>Every test has a JUnit timeout wider than the script one: if the watchdog does not fire, the
+ * test fails on timeout instead of hanging the suite, which is exactly how this test can break.
  */
 class WatchdogTest
 {
-    /** un budget stretto, così i test durano poco davvero */
+    /** a tight budget, so the tests really are short */
     private static final ExecutionBudget.Policy TIGHT = new ExecutionBudget.Policy(300, 32);
 
     private static Interpreter withPolicy(ExecutionBudget.Policy policy)
@@ -59,8 +58,8 @@ class WatchdogTest
     @Timeout(30)
     void splittingTheLoopAcrossFunctionsDoesNotResetTheBudget()
     {
-        // il budget si eredita nei frame figli: se ogni chiamata ne aprisse uno nuovo, questo
-        // programma girerebbe per sempre
+        // the budget is inherited by child frames: if every call opened a new one, this program
+        // would run forever
         assertThrows(ExecutionBudgetError.class, () -> withPolicy(TIGHT).eval(
                 "step() -> c_for(i = 0, i < 1000, i += 1, null);"
                         + "forever() -> c_for(j = 0, true, j += 1, step());"
@@ -86,8 +85,8 @@ class WatchdogTest
     @Test
     void aFunctionCalledManyTimesInSequenceDoesNotFillTheDepth()
     {
-        // ogni chiamata chiude il proprio frame: contarne 200 in fila non deve avvicinarsi al
-        // limite di profondità, che riguarda l'annidamento e non il totale
+        // every call closes its own frame: counting 200 in a row must not approach the depth
+        // limit, which is about nesting and not about the total
         assertEquals("200", withPolicy(TIGHT).eval("f(x) -> x + 1; c_for(i = 0, i < 200, i += 1, f(i))").getString());
     }
 
@@ -135,8 +134,8 @@ class WatchdogTest
     @Timeout(30)
     void aTaskIsNotKilledByTheDeadlineOfWhoStartedIt()
     {
-        // un task gira su un thread suo e non tiene fermo il tick: "gira a lungo" e' il motivo per
-        // cui uno lo lancia
+        // a task runs on a thread of its own and does not hold up the tick: "runs long" is the
+        // reason one starts it
         Interpreter interpreter = withPolicy(new ExecutionBudget.Policy(100, 64));
         String code = "import \"core.task\" as task;"
                 + "slow() -> c_for(i = 0, i < 300000, i += 1, null);"
@@ -147,8 +146,8 @@ class WatchdogTest
     @Test
     void theUnlimitedBudgetDoesNotAllocate()
     {
-        // il contesto senza limiti deve condividere il singleton: e' il caso di gran lunga piu'
-        // frequente ed e' quello su cui il costo del watchdog dev'essere zero
+        // the unlimited context has to share the singleton: it is by far the most frequent case,
+        // and the one where the watchdog cost has to be zero
         Context context = new Context(Interpreter.standalone().host());
         context.beginExecution(ExecutionBudget.Policy.UNLIMITED);
         assertEquals(ExecutionBudget.UNLIMITED_BUDGET, context.budget);

@@ -1,16 +1,16 @@
 package blossom.interpreter;
 
 /**
- * Il nodo compilato che legge una variabile, e sa dirne il nome.
+ * The compiled node that reads a variable, and can tell its name.
  *
- * <p>Il nome di una variabile è cosa del nodo, non del valore: viene dal parsing e non cambia più.
- * Chi assegna - {@code =}, {@code +=}, {@code <>}, {@code let} - lo chiede qui invece di valutare la
- * parte sinistra e leggerlo su quello che ne esce. Così un assegnamento non legge il valore vecchio
- * per scoprire come si chiama la variabile, e nessun valore deve portarsi dietro il nome di dove è
- * finito. Vedi DECISIONI.md D-093.
+ * <p>The name of a variable belongs to the node and not to the value: it comes from parsing and
+ * never changes. Whatever assigns, {@code =}, {@code +=}, {@code <>}, {@code let}, asks here instead
+ * of evaluating the left side and reading it off what comes out. That way an assignment does not
+ * read the old value to find out what the variable is called, and no value has to carry the name of
+ * where it ended up. See DECISIONI.md D-093.
  */
 public interface VariableRead extends LazyValue
 {
-    /** Il nome della variabile letta, già internato. */
+    /** The name of the variable being read, already interned. */
     String variableName();
 }

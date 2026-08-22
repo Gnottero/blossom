@@ -6,25 +6,25 @@ import java.util.List;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Un vincolo su una versione, nella forma che si scrive in {@code blossom.json}.
+ * A constraint on a version, in the form written in {@code blossom.json}.
  *
  * <pre>
- * "1.2.0"     esattamente quella versione
- * "^1.2.0"    compatibile: dalla 1.2.0 (inclusa) alla 2.0.0 (esclusa)
- * "~1.2.0"    solo patch: dalla 1.2.0 (inclusa) alla 1.3.0 (esclusa)
- * "&gt;=1.2.0"   quella o successiva
- * "&gt;=1.2, &lt;2" piu' vincoli insieme, separati da virgola: valgono tutti
- * "*"         qualunque versione
+ * "1.2.0"     exactly that version
+ * "^1.2.0"    compatible: from 1.2.0 (included) to 2.0.0 (excluded)
+ * "~1.2.0"    patches only: from 1.2.0 (included) to 1.3.0 (excluded)
+ * "&gt;=1.2.0"   that one or later
+ * "&gt;=1.2, &lt;2" several constraints together, comma separated: all of them apply
+ * "*"         any version
  * </pre>
  *
- * <p>Non c'e' l'OR di npm: un vincolo che accetta due intervalli scollegati quasi sempre vuol dire
- * che nessuno ha deciso quale versione supportare, e quella decisione tocca a chi scrive il
- * manifesto. Un pre-release non soddisfa mai un vincolo che non lo nomina - senza questa regola
- * basterebbe pubblicare una beta per farla installare a tutti.
+ * <p>There is no npm style OR: a constraint accepting two disconnected ranges almost always means
+ * nobody decided which version to support, and that decision belongs to whoever writes the manifest.
+ * A pre-release never satisfies a constraint that does not name it, since without that rule
+ * publishing a beta would be enough to have everyone install it.
  */
 public final class VersionRange
 {
-    /** Qualunque versione stabile. */
+    /** Any stable version. */
     public static final VersionRange ANY = new VersionRange(List.of(), "*");
 
     private sealed interface Constraint
@@ -80,7 +80,7 @@ public final class VersionRange
 
     private final List<Constraint> constraints;
     private final String text;
-    /** i pre-release passano solo se il vincolo ne nomina uno */
+    /** pre-releases pass only if the constraint names one */
     private final boolean allowsPreRelease;
 
     private VersionRange(List<Constraint> constraints, String text)
@@ -91,7 +91,7 @@ public final class VersionRange
     }
 
     /**
-     * @throws IllegalArgumentException se il vincolo non è scritto in una delle forme accettate
+     * @throws IllegalArgumentException if the constraint is not written in one of the accepted forms
      */
     public static VersionRange parse(String text)
     {
@@ -149,11 +149,10 @@ public final class VersionRange
     }
 
     /**
-     * La prima versione che {@code ^} non accetta più.
+     * The first version {@code ^} no longer accepts.
      *
-     * <p>Sotto la 1.0.0 semver dice che ogni incremento può rompere, quindi {@code ^0.2.3} si ferma
-     * alla 0.3.0 e {@code ^0.0.3} alla 0.0.4. Non è un dettaglio: quasi tutte le librerie giovani
-     * stanno lì.
+     * <p>Below 1.0.0 semver says every increment may break, so {@code ^0.2.3} stops at 0.3.0 and
+     * {@code ^0.0.3} at 0.0.4. Not a detail: almost every young library lives there.
      */
     private static Version nextIncompatible(Version base)
     {
@@ -188,7 +187,7 @@ public final class VersionRange
         return true;
     }
 
-    /** La più alta fra le versioni date che soddisfa il vincolo, o {@code null} se nessuna. */
+    /** The highest of the given versions satisfying the constraint, or {@code null} if none. */
     public @Nullable Version best(Iterable<Version> candidates)
     {
         Version best = null;

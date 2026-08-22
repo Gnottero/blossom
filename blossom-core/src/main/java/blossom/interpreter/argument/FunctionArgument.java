@@ -60,9 +60,9 @@ public class FunctionArgument extends Argument
         }
         if (!(functionValue instanceof FunctionValue))
         {
-            // solo un nome puo' essere cercato fra le funzioni: un numero o una lista non lo sono
-            // mai stati, e cercarli comunque faceva dire "Function '5' is not defined yet", che
-            // manda a cercare una definizione mancante invece del valore che non era una funzione
+            // only a name can be looked up among the functions: a number or a list never were one,
+            // and looking them up anyway said "Function '5' is not defined yet", which sends people
+            // hunting for a missing definition instead of the value that was not a function
             if (!(functionValue instanceof blossom.value.StringValue))
             {
                 throw new TypeMismatchError(SourcePosition.UNKNOWN, functionValue.getTypeString()

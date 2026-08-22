@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-/** C.3 - argomenti con nome e valori di riserva. */
+/** C.3: named arguments and default values. */
 class NamedArgumentsTest
 {
     private static String eval(String code)
@@ -40,7 +40,7 @@ class NamedArgumentsTest
     @Test
     void ilValoreDiRiservaSiRivalutaAdOgniChiamata()
     {
-        // se fosse valutato una volta sola, le due liste sarebbero la stessa
+        // if it were evaluated once, the two lists would be the same one
         assertEquals("[9]", eval("fn f(l = []) -> (l += 9; l); f(); f()"));
     }
 

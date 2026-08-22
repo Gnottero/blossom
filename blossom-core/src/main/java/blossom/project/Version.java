@@ -7,20 +7,20 @@ import java.util.Locale;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Una versione semver: {@code MAJOR.MINOR.PATCH} con un eventuale pre-release.
+ * A semver version: {@code MAJOR.MINOR.PATCH} with an optional pre-release.
  *
- * <p>Il sottoinsieme implementato è quello di <a href="https://semver.org">semver 2.0.0</a> meno i
- * metadati di build ({@code +sha}), che per definizione non partecipano né all'ordinamento né
- * all'uguaglianza: accettarli e ignorarli inviterebbe a usarli per distinguere due release, che è
- * esattamente quello che la specifica dice di non fare.
+ * <p>The implemented subset is <a href="https://semver.org">semver 2.0.0</a> minus build metadata
+ * ({@code +sha}), which by definition takes part in neither ordering nor equality: accepting and
+ * ignoring it would invite using it to tell two releases apart, which is exactly what the
+ * specification says not to do.
  *
- * <p>Le regole che contano qui:
+ * <p>The rules that matter here:
  * <ul>
- *   <li>si confrontano prima i tre numeri, poi il pre-release;
- *   <li>una versione con pre-release viene <em>prima</em> della stessa senza ({@code 1.0.0-rc1 <
+ *   <li>the three numbers are compared first, then the pre-release;
+ *   <li>a version with a pre-release comes <em>before</em> the same one without ({@code 1.0.0-rc1 <
  *       1.0.0});
- *   <li>fra due pre-release si confrontano gli identificatori punto per punto, numerici prima di
- *       quelli alfanumerici.
+ *   <li>between two pre-releases the identifiers are compared dot by dot, numeric ones before
+ *       alphanumeric ones.
  * </ul>
  */
 public record Version(int major, int minor, int patch, @Nullable String preRelease) implements Comparable<Version>
@@ -28,7 +28,7 @@ public record Version(int major, int minor, int patch, @Nullable String preRelea
     public static final Version ZERO = new Version(0, 0, 0, null);
 
     /**
-     * @throws IllegalArgumentException se il testo non è una versione
+     * @throws IllegalArgumentException if the text is not a version
      */
     public static Version parse(String text)
     {
@@ -53,7 +53,7 @@ public record Version(int major, int minor, int patch, @Nullable String preRelea
         return new Version(number(parts[0], text), number(parts[1], text), number(parts[2], text), pre);
     }
 
-    /** Come {@link #parse}, ma restituisce {@code null} invece di lanciare. */
+    /** Like {@link #parse}, but returns {@code null} instead of throwing. */
     public static @Nullable Version tryParse(String text)
     {
         try
@@ -84,7 +84,7 @@ public record Version(int major, int minor, int patch, @Nullable String preRelea
         return preRelease != null;
     }
 
-    /** La stessa versione senza pre-release: serve a confrontare le sole tre cifre. */
+    /** The same version without the pre-release: used to compare the three numbers alone. */
     public Version release()
     {
         return preRelease == null ? this : new Version(major, minor, patch, null);
@@ -105,7 +105,7 @@ public record Version(int major, int minor, int patch, @Nullable String preRelea
         {
             return 0;
         }
-        // una release e' sempre successiva a un suo pre-release
+        // a release always comes after any of its pre-releases
         if (preRelease == null)
         {
             return 1;

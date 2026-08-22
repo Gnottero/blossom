@@ -12,11 +12,11 @@ import blossom.value.FunctionValue;
 import blossom.value.Value;
 
 /**
- * Le chiamate rimandate a un tick futuro ({@code schedule}).
+ * The calls deferred to a future tick ({@code schedule}).
  *
- * <p>La coda viene guardata una volta per tick e i tempi sono in tick, non in millisecondi: uno
- * script che aspetta "venti tick" aspetta lo stesso tempo di gioco anche se il server rallenta, che
- * e' quasi sempre quello che chi scrive intende.
+ * <p>The queue is looked at once per tick and the times are in ticks, not milliseconds: a script
+ * waiting "twenty ticks" waits the same game time even if the server slows down, which is almost
+ * always what the author means.
  */
 public final class Scheduler
 {
@@ -35,7 +35,7 @@ public final class Scheduler
         queue.add(new Call(tick + Math.max(0, delay), app, interpreter, source, function, List.copyOf(arguments)));
     }
 
-    /** Toglie tutto quello che un'app aveva in coda: si chiama a ricaricamento e a scaricamento. */
+    /** Drops everything an app had queued: called on reload and on unload. */
     public synchronized void unregisterApp(String app)
     {
         queue.removeIf(call -> call.app().equals(app));
@@ -46,7 +46,7 @@ public final class Scheduler
         queue.clear();
     }
 
-    /** Chiamata una volta per tick dal server: esegue quello che era in scadenza. */
+    /** Called once per tick by the server: runs whatever was due. */
     public void tick()
     {
         List<Call> due;

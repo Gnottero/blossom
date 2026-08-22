@@ -20,18 +20,18 @@ import blossom.exception.SourcePosition;
 import blossom.exception.Suggestions;
 
 /**
- * Legge un progetto dal disco: manifesto, dipendenze, entrypoint, e tutti i moduli raggiungibili
- * dagli import.
+ * Reads a project from disk: manifest, dependencies, entrypoint, and every module reachable from the
+ * imports.
  *
- * <p>Fa tutto prima che una sola riga venga eseguita, che è il punto del §4 del piano: modulo
- * mancante, nome dichiarato che non combacia col percorso, livello di API sbagliato e dipendenza a
- * una versione incompatibile sono errori di caricamento, non incidenti che saltano fuori tre
- * settimane dopo perché quel ramo veniva eseguito di rado.
+ * <p>It does all of it before a single line runs, which is the point of §4 of the plan: a missing
+ * module, a declared name that does not match its path, a wrong API level and a dependency on an
+ * incompatible version are load errors, not accidents surfacing three weeks later because that
+ * branch was rarely taken.
  *
- * <p>Gli import ciclici invece <b>sono ammessi</b>: i moduli vengono registrati tutti prima che il
- * primo corpo giri, e l'ordine di esecuzione è quello in cui la ricorsione rientra. Quello che resta
- * vietato è <em>leggere</em>, mentre un modulo si carica, un simbolo di un modulo dello stesso ciclo
- * che non ha ancora girato: lì l'errore lo dice, e la soluzione è spostare l'uso dentro una funzione.
+ * <p>Cyclic imports on the other hand <b>are allowed</b>: every module is registered before the
+ * first body runs, and execution order is the order the recursion unwinds in. What stays forbidden
+ * is <em>reading</em>, while a module loads, a symbol of a module of the same cycle that has not run
+ * yet: there the error says so, and the fix is to move the use inside a function.
  */
 public final class ProjectLoader
 {
@@ -39,10 +39,10 @@ public final class ProjectLoader
     {
     }
 
-    /** Il risultato del caricamento: i moduli in ordine di dipendenza, il primo importato per primo. */
+    /** The result of loading: the modules in dependency order, the first imported one first. */
     public record LoadedProject(ProjectManifest manifest, ModuleName entrypoint, Map<ModuleName, ModuleUnit> modules)
     {
-        /** I moduli in ordine di caricamento: un modulo compare dopo tutti quelli che importa. */
+        /** The modules in load order: a module appears after everything it imports. */
         public List<ModuleUnit> inDependencyOrder()
         {
             return new ArrayList<>(modules.values());
@@ -50,13 +50,14 @@ public final class ProjectLoader
     }
 
     /**
-     * Un modulo letto, con il preambolo già separato dal corpo.
+     * A module that has been read, with the preamble already split from the body.
      *
-     * @param name           il nome globale, cioè quello con cui l'host registra il modulo
-     * @param importedByAlias alias dichiarato nel preambolo → nome globale del modulo importato.
-     *                        Non basta il preambolo: dentro una dipendenza {@code import "vector"}
-     *                        punta al modulo che di fuori si chiama {@code utils.vector}, e la
-     *                        traduzione la sa solo chi ha risolto il percorso
+     * @param name           the global name, that is the one the host registers the module under
+     * @param importedByAlias alias declared in the preamble to global name of the imported module.
+     *                        The preamble alone is not enough: inside a dependency
+     *                        {@code import "vector"} points to the module that from outside is
+     *                        called {@code utils.vector}, and only whoever resolved the path knows
+     *                        the translation
      */
     public record ModuleUnit(ModuleName name, Path file, ModuleSource source, Map<String, String> importedByAlias)
     {
@@ -68,8 +69,8 @@ public final class ProjectLoader
     }
 
     /**
-     * Come sopra, ma sapendo cosa c'è intorno: gli altri pack installati e il registry, da cui le
-     * dipendenze non a percorso vengono prese.
+     * As above, but knowing what surrounds it: the other installed packs and the registry, where
+     * non path dependencies are taken from.
      */
     public static LoadedProject load(Path root, PackEnvironment environment) throws IOException
     {
@@ -77,14 +78,14 @@ public final class ProjectLoader
     }
 
     /**
-     * @param refreshing se ri-risolvere le dipendenze ignorando quello che {@code blossom.lock}
-     *                   aveva scelto la volta scorsa
+     * @param refreshing whether to resolve dependencies again, ignoring what {@code blossom.lock}
+     *                   picked last time
      */
     public static LoadedProject load(Path root, PackEnvironment environment, boolean refreshing) throws IOException
     {
         ProjectManifest manifest = ProjectManifest.read(root);
         SourcePosition manifestPosition = new SourcePosition(root.resolve(ProjectManifest.FILE_NAME).toString(), 1, 1);
-        // prima di tutto il resto: se l'app è scritta per un'altra API, leggerne i moduli non serve
+        // before anything else: if the app targets another API, reading its modules is pointless
         manifest.apiLevel().requireSupportedBy(ApiLevel.CURRENT, manifest.name(), manifestPosition);
 
         ModuleResolver resolver = ModuleResolver.of(root, manifest, environment, refreshing);
@@ -97,20 +98,20 @@ public final class ProjectLoader
 
         Map<ModuleName, ModuleUnit> loaded = new LinkedHashMap<>();
         loadInto(entrypoint, resolver, "", loaded, new ArrayDeque<>(), new LinkedHashSet<>());
-        // NON Map.copyOf: quella perde l'ordine di inserimento, e l'ordine qui e' il contratto -
-        // un modulo deve girare dopo quelli che importa, altrimenti il suo corpo trova i simboli
-        // dell'altro non ancora registrati
+        // NOT Map.copyOf: that loses insertion order, and order here is the contract, since a
+        // module has to run after the ones it imports, otherwise its body finds the other's symbols
+        // not yet registered
         return new LoadedProject(manifest, entrypoint, Collections.unmodifiableMap(new LinkedHashMap<>(loaded)));
     }
 
     /**
-     * Carica {@code name} e, prima di lui, tutto quello che importa.
+     * Loads {@code name} and, before it, everything it imports.
      *
-     * @param name     il nome del modulo nello spazio dei nomi di {@code scope}
-     * @param scope    il resolver del progetto a cui il modulo appartiene
-     * @param prefix   la catena di alias che porta da radice a {@code scope}, con il punto finale
-     * @param chain    la catena di import che ha portato fin qui, per raccontare il ciclo
-     * @param onPath   gli stessi moduli, per riconoscere il ciclo in tempo costante
+     * @param name     the module name in the namespace of {@code scope}
+     * @param scope    the resolver of the project the module belongs to
+     * @param prefix   the alias chain leading from the root to {@code scope}, trailing dot included
+     * @param chain    the import chain that led here, used to describe the cycle
+     * @param onPath   the same modules, to recognise the cycle in constant time
      */
     private static void loadInto(
             ModuleName name,
@@ -132,17 +133,17 @@ public final class ProjectLoader
         }
         if (!onPath.add(globalName))
         {
-            // ciclo: questo modulo lo sta già caricando qualcuno più in alto nella catena, e sarà
-            // lui a inserirlo quando avrà finito. Non è un errore - vedi DECISIONI.md D-052 - ma
-            // qualcuno dei due deve girare per primo, e l'ordine è quello in cui la ricorsione
-            // rientra: il più interno del ciclo per primo
+            // cycle: someone higher up the chain is already loading this module, and they will
+            // insert it when done. It is not an error, see DECISIONI.md D-052, but one of the two
+            // has to run first, and the order is the one the recursion unwinds in: the innermost of
+            // the cycle first
             return;
         }
         chain.addLast(globalName);
 
         ModuleUnit unit = read(globalName, resolution, scope);
-        // gli import di questo file si leggono nel suo spazio dei nomi, non nel nostro: dentro una
-        // dipendenza, 'math.vec' significa quello che dice il manifesto di quella dipendenza
+        // the imports of this file are read in its own namespace and not in ours: inside a
+        // dependency, 'math.vec' means whatever that dependency's manifest says
         String nestedPrefix = prefix + resolution.prefix();
         Map<String, String> importedByAlias = new LinkedHashMap<>();
         for (Map.Entry<String, ModuleSource.ImportDeclaration> entry : unit.source().imports().entrySet())
@@ -158,7 +159,7 @@ public final class ProjectLoader
         loaded.put(globalName, unit);
     }
 
-    /** Come si chiama, visto dalla radice, il modulo che {@code name} indica dentro {@code scope}. */
+    /** What the module {@code name} points to inside {@code scope} is called, seen from the root. */
     private static String globalNameOf(ModuleName name, ModuleResolver scope, String prefix)
     {
         if (blossom.language.StdLib.isBuiltinModule(name.value()))

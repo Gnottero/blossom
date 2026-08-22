@@ -13,10 +13,10 @@ import blossom.exception.ThrowStatement;
 import blossom.exception.Throwables;
 
 /**
- * Disegnare con le particelle.
+ * Drawing with particles.
  *
- * <p>Solo particelle, separate dal dispatcher delle forme: sono vanilla e le vede chiunque, senza
- * client modificato e senza pacchetti in piu'. Le forme vere stanno in {@code core.mc.shape}.
+ * <p>Particles only, separate from the shape dispatcher: they are vanilla and everyone sees them,
+ * with no modded client and no extra packets. Real shapes live in {@code core.mc.shape}.
  */
 public final class Particles
 {
@@ -26,7 +26,7 @@ public final class Particles
     {
     }
 
-    /** @throws ThrowStatement se il nome non e' una particella conosciuta */
+    /** @throws ThrowStatement if the name is not a known particle */
     public static ParticleOptions byName(String name, RegistryAccess registries)
     {
         try

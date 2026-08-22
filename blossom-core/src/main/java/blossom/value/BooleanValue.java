@@ -48,9 +48,9 @@ public class BooleanValue extends NumericValue
     @Override
     public int hashCode()
     {
-        // un booleano e' il numero 1 o 0 - 'true == 1' risponde vero perche' questa classe estende
-        // NumericValue - quindi deve avere anche il loro stesso codice hash, o come chiave di una
-        // mappa 'true' e 1 finirebbero in due caselle diverse pur essendo lo stesso valore
+        // a boolean is the number 1 or 0, and 'true == 1' answers true because this class extends
+        // NumericValue, so it has to carry their hash code too, or as a map key 'true' and 1 would
+        // land in two different buckets while being the same value
         return Long.hashCode(getLong());
     }
 

@@ -39,7 +39,7 @@ public class SnoopyCommandSource extends CommandSourceStack
     private final CommandResultCallback resultConsumer;
     private final EntityAnchorArgument.Anchor entityAnchor;
     private final Vec2 rotation;
-    /** gli errori raccolti dal comando, invece di finire in chat */
+    /** the errors collected from the command, instead of going to chat */
     private final Component[] error;
     private final List<Component> chatOutput;
     private final CommandSigningContext signingContext;

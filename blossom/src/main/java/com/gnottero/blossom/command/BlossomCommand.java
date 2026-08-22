@@ -19,12 +19,12 @@ import com.gnottero.blossom.ScriptRuntime;
 import blossom.value.Value;
 
 /**
- * L'albero del comando {@code /blossom}.
+ * The tree of the {@code /blossom} command.
  *
- * <p>Fase 2: il minimo per avere una pipeline che va dal comando al valutatore e torna indietro con
- * un risultato - {@code script run}, {@code script load}, {@code script reload}, {@code script list}
- * e {@code script unload}. Il resto (profiling, progetti multi-file) arriva con le fasi che lo
- * rendono sensato.
+ * <p>Phase 2: the minimum needed for a pipeline that goes from the command to the evaluator and back
+ * with a result, that is {@code script run}, {@code script load}, {@code script reload},
+ * {@code script list} and {@code script unload}. The rest (profiling, multi file projects) arrives
+ * with the phases that make it meaningful.
  */
 public final class BlossomCommand
 {
@@ -103,18 +103,18 @@ public final class BlossomCommand
     }
 
     /**
-     * Rifà la scelta delle versioni delle dipendenze e ricarica il pack.
+     * Resolves the dependency versions again and reloads the pack.
      *
-     * <p>È l'unico modo di far cambiare idea al {@code blossom.lock}: senza, un vincolo come
-     * {@code ^1.0.0} viene risolto una volta e poi la scelta resta, che è appunto il motivo per cui
-     * il lock esiste.
+     * <p>It is the only way to make {@code blossom.lock} change its mind: without it a constraint
+     * like {@code ^1.0.0} is resolved once and the choice stays, which is exactly why the lock
+     * exists.
      */
     /**
-     * Genera il contenuto di gioco di un'app, chiamando la sua {@code generate()}.
+     * Generates the game content of an app, by calling its {@code generate()}.
      *
-     * <p>La convenzione al posto di un campo nel manifesto: il generatore e' codice normale
-     * dell'app, e quello che il comando deve sapere e' solo da dove cominciare. Un'app senza
-     * {@code generate()} lo dice, invece di non fare niente in silenzio.
+     * <p>A convention instead of a manifest field: the generator is ordinary app code, and all the
+     * command needs to know is where to start. An app without {@code generate()} says so, instead of
+     * silently doing nothing.
      */
     private static int dataGenerate(CommandContext<CommandSourceStack> context)
     {
@@ -148,7 +148,7 @@ public final class BlossomCommand
         }
     }
 
-    /** Cosa c'e' nella data/ di un pack, e chi l'ha scritto. */
+    /** What is in the data/ of a pack, and who wrote it. */
     private static int dataList(CommandContext<CommandSourceStack> context)
     {
         ScriptRuntime runtime = requireRuntime(context.getSource());
@@ -170,8 +170,8 @@ public final class BlossomCommand
                             + generated + " of them generated:"), false);
             for (com.gnottero.blossom.content.ContentExport.Entry entry : entries)
             {
-                // chi legge deve poter dire a colpo d'occhio cosa gli riscrive la prossima
-                // generazione e cosa invece ha scritto lui
+                // the reader has to tell at a glance what the next generation will rewrite and
+                // what they wrote themselves
                 context.getSource().sendSuccess(() -> Component.literal(
                         "  " + (entry.generated() ? "generated  " : "by hand    ") + entry.path()), false);
             }
@@ -183,7 +183,7 @@ public final class BlossomCommand
         }
     }
 
-    /** Lo zip del contenuto, per chi il mod non ce l'ha. */
+    /** The zip of the content, for whoever does not have the mod. */
     private static int dataExport(CommandContext<CommandSourceStack> context)
     {
         ScriptRuntime runtime = requireRuntime(context.getSource());
@@ -304,8 +304,8 @@ public final class BlossomCommand
         }
         catch (BlossomError e)
         {
-            // format() porta categoria, posizione, stack fra i moduli e suggerimento: e' tutto il
-            // punto degli errori tipizzati, e in chat serve piu' che altrove
+            // format() carries category, position, cross module stack and suggestion: that is the
+            // whole point of typed errors, and in chat it matters more than anywhere else
             return fail(context, e.format());
         }
         catch (ExpressionException e)

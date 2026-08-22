@@ -22,9 +22,9 @@ import com.gnottero.blossom.value.ValueConversions;
 import blossom.value.Value;
 
 /**
- * Genera {@code block_dispenses}, portato dal fork (voce BE-4 dell'inventario).
+ * Fires {@code block_dispenses}, carried over from the fork (inventory entry BE-4).
  *
- * <p>L'handler puo' annullare l'erogazione restituendo un valore vero.
+ * <p>The handler can cancel the dispensing by returning a true value.
  */
 @Mixin(DispenserBlock.class)
 public abstract class DispenserBlock_blossomEventMixin

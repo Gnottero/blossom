@@ -10,7 +10,7 @@ pluginManagement {
 
 rootProject.name = 'blossom'
 
-// il core del linguaggio: java puro, nessuna dipendenza da Minecraft
+// the language core: pure java, no dependency on Minecraft
 include 'blossom-core'
-// il mod Fabric che lo esegue
+// the Fabric mod that runs it
 include 'blossom'

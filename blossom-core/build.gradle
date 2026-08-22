@@ -1,6 +1,6 @@
-// blossom-core: l'interprete del linguaggio, java puro.
-// Nessuna dipendenza da Minecraft, da Fabric o dal resto di carpet: deve compilare ed essere
-// testabile con la sola JVM, senza scaricare il gioco.
+// blossom-core: the language interpreter, pure java.
+// No dependency on Minecraft, Fabric or the rest of carpet: it has to compile and be testable with
+// the JVM alone, without downloading the game.
 plugins {
 	id 'java-library'
 }
@@ -43,10 +43,10 @@ test {
 	}
 }
 
-// benchmark di riferimento della fase 1: ./gradlew :blossom-core:benchmark
+// reference benchmark of phase 1: ./gradlew :blossom-core:benchmark
 tasks.register('benchmark', JavaExec) {
 	group = 'verification'
-	description = 'Micro-benchmark di baseline dell\'interprete (loop aritmetico e chiamate a funzione)'
+	description = 'Baseline micro-benchmark of the interpreter (arithmetic loop and function calls)'
 	classpath = sourceSets.test.runtimeClasspath
 	mainClass = 'blossom.CoreBenchmark'
 }

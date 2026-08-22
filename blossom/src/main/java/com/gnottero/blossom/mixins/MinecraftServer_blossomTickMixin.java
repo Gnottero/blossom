@@ -13,7 +13,7 @@ import net.minecraft.world.level.Level;
 
 import com.gnottero.blossom.event.Event;
 
-/** Genera {@code tick}, {@code tick_nether} e {@code tick_ender}, una volta per tick del server. */
+/** Fires {@code tick}, {@code tick_nether} and {@code tick_ender}, once per server tick. */
 @Mixin(MinecraftServer.class)
 public abstract class MinecraftServer_blossomTickMixin
 {
@@ -28,7 +28,7 @@ public abstract class MinecraftServer_blossomTickMixin
         }
         com.gnottero.blossom.BlossomMod.shapes().onTick();
         com.gnottero.blossom.BlossomMod.hud().onTick(server);
-        // il controllo prima della chiamata e' quello che rende gratis un evento che nessuno ascolta
+        // the check before the call is what makes an event nobody listens to free
         if (Event.TICK.isListened())
         {
             Event.TICK.fireOnServer(server, List::of);

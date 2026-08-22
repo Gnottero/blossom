@@ -13,8 +13,8 @@ import blossom.interpreter.Interpreter;
 /**
  * Tipi opzionali sui parametri: {@code fn f(a: num, b: list) -> ...}.
  *
- * <p>Sono facoltativi davvero: una firma senza annotazioni deve continuare a comportarsi esattamente
- * come prima, e i test lo verificano insieme ai casi nuovi.
+ * <p>They really are optional: a signature without annotations has to keep behaving exactly as
+ * before, and the tests check that along with the new cases.
  */
 class ParameterTypesTest
 {
@@ -59,7 +59,7 @@ class ParameterTypesTest
     @Test
     void aMisspelledTypeIsCaughtWhenTheFunctionIsDefined()
     {
-        // non alla prima chiamata: e' un errore di battitura, e va detto subito
+        // not on the first call: it is a typo, and it has to be said right away
         ParseError error = assertThrows(ParseError.class, () -> eval("f(a: nmu) -> a"));
         assertEquals("num", error.suggestion());
     }
@@ -67,8 +67,8 @@ class ParameterTypesTest
     @Test
     void theDeclaredTypesShowUpWhenTheSignatureIsPrinted()
     {
-        // il tipo dichiarato fa parte della firma, quindi deve comparire dove la firma compare:
-        // altrimenti un errore di arieta' direbbe meno di quello che il codice dice
+        // the declared type is part of the signature, so it has to show wherever the signature
+        // shows: otherwise an arity error would say less than the code says
         blossom.exception.ArityError error = assertThrows(blossom.exception.ArityError.class,
                 () -> eval("f(a: num, b) -> a; g(fun) -> call(fun, 1); g(f)"));
         assertTrue(error.getMessage().contains("a: number"), error.getMessage());
@@ -77,7 +77,7 @@ class ParameterTypesTest
     @Test
     void elementAccessKeepsWorkingOutsideSignatures()
     {
-        // ':' resta l'accesso a un elemento dappertutto tranne che in una firma
+        // ':' stays element access everywhere except in a signature
         assertEquals("20", eval("l = [10, 20, 30]; l:1"));
         assertEquals("2", eval("m = {'a' -> 1, 'b' -> 2}; m:'b'"));
         assertEquals("20", eval("f(l) -> l:1; f([10, 20, 30])"));

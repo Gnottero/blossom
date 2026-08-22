@@ -47,12 +47,12 @@ public abstract class ScriptHost
 
 
     /**
-     * I limiti di esecuzione di questa app (PIANO_LINGUAGGIO.md §9): li dichiara il manifesto, e li
-     * legge ogni contesto che fa partire un'esecuzione.
+     * The execution limits of this app (PIANO_LINGUAGGIO.md §9): the manifest declares them, and
+     * every context that starts an execution reads them.
      *
-     * <p>Il default del core è "nessun limite" apposta: fuori da un server non c'è nessun tick da
-     * proteggere, e un test che misura il linguaggio non deve fallire perché la macchina è lenta. È
-     * il layer di gioco a installarne uno vero.
+     * <p>The core default is "no limit" on purpose: outside a server there is no tick to protect,
+     * and a test measuring the language must not fail because the machine is slow. The game layer
+     * installs a real one.
      */
     private volatile ExecutionBudget.Policy watchdog = ExecutionBudget.Policy.UNLIMITED;
 
@@ -67,10 +67,10 @@ public abstract class ScriptHost
     }
 
     /**
-     * Il profiler dell'app (PIANO_LINGUAGGIO.md §9), spento salvo quando qualcuno sta misurando.
+     * The app profiler (PIANO_LINGUAGGIO.md §9), off unless someone is measuring.
      *
-     * <p>Sta sull'host e non sul contesto perché quello che interessa misurare - gli handler di
-     * evento - gira in contesti creati dal gioco, che nessuno può passare da fuori.
+     * <p>It lives on the host and not on the context because what is worth measuring, the event
+     * handlers, runs in contexts created by the game, which nobody can pass in from outside.
      */
     private volatile Profiler profiler = Profiler.OFF;
 
@@ -79,7 +79,7 @@ public abstract class ScriptHost
         return profiler;
     }
 
-    /** Accende la misura e restituisce il profiler su cui leggerla. */
+    /** Turns measurement on and returns the profiler to read it from. */
     public Profiler startProfiling()
     {
         Profiler started = new Profiler();
@@ -132,7 +132,7 @@ public abstract class ScriptHost
         public final Map<String, ModuleData> functionImports = new ConcurrentHashMap<>(); // imported functions string to module
         public final Map<String, ModuleData> globalsImports = new ConcurrentHashMap<>(); // imported global variables string to module
         public final Map<String, ModuleData> futureImports = new ConcurrentHashMap<>(); // imports not known before used
-        /** cosa il modulo dichiara ed esporta, e con che alias vede gli altri moduli */
+        /** what the module declares and exports, and the aliases it sees other modules under */
         public final ModuleSymbols symbols = new ModuleSymbols();
 
         /**
@@ -143,12 +143,12 @@ public abstract class ScriptHost
         private volatile @Nullable CountDownLatch loading = null;
         private volatile @Nullable Thread loadingThread = null;
         /**
-         * Se il corpo del modulo è già girato.
+         * Whether the module body has already run.
          *
-         * <p>Distinto dall'essere registrato: con gli import ciclici i moduli vengono registrati
-         * tutti prima che il primo corpo parta, così ogni alias punta già da qualche parte. Un
-         * modulo registrato ma non ancora eseguito ha la tabella dei simboli vuota, e chi prova a
-         * leggerne uno merita di sentirsi dire che è un ciclo e non che il simbolo non esiste.
+         * <p>Distinct from being registered: with cyclic imports every module is registered before
+         * the first body starts, so that every alias already points somewhere. A module registered
+         * but not yet executed has an empty symbol table, and whoever tries to read a symbol from it
+         * deserves to be told it is a cycle and not that the symbol does not exist.
          */
         private volatile boolean executed = false;
 
@@ -280,12 +280,12 @@ public abstract class ScriptHost
     }
 
     /**
-     * Registra {@code module} senza eseguirne il corpo.
+     * Registers {@code module} without running its body.
      *
-     * <p>È la prima delle due fasi con cui si caricano moduli che si importano a vicenda: prima
-     * esistono tutti - con i loro alias già installati - poi girano. Senza questa separazione il
-     * corpo del primo modulo di un ciclo troverebbe l'alias verso il secondo puntato a un modulo che
-     * non è ancora nel registro.
+     * <p>It is the first of the two phases mutually importing modules load in: first they all exist,
+     * with their aliases already installed, then they run. Without that separation the body of the
+     * first module of a cycle would find the alias to the second pointing at a module not yet in the
+     * registry.
      */
     public void preRegisterModule(String moduleName)
     {
@@ -311,8 +311,8 @@ public abstract class ScriptHost
             imported.awaitLoaded(lowerCaseName);
             if (!imported.executed)
             {
-                // registrato ma mai eseguito: è il caso normale della seconda fase, e anche quello
-                // di un modulo che ne importa un altro dello stesso ciclo prima che tocchi a lui
+                // registered but never executed: the normal case of the second phase, and also
+                // that of a module importing another of the same cycle before its own turn
                 runIfNeeded(c, lowerCaseName, imported);
             }
             return;  // aready imported
@@ -355,11 +355,11 @@ public abstract class ScriptHost
     }
 
     /**
-     * Esegue il corpo di un modulo già registrato, una volta sola.
+     * Runs the body of an already registered module, once.
      *
-     * <p>Sincronizzato sul modulo e non sul registro: due thread che importano lo stesso modulo non
-     * devono eseguirne il corpo due volte, ma il corpo può a sua volta importare altro, e tenere il
-     * lock del registro mentre gira porterebbe dritti a un blocco.
+     * <p>Synchronized on the module and not on the registry: two threads importing the same module
+     * must not run its body twice, but the body can import more in turn, and holding the registry
+     * lock while it runs would lead straight to a deadlock.
      */
     private void runIfNeeded(Context c, String moduleName, ModuleData data)
     {
@@ -367,7 +367,7 @@ public abstract class ScriptHost
         {
             if (data.executed || data.loadingThread == Thread.currentThread())
             {
-                return; // già fatto, o è il ciclo che torna su se stesso: si va avanti
+                return; // already done, or the cycle coming back on itself: carry on
             }
             data.beginLoading();
             try
@@ -383,10 +383,10 @@ public abstract class ScriptHost
     }
 
     /**
-     * Chiamato appena un modulo entra nel registro e prima che il suo corpo giri.
+     * Called as soon as a module enters the registry and before its body runs.
      *
-     * <p>È la finestra in cui installare gli alias dei suoi import: il corpo può usarli fin dalla
-     * prima riga, quindi devono esserci già.
+     * <p>It is the window to install the aliases of its imports: the body can use them from the
+     * first line, so they have to be there already.
      */
     protected void onModuleRegistered(Module module, ModuleData data)
     {
@@ -410,14 +410,14 @@ public abstract class ScriptHost
     }
 
     /**
-     * La tabella dei simboli di {@code module}: dichiarazioni, export e alias.
+     * The symbol table of {@code module}: declarations, exports and aliases.
      */
     public ModuleSymbols symbolsOf(Module module)
     {
         return getModuleData(module).symbols;
     }
 
-    /** Il carattere che separa l'alias dal simbolo in un accesso qualificato, es. {@code vec.add}. */
+    /** The character separating alias from symbol in a qualified access, e.g. {@code vec.add}. */
     public static final char QUALIFIER = '.';
 
     public static boolean isQualified(String name)
@@ -426,13 +426,13 @@ public abstract class ScriptHost
     }
 
     /**
-     * Risolve {@code alias.symbol} nel modulo che lo ha importato.
+     * Resolves {@code alias.symbol} in the module that imported it.
      *
-     * <p>Fallisce a caricamento e non a runtime ogni volta che può: alias sconosciuto, modulo non
-     * importato, simbolo inesistente o non pubblico sono tutti errori con posizione e suggerimento,
-     * mai un null che si propaga.
+     * <p>Fails at load time rather than at run time whenever it can: an unknown alias, a module that
+     * was not imported, a symbol that does not exist or is not public are all errors with a position
+     * and a suggestion, never a null that propagates.
      *
-     * @param wantFunction se cercare fra le funzioni ({@code true}) o fra i binding di modulo
+     * @param wantFunction whether to look among functions ({@code true}) or among module bindings
      */
     private ModuleData resolveQualifier(Module module, String qualifiedName, boolean wantFunction)
     {
@@ -479,7 +479,7 @@ public abstract class ScriptHost
         return target;
     }
 
-    /** La funzione pubblica indicata da un accesso qualificato {@code alias.funzione}. */
+    /** The public function named by a qualified access {@code alias.function}. */
     public FunctionValue getQualifiedFunction(Module module, String qualifiedName)
     {
         ModuleData target = resolveQualifier(module, qualifiedName, true);
@@ -493,7 +493,7 @@ public abstract class ScriptHost
         return function;
     }
 
-    /** Il binding pubblico indicato da un accesso qualificato {@code alias.nome}. */
+    /** The public binding named by a qualified access {@code alias.name}. */
     public @Nullable LazyValue getQualifiedGlobal(Module module, String qualifiedName)
     {
         ModuleData target = resolveQualifier(module, qualifiedName, false);
@@ -510,9 +510,9 @@ public abstract class ScriptHost
         FunctionValue ret = getFunction(module, name);
         if (ret == null)
         {
-            // il nome puo' essere di libreria scritto senza import: e' l'errore piu' comune, e dire
-            // quale riga aggiungere costa meno che lasciare "non definita" a chi ha appena letto
-            // 'map' nella documentazione
+            // the name may be a library one written without an import: the most common mistake,
+            // and saying which line to add costs less than leaving "undefined" to someone who has
+            // just read 'map' in the documentation
             String home = blossom.language.StdLib.homeModuleOf(name);
             if (home != null)
             {

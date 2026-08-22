@@ -1,4 +1,4 @@
-// La radice non produce niente: tiene solo la versione di Loom per il sottoprogetto :blossom.
+// The root produces nothing: it only holds the Loom version for the :blossom subproject.
 plugins {
 	id 'net.fabricmc.fabric-loom' version "${loom_version}" apply false
 }

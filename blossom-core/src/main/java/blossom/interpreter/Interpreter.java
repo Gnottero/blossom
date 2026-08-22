@@ -15,12 +15,12 @@ import blossom.project.ProjectLoader;
 import blossom.value.Value;
 
 /**
- * La facciata del core: dato del codice, restituisce un valore.
+ * The facade of the core: given code, it returns a value.
  *
- * <p>È il solo punto di ingresso che un chiamante esterno deve conoscere per eseguire codice
- * Blossom senza Minecraft. Un'istanza tiene il proprio host, quindi le variabili globali e le
- * funzioni definite sopravvivono tra le chiamate a {@link #eval(String)} - che è quello che serve a
- * un REPL, a un test e alla riga di comando del mod.
+ * <p>It is the only entry point an external caller needs to know to run Blossom code without
+ * Minecraft. One instance keeps its own host, so global variables and defined functions survive
+ * between calls to {@link #eval(String)}, which is what a REPL, a test and the mod command line
+ * need.
  */
 public final class Interpreter
 {
@@ -32,11 +32,11 @@ public final class Interpreter
     }
 
     /**
-     * Un interprete su un host già costruito.
+     * An interpreter over an already built host.
      *
-     * <p>Serve a chi deve tenere un riferimento all'app mentre il suo codice sta ancora girando: il
-     * corpo di un modulo può già registrare un evento, e chi lo registra deve poter trovare l'app a
-     * cui appartiene.
+     * <p>Needed by whoever has to hold a reference to the app while its code is still running: the
+     * body of a module can already register an event, and whoever registers it must be able to find
+     * the app it belongs to.
      */
     public static Interpreter of(ScriptHost host)
     {
@@ -44,8 +44,7 @@ public final class Interpreter
     }
 
     /**
-     * Un interprete isolato: nessun accesso al disco, nessuna libreria importabile, solo il
-     * linguaggio.
+     * An isolated interpreter: no disk access, no importable library, only the language.
      */
     public static Interpreter standalone()
     {
@@ -58,12 +57,12 @@ public final class Interpreter
     }
 
     /**
-     * Carica un progetto: manifesto, entrypoint e tutti i moduli raggiungibili dagli import.
+     * Loads a project: manifest, entrypoint and every module reachable from the imports.
      *
-     * <p>I moduli vengono eseguiti in ordine di dipendenza - un modulo gira dopo tutti quelli che
-     * importa - così quando il corpo di un modulo usa {@code alias.simbolo} quel simbolo esiste già.
-     * Modulo mancante, nome che non combacia col percorso e import ciclico sono gia' stati
-     * intercettati dal loader, prima che una riga venisse eseguita.
+     * <p>Modules run in dependency order, each one after everything it imports, so that when the
+     * body of a module uses {@code alias.symbol} that symbol already exists. A missing module, a
+     * name that does not match its path and a cyclic import were already caught by the loader,
+     * before a single line ran.
      */
     public static Interpreter forProject(Path root) throws IOException
     {
@@ -71,9 +70,9 @@ public final class Interpreter
     }
 
     /**
-     * Come {@link #forProject(Path)}, ma con altre funzioni built-in installate su ogni espressione
-     * del progetto: è così che il layer Minecraft dà la propria API anche ai progetti multi-file, e
-     * non solo alle app in un file solo.
+     * Like {@link #forProject(Path)}, but with extra built-in functions installed on every
+     * expression of the project: that is how the Minecraft layer gives its API to multi file
+     * projects too, and not only to single file apps.
      */
     public static Interpreter forProject(Path root, UnaryOperator<Expression> setup) throws IOException
     {
@@ -81,9 +80,9 @@ public final class Interpreter
     }
 
     /**
-     * Come sopra, ma il contesto in cui i moduli girano lo decide il chiamante: al layer di gioco
-     * serve per dire agli script chi li ha caricati, visto che il corpo di un modulo può già
-     * chiamare funzioni che hanno bisogno di un mondo.
+     * As above, but the caller decides the context modules run in: the game layer needs it to tell
+     * scripts who loaded them, since the body of a module can already call functions that need a
+     * world.
      */
     public static Interpreter forProject(Path root, UnaryOperator<Expression> setup,
             java.util.function.Function<ScriptHost, Context> contextFactory) throws IOException
@@ -92,8 +91,8 @@ public final class Interpreter
     }
 
     /**
-     * Come sopra, sapendo cosa c'è intorno al progetto: gli altri pack installati e il registry, da
-     * cui vengono le dipendenze che non sono percorsi locali.
+     * As above, knowing what surrounds the project: the other installed packs and the registry,
+     * where the dependencies that are not local paths come from.
      */
     public static Interpreter forProject(Path root, UnaryOperator<Expression> setup,
             java.util.function.Function<ScriptHost, Context> contextFactory,
@@ -103,8 +102,8 @@ public final class Interpreter
     }
 
     /**
-     * @param refreshingLock se rifare la scelta delle versioni delle dipendenze invece di riusare
-     *                       quella scritta in {@code blossom.lock}
+     * @param refreshingLock whether to redo dependency version resolution instead of reusing the
+     *                       one written in {@code blossom.lock}
      */
     public static Interpreter forProject(Path root, UnaryOperator<Expression> setup,
             java.util.function.Function<ScriptHost, Context> contextFactory,
@@ -120,22 +119,22 @@ public final class Interpreter
             importAliases.put(name, unit.importedByAlias());
         }
         Module entry = modules.get(project.entrypoint().value());
-        // le mappe restano ordinate: l'ordine di dipendenza e' quello con cui i moduli devono
-        // esistere e girare, e Map.copyOf lo perderebbe
+        // the maps stay ordered: dependency order is the order modules have to exist and run in,
+        // and Map.copyOf would lose it
         BlossomHost host = new BlossomHost(entry, new BlossomServer(root),
                 Collections.unmodifiableMap(new LinkedHashMap<>(modules)),
                 Collections.unmodifiableMap(new LinkedHashMap<>(importAliases)), setup);
         Interpreter interpreter = new Interpreter(host);
         Context context = contextFactory.apply(host);
-        // l'ordine conta: la factory è il posto in cui chi incorpora il core installa i propri
-        // default (nel gioco, i limiti del server), e il manifesto dell'app li sovrascrive
+        // order matters: the factory is where whoever embeds the core installs their own defaults
+        // (in game, the server limits), and the app manifest overrides them
         if (project.manifest().watchdog() != null)
         {
             host.setWatchdog(project.manifest().watchdog());
         }
-        // prima esistono tutti, con i loro alias installati, poi girano: e' quello che rende
-        // possibili gli import ciclici, dove non c'e' un ordine in cui ogni modulo veda gia'
-        // registrato tutto quello che importa
+        // first they all exist, with their aliases installed, then they run: that is what makes
+        // cyclic imports possible, where no order lets every module already see everything it
+        // imports registered
         for (ProjectLoader.ModuleUnit unit : project.inDependencyOrder())
         {
             host.preRegisterModule(unit.name().value());
@@ -154,8 +153,7 @@ public final class Interpreter
     }
 
     /**
-     * Valuta {@code code} nell'host di questo interprete, mantenendo lo stato tra una chiamata e
-     * l'altra.
+     * Evaluates {@code code} in the host of this interpreter, keeping the state between calls.
      */
     public Value eval(String code)
     {
@@ -163,10 +161,10 @@ public final class Interpreter
     }
 
     /**
-     * Come {@link #eval(String)}, ma nel contesto dato: è così che il layer di gioco passa allo
-     * script chi lo ha lanciato, senza che il core debba sapere cosa sia un giocatore.
+     * Like {@link #eval(String)}, but in the given context: that is how the game layer tells the
+     * script who launched it, without the core having to know what a player is.
      *
-     * @param context deve appartenere all'host di questo interprete
+     * @param context must belong to the host of this interpreter
      */
     public Value evalIn(Context context, String code)
     {
@@ -174,10 +172,10 @@ public final class Interpreter
     }
 
     /**
-     * Come sopra, ma con limiti di esecuzione decisi dal chiamante.
+     * As above, but with execution limits decided by the caller.
      *
-     * <p>Serve a distinguere il codice che gira per conto del gioco - un evento dentro il tick, dove
-     * il budget è stretto - da quello che un utente ha lanciato a mano e sta aspettando.
+     * <p>It separates code running on behalf of the game, an event inside the tick where the budget
+     * is tight, from code a user launched by hand and is waiting on.
      */
     public Value evalIn(Context context, String code, ExecutionBudget.Policy policy)
     {
@@ -185,9 +183,9 @@ public final class Interpreter
         {
             throw new IllegalArgumentException("the context belongs to another host");
         }
-        context.beginExecution(policy); // qui comincia un'esecuzione: da qui parte il cronometro
-        // anche uno snippet può avere un preambolo: senza questo, importare un modulo da riga di
-        // comando sarebbe impossibile e l'unico modo di usare la libreria sarebbe scrivere un file
+        context.beginExecution(policy); // an execution starts here: the clock starts from here
+        // a snippet can have a preamble too: without this, importing a module from the command
+        // line would be impossible and the only way to use the library would be writing a file
         ModuleSource source = ModuleSource.parse(host.main == null ? "<code>" : host.main.name(), code);
         ModuleSymbols symbols = host.symbolsOf(host.main);
         source.imports().forEach((alias, declaration) -> symbols.declareAlias(alias, declaration.target().value()));
@@ -209,7 +207,7 @@ public final class Interpreter
     public static final class Builder
     {
         private final Map<String, Module> libraries = new HashMap<>();
-        /** nome del modulo → (alias → modulo importato): fuori da un progetto i nomi non hanno prefissi */
+        /** module name to (alias to imported module): outside a project names carry no prefix */
         private final Map<String, Map<String, String>> importAliases = new HashMap<>();
         private @Nullable Path storageRoot = null;
         private @Nullable Module main = null;
@@ -219,7 +217,7 @@ public final class Interpreter
         {
         }
 
-        /** Il modulo principale, se l'interprete ne esegue uno; altrimenti il codice gira anonimo. */
+        /** The main module, if the interpreter runs one; otherwise the code runs anonymous. */
         public Builder main(Module module)
         {
             this.main = module;
@@ -227,10 +225,10 @@ public final class Interpreter
         }
 
         /**
-         * Rende {@code module} importabile con il suo nome, leggendone il preambolo.
+         * Makes {@code module} importable under its name, reading its preamble.
          *
-         * <p>Il corpo registrato è quello ripulito dal preambolo, così il modulo vede i propri alias
-         * e il parser non incontra dichiarazioni che non sa valutare.
+         * <p>The registered body is the one stripped of the preamble, so the module sees its own
+         * aliases and the parser never meets declarations it cannot evaluate.
          */
         public Builder library(String name, String code)
         {
@@ -240,7 +238,7 @@ public final class Interpreter
             return this;
         }
 
-        /** Dove l'interprete può leggere e scrivere file; senza, ogni accesso al disco fallisce. */
+        /** Where the interpreter can read and write files; without it, every disk access fails. */
         public Builder storage(Path root)
         {
             this.storageRoot = root;
@@ -248,8 +246,8 @@ public final class Interpreter
         }
 
         /**
-         * Registra funzioni built-in aggiuntive su ogni espressione dell'host: è l'aggancio con cui
-         * il layer Minecraft installa la propria API.
+         * Registers extra built-in functions on every expression of the host: the hook the
+         * Minecraft layer installs its own API through.
          */
         public Builder withApi(UnaryOperator<Expression> setup)
         {

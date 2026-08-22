@@ -6,11 +6,11 @@ import org.slf4j.LoggerFactory;
 import net.minecraft.server.MinecraftServer;
 
 /**
- * Il punto di ingresso del mod.
+ * The entry point of the mod.
  *
- * <p>Tiene un solo pezzo di stato: il {@link ScriptRuntime} del server attualmente caricato. In
- * singleplayer un server viene creato e distrutto ad ogni mondo aperto, quindi il runtime va
- * ricreato ogni volta e non può essere un singleton immortale.
+ * <p>It keeps one single piece of state: the {@link ScriptRuntime} of the currently loaded server.
+ * In singleplayer a server is created and destroyed with every world opened, so the runtime has to
+ * be rebuilt every time and cannot be an immortal singleton.
  */
 public final class BlossomMod
 {
@@ -20,10 +20,11 @@ public final class BlossomMod
     private static ScriptRuntime runtime = null;
 
     /**
-     * Le forme in attesa di essere disegnate (vedi {@link com.gnottero.blossom.shape.ShapeDispatcher}).
+     * The shapes waiting to be drawn (see {@link com.gnottero.blossom.shape.ShapeDispatcher}).
      *
-     * <p>Vive quanto il gioco e non quanto un mondo: un client che si e' annunciato resta annunciato
-     * anche cambiando mondo in singleplayer, e le forme di un mondo chiuso vengono buttate a mano.
+     * <p>It lives as long as the game and not as long as a world: a client that announced itself
+     * stays announced across a world change in singleplayer, and the shapes of a closed world are
+     * dropped by hand.
      */
     private static final com.gnottero.blossom.shape.ShapeDispatcher SHAPES = new com.gnottero.blossom.shape.ShapeDispatcher();
 
@@ -33,10 +34,10 @@ public final class BlossomMod
     }
 
     /**
-     * Le righe di testo fisse sopra la hotbar (vedi {@link com.gnottero.blossom.hud.HudBoard}).
+     * The fixed text lines above the hotbar (see {@link com.gnottero.blossom.hud.HudBoard}).
      *
-     * <p>Vive quanto il gioco e non quanto un mondo, come le forme, e per lo stesso motivo: e' uno
-     * stato per giocatore, e un giocatore sopravvive al cambio di mondo in singleplayer.
+     * <p>It lives as long as the game and not as long as a world, like the shapes and for the same
+     * reason: it is per player state, and a player survives a world change in singleplayer.
      */
     private static final com.gnottero.blossom.hud.HudBoard HUD = new com.gnottero.blossom.hud.HudBoard();
 
@@ -58,11 +59,11 @@ public final class BlossomMod
     }
 
     /**
-     * Controlla che ogni simbolo dichiarato in un modulo {@code core.mc.*} esista davvero.
+     * Checks that every symbol declared in a {@code core.mc.*} module really exists.
      *
-     * <p>Dichiarare un simbolo e non registrarlo produrrebbe il peggior errore possibile: un import
-     * che passa e una chiamata che fallisce piu' tardi, dicendo che la funzione non esiste. Il
-     * controllo costa un'espressione vuota all'avvio, una volta sola.
+     * <p>Declaring a symbol without registering it would produce the worst possible error: an import
+     * that passes and a call that fails later, saying the function does not exist. The check costs
+     * one empty expression at startup, once.
      */
     private static void checkApiIsComplete()
     {
@@ -72,8 +73,8 @@ public final class BlossomMod
         java.util.List<String> missing = blossom.language.StdLib.moduleNames().stream()
                 .filter(module -> module.startsWith("core.mc."))
                 .flatMap(module -> blossom.language.StdLib.symbolsOf(module).stream()
-                        // il nome pubblico e quello dell'implementazione non coincidono piu': il
-                        // catalogo dice come si chiama la cosa, la mappa dice dove sta
+                        // the public name and the implementation name no longer match: the catalog
+                        // says what the thing is called, the map says where it lives
                         .filter(symbol -> !registered.contains(
                                 blossom.language.StdLib.implementationOf(module, symbol)))
                         .map(symbol -> module + "." + symbol))
@@ -88,8 +89,8 @@ public final class BlossomMod
     public static void onServerLoaded(MinecraftServer server)
     {
         runtime = new ScriptRuntime(server);
-        // le app con "autoload": true entrano qui, prima che venga generato server_starts: se
-        // arrivassero dopo, quell'evento sarebbe gia' passato e nessuna di loro potrebbe ascoltarlo
+        // apps with "autoload": true enter here, before server_starts fires: arriving later, that
+        // event would already be gone and none of them could listen to it
         runtime.loadAutoloadApps(server.createCommandSourceStack());
     }
 
@@ -106,7 +107,7 @@ public final class BlossomMod
     }
 
     /**
-     * @return il runtime del server corrente, o {@code null} se nessun mondo è caricato
+     * @return the runtime of the current server, or {@code null} if no world is loaded
      */
     public static ScriptRuntime runtime()
     {

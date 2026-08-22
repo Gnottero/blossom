@@ -14,7 +14,7 @@ import net.minecraft.world.item.ItemStack;
 import com.gnottero.blossom.event.Event;
 import com.gnottero.blossom.event.Fire;
 
-/** {@code player_picks_up_item}: quello che entra davvero nell'inventario, non quello che si tocca. */
+/** {@code player_picks_up_item}: what really enters the inventory, not what is touched. */
 @Mixin(Inventory.class)
 public abstract class Inventory_blossomEventMixin
 {
@@ -33,7 +33,7 @@ public abstract class Inventory_blossomEventMixin
         int before = stack.getCount();
         ItemStack previous = stack.copy();
         boolean result = inventory.add(-1, stack);
-        // add() torna false anche quando una parte della pila e' entrata: conta la differenza
+        // add() returns false even when part of the stack went in: the difference is what counts
         if (before != stack.getCount())
         {
             Fire.pickup(Event.PLAYER_PICKS_UP_ITEM, serverPlayer, previous.copyWithCount(before - stack.getCount()));

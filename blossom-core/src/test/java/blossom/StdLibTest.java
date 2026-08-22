@@ -11,8 +11,8 @@ import blossom.interpreter.Interpreter;
 import blossom.language.StdLib;
 
 /**
- * La libreria standard a pacchetti (PIANO_LINGUAGGIO.md §5): ogni funzione vive in un modulo, e
- * l'unica cosa disponibile senza import è il prelude.
+ * The packaged standard library (PIANO_LINGUAGGIO.md §5): every function lives in a module, and the
+ * only thing available without an import is the prelude.
  */
 class StdLibTest
 {
@@ -64,8 +64,8 @@ class StdLibTest
     @Test
     void everyDeclaredSymbolActuallyExists()
     {
-        // il catalogo dei moduli e le funzioni registrate devono restare allineati: un simbolo
-        // dichiarato ma inesistente sarebbe documentazione che mente
+        // the module catalog and the registered functions have to stay aligned: a declared symbol
+        // that does not exist would be documentation that lies
         for (String module : StdLib.moduleNames())
         {
             for (String symbol : StdLib.symbolsOf(module))
@@ -78,8 +78,8 @@ class StdLibTest
     }
 
     /**
-     * Chiama il simbolo senza argomenti: qualunque errore va bene tranne "non esiste", perché è
-     * quello che stiamo verificando.
+     * Calls the symbol with no arguments: any error is fine except "does not exist", which is what
+     * is being checked.
      */
     private static void assertThrowsNothingButArity(String module, String alias, String symbol)
     {
@@ -89,29 +89,29 @@ class StdLibTest
         }
         catch (UndefinedSymbolError e)
         {
-            throw new AssertionError(module + " dichiara '" + symbol + "' ma non esiste: " + e.getMessage());
+            throw new AssertionError(module + " declares '" + symbol + "' but it does not exist: " + e.getMessage());
         }
         catch (RuntimeException | StackOverflowError expected)
         {
-            // arieta' sbagliata, tipo sbagliato, valore mancante: tutto normale
+            // wrong arity, wrong type, missing value: all normal
         }
     }
 
     /**
-     * Nessun simbolo esce da due moduli diversi.
+     * No symbol is exported by two different modules.
      *
-     * <p>E' la rete che impedisce a 'join'/'split' o a 'task_join' di tornare a stare in due posti:
-     * chi legge una chiamata deve poter risalire al modulo dal nome dell'alias, e due moduli che
-     * esportano lo stesso nome rendono quella risalita una domanda invece che una lettura.
+     * <p>It is the net that keeps 'join'/'split' or 'task_join' from living in two places again:
+     * whoever reads a call has to be able to trace the module back from the alias name, and two
+     * modules exporting the same name turn that trace into a question instead of a reading.
      *
-     * <p>Le eccezioni sono dichiarate qui una per una, con il motivo, invece di essere tollerate in
-     * silenzio.
+     * <p>The exceptions are declared here one by one, with their reason, instead of being tolerated
+     * silently.
      */
     @Test
     void noSymbolIsExportedByTwoModules()
     {
-        // 'core.list' e 'core.map' condividono l'accesso indicizzato: la' il primo argomento e'
-        // genuinamente polimorfo, ed e' la stessa identica implementazione
+        // 'core.list' and 'core.map' share indexed access: there the first argument is genuinely
+        // polymorphic, and it is the very same implementation
         java.util.Set<String> shared = java.util.Set.of("get", "put", "has", "remove", "size");
 
         java.util.Map<String, java.util.List<String>> homes = new java.util.TreeMap<>();

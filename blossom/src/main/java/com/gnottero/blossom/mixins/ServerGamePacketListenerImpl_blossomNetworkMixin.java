@@ -12,16 +12,16 @@ import com.gnottero.blossom.net.BlossomPayloads;
 import com.gnottero.blossom.net.ServerNetwork;
 
 /**
- * Riceve la risposta al saluto di un client Blossom.
+ * Receives the answer to the greeting of a Blossom client.
  *
- * <p>È l'unico payload che il server accetta: tutto quello che gli script possono fare passa dai
- * comandi e dagli eventi, e un canale su cui un client può chiedere cose sarebbe una superficie in
- * più da difendere in cambio di niente.
+ * <p>It is the only payload the server accepts: everything scripts can do goes through commands and
+ * events, and a channel a client could ask things on would be one more surface to defend in exchange
+ * for nothing.
  *
- * <p>Il bersaglio è {@code ServerGamePacketListenerImpl} e non la superclasse comune:
- * {@code handleCustomPayload} è <b>ridefinito</b> qui, e il corpo ridefinito non chiama quello del
- * padre. Un aggancio sulla superclasse compila, si applica senza lamentarsi, e non viene mai
- * eseguito in fase di gioco — che è esattamente il modo in cui il saluto si perdeva.
+ * <p>The target is {@code ServerGamePacketListenerImpl} and not the common superclass:
+ * {@code handleCustomPayload} is <b>overridden</b> here, and the overriding body does not call the
+ * parent one. A hook on the superclass compiles, applies without complaining, and never runs during
+ * the play phase, which is exactly how the greeting used to get lost.
  */
 @Mixin(ServerGamePacketListenerImpl.class)
 public abstract class ServerGamePacketListenerImpl_blossomNetworkMixin
@@ -31,7 +31,7 @@ public abstract class ServerGamePacketListenerImpl_blossomNetworkMixin
     {
         if (packet.payload() instanceof final BlossomPayloads.Hello hello)
         {
-            // il saluto arriva sul thread di rete: si registra e basta, senza toccare il mondo
+            // the greeting arrives on the network thread: just record it, without touching the world
             ServerNetwork.onHello(((ServerGamePacketListenerImpl) (Object) this).player, hello.data());
         }
     }

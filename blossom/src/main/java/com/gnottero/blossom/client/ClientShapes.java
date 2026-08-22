@@ -273,11 +273,11 @@ public final class ClientShapes
     }
 
     /**
-     * Il riempimento, col modo di disegnare che gli tocca.
+     * The fill, with the draw mode it deserves.
      *
-     * <p>Un poligono di più di quattro vertici diventa un ventaglio di triangoli, e ogni triangolo un
-     * quadrilatero con l'ultimo vertice ripetuto: la pipeline disegna quadrilateri, e ripetere un
-     * vertice è il modo di darle un triangolo senza cambiarle topologia.
+     * <p>A polygon with more than four vertices becomes a triangle fan, and every triangle a quad
+     * with its last vertex repeated: the pipeline draws quads, and repeating a vertex is the way to
+     * hand it a triangle without changing its topology.
      */
     private static void submitFill(List<Vec3[]> faces, int color, RenderType renderType,
             SubmitNodeStorage collector, CameraRenderState camera)
@@ -288,16 +288,16 @@ public final class ClientShapes
     }
 
     /**
-     * Il riempimento traslucido, disegnato dopo le nuvole.
+     * The translucent fill, drawn after the clouds.
      *
-     * <p>Le facce sono le stesse e il modo di disegnarle pure - {@code debugQuads} è quello che
-     * userebbero le primitive del gioco - ma il momento no: consegnate nella fase normale
-     * finirebbero prima delle nuvole, che le coprirebbero del tutto invece che in proporzione
-     * all'alfa. Vedi {@link AfterCloudsSubmits}.
+     * <p>The faces are the same and so is the draw mode, since {@code debugQuads} is what the game
+     * primitives would use, but the moment is not: submitted in the normal phase they would land
+     * before the clouds, which would cover them entirely instead of in proportion to alpha. See
+     * {@link AfterCloudsSubmits}.
      *
-     * <p>Con la trasparenza migliorata (OIT) accesa il problema non esiste, perché lì l'ordine di
-     * consegna non conta: si passa dalla via normale, che in quel caso è anche l'unica che il gioco
-     * esegue.
+     * <p>With improved transparency (OIT) on the problem does not exist, because there submission
+     * order does not matter: the normal path is taken, which in that case is also the only one the
+     * game runs.
      */
     private static void submitTranslucentFill(List<Vec3[]> faces, int color, SubmitNodeStorage collector,
             CameraRenderState camera)
@@ -353,12 +353,12 @@ public final class ClientShapes
     }
 
     /**
-     * Il testo, con la posa che gli è stata chiesta.
+     * The text, in the pose it was asked for.
      *
-     * <p>L'ordine delle trasformazioni non è libero: prima si va nel punto, poi si gira verso quello
-     * che si deve guardare, poi si scala nelle unità del font, e solo dopo si applicano inclinazioni
-     * e spostamenti — che sono espressi in quelle unità. Girare dopo aver spostato vorrebbe dire far
-     * ruotare anche lo spostamento, che non è quello che chi scrive intende.
+     * <p>The order of the transformations is not free: first move to the point, then turn towards
+     * what has to be faced, then scale into font units, and only afterwards apply tilts and
+     * offsets, which are expressed in those units. Turning after moving would rotate the offset
+     * too, which is not what the script means.
      */
     private void submitLabel(Shape.Label label, Vec3 followPos, SubmitNodeCollector collector,
             CameraRenderState camera, Font font)
@@ -397,8 +397,8 @@ public final class ClientShapes
                 LightCoordsUtil.FULL_BRIGHT, color, background, 0);
         if (style.doublesided())
         {
-            // le primitive del gioco non lasciano spegnere il culling: la seconda faccia si ottiene
-            // scrivendo di nuovo lo stesso testo girato, che e' quello che si vuole vedere da dietro
+            // the game primitives do not allow culling to be turned off: the second face is drawn
+            // by writing the same text again, flipped, which is what one wants to see from behind
             pose.mulPose(Axis.YP.rotationDegrees(180));
             collector.submitText(pose, x, 0.0F, text.getVisualOrderText(), false, Font.DisplayMode.NORMAL,
                     LightCoordsUtil.FULL_BRIGHT, color, background, 0);
@@ -406,11 +406,11 @@ public final class ClientShapes
     }
 
     /**
-     * Il testo dell'etichetta, con lo stile che aveva nello script.
+     * The label text, with the style it had in the script.
      *
-     * <p>Chi ha disegnato l'etichetta con un testo di {@code core.mc.text} si aspetta di rivedere i
-     * suoi colori: quel testo viaggia serializzato e si decodifica qui, una volta sola. Una stringa e
-     * basta non ha niente da decodificare, e diventa il testo che è.
+     * <p>Whoever drew the label with a {@code core.mc.text} text expects their colors back: that
+     * text travels serialized and is decoded here, once. A plain string has nothing to decode, and
+     * becomes the text it is.
      */
     private Component textOf(Shape.Label label)
     {
@@ -432,12 +432,12 @@ public final class ClientShapes
     }
 
     /**
-     * Un blocco o un item, disegnato dove non ce n'è nessuno.
+     * A block or an item, drawn where there is none.
      *
-     * <p>Le trasformazioni sono nello stesso ordine dell'etichetta e per lo stesso motivo: prima il
-     * punto, poi il verso, poi la scala, e solo alla fine lo spostamento che porta l'origine dove
-     * deve stare. Un blocco gira attorno al proprio centro e non attorno al suo angolo — è quello che
-     * uno si aspetta guardandolo ruotare - e per questo l'ultimo mezzo blocco si toglie dopo.
+     * <p>The transformations are in the same order as the label and for the same reason: first the
+     * point, then the facing, then the scale, and only at the end the offset that puts the origin
+     * where it belongs. A block turns around its own center and not around its corner, which is
+     * what one expects watching it rotate, and that is why the last half block is subtracted last.
      */
     private void submitSprite(Shape.Sprite sprite, @org.jspecify.annotations.Nullable Vec3 followPos,
             SubmitNodeStorage collector, CameraRenderState camera, float partialTick, Minecraft client)
@@ -455,8 +455,8 @@ public final class ClientShapes
         Vec3 pos = sprite.anchored(sprite.pos(), followPos);
         PoseStack pose = new PoseStack();
         pose.translate(pos.x - camera.pos.x, pos.y - camera.pos.y, pos.z - camera.pos.z);
-        // un blocco occupa lo spazio dal suo angolo in avanti: e' il suo centro che deve guardare
-        // chi legge, non lo spigolo
+        // a block occupies space from its corner onwards: it is its center that has to face the
+        // viewer, not the edge
         face(pose, style.facing(), sprite.isItem() ? pos : pos.add(0.5, 0.5, 0.5), camera);
         if (style.tilt() != 0.0F)
         {
@@ -473,7 +473,7 @@ public final class ClientShapes
         pose.scale(style.scaleX(), style.scaleY(), style.scaleZ());
         if (sprite.isItem())
         {
-            // gli item il gioco li disegna guardando dall'altra parte
+            // the game draws items facing the other way
             pose.mulPose(Axis.YP.rotationDegrees(180));
         }
         else
@@ -506,19 +506,18 @@ public final class ClientShapes
     }
 
     /**
-     * L'acqua (o la lava) di un blocco disegnato a mezz'aria.
+     * The water (or lava) of a block drawn in mid air.
      *
-     * <p>Il gioco non la disegna insieme al modello: il liquido non è un modello, è una superficie
-     * che si calcola guardando i vicini - quanto è alto qui, quanto di là, quale faccia è nascosta -
-     * e questo lo fa solo chi costruisce le mesh dei chunk. Un blocco disegnato dove non c'è nessun
-     * chunk quel passaggio non ce l'ha, e un {@code water} o un baule {@code waterlogged=true}
-     * arriverebbero all'occhio asciutti.
+     * <p>The game does not draw it together with the model: a fluid is not a model, it is a surface
+     * computed by looking at the neighbours, how high it is here, how high over there, which face is
+     * hidden, and only the chunk mesh builder does that. A block drawn where there is no chunk has
+     * no such pass, and a {@code water} or a {@code waterlogged=true} chest would reach the eye dry.
      *
-     * <p>Quindi si chiama lo stesso {@link FluidRenderer} del gioco, ma su un mondo finto fatto di
-     * un blocco solo: il nostro all'origine, aria tutt'intorno. Le coordinate che scrive sono
-     * relative alla sezione ({@code pos & 15}), e dall'origine vengono in {@code [0,1]}, che è lo
-     * stesso spazio del modello del blocco. Il colore del biome invece si chiede al mondo vero, alla
-     * posizione vera: l'acqua di una palude deve restare verde anche a mezz'aria.
+     * <p>So the game's own {@link FluidRenderer} is called, but on a fake world made of a single
+     * block: ours at the origin, air all around. The coordinates it writes are relative to the
+     * section ({@code pos & 15}), and from the origin they come out in {@code [0,1]}, the same space
+     * as the block model. The biome color instead is asked of the real world at the real position:
+     * the water of a swamp has to stay green in mid air too.
      */
     private void submitFluid(BlockState state, PoseStack pose, SubmitNodeStorage collector, int light,
             BlockPos worldPos, Minecraft client)
@@ -543,10 +542,10 @@ public final class ClientShapes
     }
 
     /**
-     * Il disegnatore di liquidi, tenuto finché i modelli sono quelli.
+     * The fluid renderer, kept as long as the models stay the same.
      *
-     * <p>Costruirlo a ogni frame non costerebbe molto, ma non costa niente non farlo; e dopo un
-     * reload delle risorse i modelli sono altri, quindi la chiave è l'insieme stesso.
+     * <p>Building it every frame would not cost much, but not building it costs nothing; and after a
+     * resource reload the models are different ones, so the key is the model set itself.
      */
     private FluidRenderer fluidRenderer(FluidStateModelSet models)
     {
@@ -563,9 +562,9 @@ public final class ClientShapes
     /**
      * Un mondo di un blocco solo: il nostro all'origine, aria dappertutto.
      *
-     * <p>Serve a {@link FluidRenderer}, che di un mondo chiede i vicini e la luce. I vicini qui non
-     * ci sono per scelta - il liquido deve avere tutte le sue facce, come ce l'ha un blocco isolato -
-     * mentre la luce è quella che la forma ha chiesto, e il colore quello del mondo vero.
+     * <p>Needed by {@link FluidRenderer}, which asks a world for neighbours and light. There are no
+     * neighbours here by choice, since the fluid has to keep all of its faces the way an isolated
+     * block does, while the light is the one the shape asked for and the color is the real world's.
      */
     private record SingleBlockView(net.minecraft.client.multiplayer.ClientLevel level, BlockState state,
             BlockPos worldPos, int light) implements BlockAndTintGetter
@@ -627,10 +626,10 @@ public final class ClientShapes
     }
 
     /**
-     * Un buffer di vertici che porta con sé una posa.
+     * A vertex buffer that carries a pose with it.
      *
-     * <p>{@link FluidRenderer} scrive coordinate crude, come farebbe dentro un chunk; qui invece il
-     * blocco sta dove la forma ha detto, girato e scalato come ha detto. La posa la applica questo.
+     * <p>{@link FluidRenderer} writes raw coordinates, as it would inside a chunk; here instead the
+     * block sits where the shape said, turned and scaled as it said. This applies the pose.
      */
     private record Posed(VertexConsumer delegate, PoseStack.Pose pose) implements VertexConsumer
     {
@@ -701,9 +700,9 @@ public final class ClientShapes
     }
 
     /**
-     * La parte di un blocco che ha un renderer suo: il coperchio di un baule, il testo di un
-     * cartello, la testa di uno scheletro. Senza questa, un baule disegnato a mezz'aria sarebbe una
-     * cassa vuota senza coperchio.
+     * The part of a block that has a renderer of its own: the lid of a chest, the text of a sign,
+     * the head of a skeleton. Without this, a chest drawn in mid air would be an empty box with no
+     * lid.
      */
     private static void submitBlockEntity(net.minecraft.world.level.block.entity.@org.jspecify.annotations.Nullable BlockEntity blockEntity,
             PoseStack pose, SubmitNodeStorage collector, CameraRenderState camera, float partialTick,
@@ -727,7 +726,7 @@ public final class ClientShapes
         }
     }
 
-    /** In che posa si disegna un item: {@code none} è come lo si vede appoggiato per terra. */
+    /** The pose an item is drawn in: {@code none} is how it looks lying on the ground. */
     private static ItemDisplayContext displayContext(String variant)
     {
         try
@@ -741,10 +740,10 @@ public final class ClientShapes
     }
 
     /**
-     * Dal testo che è arrivato dalla rete al modello che il gioco sa disegnare.
+     * From the text that arrived over the network to the model the game can draw.
      *
-     * <p>Si fa una volta per forma: parsare il nome di un blocco e costruire la sua block entity a
-     * ogni frame vorrebbe dire pagare a sessanta hertz una cosa che non cambia mai.
+     * <p>Done once per shape: parsing a block name and building its block entity every frame would
+     * mean paying at sixty hertz for something that never changes.
      */
     private static Model resolve(Shape.Sprite sprite, Minecraft client)
     {
@@ -774,13 +773,13 @@ public final class ClientShapes
         }
         catch (CommandSyntaxException unknown)
         {
-            // un blocco che questo client non conosce: un server con dei mod che qui non ci sono
+            // a block this client does not know: a server with mods that are not here
             return Model.NONE;
         }
         return new Model(state, null, blockEntityOf(state, sprite, client));
     }
 
-    /** La block entity del blocco, coi dati che il server ha mandato, se il blocco ne ha una. */
+    /** The block entity of the block, with the data the server sent, if the block has one. */
     private static net.minecraft.world.level.block.entity.@org.jspecify.annotations.Nullable BlockEntity blockEntityOf(
             BlockState state, Shape.Sprite sprite, Minecraft client)
     {
@@ -808,7 +807,7 @@ public final class ClientShapes
         return blockEntity;
     }
 
-    /** Gira la posa verso quello che l'etichetta deve guardare. */
+    /** Turns the pose towards what the label has to face. */
     private static void face(PoseStack pose, String facing, Vec3 pos, CameraRenderState camera)
     {
         switch (facing)
@@ -822,8 +821,8 @@ public final class ClientShapes
             case "up" -> pose.mulPose(Axis.XP.rotationDegrees(90));
             case "down" -> pose.mulPose(Axis.XP.rotationDegrees(-90));
             case "camera" -> pose.mulPose(camera.orientation);
-            // 'player': guarda chi legge, ma restando in piedi - il testo non si inclina insieme
-            // alla testa di chi guarda, che e' la differenza con 'camera'
+            // 'player': faces the viewer, but stays upright: the text does not tilt along with the
+            // viewer's head, which is the difference from 'camera'
             default ->
             {
                 Vec3 toCamera = pos.subtract(camera.pos);
@@ -834,7 +833,7 @@ public final class ClientShapes
         }
     }
 
-    /** Dov'è adesso l'entità seguita, interpolata nel frame, o {@code null} se non c'è più. */
+    /** Where the followed entity is now, interpolated within the frame, or {@code null} if gone. */
     private static @org.jspecify.annotations.Nullable Vec3 followPositionOf(Shape shape, Minecraft client,
             float partialTick)
     {
@@ -847,8 +846,8 @@ public final class ClientShapes
     }
 
     /**
-     * Da {@code 0xRRGGBBAA} - come si scrivono i colori nello script - a {@code 0xAARRGGBB}, che è
-     * quello che le primitive del gioco si aspettano.
+     * From {@code 0xRRGGBBAA}, the way colors are written in a script, to {@code 0xAARRGGBB}, which
+     * is what the game primitives expect.
      */
     private static int argb(int rgba)
     {

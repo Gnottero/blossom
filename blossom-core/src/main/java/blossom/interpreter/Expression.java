@@ -1025,9 +1025,9 @@ public class Expression
             List<String> arguments, @Nullable List<String> argumentTypes, @Nullable List<LazyValue> defaults,
             String varArgs, List<String> outers, LazyValue code)
     {
-        // riservato e' solo il prelude: quello si scrive senza import, quindi un omonimo dell'utente
-        // renderebbe ambigua la grammatica. Tutto il resto della libreria si raggiunge per alias
-        // ('list.map'), quindi 'fn map(...)' non maschera niente e non c'e' motivo di vietarlo
+        // Only the prelude is reserved: it is written without an import, so a user function with
+        // the same name would make the grammar ambiguous. The rest of the library is reached
+        // through an alias ('list.map'), so 'fn map(...)' hides nothing and stays legal
         if (StdLib.isInPrelude(name))
         {
             throw new UndefinedSymbolError(BlossomError.positionOf(this, token),
@@ -1222,23 +1222,23 @@ public class Expression
         };
     }
 
-    /** {@code alias.simbolo}: appartiene a un altro modulo, e non può essere creato da qui. */
+    /** {@code alias.symbol}: it belongs to another module, and cannot be created from here. */
     private LazyValue qualifiedVariable(Context c, String name)
     {
-        // o esiste ed e' pubblico, o e' un errore, e lo e' subito
+        // either it exists and is public, or it is an error, and it is one right away
         LazyValue imported = c.host.getQualifiedGlobal(module, name);
         if (imported != null)
         {
             return imported;
         }
-        // un simbolo pubblico che non e' un binding e' una funzione, e una funzione e' un valore:
-        // passarla a un altro modulo deve funzionare, ed e' il FunctionValue - non il suo nome -
-        // a viaggiare, cosi' resta legata al modulo che l'ha definita ovunque venga chiamata
+        // a public symbol that is not a binding is a function, and a function is a value: passing
+        // it to another module has to work, and what travels is the FunctionValue rather than its
+        // name, so it stays bound to the module that defined it wherever it gets called
         Value function = c.host.getQualifiedFunction(module, name);
         return (cc, tt) -> function;
     }
 
-    /** Un nome nudo: il frame corrente, poi i global del modulo, poi le sue funzioni. */
+    /** A bare name: the current frame first, then the module globals, then its functions. */
     private LazyValue localVariable(Context c, String name)
     {
         LazyValue variable = c.getVariable(name);
@@ -1254,7 +1254,7 @@ public class Expression
         FunctionValue localFunction = c.host.getFunction(module, name);
         if (localFunction != null)
         {
-            // il nome nudo di una funzione del modulo vale la funzione stessa
+            // the bare name of a module function evaluates to the function itself
             return (cc, tt) -> localFunction;
         }
         variable = uninitializedVariable(name);
@@ -1413,9 +1413,9 @@ public class Expression
                     }
                     else if (previousToken != null && previousToken.type == Token.TokenType.CLOSE_PAREN)
                     {
-                        // una chiamata scritta dopo un valore: 'f()(2)', '(fn(x) -> x)(2)'. Il
-                        // valore che sta prima e' la funzione, e diventa il primo argomento di
-                        // 'call'; le parentesi che seguono portano gli altri
+                        // a call written after a value: 'f()(2)', '(fn(x) -> x)(2)'. The value
+                        // before it is the function, and becomes the first argument of 'call';
+                        // the parentheses that follow carry the others
                         Token apply = token.morphedInto(Token.TokenType.FUNCTION, "call");
                         apply.postfixCall = true;
                         outputQueue.add(token);
@@ -1508,7 +1508,7 @@ public class Expression
         return Pair.of(evaluatePartial(() -> ast, c, Context.Type.NONE), root);
     }
 
-    /** La posizione da usare quando l'errore riguarda il modulo intero e non un token preciso. */
+    /** The position to use when the error is about the whole module and not one precise token. */
     private SourcePosition modulePosition()
     {
         return new SourcePosition(getModuleName() == null ? "<code>" : getModuleName(), 0, 0);
@@ -1536,8 +1536,8 @@ public class Expression
         }
         catch (final BlossomError typed)
         {
-            // gia' tipizzato, con posizione e stack: rimpiazzarlo con un errore generico
-            // cancellerebbe proprio l'informazione che serve
+            // already typed, with position and stack: replacing it with a generic error would
+            // erase exactly the information that is needed
             throw typed;
         }
         catch (InternalExpressionException exc)
@@ -1656,18 +1656,18 @@ public class Expression
 
 
     /**
-     * Il nome con cui una chiamata va cercata fra le built-in, o {@code null} se fra le built-in non
-     * va cercata affatto.
+     * The name a call has to be looked up under among the built-ins, or {@code null} if it must
+     * not be looked up among them at all.
      *
-     * <p>Succede una volta sola per chiamata scritta nel sorgente:
+     * <p>Resolved once per call written in the source:
      * <ul>
-     *   <li>{@code math.sqrt(4)} diventa {@code sqrt}, se l'alias {@code math} punta a un modulo di
-     *       libreria che esporta quel simbolo;</li>
-     *   <li>un nome senza qualificatore che non sia del prelude e' <b>sempre</b> una funzione
-     *       dell'utente: si risolve a runtime sul suo host. Le built-in si raggiungono solo
-     *       attraverso un alias, quindi lo spazio globale implicito non torna in piedi, e in cambio
-     *       {@code fn sum(a, b)} e' un nome come un altro invece che uno dei 160 riservati
-     *       dall'elenco piatto delle implementazioni.</li>
+     *   <li>{@code math.sqrt(4)} becomes {@code sqrt}, if the alias {@code math} points to a
+     *       library module that exports that symbol;</li>
+     *   <li>an unqualified name outside the prelude is <b>always</b> a user function, resolved at
+     *       run time on its host. Built-ins are reachable only through an alias, so the implicit
+     *       global namespace does not come back, and in exchange {@code fn sum(a, b)} is an
+     *       ordinary name instead of one of the 160 reserved by the flat list of
+     *       implementations.</li>
      * </ul>
      */
     private @Nullable String resolveBuiltinName(Context context, Token token)
@@ -1689,18 +1689,18 @@ public class Expression
                 }
                 return StdLib.implementationOf(target, symbol);
             }
-            return null; // simbolo di un modulo dell'utente: si risolve a runtime, per il suo host
+            return null; // symbol of a user module: resolved at run time, on its own host
         }
         return StdLib.isInPrelude(name) ? name : null;
     }
 
     /**
-     * Se questo nodo e' una lambda scritta sul posto, {@code fn(x) -> ...}.
+     * Whether this node is a lambda written in place, {@code fn(x) -> ...}.
      *
-     * <p>Si guarda solo i token, quindi la risposta e' nota mentre si costruisce l'albero: e' cosi'
-     * che i cicli sanno se hanno davanti una funzione o un'espressione con {@code _} senza dover
-     * valutare il corpo per scoprirlo. Il nome dell'operatore e' due perche' la compattazione
-     * dell'albero riscrive {@code ->} nel suo equivalente funzionale {@code define}.
+     * <p>Only the tokens are inspected, so the answer is known while the tree is being built: that
+     * is how loops tell a function from an expression using {@code _} without evaluating the body.
+     * Two operator names are accepted because tree compaction rewrites {@code ->} into its
+     * functional equivalent {@code define}.
      */
     private static boolean isLambdaNode(Token operator, Token left)
     {
@@ -1709,15 +1709,15 @@ public class Expression
     }
 
     /**
-     * {@code a |> f(b)}, che vuol dire {@code f(a, b)}.
+     * {@code a |> f(b)}, which means {@code f(a, b)}.
      *
-     * <p>La riscrittura avviene qui, mentre si costruisce l'albero: il nodo del tubo sparisce e
-     * quello che resta e' la chiamata, con un argomento in piu' davanti. A runtime non c'e' nessun
-     * operatore da valutare, quindi incatenare tre trasformazioni costa quanto scriverle annidate -
-     * si guadagna solo l'ordine di lettura, che e' il motivo per cui esiste.
+     * <p>The rewrite happens here, while the tree is being built: the pipe node disappears and what
+     * is left is the call, with one extra argument in front. At run time there is no operator to
+     * evaluate, so chaining three transformations costs the same as nesting them; the only gain is
+     * reading order, which is the reason the operator exists.
      *
-     * <p>Se a destra non c'e' una chiamata ma un valore - {@code x |> f}, con {@code f} legata a una
-     * funzione - diventa {@code call(f, x)}, che e' la stessa cosa scritta in un altro modo.
+     * <p>If the right side is a value rather than a call, as in {@code x |> f} with {@code f} bound
+     * to a function, it becomes {@code call(f, x)}, the same thing written another way.
      */
     private ExpressionNode pipeNode(ExpressionNode left, ExpressionNode right)
     {
@@ -1725,8 +1725,8 @@ public class Expression
         if (target.type == Token.TokenType.FUNCTION)
         {
             List<ExpressionNode> args = new ArrayList<>(right.args);
-            // per un nome che non e' una built-in il parser ha gia' messo il nome come primo
-            // argomento di 'call': il soggetto va dopo di lui, non prima
+            // for a name that is not a built-in the parser already put the name as the first
+            // argument of 'call': the subject goes after it, not before
             args.add(target.surface.equals("call") ? 1 : 0, left);
             return functionNode(target, args);
         }
@@ -1745,18 +1745,17 @@ public class Expression
     }
 
     /**
-     * Se questo nodo, fra gli argomenti di una chiamata, e' un nome attaccato a un valore.
+     * Whether this node, among the arguments of a call, is a name attached to a value.
      *
-     * <p>{@code f(pos, update = false)}: un {@code =} con un nome semplice a sinistra. Si guarda
-     * solo i token, quindi la risposta e' nota mentre si costruisce l'albero. Il nome dell'operatore
-     * e' due perche' la compattazione riscrive {@code =} nel suo equivalente funzionale.
+     * <p>{@code f(pos, update = false)}: an {@code =} with a plain name on the left. Only the
+     * tokens are inspected, so the answer is known while the tree is being built. Two operator
+     * names are accepted because compaction rewrites {@code =} into its functional equivalent.
      */
     private static boolean isNamedArgument(Token callee, ExpressionNode node)
     {
-        // solo dentro una chiamata a una funzione scritta da qualcuno, o dentro una firma. Gli
-        // operatori, che la compattazione trasforma anch'essi in chiamate ('a; b' diventa
-        // then(a, b), '[x]' diventa l(x)), non hanno parametri con un nome, e li' un '=' resta
-        // l'assegnamento che e' sempre stato
+        // only inside a call to a user written function, or inside a signature. Operators, which
+        // compaction also turns into calls ('a; b' becomes then(a, b), '[x]' becomes l(x)), have no
+        // named parameters, and there an '=' stays the assignment it has always been
         if (!callee.surface.equals("call") && !callee.surface.equals("fn"))
         {
             return false;
@@ -1768,11 +1767,11 @@ public class Expression
     }
 
     /**
-     * Il nome staccato dal valore.
+     * The name detached from its value.
      *
-     * <p>Il valore resta pigro: nella firma di una funzione questo diventa il default di un
-     * parametro, e un default va valutato ad ogni chiamata che lo usa, non una volta sola alla
-     * definizione - altrimenti {@code fn f(x = {})} darebbe a tutti la stessa mappa.
+     * <p>The value stays lazy: in a function signature this becomes the default of a parameter, and
+     * a default has to be evaluated on every call that uses it, not once at definition time,
+     * otherwise {@code fn f(x = {})} would hand everyone the same map.
      */
     private static LazyValue namedArgument(String name, LazyValue value)
     {
@@ -1781,11 +1780,11 @@ public class Expression
     }
 
     /**
-     * Gli argomenti con un nome vanno in fondo, e chi non li mette li' lo sa subito.
+     * Named arguments must come last, and whoever puts them elsewhere finds out immediately.
      *
-     * <p>Il controllo si fa qui, sui token, quindi e' un errore di caricamento e non una sorpresa
-     * a runtime. E' anche quello che permette al confine della chiamata di guardare solo l'ultimo
-     * argomento per sapere se ce ne sono con un nome.
+     * <p>The check happens here, on the tokens, so it is a load time error and not a run time
+     * surprise. It is also what lets the call boundary look at the last argument alone to know
+     * whether any named ones are present.
      */
     private void checkNamedArgumentOrder(Context context, Token callee, List<ExpressionNode> args)
     {
@@ -1812,8 +1811,8 @@ public class Expression
     private ExpressionNode binaryNode(Token token, ExpressionNode left, ExpressionNode right)
     {
         LazyValue result = (c, t) -> operators.get(token.surface).lazyEval(c, t, this, token, left.op, right.op).evalValue(c, t);
-        // una lambda si riconosce dai token, qui, una volta sola: i cicli accettano sia una
-        // funzione sia un'espressione con '_', e devono saperlo senza valutare il corpo
+        // a lambda is recognised from the tokens, here, once: loops accept both a function and an
+        // expression using '_', and have to tell them apart without evaluating the body
         if (isLambdaNode(token, left.token))
         {
             result = new LazyValue.Lambda(result);
@@ -1824,23 +1823,23 @@ public class Expression
     }
 
     /**
-     * Rimette a posto {@code f = fn(a) -> a + 1}, che la precedenza spezza nel punto sbagliato.
+     * Puts {@code f = fn(a) -> a + 1} back together, which precedence splits at the wrong point.
      *
-     * <p>{@code ->} lega meno dell'assegnamento, e deve: il corpo di una funzione e' spesso un
-     * assegnamento, e {@code fn conta() -> contatore += 1} va letto con l'assegnamento dentro il
-     * corpo. Il prezzo e' che mettere una lambda in una variabile si legge al contrario,
-     * {@code (f = fn(a)) -> a + 1}, dove a sinistra della freccia non c'e' nessuna firma.
+     * <p>{@code ->} binds looser than assignment, and it has to: the body of a function is often an
+     * assignment, and {@code fn count() -> counter += 1} must read with the assignment inside the
+     * body. The price is that storing a lambda in a variable parses the other way round,
+     * {@code (f = fn(a)) -> a + 1}, where the left of the arrow carries no signature.
      *
-     * <p>Le due forme si distinguono guardando i token, cioe' senza eseguire niente: a sinistra
-     * della freccia c'e' un assegnamento cha ha per destra una {@code fn(...)}. In quel caso, e solo
-     * in quello, l'albero viene rigirato in {@code f = (fn(a) -> a + 1)}. Nessuna precedenza da
-     * cambiare e nessun costo a runtime: succede una volta, mentre si costruisce l'albero.
+     * <p>The two forms are told apart by looking at the tokens, that is without running anything:
+     * left of the arrow there is an assignment whose right side is an {@code fn(...)}. In that case
+     * only, the tree is flipped into {@code f = (fn(a) -> a + 1)}. No precedence to change and no
+     * run time cost: it happens once, while the tree is being built.
      */
     /**
-     * I nomi del prelude che a sinistra di {@code ->} non sono un errore dell'utente: {@code fn} e'
-     * la lambda, {@code call} e' il nome in cui una chiamata sconosciuta - cioe' ogni funzione che
-     * l'utente sta definendo - viene riscritta, e {@code l}/{@code m}/{@code concat} li mette il
-     * tokenizer per le parentesi quadre, le graffe e le stringhe interpolate.
+     * The prelude names that are not a user mistake on the left of {@code ->}: {@code fn} is the
+     * lambda, {@code call} is what an unknown call gets rewritten into, that is every function the
+     * user is defining, and {@code l}/{@code m}/{@code concat} are inserted by the tokenizer for
+     * brackets, braces and interpolated strings.
      */
     private static final Set<String> RESERVED_ON_THE_LEFT_OF_ARROW = Set.of("fn", "call", "l", "m", "concat");
 
@@ -1858,13 +1857,10 @@ public class Expression
                     "'" + left.token.surface + "' is part of the language and cannot be the name of a function."
                             + " The reserved names are " + String.join(", ", new java.util.TreeSet<>(StdLib.PRELUDE)) + ".");
         }
-        // 'f = fn(a) -> ...', 'x |> fn(a) -> ...', e i due insieme: il '->' lega piu' lento sia
-        // dell'assegnamento che del tubo, quindi la lambda finisce spezzata in due e la sua firma
-        // resta appesa a destra di quello che la precede. Si rimette insieme qui
-        // 'print = 1': un nome del linguaggio non puo' diventare una variabile. 'fn print(a) -> a'
-        // lo diceva gia'; questo e' la stessa regola dall'altro lato, perche' altrimenti lo stesso
-        // nome vorrebbe dire due cose - la variabile quando lo si legge, la built-in quando lo si
-        // chiama - e nessuna delle due sarebbe quella che chi legge il codice si aspetta
+        // 'print = 1': a language name cannot become a variable. 'fn print(a) -> a' said so
+        // already; this is the same rule from the other side, because otherwise the same name would
+        // mean two things, the variable when read and the built-in when called, and neither would
+        // be what the reader expects
         if (operators.get(token.surface) != null
                 && Operators.precedence.get("assign=<>").equals(operators.get(token.surface).getPrecedence())
                 && left.token.type == Token.TokenType.VARIABLE
@@ -1874,6 +1870,9 @@ public class Expression
             throw new ParseError(BlossomError.positionOf(this, left.token),
                     "'" + left.token.surface + "' is part of the language and cannot be the name of a variable.");
         }
+        // 'f = fn(a) -> ...', 'x |> fn(a) -> ...', and both together: '->' binds looser than both
+        // assignment and pipe, so the lambda ends up split in two and its signature hangs on the
+        // right of whatever precedes it. It is put back together here
         if (token.surface.equals("->") && left.token.type == Token.TokenType.OPERATOR)
         {
             ExpressionNode spliced = spliceLambdaBody(token, left, right);
@@ -1886,11 +1885,11 @@ public class Expression
     }
 
     /**
-     * {@code <valore>(a, b)}: la chiamata scritta dopo qualcosa che non e' un nome.
+     * {@code <value>(a, b)}: a call written after something that is not a name.
      *
-     * <p>Serve a {@code f()(2)} e a {@code (fn(x) -> x)(2)}: la funzione non e' un nome che il
-     * parser possa riconoscere, e' il valore che sta gia' sullo stack. Lo si ripesca da sotto la
-     * lista dei parametri e lo si mette davanti agli altri, che e' la forma che {@code call} vuole.
+     * <p>Needed by {@code f()(2)} and {@code (fn(x) -> x)(2)}: the function is not a name the
+     * parser can recognise, it is the value already sitting on the stack. It is pulled back out
+     * from under the parameter list and put in front of them, the shape {@code call} expects.
      */
     private ExpressionNode postfixCallNode(Context context, Token token, Stack<ExpressionNode> nodeStack)
     {
@@ -1910,7 +1909,7 @@ public class Expression
             throw ParseError.at(this, token, "There is nothing to call before '('.");
         }
         Collections.reverse(p);
-        // il soggetto della chiamata va davanti: 'call' vuole la funzione come primo argomento
+        // the subject of the call goes first: 'call' wants the function as its first argument
         p.add(0, nodeStack.pop());
         checkNamedArgumentOrder(context, token, p);
         List<LazyValue> params = p.stream()
@@ -1923,12 +1922,12 @@ public class Expression
     }
 
     /**
-     * Riattacca il corpo alla firma di una lambda rimasta in fondo a un assegnamento o a un tubo.
+     * Reattaches the body to the signature of a lambda left at the end of an assignment or a pipe.
      *
-     * <p>Scende lungo il lato destro finche' non trova {@code fn(...)}, ricostruendo al ritorno i
-     * nodi che ha attraversato: cosi' {@code x = 5 |> fn(v) -> v + 1} si legge come uno si aspetta,
-     * e non come {@code (x = 5 |> fn(v)) -> v + 1}. {@code null} se in fondo non c'e' una firma,
-     * cioe' se non c'era niente da rimettere insieme.
+     * <p>Walks down the right side until it finds {@code fn(...)}, rebuilding the nodes it crossed
+     * on the way back, so that {@code x = 5 |> fn(v) -> v + 1} reads as expected instead of as
+     * {@code (x = 5 |> fn(v)) -> v + 1}. Returns {@code null} when there is no signature at the
+     * bottom, that is when there was nothing to put back together.
      */
     private @Nullable ExpressionNode spliceLambdaBody(Token arrow, ExpressionNode left, ExpressionNode body)
     {
@@ -1974,9 +1973,9 @@ public class Expression
                 case OPERATOR -> {
                     ExpressionNode v1 = nodeStack.pop();
                     ExpressionNode v2 = nodeStack.pop();
-                    // 'x |> fn(a) -> ...': il tubo lega piu' stretto del '->', quindi qui a destra
-                    // c'e' ancora la sola firma della lambda. Riscriverlo adesso infilerebbe il
-                    // soggetto fra i parametri; si lascia un nodo '|>' e ci pensa il '->' che segue
+                    // 'x |> fn(a) -> ...': the pipe binds tighter than '->', so the right side
+                    // here is still only the lambda signature. Rewriting now would slip the subject
+                    // among the parameters; a '|>' node is left for the following '->' to handle
                     boolean pipeIntoLambdaSignature = token.surface.equals("|>")
                             && v1.token.type == Token.TokenType.FUNCTION && v1.token.surface.equals("fn");
                     nodeStack.push(token.surface.equals("|>") && !pipeIntoLambdaSignature
@@ -2035,8 +2034,8 @@ public class Expression
                         }
                         else
                         {
-                            // il token porta il nome risolto: cosi' 'math.sqrt' diventa 'sqrt' una volta
-                            // sola, qui, e non ad ogni chiamata
+                            // the token carries the resolved name: 'math.sqrt' becomes 'sqrt'
+                            // once, here, instead of on every call
                             token.surface = name;
                         }
                         Collections.reverse(p);
@@ -2595,7 +2594,7 @@ public class Expression
                     }
                     if (token.postfixCall)
                     {
-                        // consuma anche il valore che sta prima delle parentesi: e' la funzione
+                        // also consumes the value before the parentheses: that is the function
                         if (stack.topInt() < 1)
                         {
                             throw ParseError.at(this, token, "There is nothing to call before '('.");

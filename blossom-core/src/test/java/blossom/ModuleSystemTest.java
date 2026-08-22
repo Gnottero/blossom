@@ -19,11 +19,11 @@ import blossom.interpreter.Interpreter;
 import blossom.project.ProjectLoader;
 
 /**
- * Il sistema a moduli della Fase 3: un file è un modulo, gli import hanno un alias obbligatorio, e
- * quello che non è {@code pub} non esce dal modulo.
+ * The module system: one file is one module, imports carry a mandatory alias, and what is not
+ * {@code pub} does not leave the module.
  *
- * <p>I test costruiscono progetti veri su disco, manifesto compreso: è il modo in cui il sistema
- * verrà usato, e mette alla prova anche la corrispondenza fra nome dichiarato e percorso del file.
+ * <p>The tests build real projects on disk, manifest included: that is how the system will be used,
+ * and it also exercises the match between declared name and file path.
  */
 class ModuleSystemTest
 {
@@ -49,7 +49,7 @@ class ModuleSystemTest
             }
             """;
 
-    // --- il caso che deve funzionare ---
+    // --- the case that has to work ---
 
     @Test
     void loadsAMultiModuleProject(@TempDir Path tmp) throws IOException
@@ -89,8 +89,8 @@ class ModuleSystemTest
     @Test
     void resolvesFunctionsPassedBetweenModules(@TempDir Path tmp) throws IOException
     {
-        // una funzione passata come valore a un altro modulo deve continuare a risolversi dovunque
-        // venga chiamata: e' il FunctionValue a viaggiare, non il suo nome
+        // a function passed as a value to another module has to keep resolving wherever it is
+        // called: it is the FunctionValue that travels, not its name
         Path root = project(tmp, SIMPLE_MANIFEST);
         module(root, "runner.bs", """
                 module runner;
@@ -110,7 +110,7 @@ class ModuleSystemTest
         assertEquals("18", interpreter.eval("answer").getString());
     }
 
-    // --- quello che deve fallire, e fallire bene ---
+    // --- what has to fail, and fail well ---
 
     @Test
     void refusesAccessToPrivateSymbols(@TempDir Path tmp) throws IOException
@@ -160,8 +160,8 @@ class ModuleSystemTest
     @Test
     void modulesCanImportEachOther(@TempDir Path tmp) throws IOException
     {
-        // due moduli che si chiamano a vicenda sono un caso normale appena un progetto cresce, e
-        // finche' le chiamate stanno dentro funzioni non c'e' nessun problema di ordine
+        // two modules calling each other are a normal case as soon as a project grows, and as long
+        // as the calls sit inside functions there is no ordering problem
         Path root = project(tmp, SIMPLE_MANIFEST);
         module(root, "a.bs", """
                 module a;
@@ -194,10 +194,9 @@ class ModuleSystemTest
     @Test
     void runsEveryModuleAfterTheOnesItImports(@TempDir Path tmp) throws IOException
     {
-        // il corpo di un modulo puo' chiamare una funzione di un modulo che importa: quella
-        // funzione esiste solo dopo che il corpo dell'altro e' girato, quindi l'ordine di
-        // esecuzione e' un contratto. Molti moduli, con nomi che in una mappa non ordinata
-        // finirebbero mescolati, per accorgersi se l'ordine si perde per strada
+        // the body of a module may call a function of a module it imports: that function exists
+        // only after the other body has run, so execution order is a contract. Many modules, with
+        // names that an unordered map would shuffle, to notice if the order gets lost on the way
         Path root = project(tmp, SIMPLE_MANIFEST);
         module(root, "shared/registry.bs", """
                 module shared.registry;
@@ -222,7 +221,7 @@ class ModuleSystemTest
         mainSource.append("\nimport \"shared/registry\" as registry;\npub let value = registry.count();\n");
         module(root, "main.bs", mainSource.toString());
 
-        // l'ordine dichiarato dal loader: un modulo compare dopo tutti quelli che importa
+        // the order the loader declares: a module appears after everything it imports
         ProjectLoader.LoadedProject loaded = ProjectLoader.load(root);
         List<String> order = loaded.inDependencyOrder().stream().map(unit -> unit.name().value()).toList();
         assertEquals(0, order.indexOf("shared.registry"), order.toString());
@@ -235,9 +234,9 @@ class ModuleSystemTest
     @Test
     void readingACycleMateWhileItIsStillLoadingSaysWhy(@TempDir Path tmp) throws IOException
     {
-        // qui invece l'ordine conta davvero: uno dei due deve girare per primo, e a quel punto il
-        // binding dell'altro non esiste ancora. L'errore deve dire che e' un ciclo, non che il
-        // simbolo non esiste
+        // here order really matters: one of the two has to run first, and at that point the
+        // other's binding does not exist yet. The error has to say it is a cycle, not that the
+        // symbol does not exist
         Path root = project(tmp, SIMPLE_MANIFEST);
         module(root, "a.bs", """
                 module a;
@@ -326,7 +325,7 @@ class ModuleSystemTest
         assertTrue(error.getMessage().contains("let mut"), error.getMessage());
     }
 
-    // --- il manifesto ---
+    // --- the manifest ---
 
     @Test
     void readsAPathLocalDependency(@TempDir Path tmp) throws IOException
@@ -365,7 +364,7 @@ class ModuleSystemTest
         assertEquals("ciao!", interpreter.eval("value").getString());
     }
 
-    // --- autoload: chi parte da solo quando il mondo si apre ---
+    // --- autoload: who starts on their own when the world opens ---
 
     @Test
     void doesNotAutoloadUnlessDeclared(@TempDir Path tmp) throws IOException

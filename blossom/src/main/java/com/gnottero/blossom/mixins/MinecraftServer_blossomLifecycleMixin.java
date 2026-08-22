@@ -10,10 +10,10 @@ import net.minecraft.server.MinecraftServer;
 import com.gnottero.blossom.BlossomMod;
 
 /**
- * Aggancia il ciclo di vita del runtime a quello del server.
+ * Hooks the runtime lifecycle to the server one.
  *
- * <p>In singleplayer il server nasce e muore ad ogni mondo aperto, quindi gli script caricati vanno
- * buttati alla chiusura: altrimenti il mondo successivo si troverebbe in casa le app del precedente.
+ * <p>In singleplayer the server is born and dies with every world opened, so the loaded scripts have
+ * to be dropped on shutdown: otherwise the next world would find the previous world's apps at home.
  */
 @Mixin(MinecraftServer.class)
 public abstract class MinecraftServer_blossomLifecycleMixin

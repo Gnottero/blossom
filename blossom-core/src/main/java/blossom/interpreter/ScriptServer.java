@@ -4,21 +4,22 @@ import java.nio.file.Path;
 
 
 /**
- * L'ambiente che ospita gli interpreti: dove stanno i file, e i confini che valgono per tutti.
+ * The environment hosting the interpreters: where the files are, and the boundaries that apply to
+ * everyone.
  *
- * <p>Il core non sa cosa sia un mondo Minecraft; ne implementa una versione il layer di gioco e una
- * i test, e le funzioni che escono dal processo ({@code core.io}, {@code core.http}) chiedono qui
- * cosa possono raggiungere.
+ * <p>The core does not know what a Minecraft world is; the game layer implements one version and the
+ * tests another, and the functions that leave the process ({@code core.io}, {@code core.http}) ask
+ * here what they can reach.
  */
 public abstract class ScriptServer
 {
     public abstract Path resolveResource(String suffix);
 
     /**
-     * Le cartelle a cui {@code core.io} puo' arrivare (vedi {@link blossom.language.IoRoots}).
+     * The directories {@code core.io} can reach (see {@link blossom.language.IoRoots}).
      *
-     * <p>Vuote per default: un server che non ha dichiarato niente non da' agli script nessun
-     * accesso al disco fuori dalla cartella della propria app.
+     * <p>Empty by default: a server that declared nothing gives scripts no disk access outside their
+     * own app directory.
      */
     public blossom.language.IoRoots ioRoots()
     {
@@ -26,10 +27,10 @@ public abstract class ScriptServer
     }
 
     /**
-     * Gli host a cui {@code core.http} puo' parlare (vedi {@link blossom.language.HttpAccess}).
+     * The hosts {@code core.http} can talk to (see {@link blossom.language.HttpAccess}).
      *
-     * <p>Vuoti per default, come le radici di {@code core.io}: la rete e' un permesso che un
-     * amministratore concede, non qualcosa che un'app installata trova gia' acceso.
+     * <p>Empty by default, like the {@code core.io} roots: the network is a permission an
+     * administrator grants, not something an installed app finds already on.
      */
     public blossom.language.HttpAccess httpAccess()
     {

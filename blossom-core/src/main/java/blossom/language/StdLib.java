@@ -9,43 +9,44 @@ import java.util.Set;
 import org.jspecify.annotations.Nullable;
 
 /**
- * La standard library organizzata a pacchetti (PIANO_LINGUAGGIO.md §5).
+ * The standard library organised in packages (PIANO_LINGUAGGIO.md §5).
  *
- * <p>Le funzioni built-in restano registrate una volta sola, in una mappa piatta: è la loro
- * *visibilità* a passare per i moduli. Chi scrive vede `math.sqrt(...)` e sa da dove viene, ma la
- * chiamata non paga nulla in più, perché l'associazione simbolo → implementazione viene risolta
- * mentre il modulo si carica e non ad ogni invocazione.
+ * <p>Built-in functions stay registered once, in a flat map: it is their *visibility* that goes
+ * through modules. The author writes `math.sqrt(...)` and knows where it comes from, but the call
+ * pays nothing extra, because the symbol to implementation binding is resolved while the module
+ * loads and not on every invocation.
  *
- * <p>Fuori dai moduli resta solo un prelude minuscolo: quello che è sintassi più che libreria
- * ({@code if}, {@code loop}, {@code try}, {@code return}) e {@code print}. Tutto il resto è opt-in.
+ * <p>Outside the modules only a tiny prelude remains: what is syntax rather than library
+ * ({@code if}, {@code loop}, {@code try}, {@code return}) and {@code print}. Everything else is
+ * opt-in.
  */
 public final class StdLib
 {
-    /** i moduli built-in, nell'ordine in cui vale la pena leggerli */
+    /** the built-in modules, in the order worth reading them */
     private static final Map<String, Set<String>> MODULES = new LinkedHashMap<>();
-    /** simbolo → modulo che lo esporta, per dire a chi sbaglia da dove viene il nome che ha usato */
+    /** symbol to the module that exports it, to tell whoever is wrong where their name comes from */
     private static final Map<String, String> HOME_MODULE = new LinkedHashMap<>();
     /**
-     * {@code modulo.simbolo} → nome dell'implementazione, per i pochi casi in cui i due differiscono.
+     * {@code module.symbol} to implementation name, for the few cases where the two differ.
      *
-     * <p>Le built-in vivono in una mappa piatta e il nome pubblico di un modulo è la chiave di quella
-     * mappa: {@code core.list} e {@code core.map} esportano entrambi {@code get} perché è la stessa
-     * implementazione, ma {@code core.http} non può chiamare {@code get} la sua, che è un'altra cosa.
-     * Invece di storpiare il nome che si legge nel codice ({@code http.http_get}) il modulo dichiara
-     * {@code get} e lo si risolve qui, a caricamento, sull'implementazione {@code http_get}.
+     * <p>Built-ins live in a flat map and the public name of a module is the key of that map:
+     * {@code core.list} and {@code core.map} both export {@code get} because it is the same
+     * implementation, but {@code core.http} cannot call its own {@code get}, which is another thing.
+     * Instead of mangling the name read in the code ({@code http.http_get}) the module declares
+     * {@code get} and it is resolved here, at load time, onto the {@code http_get} implementation.
      */
     private static final Map<String, String> IMPLEMENTATION = new LinkedHashMap<>();
 
     /**
-     * Quello che si può usare senza importare niente: costrutti di controllo, che sono grammatica
-     * travestita da funzione, e le poche cose davvero universali.
+     * What can be used without importing anything: control constructs, which are grammar disguised
+     * as functions, and the few genuinely universal things.
      */
     public static final Set<String> PRELUDE = Set.of(
             "print", "if", "match", "try", "throw", "return", "break", "continue",
             "loop", "while", "for", "c_for", "exit", "call", "outer", "not",
-            // 'fn(...)' senza nome: e' la funzione anonima, e come 'call' e' grammatica
+            // 'fn(...)' without a name: the anonymous function, and like 'call' it is grammar
             "fn",
-            // costruiti dal tokenizer per [ ... ], { ... } e "...${...}...": non si scrivono a mano
+            // built by the tokenizer for [ ... ], { ... } and "...${...}...": never written by hand
             "l", "m", "concat");
 
     static
@@ -67,7 +68,7 @@ public final class StdLib
                 java.util.Map.entry("lower", "lower"),
                 java.util.Map.entry("upper", "upper"),
                 java.util.Map.entry("title", "title"),
-                // una funzione sola: quante occorrenze si dice con un numero, non con un nome
+                // one single function: how many occurrences is said with a number, not a name
                 java.util.Map.entry("replace", "replace"),
                 java.util.Map.entry("split", "split"),
                 java.util.Map.entry("encode_base64", "encode_b64"),
@@ -79,8 +80,8 @@ public final class StdLib
                 java.util.Map.entry("map", "map"),
                 java.util.Map.entry("filter", "filter"),
                 java.util.Map.entry("reduce", "reduce"),
-                // 'sort(l)' ordina per il valore, 'sort(l, chiave)' per quello che la chiave
-                // calcola: una funzione sola, con il secondo argomento facoltativo
+                // 'sort(l)' sorts by value, 'sort(l, key)' by what the key computes: one single
+                // function, with an optional second argument
                 java.util.Map.entry("sort", "sort_key"),
                 java.util.Map.entry("find", "first"),
                 java.util.Map.entry("all", "all"),
@@ -107,10 +108,10 @@ public final class StdLib
                 "encode", "encode_json",
                 "decode", "decode_json"));
 
-        // 'task_join' e 'task_await' sembravano due modi di aspettare, e non lo sono: il primo
-        // aspetta che il lavoro finisca e da' il risultato, il secondo prende il prossimo valore
-        // che una coroutine ha prodotto con 'yield'. I nomi nuovi lo dicono, invece di lasciarlo
-        // scoprire a chi sbaglia
+        // 'task_join' and 'task_await' looked like two ways of waiting, and they are not: the
+        // first waits for the work to finish and gives the result, the second takes the next value
+        // a coroutine produced with 'yield'. The new names say so, instead of leaving it to be
+        // discovered by whoever gets it wrong
         module("core.task", java.util.Map.ofEntries(
                 java.util.Map.entry("start", "task"),
                 java.util.Map.entry("wait", "task_join"),
@@ -129,10 +130,10 @@ public final class StdLib
 
         module("core.http", Http.MODULE);
 
-        // 'system_variable_get'/'system_variable_set' non ci sono piu': erano uno spazio globale
-        // condiviso fra tutte le app dello stesso server, cioe' esattamente quello che il §1.1 del
-        // piano toglie dal linguaggio. Chi deve passare dati a un'altra app usa gli eventi fra app;
-        // chi deve conservarli usa core.io
+        // 'system_variable_get'/'system_variable_set' are gone: they were a global namespace shared
+        // by every app of the same server, that is exactly what §1.1 of the plan removes from the
+        // language. Passing data to another app is done with inter app events; keeping data is done
+        // with core.io
         module("core.system", java.util.Map.ofEntries(
                 java.util.Map.entry("time", "time"),
                 java.util.Map.entry("unix_time", "unix_time"),
@@ -151,11 +152,11 @@ public final class StdLib
     }
 
     /**
-     * Dichiara un modulo di libreria fornito da chi incorpora il core - il layer Minecraft registra
-     * così i suoi {@code core.mc.*}.
+     * Declares a library module provided by whoever embeds the core; the Minecraft layer registers
+     * its {@code core.mc.*} this way.
      *
-     * <p>Le implementazioni restano quelle registrate sull'espressione: qui si dichiara solo cosa
-     * il modulo esporta, che è quello che serve al resolver.
+     * <p>The implementations stay the ones registered on the expression: here only what the module
+     * exports is declared, which is what the resolver needs.
      */
     public static void registerModule(String name, Set<String> symbols)
     {
@@ -163,17 +164,17 @@ public final class StdLib
     }
 
     /**
-     * Come sopra, per un modulo i cui nomi pubblici non coincidono con quelli delle implementazioni.
+     * As above, for a module whose public names do not match the implementation names.
      *
-     * <p>E' quello che permette di rinominare la superficie del linguaggio senza toccare una sola
-     * delle funzioni registrate: il catalogo dice come si chiama la cosa, la mappa dice dove sta.
+     * <p>It is what allows renaming the surface of the language without touching a single registered
+     * function: the catalog says what the thing is called, the map says where it lives.
      */
     public static void registerModule(String name, Map<String, String> symbols)
     {
         module(name, symbols);
     }
 
-    /** Come {@link #extendModule(String, Set)}, con i nomi pubblici staccati dalle implementazioni. */
+    /** Like {@link #extendModule(String, Set)}, with public names detached from implementations. */
     public static void extendModule(String name, Map<String, String> symbols)
     {
         extendModule(name, symbols.keySet());
@@ -181,16 +182,16 @@ public final class StdLib
     }
 
     /**
-     * Aggiunge simboli a un modulo gia' dichiarato, invece di sostituirlo.
+     * Adds symbols to a module already declared, instead of replacing it.
      *
-     * <p>Serve a un modulo che sta a cavallo dei due strati: {@code core.io} e' del core, ma leggere
-     * un file NBT o scrivere un datapack ha bisogno di Minecraft e quindi vive nel mod. Il posto in
-     * cui il simbolo si importa e' uno solo - chi legge non deve sapere quale meta' del programma lo
-     * implementa - e questa e' la funzione che lo tiene tale.
+     * <p>Needed by a module that straddles the two layers: {@code core.io} belongs to the core, but
+     * reading an NBT file or writing a datapack needs Minecraft and therefore lives in the mod. The
+     * place a symbol is imported from stays a single one, since the reader should not have to know
+     * which half of the program implements it, and this is the function that keeps it that way.
      *
-     * @throws IllegalStateException se il modulo non e' stato dichiarato prima: estendere un nome che
-     *         non esiste vuol dire quasi sempre averlo scritto male, e crearlo in silenzio
-     *         nasconderebbe l'errore fino al primo import che non risolve
+     * @throws IllegalStateException if the module was not declared before: extending a name that
+     *         does not exist almost always means it was misspelled, and creating it silently would
+     *         hide the mistake until the first import that fails to resolve
      */
     public static void extendModule(String name, Set<String> symbols)
     {
@@ -203,7 +204,7 @@ public final class StdLib
         symbols.forEach(symbol -> HOME_MODULE.putIfAbsent(symbol, name));
     }
 
-    /** Dichiara un modulo i cui nomi pubblici non coincidono con quelli delle implementazioni. */
+    /** Declares a module whose public names do not match the implementation names. */
     private static void module(String name, Map<String, String> symbols)
     {
         module(name, symbols.keySet().toArray(String[]::new));
@@ -214,8 +215,8 @@ public final class StdLib
     {
         Set<String> exported = new LinkedHashSet<>(List.of(symbols));
         MODULES.put(name, exported);
-        // il primo modulo che esporta un simbolo e' quello "di casa": e' il nome che compare nel
-        // suggerimento quando qualcuno lo usa senza importarlo
+        // the first module exporting a symbol is its "home" one: that is the name shown in the
+        // suggestion when someone uses it without importing it
         exported.forEach(symbol -> HOME_MODULE.putIfAbsent(symbol, name));
     }
 
@@ -232,9 +233,9 @@ public final class StdLib
     }
 
     /**
-     * Il nome con cui cercare fra le built-in il simbolo {@code symbol} di {@code moduleName}.
+     * The name to look up symbol {@code symbol} of {@code moduleName} under among the built-ins.
      *
-     * @return il nome dell'implementazione, che per quasi tutti i moduli è il simbolo stesso
+     * @return the implementation name, which for almost every module is the symbol itself
      */
     public static String implementationOf(String moduleName, String symbol)
     {
@@ -251,26 +252,26 @@ public final class StdLib
         return MODULES.keySet();
     }
 
-    /** Il modulo da importare per usare {@code symbol}, o {@code null} se non è di libreria. */
+    /** The module to import in order to use {@code symbol}, or {@code null} if it is not library. */
     public static @Nullable String homeModuleOf(String symbol)
     {
         return HOME_MODULE.get(symbol);
     }
 
     /**
-     * I nomi del prelude che il tokenizer costruisce da solo per {@code [...]}, {@code {...}} e le
-     * stringhe interpolate. Nessuno li scrive come chiamata, e {@code l} e {@code m} sono nomi
-     * naturali per una lista e una mappa, quindi restano liberi come nomi di variabile.
+     * The prelude names the tokenizer builds on its own for {@code [...]}, {@code {...}} and
+     * interpolated strings. Nobody writes them as a call, and {@code l} and {@code m} are natural
+     * names for a list and a map, so they stay free as variable names.
      */
     private static final Set<String> TOKENIZER_BUILT = Set.of("l", "m", "concat");
 
     /**
-     * {@code true} se {@code symbol} e' un nome del linguaggio che non puo' diventare una variabile
-     * o un parametro.
+     * {@code true} if {@code symbol} is a language name that cannot become a variable or a
+     * parameter.
      *
-     * <p>Non e' lo stesso insieme di {@link #PRELUDE}: {@code l}, {@code m} e {@code concat} sono
-     * nomi interni al tokenizer, non parole che qualcuno scrive, e vietarli toglierebbe due dei
-     * nomi piu' comodi che ci siano senza guadagnare niente.
+     * <p>It is not the same set as {@link #PRELUDE}: {@code l}, {@code m} and {@code concat} are
+     * tokenizer internal names, not words anyone writes, and forbidding them would take away two of
+     * the handiest names there are for nothing in return.
      */
     public static boolean isReservedAsAName(String symbol)
     {
