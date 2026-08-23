@@ -11,6 +11,7 @@ import com.gnottero.blossom.util.Colors;
 import com.gnottero.blossom.util.FeatureGenerator;
 import com.gnottero.blossom.argument.BlockArgument;
 import com.gnottero.blossom.argument.Vector3Argument;
+import com.gnottero.blossom.event.Event;
 import blossom.exception.InternalExpressionException;
 import blossom.exception.ThrowStatement;
 import blossom.exception.Throwables;
@@ -983,14 +984,7 @@ public class WorldAccess
                 throw new InternalExpressionException("'harvest' takes at least 2 parameters: entity and block, or position, to harvest");
             }
             ScriptContext cc = (ScriptContext) c;
-            Level world = cc.level();
-            Value entityValue = lv.get(0);
-            if (!(entityValue instanceof final EntityValue ev))
-            {
-                return Value.FALSE;
-            }
-            Entity e = ev.getEntity();
-            if (!(e instanceof final ServerPlayer player))
+            if (!(lv.get(0) instanceof final EntityValue ev) || !(ev.getEntity() instanceof final ServerPlayer player))
             {
                 return Value.FALSE;
             }
@@ -998,16 +992,18 @@ public class WorldAccess
             BlockPos where = locator.block.getPos();
             BlockState state = locator.block.getBlockState();
             Block block = state.getBlock();
-            boolean success = false;
-            if (!((block == Blocks.BEDROCK || block == Blocks.BARRIER) && player.gameMode.isSurvival()))
+            if ((block == Blocks.BEDROCK || block == Blocks.BARRIER) && player.gameMode.isSurvival())
             {
-                success = player.gameMode.destroyBlock(where);
+                return Value.FALSE;
             }
-            if (success)
+            // rottura artificiale: passa per il gioco, quindi drop e statistiche restano quelli
+            // veri, ma non è un'azione del giocatore e nessun evento deve partire
+            if (!Event.suppressing(() -> player.gameMode.destroyBlock(where)))
             {
-                world.levelEvent(null, 2001, where, Block.getId(state));
+                return Value.FALSE;
             }
-            return BooleanValue.of(success);
+            cc.level().levelEvent(null, 2001, where, Block.getId(state));
+            return Value.TRUE;
         });
 
         // from ServerLevel = don't wanna mixin this in, as it is PITA

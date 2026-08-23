@@ -301,10 +301,32 @@ public final class Event
         return handlers;
     }
 
+    /**
+     * Eventi silenziati: {@code harvest} rompe il blocco passando per la strada del gioco, così
+     * drop e statistiche restano quelli veri, ma non è un'azione del giocatore e nessun evento
+     * deve partire. Solo thread del server, con ripristino garantito.
+     */
+    private static boolean suppressed = false;
+
+    /** Runs {@code action} without firing any event. */
+    public static boolean suppressing(java.util.function.BooleanSupplier action)
+    {
+        boolean previous = suppressed;
+        suppressed = true;
+        try
+        {
+            return action.getAsBoolean();
+        }
+        finally
+        {
+            suppressed = previous;
+        }
+    }
+
     /** @return whether someone is listening: the mixins ask this before building the arguments */
     public boolean isListened()
     {
-        return !handlers.isEmpty();
+        return !suppressed && !handlers.isEmpty();
     }
 
     /**
@@ -316,7 +338,7 @@ public final class Event
      */
     public boolean fire(CommandSourceStack source, Supplier<List<Value>> arguments)
     {
-        if (handlers.isEmpty())
+        if (suppressed || handlers.isEmpty())
         {
             return false;
         }
