@@ -69,11 +69,6 @@ public final class ModuleResolver
      */
     public record Resolution(Path file, ModuleName localName, ModuleResolver scope, String prefix)
     {
-        /** The module's name as seen from the project's root. */
-        public ModuleName globalName()
-        {
-            return prefix.isEmpty() ? localName : new ModuleName(prefix + localName.value());
-        }
     }
 
     public Resolution resolve(ModuleName name)

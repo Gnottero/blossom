@@ -11,8 +11,6 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.arguments.blocks.BlockInput;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
@@ -20,7 +18,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerPlayerGameMode;
 import net.minecraft.server.level.Ticket;
-import net.minecraft.world.level.TicketStorage;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.Entity;
@@ -106,11 +103,6 @@ public final class Vanilla
         return ((Access.SpawnState) state).blossom$potentialCalculator();
     }
 
-    public static Long2ObjectOpenHashMap<List<Ticket>> TicketStorage_getTicketsByPosition(TicketStorage storage)
-    {
-        return ((Access.Tickets) storage).blossom$ticketsByPosition();
-    }
-
     public static DensityFunction.Visitor RandomState_getVisitor(RandomState state)
     {
         return ((Access.RandomStateVisitor) (Object) state).blossom$visitor();
@@ -119,11 +111,6 @@ public final class Vanilla
     public static Biome.ClimateSettings Biome_getClimateSettings(Biome biome)
     {
         return ((Access.BiomeClimate) (Object) biome).blossom$climate();
-    }
-
-    public static CompoundTag BlockInput_getTag(BlockInput input)
-    {
-        return ((Access.BlockInputTag) input).blossom$tag();
     }
 
     public static int PoiRecord_getFreeTickets(PoiRecord record)
@@ -346,14 +333,5 @@ public final class Vanilla
                     net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate template)
     {
         return ((com.gnottero.blossom.mixins.access.StructureTemplate_blossomAccessMixin) (Object) template).blossom$palettes();
-    }
-
-    /** Builds a "silent" command source for {@code run()}. */
-    public static void CommandSourceStack_setupPrivates(CommandSourceStack source, boolean silent,
-            net.minecraft.commands.CommandResultCallback callback,
-            net.minecraft.commands.arguments.EntityAnchorArgument.Anchor anchor,
-            net.minecraft.commands.CommandSigningContext signingContext, net.minecraft.util.TaskChainer chainer)
-    {
-        ((Access.Source) source).blossom$setupPrivates(silent, callback, anchor, signingContext, chainer);
     }
 }

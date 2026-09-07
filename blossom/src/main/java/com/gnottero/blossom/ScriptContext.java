@@ -10,7 +10,6 @@ import net.minecraft.server.level.ServerLevel;
 
 import blossom.interpreter.Context;
 import blossom.interpreter.ScriptHost;
-import blossom.value.Value;
 
 /**
  * The execution context inside the game: who launched the code, and from where.

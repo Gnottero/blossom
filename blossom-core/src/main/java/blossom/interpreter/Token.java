@@ -2,7 +2,7 @@ package blossom.interpreter;
 
 import org.jspecify.annotations.Nullable;
 
-public class Token implements Comparable<Token> {
+public class Token {
 
     enum TokenType {
         FUNCTION(true, false), OPERATOR(true, false), UNARY_OPERATOR(true, false),
@@ -30,11 +30,8 @@ public class Token implements Comparable<Token> {
     }
 
     public String surface = "";
-    public String display = "";
-    public String comment = "";
     public TokenType type;
     public int pos;
-    public int ordinal = 0;
     public int linepos;
     public int lineno;
 
@@ -59,31 +56,12 @@ public class Token implements Comparable<Token> {
         created.linepos = linepos;
         created.lineno = lineno;
         created.node = node;
-        created.ordinal = ordinal + 1;
         return created;
-    }
-
-    public void swapPlace(Token other) {
-        int order = other.ordinal;
-        other.ordinal = ordinal;
-        ordinal = order;
     }
 
     public void morph(TokenType type, String s) {
         this.type = type;
         this.surface = s;
-        this.display = "";
-        this.comment = "";
-    }
-
-    public Token disguiseAs(@Nullable String s, @Nullable String s1) {
-        if (s != null) {
-            display = s;
-        }
-        if (s1 != null) {
-            comment = s1;
-        }
-        return this;
     }
 
     public void append(char c) {
@@ -105,19 +83,5 @@ public class Token implements Comparable<Token> {
     @Override
     public String toString() {
         return surface;
-    }
-
-    @Override
-    public int compareTo(Token o) {
-        // compare by lineno, then by linepos, then by ordinal
-        if (lineno != o.lineno)
-        {
-            return lineno - o.lineno;
-        }
-        if (linepos != o.linepos)
-        {
-            return linepos - o.linepos;
-        }
-        return ordinal - o.ordinal;
     }
 }

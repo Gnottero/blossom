@@ -73,12 +73,6 @@ public final class Access
         DensityFunction.Visitor blossom$visitor();
     }
 
-    /** {@link net.minecraft.commands.arguments.blocks.BlockInput} */
-    public interface BlockInputTag
-    {
-        CompoundTag blossom$tag();
-    }
-
     /** {@link Biome} */
     public interface BiomeClimate
     {

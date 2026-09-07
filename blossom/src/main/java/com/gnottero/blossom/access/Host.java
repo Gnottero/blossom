@@ -6,9 +6,7 @@ import org.jspecify.annotations.Nullable;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Player;
 
-import blossom.value.MapValue;
 
 /**
  * The small set of things the game API needs to ask the mod itself rather than Minecraft: its own

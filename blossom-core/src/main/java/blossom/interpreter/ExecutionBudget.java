@@ -100,11 +100,6 @@ public final class ExecutionBudget
                 : System.nanoTime() + policy.timeoutMillis() * 1_000_000L;
     }
 
-    public Policy policy()
-    {
-        return policy;
-    }
-
     /** How many iterations/calls have been counted so far: used by the profiler for its final report. */
     public long ticks()
     {

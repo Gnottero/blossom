@@ -12,14 +12,12 @@ import blossom.value.Value;
 import blossom.value.ValueGuard;
 
 import org.jspecify.annotations.Nullable;
-import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -105,11 +103,6 @@ public abstract class ScriptHost
     public boolean resetRandom(long aLong)
     {
         return randomizers.remove(aLong) != null;
-    }
-
-    public Path resolveScriptFile(String suffix)
-    {
-        return scriptServer.resolveResource(suffix);
     }
 
     public boolean canSynchronouslyExecute()
@@ -251,11 +244,6 @@ public abstract class ScriptHost
     public String getName()
     {
         return main == null ? null : main.name();
-    }
-
-    public String getVisualName()
-    {
-        return main == null ? "built-in default app" : main.name();
     }
 
     @Nullable
@@ -742,14 +730,6 @@ public abstract class ScriptHost
                 getModuleData(module).globals.keySet().stream(),
                 getModuleData(module).globalsImports.keySet().stream()
         ), getModuleData(module).futureImports.keySet().stream().filter(Expression::isGlobalVariableName)).filter(predicate);
-    }
-
-    public Stream<String> globalFunctionNames(Module module, Predicate<String> predicate)
-    {
-        return Stream.concat(Stream.concat(
-                getModuleData(module).globalFunctions.keySet().stream(),
-                getModuleData(module).functionImports.keySet().stream()
-        ), getModuleData(module).futureImports.keySet().stream().filter(s -> !Expression.isGlobalVariableName(s))).filter(predicate);
     }
 
     public synchronized void handleExpressionException(String msg, ExpressionException exc)

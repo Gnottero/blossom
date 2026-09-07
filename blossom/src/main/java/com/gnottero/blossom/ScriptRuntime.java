@@ -499,7 +499,6 @@ public class ScriptRuntime
     {
         String appName = main == null ? "<comando>" : main.name();
         Interpreter.Builder builder = Interpreter.builder()
-                .storage(scriptDirectory())
                 .withApi(expression -> BlossomApi.apply(expression, appName));
         if (main != null)
         {

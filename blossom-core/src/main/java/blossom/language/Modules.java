@@ -4,7 +4,6 @@ import blossom.exception.ParseError;
 import blossom.exception.SourcePosition;
 import blossom.interpreter.Context;
 import blossom.interpreter.Expression;
-import blossom.interpreter.LazyValue;
 import blossom.interpreter.ModuleSymbols;
 import blossom.value.FunctionValue;
 import blossom.value.VariableReferenceValue;

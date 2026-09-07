@@ -121,7 +121,7 @@ public final class Interpreter
         Module entry = modules.get(project.entrypoint().value());
         // the maps stay ordered: dependency order is the order modules have to exist and run in,
         // and Map.copyOf would lose it
-        BlossomHost host = new BlossomHost(entry, new BlossomServer(root),
+        BlossomHost host = new BlossomHost(entry, new BlossomServer(),
                 Collections.unmodifiableMap(new LinkedHashMap<>(modules)),
                 Collections.unmodifiableMap(new LinkedHashMap<>(importAliases)), setup);
         Interpreter interpreter = new Interpreter(host);
@@ -209,7 +209,6 @@ public final class Interpreter
         private final Map<String, Module> libraries = new HashMap<>();
         /** module name to (alias to imported module): outside a project names carry no prefix */
         private final Map<String, Map<String, String>> importAliases = new HashMap<>();
-        private @Nullable Path storageRoot = null;
         private @Nullable Module main = null;
         private UnaryOperator<Expression> setup = UnaryOperator.identity();
 
@@ -238,13 +237,6 @@ public final class Interpreter
             return this;
         }
 
-        /** Where the interpreter can read and write files; without it, every disk access fails. */
-        public Builder storage(Path root)
-        {
-            this.storageRoot = root;
-            return this;
-        }
-
         /**
          * Registers extra built-in functions on every expression of the host: the hook the
          * Minecraft layer installs its own API through.
@@ -258,7 +250,7 @@ public final class Interpreter
 
         public Interpreter build()
         {
-            return new Interpreter(new BlossomHost(main, new BlossomServer(storageRoot),
+            return new Interpreter(new BlossomHost(main, new BlossomServer(),
                     Collections.unmodifiableMap(new LinkedHashMap<>(libraries)),
                     Collections.unmodifiableMap(new LinkedHashMap<>(importAliases)), setup));
         }

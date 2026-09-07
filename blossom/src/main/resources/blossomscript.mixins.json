@@ -35,7 +35,6 @@
     "ServerPlayer_blossomEventsMixin",
     "access.AbstractHorse_blossomAccessMixin",
     "access.Biome_blossomAccessMixin",
-    "access.BlockInput_blossomAccessMixin",
     "access.BlockPredicate_blossomAccessMixin",
     "access.Brain_blossomAccessMixin",
     "access.CommandSourceStack_blossomAccessMixin",

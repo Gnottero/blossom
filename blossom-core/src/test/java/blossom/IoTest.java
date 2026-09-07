@@ -29,9 +29,9 @@ class IoTest
 {
     private static final String IMPORT = "import \"core.io\" as io; ";
 
-    private static Interpreter withRoots(Path storage, Map<String, Path> roots, Set<String> writable)
+    private static Interpreter withRoots(Map<String, Path> roots, Set<String> writable)
     {
-        Interpreter interpreter = Interpreter.builder().storage(storage).build();
+        Interpreter interpreter = Interpreter.builder().build();
         ((BlossomServer) interpreter.host().scriptServer()).setIoRoots(new IoRoots(roots, writable));
         return interpreter;
     }
@@ -39,7 +39,7 @@ class IoTest
     @Test
     void withoutRootsNothingOpens(@TempDir Path tmp)
     {
-        Interpreter interpreter = Interpreter.builder().storage(tmp).build();
+        Interpreter interpreter = Interpreter.builder().build();
         BlossomRuntimeError error = assertThrows(BlossomRuntimeError.class,
                 () -> interpreter.eval(IMPORT + "io.read_text('qualsiasi', 'file.txt')"));
         assertTrue(error.getMessage().contains("No io root"), error.getMessage());
@@ -50,7 +50,7 @@ class IoTest
     void readsAndWritesInsideAWritableRoot(@TempDir Path tmp) throws IOException
     {
         Path shared = Files.createDirectories(tmp.resolve("condiviso"));
-        Interpreter interpreter = withRoots(tmp, Map.of("condiviso", shared), Set.of("condiviso"));
+        Interpreter interpreter = withRoots(Map.of("condiviso", shared), Set.of("condiviso"));
 
         interpreter.eval(IMPORT + "io.write_text('condiviso', 'note/oggi.txt', 'ciao')");
         assertEquals("ciao", Files.readString(shared.resolve("note/oggi.txt")));
@@ -70,7 +70,7 @@ class IoTest
     {
         Path data = Files.createDirectories(tmp.resolve("dati"));
         Files.writeString(data.resolve("letto.txt"), "contenuto");
-        Interpreter interpreter = withRoots(tmp, Map.of("dati", data), Set.of());
+        Interpreter interpreter = withRoots(Map.of("dati", data), Set.of());
 
         assertEquals("contenuto", interpreter.eval(IMPORT + "io.read_text('dati', 'letto.txt')").getString());
         assertEquals("false", interpreter.eval(IMPORT + "io.writable('dati')").getString());
@@ -85,7 +85,7 @@ class IoTest
     {
         Path data = Files.createDirectories(tmp.resolve("dati"));
         Files.writeString(tmp.resolve("segreto.txt"), "non si legge");
-        Interpreter interpreter = withRoots(tmp, Map.of("dati", data), Set.of("dati"));
+        Interpreter interpreter = withRoots(Map.of("dati", data), Set.of("dati"));
 
         for (String attempt : new String[] {"../segreto.txt", "sub/../../segreto.txt", "/etc/passwd"})
         {
@@ -109,7 +109,7 @@ class IoTest
         {
             return; // no symbolic links on this system: this case can't be tested here
         }
-        Interpreter interpreter = withRoots(tmp, Map.of("dati", data), Set.of("dati"));
+        Interpreter interpreter = withRoots(Map.of("dati", data), Set.of("dati"));
 
         // a textual comparison on the normalized path isn't enough: a link inside the root can
         // point outside without any '..'
@@ -122,7 +122,7 @@ class IoTest
     void anUnknownRootSuggestsTheRightOne(@TempDir Path tmp) throws IOException
     {
         Path shared = Files.createDirectories(tmp.resolve("condiviso"));
-        Interpreter interpreter = withRoots(tmp, Map.of("condiviso", shared), Set.of());
+        Interpreter interpreter = withRoots(Map.of("condiviso", shared), Set.of());
 
         BlossomRuntimeError error = assertThrows(BlossomRuntimeError.class,
                 () -> interpreter.eval(IMPORT + "io.read_text('condivisi', 'x.txt')"));
@@ -133,7 +133,7 @@ class IoTest
     void ioErrorsAreCatchable(@TempDir Path tmp) throws IOException
     {
         Path data = Files.createDirectories(tmp.resolve("dati"));
-        Interpreter interpreter = withRoots(tmp, Map.of("dati", data), Set.of("dati"));
+        Interpreter interpreter = withRoots(Map.of("dati", data), Set.of("dati"));
 
         // a missing file is something a script might reasonably want to handle
         assertEquals("assente", interpreter.eval(
@@ -144,7 +144,7 @@ class IoTest
     void jsonRoundTrips(@TempDir Path tmp) throws IOException
     {
         Path data = Files.createDirectories(tmp.resolve("dati"));
-        Interpreter interpreter = withRoots(tmp, Map.of("dati", data), Set.of("dati"));
+        Interpreter interpreter = withRoots(Map.of("dati", data), Set.of("dati"));
 
         interpreter.eval(IMPORT + "io.write_json('dati', 'c.json', {'a' -> 1, 'b' -> [1, 2]})");
         assertEquals("1", interpreter.eval(IMPORT + "io.read_json('dati', 'c.json'):'a'").getString());
@@ -158,7 +158,7 @@ class IoTest
         Path world = Files.createDirectories(tmp.resolve("mondo"));
         Path outside = Files.createDirectories(tmp.resolve("fuori"));
         Files.writeString(outside.resolve("segreto.txt"), "non si legge");
-        Interpreter interpreter = Interpreter.builder().storage(world).build();
+        Interpreter interpreter = Interpreter.builder().build();
         ((BlossomServer) interpreter.host().scriptServer())
                 .setIoRoots(new IoRoots(Map.of("fuori", outside), Set.of(), world));
 
@@ -172,7 +172,7 @@ class IoTest
     {
         Path world = Files.createDirectories(tmp.resolve("mondo"));
         Path data = Files.createDirectories(world.resolve("dati"));
-        Interpreter interpreter = Interpreter.builder().storage(world).build();
+        Interpreter interpreter = Interpreter.builder().build();
         ((BlossomServer) interpreter.host().scriptServer())
                 .setIoRoots(new IoRoots(Map.of("dati", data), Set.of("dati"), world));
 

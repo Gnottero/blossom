@@ -2,7 +2,6 @@ package blossom.value;
 
 import blossom.exception.SourcePosition;
 import blossom.exception.BlossomRuntimeError;
-import blossom.interpreter.Blossom;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 

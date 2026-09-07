@@ -1,6 +1,5 @@
 package com.gnottero.blossom;
 
-import java.util.Set;
 
 import blossom.interpreter.Expression;
 import blossom.language.StdLib;

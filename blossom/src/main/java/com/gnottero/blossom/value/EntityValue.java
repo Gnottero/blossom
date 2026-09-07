@@ -15,7 +15,6 @@ import com.gnottero.blossom.ScriptRuntime;
 import com.gnottero.blossom.event.EntityEvents;
 import com.gnottero.blossom.argument.Vector3Argument;
 import blossom.exception.InternalExpressionException;
-import com.gnottero.blossom.access.Host;
 import com.gnottero.blossom.util.EntityTools;
 import com.gnottero.blossom.util.InputValidator;
 import com.mojang.brigadier.StringReader;

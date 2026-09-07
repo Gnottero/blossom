@@ -3,7 +3,6 @@ package blossom.interpreter;
 import blossom.exception.SourcePosition;
 import blossom.exception.BlossomRuntimeError;
 import blossom.value.ThreadValue;
-import blossom.value.Value;
 
 import java.util.Set;
 
