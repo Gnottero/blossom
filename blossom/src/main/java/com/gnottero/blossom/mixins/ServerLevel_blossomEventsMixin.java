@@ -5,25 +5,22 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import java.util.Locale;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.util.random.WeightedList;
-import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LightningBolt;
-import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.entity.animal.equine.SkeletonHorse;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.ExplosionDamageCalculator;
 import net.minecraft.core.particles.ExplosionParticleInfo;
@@ -53,15 +50,37 @@ public abstract class ServerLevel_blossomEventsMixin extends Level
                 maxChainedNeighborUpdates);
     }
 
-    @Inject(method = "tickThunder", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/server/level/ServerLevel;addFreshEntity(Lnet/minecraft/world/entity/Entity;)Z",
-            shift = At.Shift.BEFORE, ordinal = 1))
-    private void blossom$onLightning(LevelChunk chunk, CallbackInfo ci, ChunkPos chunkPos, boolean thundering,
-            int i, int j, ProfilerFiller profiler, BlockPos pos, DifficultyInstance difficulty,
-            boolean skeletonHorse, LightningBolt bolt)
+    /**
+     * {@code lightning}: the bolt, and the skeleton horse trap that sometimes comes with it.
+     *
+     * <p>Both are added to the world by the same method, one after the other, so one redirect
+     * covers them: the event is raised at the first of the two that shows up and the answer is
+     * remembered for the second, otherwise cancelling the bolt would leave a horse behind and a
+     * strike with a trap would raise two events.
+     */
+    @Redirect(method = "tickThunder", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/server/level/ServerLevel;addFreshEntity(Lnet/minecraft/world/entity/Entity;)Z"))
+    private boolean blossom$onLightning(ServerLevel level, Entity entity)
     {
-        Fire.lightning((ServerLevel) (Object) this, pos, skeletonHorse);
+        if (entity instanceof SkeletonHorse)
+        {
+            boolean cancelled = Fire.lightning(level, entity.blockPosition(), true);
+            blossom$lightningCancelled = cancelled;
+            return !cancelled && level.addFreshEntity(entity);
+        }
+        if (entity instanceof LightningBolt)
+        {
+            Boolean decided = blossom$lightningCancelled;
+            blossom$lightningCancelled = null;
+            boolean cancelled = decided != null ? decided : Fire.lightning(level, entity.blockPosition(), false);
+            return !cancelled && level.addFreshEntity(entity);
+        }
+        return level.addFreshEntity(entity);
     }
+
+    /** The answer given for the horse, waiting for the bolt that follows it. Server thread only. */
+    @Unique
+    private Boolean blossom$lightningCancelled;
 
     @Unique
     private Explosion.BlockInteraction blossom$destroyType(GameRule<Boolean> rule)

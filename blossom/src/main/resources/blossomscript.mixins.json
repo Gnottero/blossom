@@ -8,6 +8,7 @@
   },
   "mixins": [
     "ServerPacksSource_blossomContentMixin",
+    "AbstractContainerMenu_blossomEventMixin",
     "BellBlock_blossomEventMixin",
     "BlockItem_blossomEventMixin",
     "ChunkStatusTasks_blossomEventsMixin",

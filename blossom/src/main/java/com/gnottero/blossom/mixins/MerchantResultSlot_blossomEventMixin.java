@@ -16,7 +16,15 @@ import net.minecraft.world.item.trading.Merchant;
 
 import com.gnottero.blossom.event.Fire;
 
-/** {@code player_trades}: fires when the trade result is really taken away. */
+/**
+ * {@code player_trades}: fires when the trade result is really taken away.
+ *
+ * <p>The hook is the head of {@code onTake}, the one moment when everything is still undoable: the
+ * result is in the hand of whoever clicked but the cost items are still in the slots and the
+ * villager has not been told anything. Emptying that stack and stopping the method there is the
+ * whole of the cancellation - the trade simply never happened, and the result slot fills itself
+ * back up from the costs that were never spent.
+ */
 @Mixin(MerchantResultSlot.class)
 public abstract class MerchantResultSlot_blossomEventMixin
 {
@@ -28,13 +36,14 @@ public abstract class MerchantResultSlot_blossomEventMixin
     @Final
     private MerchantContainer slots;
 
-    @Inject(method = "onTake", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/world/item/trading/Merchant;notifyTrade(Lnet/minecraft/world/item/trading/MerchantOffer;)V"))
+    @Inject(method = "onTake", at = @At("HEAD"), cancellable = true)
     private void blossom$onTrade(Player player, ItemStack stack, CallbackInfo ci)
     {
-        if (player instanceof final ServerPlayer serverPlayer && !player.level().isClientSide())
+        if (player instanceof final ServerPlayer serverPlayer && !player.level().isClientSide()
+                && Fire.trade(serverPlayer, merchant, slots.getActiveOffer()))
         {
-            Fire.trade(serverPlayer, merchant, slots.getActiveOffer());
+            stack.setCount(0);
+            ci.cancel();
         }
     }
 }

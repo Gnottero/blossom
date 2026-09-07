@@ -43,11 +43,21 @@ public abstract class PlayerList_blossomEventsMixin
                 () -> List.of(new EntityValue(player), StringValue.of("disconnected")));
     }
 
-    @Inject(method = "respawn", at = @At("HEAD"))
+    /**
+     * {@code player_respawns}: cancelling means they do not come back.
+     *
+     * <p>Handing back the same player is what the callers expect of a respawn that did not happen:
+     * the client stays on the screen it is on and can ask again. This is also the way back from
+     * the end, so cancelling there keeps the player in the end.
+     */
+    @Inject(method = "respawn", at = @At("HEAD"), cancellable = true)
     private void blossom$onRespawn(ServerPlayer player, boolean alive, Entity.RemovalReason reason,
             CallbackInfoReturnable<ServerPlayer> cir)
     {
-        Event.PLAYER_RESPAWNS.fireForPlayer(player, () -> List.of(new EntityValue(player)));
+        if (Event.PLAYER_RESPAWNS.fireForPlayer(player, () -> List.of(new EntityValue(player))))
+        {
+            cir.setReturnValue(player);
+        }
     }
 
     @Inject(method = "broadcastChatMessage(Lnet/minecraft/network/chat/PlayerChatMessage;Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/network/chat/ChatType$Bound;)V",

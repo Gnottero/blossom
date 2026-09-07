@@ -51,12 +51,14 @@ public abstract class Player_blossomEventsMixin extends LivingEntity
         }
     }
 
-    @Inject(method = "touch", at = @At("HEAD"))
+    /** Cancelling skips what the touched entity would do: no pickup, no experience, no damage. */
+    @Inject(method = "touch", at = @At("HEAD"), cancellable = true)
     private void blossom$onCollide(Entity entity, CallbackInfo ci)
     {
-        if (!level().isClientSide() && (Object) this instanceof final ServerPlayer player)
+        if (!level().isClientSide() && (Object) this instanceof final ServerPlayer player
+                && Fire.entity(Event.PLAYER_COLLIDES_WITH_ENTITY, player, entity, null))
         {
-            Fire.entity(Event.PLAYER_COLLIDES_WITH_ENTITY, player, entity, null);
+            ci.cancel();
         }
     }
 

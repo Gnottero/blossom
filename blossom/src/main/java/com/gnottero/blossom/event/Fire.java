@@ -81,6 +81,28 @@ public final class Fire
                 ValueConversions.of(stack, player.level().registryAccess())));
     }
 
+    /**
+     * {@code (player, carried, other, slot, action)}: an item clicked onto another item.
+     *
+     * <p>The two stacks are passed as they are before the click, {@code slot} is the slot's number
+     * in the open container and {@code action} the button, {@code 'left'} or {@code 'right'}.
+     */
+    public static boolean itemOnItem(ServerPlayer player, ItemStack carried, ItemStack other, int slot,
+            boolean secondary)
+    {
+        Event event = Event.PLAYER_CLICKS_ITEM_ON_ITEM;
+        if (!event.isListened())
+        {
+            return false;
+        }
+        return event.fireForPlayer(player, () -> List.of(
+                new EntityValue(player),
+                ValueConversions.of(carried, player.level().registryAccess()),
+                ValueConversions.of(other, player.level().registryAccess()),
+                new NumericValue(slot),
+                StringValue.of(secondary ? "right" : "left")));
+    }
+
     /** {@code (player, block, facing)} */
     public static boolean blockClick(Event event, ServerPlayer player, BlockPos pos, Direction facing)
     {
@@ -206,15 +228,15 @@ public final class Fire
     }
 
     /** {@code (player, from_pos, to_pos, from_dimension, to_dimension)} */
-    public static void dimensionChange(ServerPlayer player, Vec3 from, @Nullable Vec3 to, ResourceKey<Level> fromDim,
-            ResourceKey<Level> toDim)
+    public static boolean dimensionChange(ServerPlayer player, Vec3 from, @Nullable Vec3 to,
+            ResourceKey<Level> fromDim, ResourceKey<Level> toDim)
     {
         Event event = Event.PLAYER_CHANGES_DIMENSION;
         if (!event.isListened())
         {
-            return;
+            return false;
         }
-        event.fireForPlayer(player, () -> List.of(
+        return event.fireForPlayer(player, () -> List.of(
                 new EntityValue(player),
                 from == null ? Value.NULL : ValueConversions.of(from),
                 to == null ? Value.NULL : ValueConversions.of(to),
@@ -223,37 +245,37 @@ public final class Fire
     }
 
     /** {@code (player, from, to)} */
-    public static void slotSwitch(ServerPlayer player, int from, int to)
+    public static boolean slotSwitch(ServerPlayer player, int from, int to)
     {
         Event event = Event.PLAYER_SWITCHES_SLOT;
         if (!event.isListened())
         {
-            return;
+            return false;
         }
-        event.fireForPlayer(player,
+        return event.fireForPlayer(player,
                 () -> List.of(new EntityValue(player), new NumericValue(from), new NumericValue(to)));
     }
 
     /** {@code (player, hand)} */
-    public static void handAction(Event event, ServerPlayer player, InteractionHand hand)
+    public static boolean handAction(Event event, ServerPlayer player, InteractionHand hand)
     {
         if (!event.isListened())
         {
-            return;
+            return false;
         }
-        event.fireForPlayer(player, () -> List.of(new EntityValue(player), StringValue.of(handName(hand))));
+        return event.fireForPlayer(player, () -> List.of(new EntityValue(player), StringValue.of(handName(hand))));
     }
 
     /** {@code (player, strafe, forward, jumping, sneaking)} */
-    public static void mountControls(ServerPlayer player, float strafe, float forward, boolean jumping,
+    public static boolean mountControls(ServerPlayer player, float strafe, float forward, boolean jumping,
             boolean sneaking)
     {
         Event event = Event.PLAYER_RIDES;
         if (!event.isListened())
         {
-            return;
+            return false;
         }
-        event.fireForPlayer(player, () -> List.of(
+        return event.fireForPlayer(player, () -> List.of(
                 new EntityValue(player),
                 new NumericValue(strafe),
                 new NumericValue(forward),
@@ -262,14 +284,14 @@ public final class Fire
     }
 
     /** {@code (player, merchant, buy, buy_b, sell)} */
-    public static void trade(ServerPlayer player, Merchant merchant, MerchantOffer offer)
+    public static boolean trade(ServerPlayer player, Merchant merchant, @Nullable MerchantOffer offer)
     {
         Event event = Event.PLAYER_TRADES;
         if (!event.isListened() || offer == null)
         {
-            return;
+            return false;
         }
-        event.fireForPlayer(player, () -> List.of(
+        return event.fireForPlayer(player, () -> List.of(
                 new EntityValue(player),
                 merchant instanceof final AbstractVillager villager ? new EntityValue(villager) : Value.NULL,
                 ValueConversions.of(offer.getBaseCostA(), player.level().registryAccess()),
@@ -292,19 +314,19 @@ public final class Fire
     }
 
     /** {@code (player, category, event, value)} */
-    public static void statistic(ServerPlayer player, Stat<?> stat, int amount)
+    public static boolean statistic(ServerPlayer player, Stat<?> stat, int amount)
     {
         Event event = Event.STATISTIC;
         if (!event.isListened())
         {
-            return;
+            return false;
         }
         Identifier type = net.minecraft.core.registries.BuiltInRegistries.STAT_TYPE.getKey(stat.getType());
         if (type == null)
         {
-            return;
+            return false;
         }
-        event.fireForPlayer(player, () -> List.of(
+        return event.fireForPlayer(player, () -> List.of(
                 new EntityValue(player),
                 StringValue.of(type.getPath()),
                 StringValue.of(stat.getValue().toString()),
@@ -322,9 +344,9 @@ public final class Fire
     }
 
     /** {@code (entity)}: an entity appeared in the world. */
-    public static void entityLoads(ServerLevel level, Entity entity)
+    public static boolean entityLoads(ServerLevel level, Entity entity)
     {
-        Event.ENTITY_LOADS.fireInLevel(level, () -> List.of(new EntityValue(entity)));
+        return Event.ENTITY_LOADS.fireInLevel(level, () -> List.of(new EntityValue(entity)));
     }
 
     /**
@@ -403,17 +425,17 @@ public final class Fire
                 blossom.value.BooleanValue.of(createFire)));
     }
 
-    /** As above, plus {@code (blocks, entities)}: what the blast actually hit. */
-    public static void explosionOutcome(ServerLevel level, @Nullable Entity source, @Nullable Entity attacker,
+    /** As above, plus {@code (blocks, entities)}: what the blast hit, and what it is about to break. */
+    public static boolean explosionOutcome(ServerLevel level, @Nullable Entity source, @Nullable Entity attacker,
             Vec3 center, float power, boolean createFire, String blockInteraction, List<BlockPos> blocks,
             List<Entity> entities)
     {
         Event event = Event.EXPLOSION_OUTCOME;
         if (!event.isListened())
         {
-            return;
+            return false;
         }
-        event.fireInLevel(level, () -> List.of(
+        return event.fireInLevel(level, () -> List.of(
                 ValueConversions.of(center),
                 new NumericValue(power),
                 source == null ? Value.NULL : new EntityValue(source),
@@ -427,15 +449,15 @@ public final class Fire
                 ListValue.wrap(entities.stream().map(entity -> (Value) new EntityValue(entity)).toList())));
     }
 
-    /** {@code (pos, entity)}: the lightning, and the skeleton horse it summoned, if it summoned one. */
-    public static void lightning(ServerLevel level, BlockPos pos, boolean skeletonHorse)
+    /** {@code (pos, skeleton_horse)}: a bolt is about to strike, with or without its horse trap. */
+    public static boolean lightning(ServerLevel level, BlockPos pos, boolean skeletonHorse)
     {
         Event event = Event.LIGHTNING;
         if (!event.isListened())
         {
-            return;
+            return false;
         }
-        event.fireInLevel(level, () -> List.of(
+        return event.fireInLevel(level, () -> List.of(
                 ValueConversions.of(pos),
                 blossom.value.BooleanValue.of(skeletonHorse)));
     }

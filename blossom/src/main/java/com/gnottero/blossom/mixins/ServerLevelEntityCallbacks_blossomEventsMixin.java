@@ -9,6 +9,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 
 import com.gnottero.blossom.event.Event;
 import com.gnottero.blossom.event.Fire;
@@ -32,12 +33,19 @@ public abstract class ServerLevelEntityCallbacks_blossomEventsMixin
     @Final
     ServerLevel this$0;
 
+    /**
+     * <p>Cancelling discards the entity. There is no earlier point that covers all three ways one
+     * appears, so "it must not be here" can only be said once it is: for whoever listens the
+     * difference is a tick of existence, for whoever writes the code it is the difference between a
+     * cancellable event and no way at all to keep something out of the world. Players are the one
+     * exception - discarding one would drop the connection, not the entity.
+     */
     @Inject(method = "onCreated(Lnet/minecraft/world/entity/Entity;)V", at = @At("TAIL"), require = 1)
     private void blossom$onEntityLoads(Entity entity, CallbackInfo ci)
     {
-        if (Event.ENTITY_LOADS.isListened())
+        if (Event.ENTITY_LOADS.isListened() && Fire.entityLoads(this$0, entity) && !(entity instanceof Player))
         {
-            Fire.entityLoads(this$0, entity);
+            entity.discard();
         }
     }
 }

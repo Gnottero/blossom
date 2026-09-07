@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.8.0
+
+The catalogue follows the events of the mod: one new event, and cancellation nearly everywhere.
+
+- **`player_clicks_item_on_item`** — an item on the cursor clicked onto another item in an open
+  container, the gesture a bundle answers to, here for every item. Completion, hover and the
+  handbook know its five parameters
+- **every game event is now cancellable except thirteen**, and the hover says so: what is left out
+  is the life of the server and of the apps, the three ticks, the two ends of a session, `player_dies`
+  and the three chunk events. The events that fire after the game has acted stop what is left of the action, and the
+  handbook says for each one exactly what that is
+- `player_picks_up_item`, `player_changes_dimension` and `player_trades` are now raised before the
+  action, and the handbook describes the arguments they carry there
+
 ## 0.7.2
 
 The extension follows the nine corrections the core received after 1.0.

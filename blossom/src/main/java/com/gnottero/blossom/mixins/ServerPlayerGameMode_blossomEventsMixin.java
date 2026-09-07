@@ -48,12 +48,24 @@ public abstract class ServerPlayerGameMode_blossomEventsMixin
         }
     }
 
-    @Inject(method = "useItemOn", at = @At(value = "INVOKE",
+    /**
+     * {@code player_interacts_with_block}: the click after the block answered.
+     *
+     * <p>The answer cannot be taken back - the chest is open, the lever is down - so cancelling
+     * stops what the interaction had left to do: the advancement does not trigger and the result
+     * becomes a plain "not consumed", which is what stops the arm swing everybody else would see.
+     * To stop the interaction itself there is {@code player_right_clicks_block}, which is asked
+     * before the block.
+     */
+    @Inject(method = "useItemOn", cancellable = true, at = @At(value = "INVOKE",
             target = "Lnet/minecraft/advancements/triggers/ItemUsedOnLocationTrigger;trigger(Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/item/ItemInstance;)V",
             shift = At.Shift.BEFORE))
     private void blossom$onInteract(ServerPlayer serverPlayer, Level world, ItemStack stack, InteractionHand hand,
             BlockHitResult hit, CallbackInfoReturnable<InteractionResult> cir)
     {
-        Fire.blockHit(Event.PLAYER_INTERACTS_WITH_BLOCK, player, hand, hit);
+        if (Fire.blockHit(Event.PLAYER_INTERACTS_WITH_BLOCK, player, hand, hit))
+        {
+            cir.setReturnValue(InteractionResult.PASS);
+        }
     }
 }

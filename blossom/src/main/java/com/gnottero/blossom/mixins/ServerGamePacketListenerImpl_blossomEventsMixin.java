@@ -7,14 +7,12 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import net.minecraft.network.protocol.game.ClientboundSetHeldSlotPacket;
 import net.minecraft.network.protocol.game.ServerboundChatCommandPacket;
-import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.network.protocol.game.ServerboundPlaceRecipePacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket;
-import net.minecraft.network.protocol.game.ServerboundPlayerInputPacket;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
-import net.minecraft.network.protocol.game.ServerboundSwingPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
 import net.minecraft.server.level.ServerPlayer;
@@ -31,6 +29,11 @@ import blossom.value.StringValue;
 /**
  * The events born from a client packet: jumps, sneaking, sprinting, clicks, dropped items, chosen
  * recipes, typed commands.
+ *
+ * <p>Nearly all of them are hooked with a {@code @Redirect} on the call that carries the action out,
+ * and not with an {@code @Inject} beside it: it is the only shape in which "the handler said no"
+ * really means the game does not do it, instead of an event that watches and lies about being
+ * cancellable.
  */
 @Mixin(ServerGamePacketListenerImpl.class)
 public class ServerGamePacketListenerImpl_blossomEventsMixin
@@ -38,31 +41,51 @@ public class ServerGamePacketListenerImpl_blossomEventsMixin
     @Shadow
     public ServerPlayer player;
 
-    @Inject(method = "handlePlayerInput", at = @At(value = "INVOKE",
+    /**
+     * {@code player_rides}: the commands a mounted player gives to their mount.
+     *
+     * <p>Cancelling replaces them with an input that asks for nothing, keeping sneaking and
+     * sprinting, which belong to the player and not to the mount.
+     */
+    @Redirect(method = "handlePlayerInput", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/server/level/ServerPlayer;setLastClientInput(Lnet/minecraft/world/entity/player/Input;)V"))
-    private void blossom$onInput(ServerboundPlayerInputPacket packet, CallbackInfo ci)
+    private void blossom$onMountControls(ServerPlayer target, Input input)
     {
-        Input input = packet.input();
-        boolean wasSneaking = player.isShiftKeyDown();
-        if (wasSneaking != input.shift())
-        {
-            Fire.player(input.shift() ? Event.PLAYER_STARTS_SNEAKING : Event.PLAYER_STOPS_SNEAKING, player);
-        }
         if (Event.PLAYER_RIDES.isListened()
-                && (input.jump() || input.shift() || input.forward() || input.backward() || input.left() || input.right()))
+                && (input.jump() || input.shift() || input.forward() || input.backward() || input.left()
+                        || input.right())
+                && Fire.mountControls(player,
+                        input.left() == input.right() ? 0 : (input.left() ? -1 : 1),
+                        input.forward() == input.backward() ? 0 : (input.forward() ? 1 : -1),
+                        input.jump(), input.shift()))
         {
-            Fire.mountControls(player,
-                    input.left() == input.right() ? 0 : (input.left() ? -1 : 1),
-                    input.forward() == input.backward() ? 0 : (input.forward() ? 1 : -1),
-                    input.jump(), input.shift());
+            target.setLastClientInput(new Input(false, false, false, false, false, input.shift(), input.sprint()));
+            return;
         }
+        target.setLastClientInput(input);
     }
 
-    @Inject(method = "handleMovePlayer", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/server/level/ServerPlayer;jumpFromGround()V"))
-    private void blossom$onJump(ServerboundMovePlayerPacket packet, CallbackInfo ci)
+    /** {@code player_starts_sneaking} and {@code player_stops_sneaking}: cancelling keeps the state. */
+    @Redirect(method = "handlePlayerInput", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/server/level/ServerPlayer;setShiftKeyDown(Z)V"))
+    private void blossom$onSneak(ServerPlayer target, boolean sneaking)
     {
-        Fire.player(Event.PLAYER_JUMPS, player);
+        if (target.isShiftKeyDown() != sneaking
+                && Fire.player(sneaking ? Event.PLAYER_STARTS_SNEAKING : Event.PLAYER_STOPS_SNEAKING, player))
+        {
+            return;
+        }
+        target.setShiftKeyDown(sneaking);
+    }
+
+    @Redirect(method = "handleMovePlayer", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/server/level/ServerPlayer;jumpFromGround()V"))
+    private void blossom$onJump(ServerPlayer target)
+    {
+        if (!Fire.player(Event.PLAYER_JUMPS, player))
+        {
+            target.jumpFromGround();
+        }
     }
 
     @Inject(method = "handlePlayerAction", cancellable = true, at = @At(value = "INVOKE",
@@ -147,32 +170,60 @@ public class ServerGamePacketListenerImpl_blossomEventsMixin
         }
     }
 
-    @Inject(method = "handlePlayerCommand", at = @At(value = "INVOKE",
+    @Redirect(method = "handlePlayerCommand", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/server/level/ServerPlayer;setSprinting(Z)V", ordinal = 0))
-    private void blossom$onStartSprinting(ServerboundPlayerCommandPacket packet, CallbackInfo ci)
+    private void blossom$onStartSprinting(ServerPlayer target, boolean sprinting)
     {
-        Fire.player(Event.PLAYER_STARTS_SPRINTING, player);
+        if (!Fire.player(Event.PLAYER_STARTS_SPRINTING, player))
+        {
+            target.setSprinting(sprinting);
+        }
     }
 
-    @Inject(method = "handlePlayerCommand", at = @At(value = "INVOKE",
+    @Redirect(method = "handlePlayerCommand", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/server/level/ServerPlayer;setSprinting(Z)V", ordinal = 1))
-    private void blossom$onStopSprinting(ServerboundPlayerCommandPacket packet, CallbackInfo ci)
+    private void blossom$onStopSprinting(ServerPlayer target, boolean sprinting)
     {
-        Fire.player(Event.PLAYER_STOPS_SPRINTING, player);
+        if (!Fire.player(Event.PLAYER_STOPS_SPRINTING, player))
+        {
+            target.setSprinting(sprinting);
+        }
     }
 
-    @Inject(method = "handlePlayerCommand", at = @At(value = "INVOKE",
+    /**
+     * {@code player_escapes_sleep}: the key pressed while not asleep. Waking up for real is the
+     * redirect below.
+     *
+     * <p>Cancelling drops the leave-bed action, and the honest version of that sentence is that
+     * today it changes nothing anybody can see: in this branch the game does nothing, so there is
+     * nothing to stop. The hook is real, the branch is empty.
+     */
+    @Inject(method = "handlePlayerCommand", cancellable = true, at = @At(value = "INVOKE",
             target = "Lnet/minecraft/server/level/ServerPlayer;isSleeping()Z", shift = At.Shift.BEFORE))
-    private void blossom$onWakeUp(ServerboundPlayerCommandPacket packet, CallbackInfo ci)
+    private void blossom$onEscapeSleep(ServerboundPlayerCommandPacket packet, CallbackInfo ci)
     {
-        Fire.player(player.isSleeping() ? Event.PLAYER_WAKES_UP : Event.PLAYER_ESCAPES_SLEEP, player);
+        if (!player.isSleeping() && Fire.player(Event.PLAYER_ESCAPES_SLEEP, player))
+        {
+            ci.cancel();
+        }
     }
 
-    @Inject(method = "handlePlayerCommand", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/server/level/ServerPlayer;tryToStartFallFlying()Z", shift = At.Shift.BEFORE))
-    private void blossom$onElytra(ServerboundPlayerCommandPacket packet, CallbackInfo ci)
+    @Redirect(method = "handlePlayerCommand", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/server/level/ServerPlayer;stopSleepInBed(ZZ)V"))
+    private void blossom$onWakeUp(ServerPlayer target, boolean wakeImmediately, boolean updateLevelForSleepingPlayers)
     {
-        Fire.player(Event.PLAYER_DEPLOYS_ELYTRA, player);
+        if (!Fire.player(Event.PLAYER_WAKES_UP, player))
+        {
+            target.stopSleepInBed(wakeImmediately, updateLevelForSleepingPlayers);
+        }
+    }
+
+    /** Cancelling answers "not flying", which is what makes the game call {@code stopFallFlying}. */
+    @Redirect(method = "handlePlayerCommand", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/server/level/ServerPlayer;tryToStartFallFlying()Z"))
+    private boolean blossom$onElytra(ServerPlayer target)
+    {
+        return !Fire.player(Event.PLAYER_DEPLOYS_ELYTRA, player) && target.tryToStartFallFlying();
     }
 
     @Inject(method = "handlePlaceRecipe", cancellable = true, at = @At(value = "INVOKE",
@@ -195,33 +246,49 @@ public class ServerGamePacketListenerImpl_blossomEventsMixin
         }
     }
 
-    @Inject(method = "handleSetCarriedItem", at = @At("HEAD"))
+    /**
+     * {@code player_switches_slot}: cancelling keeps the old slot.
+     *
+     * <p>The client has already moved its own selection when the packet leaves, so it has to be
+     * told to move it back: without the packet the two sides disagree until the next switch.
+     */
+    @Inject(method = "handleSetCarriedItem", cancellable = true, at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/world/entity/player/Inventory;setSelectedSlot(I)V", shift = At.Shift.BEFORE))
     private void blossom$onSwitchSlot(ServerboundSetCarriedItemPacket packet, CallbackInfo ci)
     {
-        if (Event.PLAYER_SWITCHES_SLOT.isListened() && player.level().getServer() != null
-                && player.level().getServer().isSameThread())
+        int from = player.getInventory().getSelectedSlot();
+        if (Fire.slotSwitch(player, from, packet.getSlot()))
         {
-            Fire.slotSwitch(player, player.getInventory().getSelectedSlot(), packet.getSlot());
+            player.connection.send(new ClientboundSetHeldSlotPacket(from));
+            ci.cancel();
         }
     }
 
-    @Inject(method = "handleAnimate", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/server/level/ServerPlayer;resetLastActionTime()V", shift = At.Shift.BEFORE))
-    private void blossom$onSwing(ServerboundSwingPacket packet, CallbackInfo ci)
+    @Redirect(method = "handleAnimate", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/server/level/ServerPlayer;swing(Lnet/minecraft/world/InteractionHand;)V"))
+    private void blossom$onSwing(ServerPlayer target, InteractionHand hand)
     {
-        if (!player.swinging)
+        if (!target.swinging && Fire.handAction(Event.PLAYER_SWINGS_HAND, player, hand))
         {
-            Fire.handAction(Event.PLAYER_SWINGS_HAND, player, packet.getHand());
+            return;
         }
+        target.swing(hand);
     }
 
-    @Inject(method = "lambda$handleChatCommand$0", at = @At("HEAD"))
+    /**
+     * {@code player_command}: the body that runs a command typed in chat, before it runs.
+     *
+     * <p>The signature has already been checked here, which is the part that cannot be undone; the
+     * command itself has not started, so cancelling really does stop it.
+     */
+    @Inject(method = "lambda$handleChatCommand$0", cancellable = true, at = @At("HEAD"))
     private void blossom$onCommand(ServerboundChatCommandPacket packet, CallbackInfo ci)
     {
-        if (Event.PLAYER_COMMAND.isListened())
+        if (Event.PLAYER_COMMAND.isListened()
+                && Event.PLAYER_COMMAND.fireForPlayer(player, () -> java.util.List.of(
+                        new com.gnottero.blossom.value.EntityValue(player), StringValue.of(packet.command()))))
         {
-            Event.PLAYER_COMMAND.fireForPlayer(player, () -> java.util.List.of(
-                    new com.gnottero.blossom.value.EntityValue(player), StringValue.of(packet.command())));
+            ci.cancel();
         }
     }
 }

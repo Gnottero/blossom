@@ -9,6 +9,46 @@ carica piu'. E' voluto: e' meglio di un'app che carica e sbaglia. Un manifesto c
 il campo vale invece il MINOR piu' basso del MAJOR corrente - oggi `2.0` - cioe' "non uso niente di
 recente", che e' quello che il campo facoltativo ha sempre voluto dire.
 
+### Eventi
+
+- **`player_clicks_item_on_item(player, carried, other, slot, action)`**: un oggetto tenuto sul
+  cursore cliccato su un altro oggetto in un contenitore aperto — il gesto a cui risponde il bundle,
+  qui per ogni oggetto. `carried` e `other` sono le due pile come stanno prima del click, `slot` e'
+  il numero dello slot nel contenitore aperto e `action` e' `'left'` o `'right'`. Parte solo se
+  entrambe le pile ci sono, e annullarlo vuol dire che il click e' stato gestito: niente scambio,
+  niente unione, le due pile restano come stavano.
+
+- **Tutti gli eventi di gioco sono annullabili tranne tredici**: la vita del server e delle app
+  (`server_starts`, `server_shuts_down`, `app_reloading`, `app_reloaded`), i tre `tick`, i due capi
+  di una sessione (`player_connects`, `player_disconnects`), `player_dies` e i tre eventi dei chunk.
+  Per tutti gli altri l'aggancio e' stato spostato sulla chiamata che compie davvero l'azione,
+  quindi annullare ferma il gioco e non solo l'evento. La colonna "Cancellable" del catalogo e
+  `event.describe(nome)` restano la fonte.
+
+- **Gli eventi che partono a cose fatte fermano quello che resta**, e la voce del catalogo dice
+  esattamente cosa: `player_places_block` rimette al suo posto quello che c'era e non consuma
+  l'oggetto; `explosion_outcome` parte fra le due meta' dello scoppio, quindi salva i blocchi ma non
+  le entita', gia' colpite; `player_interacts_with_block` ferma l'advancement e il movimento del
+  braccio, non richiude il baule; `player_respawns` lascia il giocatore sulla schermata di morte.
+  `player_escapes_sleep` e' annullabile per coerenza, ma in quel ramo il gioco non fa niente: e'
+  detto senza girarci intorno anche nella documentazione.
+
+  Dove la cancellazione andrebbe **inventata** invece che fermata, l'evento resta non annullabile e
+  rimanda a quello chiesto prima: `player_dies` a `player_takes_damage` — a vita gia' a zero,
+  annullare vorrebbe dire anche decidere quanta vita restituire — e i due capi di una sessione alla
+  porta da cui si entra.
+
+- **Rottura, tre eventi cambiano momento** per poter essere annullati:
+  - `player_picks_up_item` parte **prima** che l'oggetto entri nell'inventario, quindi `item` e' la
+    pila offerta e non piu' la parte che ci stava;
+  - `player_changes_dimension` parte **prima** dello spostamento: `to_pos` e' la destinazione decisa
+    dal gioco e non e' piu' `null` uscendo dall'End;
+  - `player_trades` parte prima che i costi vengano spesi.
+
+- **Attenzione al `false` finale.** Un handler che finisce con un `print` restituisce un valore vero,
+  e su un evento diventato annullabile questo ora ferma l'azione: su `statistic` la statistica non
+  viene contata, su `player_picks_up_item` l'oggetto resta per terra.
+
 ### Il contenuto di gioco dentro il pack
 
 Un pack puo' avere una cartella **`data/`** con l'albero di un datapack vero. Viene data al gioco da

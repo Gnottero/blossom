@@ -27,10 +27,15 @@ import com.gnottero.blossom.event.Event;
 import com.gnottero.blossom.event.Fire;
 
 /**
- * {@code explosion_outcome}: what the blast really broke and hit.
+ * {@code explosion_outcome}: what the blast really hit, and what it is about to break.
  *
  * <p>The entities hit are not known in advance, so they are collected while the game hurts them and
- * handed to the event at the end.
+ * handed to the event afterwards.
+ *
+ * <p>Afterwards, but not too late: the hook sits between the two halves of {@code explode}, with the
+ * entities already hurt and the blocks only chosen. That is what makes the event cancellable at all
+ * - answering yes leaves every block standing and lights no fires, and the count of broken blocks
+ * the method returns becomes the zero it now is.
  */
 @Mixin(value = ServerExplosion.class, priority = 990)
 public abstract class Explosion_blossomEventMixin
@@ -79,14 +84,16 @@ public abstract class Explosion_blossomEventMixin
         hit.onExplosionHit(source);
     }
 
-    @Inject(method = "explode", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/world/level/ServerExplosion;hurtEntities()V", shift = At.Shift.AFTER))
+    @Inject(method = "explode", cancellable = true, locals = LocalCapture.CAPTURE_FAILHARD, at = @At(
+            value = "INVOKE", target = "Lnet/minecraft/world/level/ServerExplosion;hurtEntities()V",
+            shift = At.Shift.AFTER))
     private void blossom$afterExplode(CallbackInfoReturnable<Integer> cir, List<BlockPos> blocks)
     {
-        if (Event.EXPLOSION_OUTCOME.isListened() && !level.isClientSide())
+        if (Event.EXPLOSION_OUTCOME.isListened() && !level.isClientSide()
+                && Fire.explosionOutcome(level, source, getIndirectSourceEntity(), center, radius, fire,
+                        blockInteraction.name().toLowerCase(Locale.ROOT), blocks, blossom$affected))
         {
-            Fire.explosionOutcome(level, source, getIndirectSourceEntity(), center, radius, fire,
-                    blockInteraction.name().toLowerCase(Locale.ROOT), blocks, blossom$affected);
+            cir.setReturnValue(0);
         }
     }
 }

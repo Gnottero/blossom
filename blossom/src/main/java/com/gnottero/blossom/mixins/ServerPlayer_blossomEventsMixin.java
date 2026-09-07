@@ -3,25 +3,19 @@ package com.gnottero.blossom.mixins;
 import com.mojang.authlib.GameProfile;
 
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stat;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.portal.TeleportTransition;
-import net.minecraft.world.phys.Vec3;
 
 import com.gnottero.blossom.access.Access;
 import com.gnottero.blossom.event.EntityEvents;
@@ -32,15 +26,6 @@ import com.gnottero.blossom.event.Fire;
 @Mixin(ServerPlayer.class)
 public abstract class ServerPlayer_blossomEventsMixin extends Player
 {
-    @Shadow
-    public boolean wonGame;
-
-    @Unique
-    private Vec3 blossom$previousLocation;
-
-    @Unique
-    private ResourceKey<Level> blossom$previousDimension;
-
     protected ServerPlayer_blossomEventsMixin(Level level, GameProfile profile)
     {
         super(level, profile);
@@ -62,12 +47,23 @@ public abstract class ServerPlayer_blossomEventsMixin extends Player
         }
     }
 
-    @Inject(method = "awardStat", at = @At("HEAD"))
+    @Inject(method = "awardStat", at = @At("HEAD"), cancellable = true)
     private void blossom$onStat(Stat<?> stat, int amount, CallbackInfo ci)
     {
-        Fire.statistic((ServerPlayer) (Object) this, stat, amount);
+        if (Fire.statistic((ServerPlayer) (Object) this, stat, amount))
+        {
+            ci.cancel();
+        }
     }
 
+    /**
+     * {@code player_dies}: not cancellable, and it is a deliberate line.
+     *
+     * <p>The health is already at zero when {@code die} is called, so stopping it would mean also
+     * deciding how much life to hand back - a decision that belongs to whoever writes the script,
+     * not to the shape of the event. {@code player_takes_damage} is asked before the blow lands
+     * and stops it properly.
+     */
     @Inject(method = "die", at = @At("HEAD"))
     private void blossom$onDeath(DamageSource source, CallbackInfo ci)
     {
@@ -75,26 +71,28 @@ public abstract class ServerPlayer_blossomEventsMixin extends Player
         Fire.player(Event.PLAYER_DIES, (ServerPlayer) (Object) this);
     }
 
-    @Inject(method = "teleport", at = @At("HEAD"))
-    private void blossom$rememberOrigin(TeleportTransition transition, CallbackInfoReturnable<Entity> cir)
+    /**
+     * {@code player_changes_dimension}: fired before the move, with the destination the game has
+     * already chosen.
+     *
+     * <p>Before and not after so that it can be cancelled, and because the transition carries the
+     * arrival position even in the cases where reading it afterwards gives nothing sensible, like
+     * finishing the game and leaving the end.
+     *
+     * <p>The descriptor is written out in full on purpose: {@code teleport} also exists as the
+     * bridge method that returns {@code Entity}, and matching by name alone would fire the event
+     * twice for one teleport.
+     */
+    @Inject(method = "teleport(Lnet/minecraft/world/level/portal/TeleportTransition;)Lnet/minecraft/server/level/ServerPlayer;",
+            at = @At("HEAD"), cancellable = true)
+    private void blossom$onDimensionChange(TeleportTransition transition,
+            CallbackInfoReturnable<ServerPlayer> cir)
     {
-        blossom$previousLocation = position();
-        blossom$previousDimension = level().dimension();
-    }
-
-    @Inject(method = "teleport", at = @At("RETURN"))
-    private void blossom$onDimensionChange(TeleportTransition transition, CallbackInfoReturnable<Entity> cir)
-    {
-        if (!Event.PLAYER_CHANGES_DIMENSION.isListened())
+        if (Fire.dimensionChange((ServerPlayer) (Object) this, position(), transition.position(),
+                level().dimension(), transition.newLevel().dimension()))
         {
-            return;
+            // what the game itself returns when the teleport does not happen: the player, where it was
+            cir.setReturnValue((ServerPlayer) (Object) this);
         }
-        ServerLevel destination = transition.newLevel();
-        // finishing the game leads to the overworld with no sensible arrival position
-        Vec3 to = wonGame && blossom$previousDimension == Level.END && destination.dimension() == Level.OVERWORLD
-                ? null
-                : position();
-        Fire.dimensionChange((ServerPlayer) (Object) this, blossom$previousLocation, to, blossom$previousDimension,
-                destination.dimension());
     }
 }

@@ -72,29 +72,34 @@ public final class Event
     // --- player: movement and state ---
 
     /** {@code (player)} */
-    public static final Event PLAYER_JUMPS = new Event("player_jumps", 1, false);
+    public static final Event PLAYER_JUMPS = new Event("player_jumps", 1, true);
     /** {@code (player)} */
-    public static final Event PLAYER_DEPLOYS_ELYTRA = new Event("player_deploys_elytra", 1, false);
+    public static final Event PLAYER_DEPLOYS_ELYTRA = new Event("player_deploys_elytra", 1, true);
     /** {@code (player)} */
-    public static final Event PLAYER_WAKES_UP = new Event("player_wakes_up", 1, false);
-    /** {@code (player)} */
-    public static final Event PLAYER_ESCAPES_SLEEP = new Event("player_escapes_sleep", 1, false);
+    public static final Event PLAYER_WAKES_UP = new Event("player_wakes_up", 1, true);
+    /**
+     * {@code (player)} - the leave-bed key while not actually asleep
+     *
+     * <p>Cancelling drops the leave-bed action. Said plainly: in this branch the game does nothing
+     * today, so there is nothing visible to stop - the hook is real, the branch is empty.
+     */
+    public static final Event PLAYER_ESCAPES_SLEEP = new Event("player_escapes_sleep", 1, true);
     /** {@code (player, strafe, forward, jumping, sneaking)} - commands given to the mount */
-    public static final Event PLAYER_RIDES = new Event("player_rides", 5, false);
+    public static final Event PLAYER_RIDES = new Event("player_rides", 5, true);
     /** {@code (player)} */
-    public static final Event PLAYER_STARTS_SNEAKING = new Event("player_starts_sneaking", 1, false);
+    public static final Event PLAYER_STARTS_SNEAKING = new Event("player_starts_sneaking", 1, true);
     /** {@code (player)} */
-    public static final Event PLAYER_STOPS_SNEAKING = new Event("player_stops_sneaking", 1, false);
+    public static final Event PLAYER_STOPS_SNEAKING = new Event("player_stops_sneaking", 1, true);
     /** {@code (player)} */
-    public static final Event PLAYER_STARTS_SPRINTING = new Event("player_starts_sprinting", 1, false);
+    public static final Event PLAYER_STARTS_SPRINTING = new Event("player_starts_sprinting", 1, true);
     /** {@code (player)} */
-    public static final Event PLAYER_STOPS_SPRINTING = new Event("player_stops_sprinting", 1, false);
+    public static final Event PLAYER_STOPS_SPRINTING = new Event("player_stops_sprinting", 1, true);
     /** {@code (player)} */
     public static final Event PLAYER_SWAPS_HANDS = new Event("player_swaps_hands", 1, true);
     /** {@code (player, hand)} */
-    public static final Event PLAYER_SWINGS_HAND = new Event("player_swings_hand", 2, false);
+    public static final Event PLAYER_SWINGS_HAND = new Event("player_swings_hand", 2, true);
     /** {@code (player, from, to)} - the selected hotbar slot */
-    public static final Event PLAYER_SWITCHES_SLOT = new Event("player_switches_slot", 3, false);
+    public static final Event PLAYER_SWITCHES_SLOT = new Event("player_switches_slot", 3, true);
 
     // --- player: blocks and items ---
 
@@ -104,26 +109,51 @@ public final class Event
     public static final Event PLAYER_CLICKS_BLOCK = new Event("player_clicks_block", 3, true);
     /** {@code (player, item, hand, block, face, hitvec)} - before the block decides */
     public static final Event PLAYER_RIGHT_CLICKS_BLOCK = new Event("player_right_clicks_block", 6, true);
-    /** {@code (player, hand, block, face, hitvec)} - the block has responded */
-    public static final Event PLAYER_INTERACTS_WITH_BLOCK = new Event("player_interacts_with_block", 5, false);
+    /**
+     * {@code (player, hand, block, face, hitvec)} - the block has responded
+     *
+     * <p>Cancelling cannot take back the block's answer, which has already been given: what it
+     * stops is the tail of the interaction, the advancement and the arm swing everybody else sees.
+     * To stop the interaction itself there is {@link #PLAYER_RIGHT_CLICKS_BLOCK}.
+     */
+    public static final Event PLAYER_INTERACTS_WITH_BLOCK = new Event("player_interacts_with_block", 5, true);
     /** {@code (player, item, hand, block)} - before the block is placed */
     public static final Event PLAYER_PLACING_BLOCK = new Event("player_placing_block", 4, true);
-    /** {@code (player, item, hand, block)} - the block has been placed */
-    public static final Event PLAYER_PLACES_BLOCK = new Event("player_places_block", 4, false);
+    /**
+     * {@code (player, item, hand, block)} - the block has been placed
+     *
+     * <p>Cancelling puts back whatever was there before and stops everything the placement had
+     * left to do: no sound, no advancement, and the item is not consumed.
+     */
+    public static final Event PLAYER_PLACES_BLOCK = new Event("player_places_block", 4, true);
     /** {@code (player, block)} */
     public static final Event PLAYER_BREAKS_BLOCK = new Event("player_breaks_block", 2, true);
     /** {@code (player, item, hand)} */
     public static final Event PLAYER_RELEASES_ITEM = new Event("player_releases_item", 3, true);
     /** {@code (player, item, hand)} */
     public static final Event PLAYER_FINISHES_USING_ITEM = new Event("player_finishes_using_item", 3, true);
-    /** {@code (player, item)} */
-    public static final Event PLAYER_PICKS_UP_ITEM = new Event("player_picks_up_item", 2, false);
+    /**
+     * {@code (player, item)} - an item is about to enter the inventory
+     *
+     * <p>Fires before the stack is put away, so that cancelling can leave it on the ground: the
+     * item is therefore what is being offered, not what would have fit.
+     */
+    public static final Event PLAYER_PICKS_UP_ITEM = new Event("player_picks_up_item", 2, true);
     /** {@code (player)} - dropped an item */
     public static final Event PLAYER_DROPS_ITEM = new Event("player_drops_item", 1, true);
     /** {@code (player)} - dropped an entire stack */
     public static final Event PLAYER_DROPS_STACK = new Event("player_drops_stack", 1, true);
     /** {@code (player, recipe, full_stack)} */
     public static final Event PLAYER_CHOOSES_RECIPE = new Event("player_chooses_recipe", 3, true);
+    /**
+     * {@code (player, carried, other, slot, action)} - an item clicked onto another item in a
+     * container, the gesture a bundle answers to, here for every item
+     *
+     * <p>Fires at the point where the game asks the two stacks whether they want to handle the
+     * click themselves, before the ordinary swap: cancelling it means the click was handled and
+     * nothing else happens, which is exactly what a bundle does when it swallows an item.
+     */
+    public static final Event PLAYER_CLICKS_ITEM_ON_ITEM = new Event("player_clicks_item_on_item", 5, true);
 
     // --- player: entities and damage ---
 
@@ -132,23 +162,51 @@ public final class Event
     /** {@code (player, entity)} */
     public static final Event PLAYER_ATTACKS_ENTITY = new Event("player_attacks_entity", 2, true);
     /** {@code (player, entity)} */
-    public static final Event PLAYER_COLLIDES_WITH_ENTITY = new Event("player_collides_with_entity", 2, false);
-    /** {@code (player, merchant, buy, buy_b, sell)} */
-    public static final Event PLAYER_TRADES = new Event("player_trades", 5, false);
+    public static final Event PLAYER_COLLIDES_WITH_ENTITY = new Event("player_collides_with_entity", 2, true);
+    /**
+     * {@code (player, merchant, buy, buy_b, sell)} - a trade is being taken from the result slot
+     *
+     * <p>Cancelling gives nothing to the player and leaves the cost items in place: the villager
+     * is not notified and gains no experience, so the trade simply never happened.
+     */
+    public static final Event PLAYER_TRADES = new Event("player_trades", 5, true);
     /** {@code (player, amount, source, source_entity)} */
     public static final Event PLAYER_TAKES_DAMAGE = new Event("player_takes_damage", 4, true);
     /** {@code (player, amount, entity)} */
     public static final Event PLAYER_DEALS_DAMAGE = new Event("player_deals_damage", 3, true);
-    /** {@code (player)} */
+    /**
+     * {@code (player)} - the player is dying
+     *
+     * <p>Not cancellable: the health is already at zero when this fires, so stopping the death
+     * would mean also deciding how much life to hand back, which is a decision the event has no
+     * business making. To keep somebody alive, cancel {@link #PLAYER_TAKES_DAMAGE}, which is asked
+     * before the blow lands.
+     */
     public static final Event PLAYER_DIES = new Event("player_dies", 1, false);
-    /** {@code (player)} */
-    public static final Event PLAYER_RESPAWNS = new Event("player_respawns", 1, false);
-    /** {@code (player, from_pos, to_pos, from_dimension, to_dimension)} */
-    public static final Event PLAYER_CHANGES_DIMENSION = new Event("player_changes_dimension", 5, false);
+    /**
+     * {@code (player)} - the player is coming back
+     *
+     * <p>Cancelling means they do not: they stay on the death screen and can ask again. It also
+     * covers the return from the end, where cancelling keeps them there.
+     */
+    public static final Event PLAYER_RESPAWNS = new Event("player_respawns", 1, true);
+    /**
+     * {@code (player, from_pos, to_pos, from_dimension, to_dimension)} - before the move
+     *
+     * <p>{@code to_pos} is the destination the game has decided on, not a position read after the
+     * fact: cancelling leaves the player exactly where they are.
+     */
+    public static final Event PLAYER_CHANGES_DIMENSION = new Event("player_changes_dimension", 5, true);
 
     // --- player: session and chat ---
 
-    /** {@code (player)} */
+    /**
+     * {@code (player)} - the player has entered the world, with their data already loaded
+     *
+     * <p>Not cancellable, like {@link #PLAYER_DISCONNECTS}: a session is not an action of the
+     * game to be stopped. Somebody who must not enter is turned away by whatever guards the door,
+     * not by an event that lets them in and then throws them out.
+     */
     public static final Event PLAYER_CONNECTS = new Event("player_connects", 1, false);
     /** {@code (player, reason)} */
     public static final Event PLAYER_DISCONNECTS = new Event("player_disconnects", 2, false);
@@ -157,23 +215,32 @@ public final class Event
     /**
      * {@code (player, command)} - a command has been sent from chat
      *
-     * <p>Not cancellable: fires with the command already accepted, and returning true from here
-     * does not stop it. It used to be declared cancellable and was not: a flag that does nothing
-     * is worse than one that is absent, because whoever reads it writes code that believes it
-     * works.
+     * <p>Fires on the server thread, on the body that runs the command and before it runs:
+     * cancelling means the command is never carried out. The signature has already been checked by
+     * then, which is the part that cannot be undone; the command itself has not started.
      */
-    public static final Event PLAYER_COMMAND = new Event("player_command", 2, false);
-    /** {@code (player, category, event, value)} */
-    public static final Event STATISTIC = new Event("statistic", 4, false);
+    public static final Event PLAYER_COMMAND = new Event("player_command", 2, true);
+    /** {@code (player, category, event, value)} - cancelling means the statistic is not counted */
+    public static final Event STATISTIC = new Event("statistic", 4, true);
 
     // --- world ---
 
-    /** {@code (pos, skeleton_horse)} - lightning has struck; the second argument is a boolean */
-    public static final Event LIGHTNING = new Event("lightning", 2, false);
+    /**
+     * {@code (pos, skeleton_horse)} - lightning is about to strike; the second argument is a boolean
+     *
+     * <p>Cancelling means neither the bolt nor the skeleton horse trap that comes with it.
+     */
+    public static final Event LIGHTNING = new Event("lightning", 2, true);
     /** {@code (pos, power, source, attacker, block_interaction, create_fire)} - before the blast */
     public static final Event EXPLOSION = new Event("explosion", 6, true);
-    /** {@code (pos, power, source, attacker, block_interaction, create_fire, blocks, entities)} */
-    public static final Event EXPLOSION_OUTCOME = new Event("explosion_outcome", 8, false);
+    /**
+     * {@code (pos, power, source, attacker, block_interaction, create_fire, blocks, entities)}
+     *
+     * <p>It fires between the two halves of a blast: the entities have been hurt, the blocks have
+     * only been chosen. Cancelling therefore leaves every one of them standing, and lights no
+     * fires - which is a blast that is heard and felt but breaks nothing.
+     */
+    public static final Event EXPLOSION_OUTCOME = new Event("explosion_outcome", 8, true);
     /** {@code (pos, item)} - a dispenser is about to activate, with the item it is about to launch */
     public static final Event BLOCK_DISPENSES = new Event("block_dispenses", 2, true);
     /** {@code (x, z)} - a chunk has been unloaded */
@@ -182,8 +249,13 @@ public final class Event
     public static final Event CHUNK_GENERATED = new Event("chunk_generated", 2, false);
     /** {@code (x, z, generated)} - a chunk has entered memory, either just created or read back from disk */
     public static final Event CHUNK_LOADED = new Event("chunk_loaded", 3, false);
-    /** {@code (entity)} - an entity has appeared in the world: loaded from disk, spawned or summoned */
-    public static final Event ENTITY_LOADS = new Event("entity_loads", 1, false);
+    /**
+     * {@code (entity)} - an entity has appeared in the world: loaded from disk, spawned or summoned
+     *
+     * <p>Cancelling discards the entity right after it appeared, which is the only "it must not be
+     * here" available at this point. It is ignored for players, which cannot be discarded.
+     */
+    public static final Event ENTITY_LOADS = new Event("entity_loads", 1, true);
     /** {@code (pos, direction, entity)} - a bell has been rung; the entity is null if it was redstone */
     public static final Event BELL_RINGS = new Event("bell_rings", 3, true);
     /** {@code (piston, facing, blocks)} - a piston is about to extend, with the blocks it will push */
