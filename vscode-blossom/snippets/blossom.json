@@ -107,6 +107,16 @@
         "body": "\"${1:text} \\${${2:expression}}\"",
         "description": "An interpolated string (double quotes interpolate, single ones do not)"
     },
+    "app command": {
+        "prefix": "command",
+        "body": [
+            "command.register('${1:path} <${2:pos}>', fn(${2:pos}) -> (",
+            "\t$0",
+            "\t1",
+            ");"
+        ],
+        "description": "A path of the app's own command, /<app> ... (needs import \"core.mc.command\" as command)"
+    },
     "manifest": {
         "prefix": "blossom.json",
         "body": [
@@ -114,7 +124,7 @@
             "  \"name\": \"${1:name}\",",
             "  \"version\": \"0.1.0\",",
             "  \"entrypoint\": \"src/main.bs\",",
-            "  \"api_level\": \"2.0\"",
+            "  \"api_level\": \"2.1\"",
             "}"
         ],
         "description": "The manifest of a project"

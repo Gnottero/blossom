@@ -23,6 +23,31 @@
     ],
     "note": "The task runs **outside** the tick of the game: to touch blocks, entities or anything else of the world from inside it, wrap that part in `dock`."
   },
+  "start_in": {
+    "signatures": [
+      "start_in(pool, function, ...arguments)"
+    ],
+    "summary": "Like `start`, but the task belongs to a pool that `count(pool)` can count on its own.",
+    "params": [
+      [
+        "pool",
+        "any value used as a name, like `'loaders'`"
+      ],
+      [
+        "function",
+        "the function to run, passed as a value"
+      ],
+      [
+        "...arguments",
+        "what to call it with"
+      ]
+    ],
+    "returns": "the handle of the task, as `start` returns it.",
+    "examples": [
+      "task.start_in('loaders', load_region, [0, 0], 4);\ntask.count('loaders');   // 1 while it runs"
+    ],
+    "note": "Tasks of the same pool still run side by side: a pool groups them, it does not queue them."
+  },
   "wait": {
     "signatures": [
       "wait(t)"

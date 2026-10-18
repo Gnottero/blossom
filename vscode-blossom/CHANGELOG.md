@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.9.0
+
+The extension follows Blossom 1.1.0, which brings the mod to Minecraft 26.4 and to parity with
+Scarpet 26.4-beta-3.
+
+- **`core.mc.command`** — the app's own `/<app> ...` command: `register`, `argument`,
+  `permission`, `allow_conflicts`, `list` and `types` complete, hover and appear in the api viewer,
+  each with a handbook entry. A new `command` snippet writes a path and its function
+- **`task.start_in(pool, function, ...)`** — a task that belongs to a pool `task.count(pool)` counts
+  on its own
+- **`app_unloading`** joins the catalogue of events
+- **shapes**: the handbook of `shape.draw` lists `polygon` and the common attributes `seethrough`
+  and `dim`, with an example of each
+- **the manifest schema** knows `strict`, `event_priority` and `requires`: until now `blossom.json`
+  marked them as unknown keys. `api_level` says what leaving it out means — `2.0` — and the snippet
+  writes `2.1`, the current level
+
 ## 0.8.0
 
 The catalogue follows the events of the mod: one new event, and cancellation nearly everywhere.

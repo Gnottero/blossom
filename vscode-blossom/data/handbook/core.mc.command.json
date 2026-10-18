@@ -1,0 +1,110 @@
+{
+  "$alias": "command",
+  "register": {
+    "signatures": [
+      "register(path, function)",
+      "register(path, function, fixed_arguments)"
+    ],
+    "summary": "Adds a path under `/<app>`: words typed as they are and `<name>` arguments, separated by spaces.",
+    "params": [
+      [
+        "path",
+        "the path, like `'plant <pos> <block>'`; `''` is `/<app>` alone"
+      ],
+      [
+        "function",
+        "called with the typed arguments in the order of the path, passed as a value"
+      ],
+      [
+        "fixed_arguments",
+        "optional: a list passed after the typed arguments, the same on every call"
+      ]
+    ],
+    "returns": "`true`. What `function` returns becomes the result of the command: a number as it is, anything else `1` if true and `0` if false.",
+    "examples": [
+      "command.register('plant <pos> <block>', fn(pos, what) -> (block.set(pos, what); 1));",
+      "// two paths, one function\ncommand.register('give <entities> <effect>', apply, [30]);\ncommand.register('give <entities> <effect> <seconds>', apply);"
+    ],
+    "note": "The number of parameters of the function is checked against the path when `register` runs, not when someone types the command. Nothing is printed on its own: answer the player with `print` or `core.mc.text`."
+  },
+  "argument": {
+    "signatures": [
+      "argument(name, spec)"
+    ],
+    "summary": "Declares the type of the arguments called `<name>`.",
+    "params": [
+      [
+        "name",
+        "the name used between `<` and `>` in the paths"
+      ],
+      [
+        "spec",
+        "a map with a `'type'`, one of `command.types()`, and the modifiers of that type"
+      ]
+    ],
+    "returns": "`true`.",
+    "examples": [
+      "command.argument('radius', {'type' -> 'int', 'min' -> 1, 'max' -> 32, 'suggest' -> [4, 8]});",
+      "command.argument('mode', {'type' -> 'term', 'options' -> ['fast', 'safe'], 'case_sensitive' -> false});"
+    ],
+    "note": "An undeclared name gets its type from the name itself, as in Scarpet: `<from_pos>` is a `pos`, `<count_int>` an `int`, anything else a `string`. A type or modifier that does not exist stops the load, with the right name suggested."
+  },
+  "permission": {
+    "signatures": [
+      "permission(who)"
+    ],
+    "summary": "Who can use the command of the app.",
+    "params": [
+      [
+        "who",
+        "`'all'` (the default), `'ops'`, a level `1`…`4`, `'players'`, `'server'`, or a function `fn(player) -> bool`"
+      ]
+    ],
+    "returns": "`true`.",
+    "examples": [
+      "command.permission('ops');",
+      "command.permission(fn(p) -> p != null && entity.query(p, 'gamemode') == 'creative');"
+    ],
+    "note": "The game decides who sees the command when they join: a function that changes its answer over time may show it to someone who cannot use it, but typing it is always checked again."
+  },
+  "allow_conflicts": {
+    "signatures": [
+      "allow_conflicts()",
+      "allow_conflicts(allow)"
+    ],
+    "summary": "Lets through two paths that take different arguments at the same point, which are otherwise a load error.",
+    "params": [
+      [
+        "allow",
+        "optional: `false` to forbid them again"
+      ]
+    ],
+    "returns": "`true`.",
+    "examples": [
+      "command.allow_conflicts();\ncommand.register('give <player>', give_to);\ncommand.register('give <item>', give_item);"
+    ],
+    "note": "Brigadier accepts such paths and then suggests badly, which looks like a command that works: that is why they are refused by default."
+  },
+  "list": {
+    "signatures": [
+      "list()"
+    ],
+    "summary": "The paths the app has declared so far, as they are typed.",
+    "params": [],
+    "returns": "`list` of strings, like `['/garden plant <pos> <block>']`.",
+    "examples": [
+      "for(command.list(), print(_));"
+    ]
+  },
+  "types": {
+    "signatures": [
+      "types()"
+    ],
+    "summary": "The names of the built-in argument types.",
+    "params": [],
+    "returns": "`list` of strings: `'int'`, `'pos'`, `'block'`, ...",
+    "examples": [
+      "if(command.types() ~ 'biome', command.register('where <biome>', locate));"
+    ]
+  }
+}

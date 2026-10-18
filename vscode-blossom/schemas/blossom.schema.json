@@ -22,9 +22,9 @@
     },
     "api_level": {
       "type": "string",
-      "description": "The Blossom API version required, MAJOR.MINOR. Leaving it out means 1.0, which this runtime no longer accepts: the current level is 2.0.",
+      "description": "The Blossom API version required, MAJOR.MINOR. Leaving it out means 2.0, the lowest level of the current MAJOR; the current level is 2.1.",
       "pattern": "^\\d+\\.\\d+$",
-      "default": "2.0"
+      "default": "2.1"
     },
     "autoload": {
       "type": "boolean",
@@ -81,6 +81,23 @@
           }
         }
       ]
+    },
+    "strict": {
+      "type": "boolean",
+      "description": "When true, reading a variable nothing was assigned to is an error that names it, instead of null. Applies to the whole pack. Default: false.",
+      "default": false
+    },
+    "event_priority": {
+      "type": "number",
+      "description": "The order of the apps on the same event: the highest number hears it first. Once a handler cancels, the ones after it are not asked. Default: 0.",
+      "default": 0
+    },
+    "requires": {
+      "type": "object",
+      "description": "The mods the pack needs, with versions written as in fabric.mod.json: {\"minecraft\": \">=26.4\", \"carpet\": \"*\"}. Checked when the pack loads.",
+      "additionalProperties": {
+        "type": "string"
+      }
     }
   }
 }
