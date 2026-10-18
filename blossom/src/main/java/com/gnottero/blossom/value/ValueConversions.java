@@ -186,9 +186,10 @@ public class ValueConversions
                 payload.tag() == null ? Value.NULL : new NBTSerializableValue(payload.tag()));
     }
 
+    /** {@code 0xRRGGBB} as {@code 0xRRGGBBAA}, opaque: in a long, since in an int any red above 0x7f went negative. */
     public static Value ofRGB(int value)
     {
-        return new NumericValue(value * 256 + 255);
+        return new NumericValue(((long) (value & 0xFFFFFF) << 8) | 0xFF);
     }
 
     /** the same 0xRRGGBBAA as {@link #ofRGB(int)}, for the colours the game now keeps as vectors */
