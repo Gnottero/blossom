@@ -73,6 +73,9 @@ my-app/
 | `autoload` | no (`false`) | the pack loads itself as soon as the world is open |
 | `dependencies` | no | see below |
 | `watchdog` | no | execution limits, or `false` to remove them |
+| `strict` | no (`false`) | reading a variable nothing was assigned to is an error instead of `null` |
+| `event_priority` | no (`0`) | who hears an event first: the highest number first |
+| `requires` | no | the mods the pack needs, with their versions |
 
 A directory like that, copied under `<world>/blossom/`, is a **pack**:
 `/blossom script load my-app`.
@@ -198,6 +201,30 @@ Off by default; turned on in `config/blossomscript.json`:
 maintain. **Over http**: a static `index.json` and some zip files, with `sha256` **mandatory**: an
 archive downloaded and executed without a check is arbitrary code on a server. Each version is
 downloaded once and stays in `<world>/blossom/.cache/`.
+
+## `strict`, `event_priority`, `requires`
+
+The three settings a Scarpet app gave from inside, in `__config()`, and that here live with the
+others where they can be read without running anything.
+
+`"strict": true` turns a variable read before anything was assigned to it into an error that names
+it, instead of a `null` that travels on: the way to find the misspelled name a script keeps reading
+as nothing. It applies to the whole pack.
+
+`"event_priority": 10` orders the apps on the same event: the highest number hears it first, the
+others in the order they registered. It matters because **a cancel ends the round**: once a handler
+cancels, the action will not happen and the ones after it are not asked. The app that decides should
+come before those that only observe. Without it every app has `0`.
+
+`"requires"` lists the mods the pack needs, with the versions written as in a Fabric
+`fabric.mod.json`, and is checked when the pack loads:
+
+```json
+"requires": { "minecraft": ">=26.4", "carpet": "*", "lithium": "^0.15" }
+```
+
+A missing mod, or one with a version out of the range, is a load error that says which. The core
+does not check them: it does not know which mods are installed, the mod does.
 
 ## `api_level`
 

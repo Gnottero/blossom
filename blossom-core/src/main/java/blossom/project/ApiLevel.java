@@ -22,7 +22,7 @@ public record ApiLevel(int major, int minor) implements Comparable<ApiLevel>
      * <p>Must be raised together with the change that justifies it, not at the end of a release
      * cycle: a number bumped later, in bulk, no longer tells which version each function dates back to.
      */
-    public static final ApiLevel CURRENT = new ApiLevel(2, 0);
+    public static final ApiLevel CURRENT = new ApiLevel(2, 1);
 
     /**
      * What is assumed for a manifest that does not declare it: the lowest MINOR of the current
