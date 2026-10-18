@@ -2,6 +2,165 @@
 
 Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
+## 1.1.0 — non rilasciato
+
+Minecraft **26.4-snapshot-4** con Fabric loader **0.19.5**, e parita' con **Scarpet 26.4-beta-3**:
+quello che Scarpet ha aggiunto da allora c'e' anche qui, e i difetti che ha corretto sono corretti
+anche qui, piu' qualcuno che Scarpet ha ancora. `api_level` sale a **2.1**: un'app che usa
+`core.mc.command` o le chiavi nuove del manifesto lo dichiara, le altre caricano come prima.
+
+Le suite di test che Scarpet ha aggiunto (linguaggio, mondo, entita', inventari) sono state tradotte
+in Blossom e fatte girare sul core e su un server di sviluppo: 410 casi su 474 passano. I restanti
+vogliono un giocatore connesso, o provano convenzioni che Blossom ha cambiato apposta (un handler di
+evento con l'arita' sbagliata e' un errore alla registrazione, non un `false`).
+
+### Comandi delle app
+
+- **`core.mc.command`** porta i comandi custom di Scarpet: ogni app ha il suo `/<app> ...`.
+  `command.register('plant <pos> <block>', plant)` aggiunge un percorso, con la funzione passata
+  come **valore** come per gli eventi; `command.argument(nome, spec)` dichiara un tipo,
+  `command.permission(chi)` chi puo' usarlo, `command.allow_conflicts()` lascia passare due percorsi
+  che prendono argomenti diversi nello stesso punto. `command.list()` e `command.types()` dicono cosa
+  c'e'.
+- Ci sono **tutti i tipi di argomento di Scarpet**, e il tipo di `<nome>` si trova dal nome come la':
+  `<from_pos>` e' un `pos`, `<count_int>` un `int`, un nome che non corrisponde a niente una
+  `string`. Un tipo o un modificatore che non esiste ferma il caricamento con il nome giusto
+  suggerito, invece di diventare un `int` senza minimo.
+- **Gli errori arrivano al caricamento, non quando qualcuno digita il comando**: il numero di
+  parametri della funzione si controlla contro il percorso al `register`, i conflitti fra percorsi e
+  un nome gia' preso da un altro comando al termine del caricamento.
+- Il comando vive quanto l'app: lo scaricamento lo toglie, il ricaricamento rimette quello nuovo, e
+  il `/reload` del gioco, che ricostruisce i comandi da zero, lo ritrova.
+- Corretti nel porting **tre difetti di Scarpet**: un tipo custom basato su `scoreholder` dava una
+  lista di giocatori, uno basato su un tipo del gioco perdeva i suggerimenti, e `biome` leggeva
+  sempre l'argomento chiamato `biome` invece del proprio.
+
+La tabella "Coming from Scarpet" in fondo a `docs/api/core.mc.command.md` traduce `__config()`
+riga per riga. `__command()` e le funzioni pubbliche come sottocomandi non ci sono: ogni percorso e'
+dichiarato.
+
+### `/blossom script`
+
+Gli strumenti che `/script` di Scarpet aveva e Blossom no:
+
+- **`scan`**, **`fill`** e **`outline`**, anche nella forma `... in <app>`, per eseguire
+  un'espressione su ogni blocco di un'area;
+- **`invoke`**, **`invokepoint`** e **`invokearea`**, per chiamare una funzione di un'app da riga di
+  comando passandole una posizione o un'area;
+- **`globals`**, per vedere le variabili globali di un'app;
+- **`event`**, per elencare, aggiungere e togliere gli handler degli eventi a mano;
+- **`stop`** e **`resume`**: `stop` ferma il codice al prossimo controllo del watchdog, compresi i
+  task, e mette in attesa eventi e chiamate programmate fino a `resume`;
+- **`explain`**, che mostra come un'espressione e' stata letta, con le parentesi giuste a destra di
+  un operatore della stessa precedenza.
+
+### Manifesto
+
+Le tre chiavi di `__config()` di Scarpet che il manifesto non aveva:
+
+- **`"strict": true`**: una variabile letta prima di un assegnamento e' un errore che la nomina,
+  invece di un `null` che viaggia. Il core lo sapeva gia' fare, mancava come accenderlo.
+- **`"event_priority"`**: l'ordine in cui le app sentono lo stesso evento, il numero piu' alto per
+  primo. Senza, tutte valgono `0`.
+- **`"requires"`**: le mod che servono, con la versione scritta come in `fabric.mod.json`
+  (`{"minecraft": ">=26.4", "carpet": "*"}`), controllate al caricamento.
+
+### Eventi
+
+- **`app_unloading(app)`**: il `__on_close` di Scarpet, parte quando un'app viene scaricata con
+  `/blossom script unload`.
+- **Rottura: chi annulla un evento chiude il giro.** Una volta che un handler annulla, l'azione non
+  avviene e gli handler dopo di lui non vengono chiamati, come in Scarpet. L'ordine e' quello di
+  `event_priority`, e a parita' quello di registrazione: l'app che decide va prima di quelle che
+  osservano soltanto.
+- Un evento di entita' con il nome sbagliato suggerisce quello giusto: chi viene da Scarpet e scrive
+  `on_damaged` si sente rispondere `on_damage`.
+
+### Forme
+
+- **`seethrough`**: linee, riempimento e testo si vedono attraverso i blocchi davanti. E' per quello
+  che va trovato piu' che guardato: un minerale dietro un muro, un percorso sottoterra.
+- **`dim`**: la dimensione in cui sta la forma, come nome, entita' o blocco. Decide chi la vede per
+  default e dove la disegnano il client e le particelle.
+- **`polygon`**, con `points`, `mode` (`'polygon'`, `'strip'`, `'triangles'`), `inner` e
+  `relative`. Era stato escluso (D-082): la parita' con Scarpet lo riporta.
+- I segnaposto di `label`, `block` e `item` arrivano davvero come particella a chi gioca senza il
+  client: una linea lunga zero non ne mandava nessuna.
+
+### Altre aggiunte
+
+- **`entity.query(player, 'input')`**: i tasti di movimento che il client ha detto premuti, come
+  mappa con `forward`, `backward`, `left`, `right`, `jump`, `sneak` e `sprint`.
+- **`task.start_in(pool, fn, ...)`**: un task che appartiene a un gruppo, che `task.count(pool)`
+  conta da solo. E' il `task_thread` tolto in 1.0.0 come irraggiungibile: `task.count(pool)` contava
+  ancora per gruppo, ma niente poteva piu' mettercelo.
+
+### Rotture
+
+Oltre alla fine del giro sull'annullamento, sopra:
+
+- **`convert_date` lavora in UTC** invece che nel fuso del server, e senza i millisecondi
+  dell'orologio. Lo stesso script dava date diverse su due server.
+- **`f((x = 5), 2)` passa due argomenti posizionali.** Prima le parentesi non lasciavano traccia
+  nell'albero, e `(x = 5)` veniva letto come argomento con nome seguito da uno posizionale, cioe' un
+  errore. Ora un `=` fra parentesi e' un assegnamento, e il messaggio d'errore per l'altro caso lo
+  suggerisce.
+
+API 2.0 non e' mai stata rilasciata, quindi queste rotture restano dentro il MAJOR 2.
+
+### Corretto
+
+Dal linguaggio, ognuno con il suo caso in `UpstreamParityTest`:
+
+- **`_`, `_i`, `_a` e `_trace` tornano al valore di prima** anche quando un `for`, `sort`, `try` o
+  `scan` esce con un errore, e l'iteratore si riavvolge. Prima, dopo un errore preso da `try`,
+  restavano i valori del ciclo interrotto.
+- **`0xfe+2` e' una somma**, non un numero esadecimale malformato.
+- **`for` conta l'iterazione che esce con `break(true)`.**
+- **Numeri oltre 2^53**: `bitwise_not`, `bitwise_popcount` e i formati `%d`, `%o`, `%x` leggono un
+  long e non un double, e non perdono piu' le ultime cifre.
+- `slice` di una lista o stringa vuota non lancia, `range` con un passo che sfora i long si ferma
+  prima di traboccare, e un indice oltre i 32 bit gira attorno alla lista come gli altri invece di
+  essere troncato.
+- `min` e `max` di una lista vuota danno `null`.
+- Una catena di `!=` con due valori diversi che hanno lo stesso hash li dava uguali.
+- **I colori `0xRRGGBBAA` non vanno piu' negativi**: ogni colore con il rosso sopra `0x7f` usciva
+  negativo (`fog_color`, `sky_color`, i colori di squadra). Lo stesso difetto c'e' in Scarpet.
+
+Dal gioco:
+
+- **`set_biome`** scrive per blocco, come 26.4 conserva ora i biomi: scriveva le celle sbagliate.
+- **`destroy` con un attrezzo** non crea piu' un'entita' senza mondo, che faceva crashare.
+- **`world.chunk_tickets()`** lanciava `ClassCastException`: la pulizia prima del porting aveva
+  tenuto la versione sbagliata.
+- `scan` rispetta il limite superiore, e `rect` ha `y` e `z` al loro posto.
+- La voce `game_target` delle informazioni di sistema legge "26.4 Snapshot 4" come `26.4.0`.
+- `structure.eligibility` senza la dimensione funziona: in Scarpet 26.4-beta-3 risponde sempre di
+  no. Blossom non ha preso quella regressione.
+
+### Sicurezza e robustezza
+
+- **Le chiamate programmate giravano senza watchdog**: un ciclo infinito in una `schedule`
+  bloccava il server. Ora hanno il limite di tempo come tutto il resto.
+- **Il controllo del volume di `scan` e `fill` moltiplicava in `int`**: tre lati grandi traboccavano
+  in un numero piccolo, passavano il limite e allocavano un array enorme. Ora e' un `long`.
+- I `toLowerCase` senza `Locale`, che su un server in turco rompevano i nomi con la `i`.
+
+### Porting a 26.4
+
+Le API spostate o rinominate fra 26.3-snapshot-3 e 26.4-snapshot-4: i suoni dei blocchi (registro
+`BlockSoundSet`), le density function e il loro campionatore, `StructureStart.INVALID_START` sparito,
+il pacchetto di swing diventato punch, il renderer (`RenderPipeline`, `PoseStack.rotate`,
+`LevelRenderer.render`) e i biomi conservati per blocco. Il mixin di `RandomState` non serve piu' ed
+e' tolto. L'audit di Mixin su server e client conferma che ogni iniezione trova il suo bersaglio.
+
+### Editor
+
+L'estensione per VS Code passa alla **0.9.0**: completamento, hover e manuale per
+`core.mc.command` e `task.start_in`, `polygon`, `seethrough` e `dim` nel manuale delle forme, e lo
+schema del manifesto conosce `strict`, `event_priority` e `requires`, che prima segnava come chiavi
+sconosciute.
+
 ## 1.0.0 — non rilasciato
 
 `api_level` sale a **2.0**: e' una rottura MAJOR, e un'app che dichiara `api_level: "1.0"` non
