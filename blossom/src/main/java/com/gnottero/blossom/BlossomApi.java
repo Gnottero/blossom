@@ -202,6 +202,15 @@ public final class BlossomApi
      * into existence, which by definition has no catalog, and pairs with {@code emit}. Merging them
      * would mean losing the control over names, which is the more useful half of the two.
      */
+    /** {@code core.mc.command}: the app's own command, {@code /<app> ...}. */
+    public static final java.util.Map<String, String> COMMAND = java.util.Map.of(
+            "register", "command_register",
+            "argument", "command_argument",
+            "permission", "command_permission",
+            "allow_conflicts", "command_allow_conflicts",
+            "list", "command_list",
+            "types", "command_types");
+
     public static final java.util.Map<String, String> EVENT = java.util.Map.of(
             "on", "on",
             "off", "off",
@@ -268,6 +277,7 @@ public final class BlossomApi
         StdLib.registerModule("core.mc.text", TEXT);
         StdLib.registerModule("core.mc.effect", EFFECT);
         StdLib.registerModule("core.mc.event", EVENT);
+        StdLib.registerModule("core.mc.command", COMMAND);
         StdLib.registerModule("core.mc.system", SYSTEM);
         StdLib.registerModule("core.mc.data", DATA);
         // not a new module: files are opened from 'core.io', even when the implementation needs
@@ -309,6 +319,7 @@ public final class BlossomApi
         com.gnottero.blossom.api.Auxiliary.apply(expression);
         com.gnottero.blossom.api.ModThreading.apply(expression);
         com.gnottero.blossom.api.EventApi.apply(expression, appName);
+        com.gnottero.blossom.api.CommandApi.apply(expression, appName);
         return expression;
     }
 }

@@ -1768,7 +1768,7 @@ public class EntityValue extends Value implements Nbt.Serializable
         if (kind == null)
         {
             throw new blossom.exception.UndefinedSymbolError(blossom.exception.SourcePosition.UNKNOWN,
-                    "Evento di entita' '" + eventName + "' sconosciuto.",
+                    "Unknown entity event '" + eventName + "'.",
                     blossom.exception.Suggestions.closestTo(eventName,
                             java.util.Arrays.stream(EntityEvents.Kind.values()).map(EntityEvents.Kind::id).toList()));
         }

@@ -7,8 +7,12 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 
+import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.blocks.BlockPredicateArgument;
+import net.minecraft.commands.arguments.blocks.BlockStateArgument;
+import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.Component;
 
@@ -21,10 +25,12 @@ import blossom.value.Value;
 /**
  * The tree of the {@code /blossom} command.
  *
- * <p>Phase 2: the minimum needed for a pipeline that goes from the command to the evaluator and back
- * with a result, that is {@code script run}, {@code script load}, {@code script reload},
- * {@code script list} and {@code script unload}. The rest (profiling, multi file projects) arrives
- * with the phases that make it meaningful.
+ * <p>{@code script} runs and manages apps ({@code run}, {@code in}, {@code load}, {@code reload},
+ * {@code unload}, {@code list}) and carries Scarpet's tools for working on the world and on an app:
+ * {@code scan}, {@code fill}, {@code outline}, {@code invoke}, {@code globals}, {@code event},
+ * {@code stop}, {@code resume} and {@code explain}, implemented in {@link ScriptTools}. {@code pack},
+ * {@code data} and {@code profile} are the rest. The apps' own commands are not here: each lives
+ * under its own name, see {@link AppCommands}.
  */
 public final class BlossomCommand
 {
@@ -38,7 +44,31 @@ public final class BlossomCommand
     {
     }
 
-    public static void register(CommandDispatcher<CommandSourceStack> dispatcher)
+    private static final SuggestionProvider<CommandSourceStack> APP_FUNCTIONS = (context, builder) ->
+            SharedSuggestionProvider.suggest(withRuntime(context.getSource(), runtime -> {
+                blossom.interpreter.Interpreter interpreter = runtime.interpreterOf(appOf(context));
+                return interpreter == null ? List.of() : ScriptTools.functionNames(interpreter.host());
+            }), builder);
+
+    private static final SuggestionProvider<CommandSourceStack> EVENTS = (context, builder) ->
+            SharedSuggestionProvider.suggest(com.gnottero.blossom.event.Event.names(), builder);
+
+    private static final SuggestionProvider<CommandSourceStack> EXPLAIN_STYLES = (context, builder) ->
+            SharedSuggestionProvider.suggest(ScriptTools.EXPLAIN_STYLES, builder);
+
+    private static String appOf(CommandContext<CommandSourceStack> context)
+    {
+        try
+        {
+            return StringArgumentType.getString(context, "app");
+        }
+        catch (IllegalArgumentException none)
+        {
+            return null;
+        }
+    }
+
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext buildContext)
     {
         dispatcher.register(Commands.literal("blossom")
                 .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
@@ -46,9 +76,62 @@ public final class BlossomCommand
                         .then(Commands.literal("run")
                                 .then(Commands.argument("code", StringArgumentType.greedyString())
                                         .executes(context -> run(context, null))))
+                        .then(areaCommands(Commands.literal("scan"), "scan", buildContext))
+                        .then(areaCommands(Commands.literal("fill"), "fill", buildContext))
+                        .then(areaCommands(Commands.literal("outline"), "outline", buildContext))
+                        .then(explainCommands(Commands.literal("explain")))
+                        .then(Commands.literal("stop")
+                                .executes(context -> stop(context, true)))
+                        .then(Commands.literal("resume")
+                                .executes(context -> stop(context, false)))
+                        .then(Commands.literal("event")
+                                .executes(context -> attempt(context, () -> ScriptTools.listEvents(context.getSource())))
+                                .then(Commands.literal("add")
+                                        .then(Commands.argument("event", StringArgumentType.word()).suggests(EVENTS)
+                                                .then(Commands.argument("app", StringArgumentType.word()).suggests(LOADED_APPS)
+                                                        .then(Commands.argument("function", StringArgumentType.word()).suggests(APP_FUNCTIONS)
+                                                                .executes(BlossomCommand::addEvent)))))
+                                .then(Commands.literal("remove")
+                                        .then(Commands.argument("event", StringArgumentType.word()).suggests(EVENTS)
+                                                .then(Commands.argument("app", StringArgumentType.word()).suggests(LOADED_APPS)
+                                                        .then(Commands.argument("function", StringArgumentType.word()).suggests(APP_FUNCTIONS)
+                                                                .executes(BlossomCommand::removeEvent))))))
                         .then(Commands.literal("in")
                                 .then(Commands.argument("app", StringArgumentType.word())
                                         .suggests(LOADED_APPS)
+                                        // the words below win over the code when they are typed alone: an
+                                        // expression that starts with 'scan ' followed by a space has to be
+                                        // written with /blossom script run inside the app instead
+                                        .then(areaCommands(Commands.literal("scan"), "scan", buildContext))
+                                        .then(areaCommands(Commands.literal("fill"), "fill", buildContext))
+                                        .then(areaCommands(Commands.literal("outline"), "outline", buildContext))
+                                        .then(explainCommands(Commands.literal("explain")))
+                                        .then(Commands.literal("globals")
+                                                .executes(context -> attempt(context, () -> ScriptTools.globals(
+                                                        requireRuntime(context.getSource()), context.getSource(), appOf(context)))))
+                                        .then(Commands.literal("invoke")
+                                                .then(Commands.argument("function", StringArgumentType.word()).suggests(APP_FUNCTIONS)
+                                                        .executes(context -> invoke(context, List.of(), ""))
+                                                        .then(Commands.argument("arguments", StringArgumentType.greedyString())
+                                                                .executes(context -> invoke(context, List.of(),
+                                                                        StringArgumentType.getString(context, "arguments"))))))
+                                        .then(Commands.literal("invokepoint")
+                                                .then(Commands.argument("function", StringArgumentType.word()).suggests(APP_FUNCTIONS)
+                                                        .then(Commands.argument("origin", BlockPosArgument.blockPos())
+                                                                .executes(context -> invoke(context, List.of(pos(context, "origin")), ""))
+                                                                .then(Commands.argument("arguments", StringArgumentType.greedyString())
+                                                                        .executes(context -> invoke(context, List.of(pos(context, "origin")),
+                                                                                StringArgumentType.getString(context, "arguments")))))))
+                                        .then(Commands.literal("invokearea")
+                                                .then(Commands.argument("function", StringArgumentType.word()).suggests(APP_FUNCTIONS)
+                                                        .then(Commands.argument("from", BlockPosArgument.blockPos())
+                                                                .then(Commands.argument("to", BlockPosArgument.blockPos())
+                                                                        .executes(context -> invoke(context,
+                                                                                List.of(pos(context, "from"), pos(context, "to")), ""))
+                                                                        .then(Commands.argument("arguments", StringArgumentType.greedyString())
+                                                                                .executes(context -> invoke(context,
+                                                                                        List.of(pos(context, "from"), pos(context, "to")),
+                                                                                        StringArgumentType.getString(context, "arguments"))))))))
                                         .then(Commands.argument("code", StringArgumentType.greedyString())
                                                 .executes(context -> run(context, StringArgumentType.getString(context, "app"))))))
                         .then(Commands.literal("load")
@@ -100,6 +183,161 @@ public final class BlossomCommand
                                 .then(Commands.argument("app", StringArgumentType.word())
                                         .suggests(LOADED_APPS)
                                         .executes(BlossomCommand::profileStop)))));
+    }
+
+    // --- scan, fill, outline, invoke, events, stop, explain ---
+
+    /** {@code <origin> <from> <to> <expression>}, and for fill and outline {@code <block> [replace <filter>]}. */
+    private static com.mojang.brigadier.builder.ArgumentBuilder<CommandSourceStack, ?> areaCommands(
+            com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSourceStack> literal, String mode, CommandBuildContext buildContext)
+    {
+        var to = Commands.argument("to", BlockPosArgument.blockPos());
+        if (mode.equals("scan"))
+        {
+            to.then(Commands.argument("expression", StringArgumentType.greedyString())
+                    .executes(context -> attempt(context, () -> ScriptTools.scan(requireRuntime(context.getSource()),
+                            context.getSource(), appOf(context), pos(context, "origin"), pos(context, "from"), pos(context, "to"),
+                            StringArgumentType.getString(context, "expression")))));
+        }
+        else
+        {
+            boolean outline = mode.equals("outline");
+            to.then(Commands.argument("expression", StringArgumentType.string())
+                    .then(Commands.argument("block", BlockStateArgument.block(buildContext))
+                            .executes(context -> fill(context, null, outline))
+                            .then(Commands.literal("replace")
+                                    .then(Commands.argument("filter", BlockPredicateArgument.blockPredicate(buildContext))
+                                            .executes(context -> fill(context,
+                                                    BlockPredicateArgument.getBlockPredicate(context, "filter"), outline))))));
+        }
+        return literal.then(Commands.argument("origin", BlockPosArgument.blockPos())
+                .then(Commands.argument("from", BlockPosArgument.blockPos()).then(to)));
+    }
+
+    private static com.mojang.brigadier.builder.ArgumentBuilder<CommandSourceStack, ?> explainCommands(
+            com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSourceStack> literal)
+    {
+        return literal
+                // without arguments: the app's own source, as the parser reads it
+                .executes(context -> explain(context, null, null, null))
+                .then(Commands.literal("expression")
+                        .then(Commands.argument("style", StringArgumentType.word()).suggests(EXPLAIN_STYLES)
+                                .then(Commands.argument("code", StringArgumentType.greedyString())
+                                        .executes(context -> explain(context, StringArgumentType.getString(context, "code"), null,
+                                                StringArgumentType.getString(context, "style"))))))
+                .then(Commands.literal("function")
+                        .then(Commands.argument("function", StringArgumentType.word()).suggests(APP_FUNCTIONS)
+                                .executes(context -> explain(context, null, StringArgumentType.getString(context, "function"), null))))
+                .then(Commands.literal("source")
+                        .then(Commands.argument("style", StringArgumentType.word()).suggests(EXPLAIN_STYLES)
+                                .executes(context -> explain(context, null, null, StringArgumentType.getString(context, "style")))));
+    }
+
+    private static net.minecraft.core.BlockPos pos(CommandContext<CommandSourceStack> context, String name)
+            throws com.mojang.brigadier.exceptions.CommandSyntaxException
+    {
+        return BlockPosArgument.getSpawnablePos(context, name);
+    }
+
+    private static int fill(CommandContext<CommandSourceStack> context,
+            java.util.function.@org.jspecify.annotations.Nullable Predicate<net.minecraft.world.level.block.state.pattern.BlockInWorld> filter,
+            boolean outline) throws com.mojang.brigadier.exceptions.CommandSyntaxException
+    {
+        net.minecraft.core.BlockPos origin = pos(context, "origin");
+        net.minecraft.core.BlockPos from = pos(context, "from");
+        net.minecraft.core.BlockPos to = pos(context, "to");
+        return attempt(context, () -> ScriptTools.fill(requireRuntime(context.getSource()), context.getSource(), appOf(context),
+                origin, from, to, StringArgumentType.getString(context, "expression"),
+                BlockStateArgument.getBlock(context, "block"), filter, outline));
+    }
+
+    private static int invoke(CommandContext<CommandSourceStack> context, List<net.minecraft.core.BlockPos> positions, String arguments)
+    {
+        return attempt(context, () -> {
+            Value result = ScriptTools.invoke(requireRuntime(context.getSource()), context.getSource(), appOf(context),
+                    StringArgumentType.getString(context, "function"), positions, arguments);
+            context.getSource().sendSuccess(() -> Component.literal(" -> " + result.getPrettyString()), false);
+            return result instanceof final blossom.value.NumericValue number ? (int) number.getLong() : result.getBoolean() ? 1 : 0;
+        });
+    }
+
+    private static int explain(CommandContext<CommandSourceStack> context, String code, String function, String style)
+    {
+        return attempt(context, () -> ScriptTools.explain(requireRuntime(context.getSource()), context.getSource(),
+                appOf(context), code, function, style));
+    }
+
+    private static int addEvent(CommandContext<CommandSourceStack> context)
+    {
+        String event = StringArgumentType.getString(context, "event");
+        String app = appOf(context);
+        String function = StringArgumentType.getString(context, "function");
+        return attempt(context, () -> {
+            ScriptTools.addEvent(requireRuntime(context.getSource()), context.getSource(), event, app, function);
+            context.getSource().sendSuccess(() -> Component.literal(function + " of '" + app + "' now handles " + event), true);
+            return 1;
+        });
+    }
+
+    private static int removeEvent(CommandContext<CommandSourceStack> context)
+    {
+        String event = StringArgumentType.getString(context, "event");
+        String app = appOf(context);
+        String function = StringArgumentType.getString(context, "function");
+        return attempt(context, () -> {
+            int removed = com.gnottero.blossom.event.EventBus.eventOrThrow(event).removeHandler(app, function);
+            if (removed == 0)
+            {
+                return fail(context, function + " of '" + app + "' does not handle " + event);
+            }
+            context.getSource().sendSuccess(() -> Component.literal(function + " of '" + app + "' no longer handles " + event), true);
+            return removed;
+        });
+    }
+
+    private static int stop(CommandContext<CommandSourceStack> context, boolean stop)
+    {
+        requireRuntime(context.getSource()).stop(stop);
+        context.getSource().sendSuccess(() -> Component.literal(stop
+                ? "Every script on the server is stopped: running code ends at its next check, events and scheduled"
+                        + " calls wait. /blossom script resume lets them run again."
+                : "Scripts run again"), true);
+        return 1;
+    }
+
+    /** Runs a command body, turning the errors of a script into a message instead of a stack trace. */
+    private static int attempt(CommandContext<CommandSourceStack> context, CommandBody body)
+    {
+        try
+        {
+            return body.run();
+        }
+        catch (BlossomError e)
+        {
+            return fail(context, e.format());
+        }
+        catch (ExpressionException e)
+        {
+            return fail(context, e.getMessage());
+        }
+        catch (com.mojang.brigadier.exceptions.CommandSyntaxException e)
+        {
+            return fail(context, e.getMessage());
+        }
+        catch (IllegalArgumentException | IllegalStateException | ArithmeticException e)
+        {
+            return fail(context, e.getMessage());
+        }
+        catch (StackOverflowError e)
+        {
+            return fail(context, "the script went too deep");
+        }
+    }
+
+    @FunctionalInterface
+    private interface CommandBody
+    {
+        int run() throws com.mojang.brigadier.exceptions.CommandSyntaxException;
     }
 
     /**

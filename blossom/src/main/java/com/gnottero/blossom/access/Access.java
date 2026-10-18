@@ -160,6 +160,12 @@ public final class Access
         void blossom$setExhaustion(float exhaustion);
     }
 
+    /** {@code com.mojang.brigadier.tree.CommandNode} */
+    public interface CommandTree
+    {
+        void blossom$removeChild(String name);
+    }
+
     /** {@link net.minecraft.commands.CommandSourceStack} */
     public interface Source
     {

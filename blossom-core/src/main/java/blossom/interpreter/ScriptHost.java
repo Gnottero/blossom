@@ -732,6 +732,14 @@ public abstract class ScriptHost
         ), getModuleData(module).futureImports.keySet().stream().filter(Expression::isGlobalVariableName)).filter(predicate);
     }
 
+    public Stream<String> globalFunctionNames(Module module, Predicate<String> predicate)
+    {
+        return Stream.concat(Stream.concat(
+                getModuleData(module).globalFunctions.keySet().stream(),
+                getModuleData(module).functionImports.keySet().stream()
+        ), getModuleData(module).futureImports.keySet().stream().filter(s -> !Expression.isGlobalVariableName(s))).filter(predicate);
+    }
+
     public synchronized void handleExpressionException(String msg, ExpressionException exc)
     {
         System.out.println(msg + ": " + exc);

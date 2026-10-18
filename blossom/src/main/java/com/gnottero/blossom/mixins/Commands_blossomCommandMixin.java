@@ -31,6 +31,8 @@ public abstract class Commands_blossomCommandMixin
     @Inject(method = "<init>", at = @At("RETURN"))
     private void blossom$registerCommands(Commands.CommandSelection selection, CommandBuildContext buildContext, CallbackInfo ci)
     {
-        BlossomCommand.register(this.dispatcher);
+        BlossomCommand.register(this.dispatcher, buildContext);
+        // a new dispatcher (server start, /reload) has only the game's commands: the apps put theirs back
+        com.gnottero.blossom.command.AppCommands.installAll(this.dispatcher, buildContext);
     }
 }

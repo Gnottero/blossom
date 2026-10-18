@@ -49,6 +49,7 @@ import it.unimi.dsi.fastutil.Stack;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import org.jspecify.annotations.Nullable;
@@ -1483,7 +1484,11 @@ public class Expression
     }
 
     public enum LoadOverride {
-        DEFAULT, CANONICAL, OPTIMIZED, FUNCTIONAL, FUNCTIONAL_OPTIMIZED
+        DEFAULT("clean"), CANONICAL("canonical"), OPTIMIZED("optimized"), FUNCTIONAL("functional"), FUNCTIONAL_OPTIMIZED("functional_optimized");
+        public String equivalent;
+        LoadOverride(String equivalent) {
+            this.equivalent = equivalent;
+        }
     }
 
     public Pair<Value, ExpressionNode> executeAndEvaluate(Context c, boolean optimize, LoadOverride override, @Nullable Consumer<String> logger)
@@ -1569,6 +1574,85 @@ public class Expression
         public static ExpressionNode ofConstant(Value val, Token token)
         {
             return new ExpressionNode(new LazyValue.Constant(val), Collections.emptyList(), token);
+        }
+
+        public List<Token> tokensRecursive(Expression expression, List<Token> reference, Map<Pair<Integer, Integer>, List<Integer>> referencePointers){
+            List<Token> tokens = new ArrayList<>();
+            switch (token.type) {
+                case FUNCTION -> {
+                    tokens.add(token);
+                    tokens.add(findToken(token, Token.TokenType.OPEN_PAREN, "(", reference, referencePointers));
+                    if (!args.isEmpty()) {
+                        for (ExpressionNode arg : args) {
+                            List<Token> argTokens = arg.tokensRecursive(expression, reference, referencePointers);
+                            tokens.addAll(argTokens);
+                            tokens.add(findToken(argTokens.getLast(), Token.TokenType.COMMA, ",", reference, referencePointers).disguiseAs(", ", null));
+                        }
+                        tokens.removeLast();
+                    }
+                    tokens.add(findToken(tokens.getLast(), Token.TokenType.CLOSE_PAREN, ")", reference, referencePointers));
+                }
+                case OPERATOR -> {
+                    tokens.addAll(createOperatorArgumentTokens(expression, args.get(0), false, reference, referencePointers));
+                    tokens.add(token.disguiseAs(token.surface.equals(";") ? (token.surface+" ") : (" "+token.surface+" "), null));
+                    tokens.addAll(createOperatorArgumentTokens(expression, args.get(1), true, reference, referencePointers));
+                }
+                case UNARY_OPERATOR -> {
+                    tokens.add(token.disguiseAs(" "+StringUtils.chop(token.surface),null));
+                    tokens.addAll(createOperatorArgumentTokens(expression, args.get(0), false, reference, referencePointers));
+                }
+                case VARIABLE, LITERAL, HEX_LITERAL, CONSTANT -> tokens.add(token);
+                case STRINGPARAM -> tokens.add(token.disguiseAs("'"+token.surface+"'", null));
+                // these should be parsed out already, but ....
+                //case LITERAL, STRINGPARAM, HEX_LITERAL, OPEN_PAREN, CLOSE_PAREN, MARKER -> tokens.add(token.morphedInto(token.type, token.surface+"?"));
+                // CONSTANT ??
+                default -> tokens.add(token.disguiseAs("?"+token.surface+"?", null));
+            }
+            return tokens;
+        }
+
+        public Token findToken(Token previous, Token.TokenType type, String expectedSurface, List<Token> reference, Map<Pair<Integer, Integer>, List<Integer>> referencePointers)
+        {
+            List<Integer> indices = referencePointers.get(Pair.of(previous.lineno, previous.linepos));
+            if (indices == null)
+            {
+                return previous.morphedInto(type, expectedSurface);
+            }
+            for (int index : indices)
+            {
+                if (index + 1 == reference.size())
+                {
+                    continue;
+                }
+                Token token = reference.get(index + 1);
+                if (token.type == type)
+                {
+                    return token.morphedInto(type, expectedSurface);
+                }
+            }
+            return previous.morphedInto(type, expectedSurface);
+        }
+
+        public List<Token> createOperatorArgumentTokens(Expression expression, ExpressionNode operand, boolean right, List<Token> reference, Map<Pair<Integer, Integer>, List<Integer>> referencePointers) {
+            boolean needsBrackets = false;
+            var operators = expression.operators;
+            if (operand.token.type == Token.TokenType.OPERATOR && operators.containsKey(operand.token.surface) && operators.containsKey(token.surface)) {
+                int inner = operators.get(operand.token.surface).getPrecedence();
+                int outer = operators.get(token.surface).getPrecedence();
+                // a + (b + c) is not a + b + c: on the right of a left associative operator, the
+                // same precedence needs its brackets too
+                needsBrackets = inner < outer || (right && inner == outer && operators.get(token.surface).isLeftAssoc());
+            }
+            List<Token> argumentTokens = operand.tokensRecursive(expression, reference, referencePointers);
+            if (!needsBrackets) {
+                return argumentTokens;
+            }
+            List<Token> bracketed = new ArrayList<>();
+            bracketed.add(findToken(argumentTokens.getFirst(), Token.TokenType.OPEN_PAREN, "(", reference, referencePointers));
+            bracketed.get(0).swapPlace(argumentTokens.getFirst());
+            bracketed.addAll(argumentTokens);
+            bracketed.add(findToken(argumentTokens.getLast(), Token.TokenType.CLOSE_PAREN, ")", reference, referencePointers));
+            return bracketed;
         }
     }
 
@@ -2096,6 +2180,81 @@ public class Expression
         }
     }
 
+    public List<Token> explain(Context context, @Nullable String code, @Nullable String method, @Nullable String style)
+    {
+        if (code == null)
+        {
+            ExpressionNode node;
+            if (method != null)
+            {
+                FunctionValue function = context.host.getFunction(method);
+                if (function == null) {
+                    throw new ParseError(new SourcePosition(getModuleName() == null ? "<code>" : getModuleName(), 0, 0), "Unknown function " + method);
+                }
+                node = function.getToken().node;
+                if (node == null) {
+                    throw new ParseError(new SourcePosition(getModuleName() == null ? "<code>" : getModuleName(), 0, 0), "Function " + method + " is not a compiled function");
+                }
+            } else
+            {
+                node = context.host.root;
+            }
+            if (node == null || node.token.type == null) {
+                throw new ParseError(new SourcePosition(getModuleName() == null ? "<code>" : getModuleName(), 0, 0), "No code to explain");
+            }
+
+            // grab source reference
+            Tokenizer tokenizer = new Tokenizer(context, this, context.host.main == null ? "" : stripExpression(context.host.main.code()) , true, true);
+            List<Token> input = tokenizer.parseTokens();
+            List<Token> cleanedTokens = Tokenizer.postProcess(input);
+
+            Map<Pair<Integer, Integer>, List<Integer>> tokenPointers = new HashMap<>();
+            for (int i = 0; i < cleanedTokens.size(); i++) {
+                Token token = cleanedTokens.get(i);
+                tokenPointers.computeIfAbsent(Pair.of(token.lineno, token.linepos), k -> new ArrayList<>()).add(i);
+            }
+
+            return node.tokensRecursive(this, cleanedTokens, tokenPointers);
+        }
+        if (style == null) {
+            style = context.host.loadOverrides.equivalent;
+        }
+
+        //todo convert to explain
+        Tokenizer tokenizer = new Tokenizer(context, this, stripExpression(code), true, true);
+        // stripping lousy but acceptable semicolons
+        List<Token> input = tokenizer.parseTokens();
+        if (style.equalsIgnoreCase("raw")) {
+            return input;
+        }
+        List<Token> cleanedTokens = Tokenizer.postProcess(input);
+        if (style.equalsIgnoreCase("clean")) {
+            return cleanedTokens;
+        }
+
+        List<Token> rpn = shuntingYard(context, cleanedTokens);
+        validate(context, rpn);
+        ExpressionNode root = RPNToParseTree(rpn, context);
+
+        Map<Pair<Integer, Integer>, List<Integer>> tokenPointers = new HashMap<>();
+        for (int i = 0; i < cleanedTokens.size(); i++) {
+            Token token = cleanedTokens.get(i);
+            tokenPointers.computeIfAbsent(Pair.of(token.lineno, token.linepos), k -> new ArrayList<>()).add(i);
+        }
+
+        List<Token> parsedTokens = root.tokensRecursive(this, cleanedTokens, tokenPointers);
+        if (style.equalsIgnoreCase("canonical")) {
+            return parsedTokens;
+        }
+
+        Context optimizeOnlyContext = new Context.ContextForErrorReporting(context);
+        // pure functional
+        optimizeTree(root, optimizeOnlyContext, null, style.contains("optimized"), style.contains("functional"));
+        List<Token> compileTimeOptimized = root.tokensRecursive(this, cleanedTokens, tokenPointers);
+
+        return compileTimeOptimized;
+    }
+
     private int treeSize(ExpressionNode node)
     {
         return node.op instanceof LazyValue.ContextFreeLazyValue ? 1 : node.args.stream().mapToInt(this::treeSize).sum() + 1;
@@ -2322,6 +2481,7 @@ public class Expression
             // Giving up on this node is always safe - what is left is the call itself.
             return optimized;
         }
+        node.token.disguiseAs(null, "=> "+result.getString());
         node.op = LazyValue.ofConstant(result);
         if (logger != null)
         {

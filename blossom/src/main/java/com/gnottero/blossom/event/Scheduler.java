@@ -49,6 +49,10 @@ public final class Scheduler
     /** Called once per tick by the server: runs whatever was due. */
     public void tick()
     {
+        if (blossom.interpreter.ExecutionBudget.isHalted())
+        {
+            return; // stopped: the calls wait, and run when the scripts are resumed
+        }
         List<Call> due;
         synchronized (this)
         {
@@ -72,7 +76,9 @@ public final class Scheduler
         {
             try
             {
-                Context context = new ScriptContext(call.interpreter().host(), call.source());
+                // a call of its own, with its own watchdog: without it an endless loop in a
+                // scheduled function stopped the server for good
+                Context context = new ScriptContext(call.interpreter().host(), call.source()).beginExecution();
                 call.function().callInContext(context, Context.Type.NONE, call.arguments()).evalValue(context);
             }
             catch (RuntimeException | StackOverflowError error)

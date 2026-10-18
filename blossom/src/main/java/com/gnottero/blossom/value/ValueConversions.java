@@ -137,6 +137,55 @@ public class ValueConversions
         return StringValue.of(repr.startsWith("minecraft:") ? repr.substring(10) : repr);
     }
 
+    /**
+     * A slot of a vanilla slot argument ({@code weapon.offhand}, {@code enderchest.3}) as
+     * {@code [inventory, index]}: the inventory is {@code null} for the default one of whoever is
+     * targeted, and the index is the one {@code core.mc.inventory} uses for it.
+     */
+    public static Value ofVanillaSlotResult(int slot)
+    {
+        if (slot >= 0 && slot < 54)
+        {
+            return ListValue.of(Value.NULL, new NumericValue(slot)); // a block, or a player's inventory
+        }
+        if (slot >= 200 && slot < 227)
+        {
+            return ListValue.of(StringValue.of("enderchest"), new NumericValue(slot - 200));
+        }
+        if (slot >= 300 && slot < 308)
+        {
+            return ListValue.of(Value.NULL, new NumericValue(slot - 300)); // a villager
+        }
+        if (slot >= 500 && slot < 515)
+        {
+            return ListValue.of(Value.NULL, new NumericValue(slot - 500 + 2)); // after saddle and armour
+        }
+        return switch (slot)
+        {
+            case 98 -> ListValue.of(StringValue.of("equipment"), new NumericValue(0));
+            case 99 -> ListValue.of(StringValue.of("equipment"), new NumericValue(5));
+            case 100, 101, 102, 103 -> ListValue.of(StringValue.of("equipment"), new NumericValue(slot - 99));
+            case 400 -> ListValue.of(Value.NULL, new NumericValue(0)); // saddle
+            case 401 -> ListValue.of(Value.NULL, new NumericValue(1)); // body armour
+            default -> ListValue.of(Value.NULL, new NumericValue(slot));
+        };
+    }
+
+    /** A block predicate as {@code [block, tag, properties, nbt]}: block or tag is null, never both. */
+    public static Value ofBlockPredicate(RegistryAccess registryAccess,
+            java.util.function.Predicate<net.minecraft.world.level.block.state.pattern.BlockInWorld> predicate)
+    {
+        com.gnottero.blossom.access.Vanilla.BlockPredicatePayload payload =
+                com.gnottero.blossom.access.Vanilla.BlockPredicatePayload.of(predicate);
+        net.minecraft.core.Registry<net.minecraft.world.level.block.Block> blocks =
+                registryAccess.lookupOrThrow(net.minecraft.core.registries.Registries.BLOCK);
+        return ListValue.of(
+                payload.state() == null ? Value.NULL : of(blocks.getKey(payload.state().getBlock())),
+                payload.tagKey() == null ? Value.NULL : of(payload.tagKey()),
+                MapValue.wrap(payload.properties()),
+                payload.tag() == null ? Value.NULL : new NBTSerializableValue(payload.tag()));
+    }
+
     public static Value ofRGB(int value)
     {
         return new NumericValue(value * 256 + 255);

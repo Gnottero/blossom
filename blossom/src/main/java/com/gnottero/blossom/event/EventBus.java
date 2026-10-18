@@ -37,7 +37,7 @@ public final class EventBus
         if (event == null)
         {
             throw new UndefinedSymbolError(SourcePosition.UNKNOWN,
-                    "Evento '" + name + "' sconosciuto.",
+                    "Unknown event '" + name + "'.",
                     Suggestions.closestTo(name, List.copyOf(Event.names())));
         }
         return event;

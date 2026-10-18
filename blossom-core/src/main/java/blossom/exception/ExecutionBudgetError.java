@@ -13,7 +13,9 @@ public class ExecutionBudgetError extends BlossomError
     /** What was exceeded: lets the two cases be told apart even from the logs. */
     public enum Limit
     {
-        TIME("tempo"), DEPTH("profondita' di chiamata");
+        TIME("time"), DEPTH("call depth"),
+        /** the server stopped every script, with {@code /blossom script stop} */
+        STOPPED("stopped");
 
         private final String label;
 

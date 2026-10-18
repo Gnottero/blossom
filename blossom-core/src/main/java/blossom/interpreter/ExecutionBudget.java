@@ -116,12 +116,48 @@ public final class ExecutionBudget
     {
         if (deadlineNanos == Long.MAX_VALUE)
         {
+            // no clock (a task, or no watchdog at all): a server-wide stop still has to reach it
+            if (halted && this != UNLIMITED_BUDGET)
+            {
+                throw stopped();
+            }
             return;
         }
-        if ((++ticks & CLOCK_CHECK_MASK) == 0 && System.nanoTime() > deadlineNanos)
+        if ((++ticks & CLOCK_CHECK_MASK) == 0)
         {
-            throw timedOut();
+            if (halted)
+            {
+                throw stopped();
+            }
+            if (System.nanoTime() > deadlineNanos)
+            {
+                throw timedOut();
+            }
         }
+    }
+
+    /**
+     * Whether every execution has to stop: {@code /blossom script stop}. Read where the clock is,
+     * once every {@link #CLOCK_CHECK_MASK}+1 ticks, so it costs nothing while it is off.
+     */
+    private static volatile boolean halted = false;
+
+    /** Stops (or lets run again) every execution that has a watchdog, everywhere on this JVM. */
+    public static void halt(boolean halt)
+    {
+        halted = halt;
+    }
+
+    public static boolean isHalted()
+    {
+        return halted;
+    }
+
+    private ExecutionBudgetError stopped()
+    {
+        return new ExecutionBudgetError(SourcePosition.UNKNOWN, ExecutionBudgetError.Limit.STOPPED,
+                "Execution stopped: every script on this server was stopped with /blossom script stop."
+                        + " /blossom script resume lets them run again.");
     }
 
     /** Enters a function call: counts as both a tick and a depth level. */

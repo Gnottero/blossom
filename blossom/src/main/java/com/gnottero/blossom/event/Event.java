@@ -410,7 +410,7 @@ public final class Event
      */
     public boolean fire(CommandSourceStack source, Supplier<List<Value>> arguments)
     {
-        if (suppressed || handlers.isEmpty())
+        if (suppressed || handlers.isEmpty() || blossom.interpreter.ExecutionBudget.isHalted())
         {
             return false;
         }
@@ -497,6 +497,18 @@ public final class Event
         all.addAll(base);
         all.addAll(extra);
         return all;
+    }
+
+    /**
+     * Removes the handlers of one function of an app: {@code /blossom script event remove}.
+     *
+     * @return how many were removed
+     */
+    public int removeHandler(String app, String function)
+    {
+        int before = handlers.size();
+        handlers.removeIf(handler -> handler.app().equals(app) && handler.function().getString().equals(function));
+        return before - handlers.size();
     }
 
     /** Removes the app's handlers from every event: called on reload and on unload. */

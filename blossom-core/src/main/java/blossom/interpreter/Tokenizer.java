@@ -235,6 +235,7 @@ public class Tokenizer
     private static Token stringPiece(Token token, String text)
     {
         Token piece = token.morphedInto(Token.TokenType.STRINGPARAM, text);
+        piece.disguiseAs('\'' + text + '\'', null);
         return piece;
     }
 
@@ -310,6 +311,7 @@ public class Tokenizer
         {
             return; // 'mut' da solo non e' un operatore: esiste solo attaccato a 'let'
         }
+        token.disguiseAs(surface, null);
         token.surface = surface + "u";
         token.type = Token.TokenType.UNARY_OPERATOR;
     }
@@ -491,6 +493,7 @@ public class Tokenizer
                 pos++;
                 linepos++;
             }
+            token.disguiseAs('"' + token.surface + '"', null);
         }
         else if (ch == '\'')
         {
@@ -557,6 +560,7 @@ public class Tokenizer
             }
             pos++;
             linepos++;
+            token.disguiseAs("'"+token.surface+"'", null);
 
         }
         else if (Character.isLetter(ch) || "_".indexOf(ch) >= 0)
@@ -602,6 +606,7 @@ public class Tokenizer
             else if (ch == ',')
             {
                 token.type = Token.TokenType.COMMA;
+                token.disguiseAs(", ", null);
             }
             else
             {
@@ -683,12 +688,14 @@ public class Tokenizer
                     || (previousToken.type == Token.TokenType.MARKER && (previousToken.surface.equals("{") || previousToken.surface.equals("[")))
             )
             {
+                token.disguiseAs(token.surface, null);
                 token.surface += "u";
                 token.type = Token.TokenType.UNARY_OPERATOR;
             }
             else
             {
                 token.type = Token.TokenType.OPERATOR;
+                token.disguiseAs(token.surface.equals(";") ? (token.surface + " ") : (" " + token.surface + " "), null);
 
             }
         }

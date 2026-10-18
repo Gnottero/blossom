@@ -65,6 +65,8 @@ public class ScriptRuntime
     public ScriptRuntime(MinecraftServer server)
     {
         this.server = server;
+        // the stop is static in the core: a world opened after one that was stopped starts running
+        blossom.interpreter.ExecutionBudget.halt(false);
         ScriptHost.mainThread = Thread.currentThread();
         Path world = server.getWorldPath(LevelResource.ROOT);
         this.config = ServerConfig.read(
@@ -194,11 +196,13 @@ public class ScriptRuntime
         // app
         com.gnottero.blossom.event.EventBus.unregisterApp(module.name());
         scheduler.unregisterApp(module.name());
+        com.gnottero.blossom.command.AppCommands.uninstall(server, module.name());
         Interpreter interpreter = newInterpreter(module);
         apps.put(module.name(), interpreter);
         try
         {
             Value result = evaluate(interpreter, source, module.code());
+            com.gnottero.blossom.command.AppCommands.install(server, module.name());
             fireReloaded(module.name(), reloading);
             return result;
         }
@@ -206,6 +210,7 @@ public class ScriptRuntime
         {
             apps.remove(module.name());
             com.gnottero.blossom.event.EventBus.unregisterApp(module.name());
+            com.gnottero.blossom.command.AppCommands.uninstall(server, module.name());
             throw e;
         }
     }
@@ -268,6 +273,7 @@ public class ScriptRuntime
         boolean reloading = fireReloading(appName);
         com.gnottero.blossom.event.EventBus.unregisterApp(appName);
         scheduler.unregisterApp(appName);
+        com.gnottero.blossom.command.AppCommands.uninstall(server, appName);
         try
         {
             // the app enters the list before running: module level code can already register
@@ -290,6 +296,7 @@ public class ScriptRuntime
                     },
                     packEnvironment(), refreshLock);
             apps.put(appName, interpreter);
+            com.gnottero.blossom.command.AppCommands.install(server, appName);
             fireReloaded(appName, reloading);
             return new blossom.value.StringValue(appName);
         }
@@ -297,6 +304,7 @@ public class ScriptRuntime
         {
             apps.remove(appName);
             com.gnottero.blossom.event.EventBus.unregisterApp(appName);
+            com.gnottero.blossom.command.AppCommands.uninstall(server, appName);
             throw e;
         }
     }
@@ -419,7 +427,24 @@ public class ScriptRuntime
         return profiler;
     }
 
-    private Interpreter requireApp(String name)
+    /**
+     * Calls a function of a loaded app on behalf of {@code source}, with the limits of something
+     * typed by hand: app commands, {@code invoke}, and their suggestion and permission functions.
+     */
+    public Value call(String app, CommandSourceStack source, blossom.value.FunctionValue function, List<Value> args)
+    {
+        Interpreter interpreter = requireApp(app);
+        Context context = new ScriptContext(interpreter.host(), source).beginExecution(interactiveWatchdog(interpreter.host()));
+        return function.callInContext(context, Context.Type.NONE, args).evalValue(context);
+    }
+
+    /** The interpreter to evaluate a command's expression in: the app's, or a clean one. */
+    public Interpreter interpreterFor(@org.jspecify.annotations.Nullable String app)
+    {
+        return app == null ? newInterpreter(null) : requireApp(app);
+    }
+
+    public Interpreter requireApp(String name)
     {
         Interpreter interpreter = apps.get(name.toLowerCase(Locale.ROOT));
         if (interpreter == null)
@@ -433,6 +458,7 @@ public class ScriptRuntime
     {
         com.gnottero.blossom.event.EventBus.unregisterApp(name.toLowerCase(Locale.ROOT));
         scheduler.unregisterApp(name.toLowerCase(Locale.ROOT));
+        com.gnottero.blossom.command.AppCommands.uninstall(server, name.toLowerCase(Locale.ROOT));
         return apps.remove(name.toLowerCase(Locale.ROOT)) != null;
     }
 
@@ -481,11 +507,22 @@ public class ScriptRuntime
         return fileName.substring(0, fileName.length() - SCRIPT_EXTENSION.length());
     }
 
+    /**
+     * Stops every script on the server, or lets them run again: {@code /blossom script stop} and
+     * {@code resume}. Running code stops at its next watchdog check, events and scheduled calls wait.
+     */
+    public void stop(boolean stop)
+    {
+        stopAll = stop;
+        blossom.interpreter.ExecutionBudget.halt(stop);
+    }
+
     public void shutdown()
     {
-        stopAll = true;
+        stop(true);
         scheduler.clear();
         com.gnottero.blossom.event.EventBus.clear();
+        com.gnottero.blossom.command.AppCommands.clear();
         apps.clear();
     }
 
@@ -533,7 +570,7 @@ public class ScriptRuntime
      * the tick. An app that declared its own limits wins though: if it wrote them in the manifest,
      * it wants them here too.
      */
-    private blossom.interpreter.ExecutionBudget.Policy interactiveWatchdog(ScriptHost host)
+    public blossom.interpreter.ExecutionBudget.Policy interactiveWatchdog(ScriptHost host)
     {
         return host.watchdog().equals(defaultWatchdog)
                 ? blossom.interpreter.ExecutionBudget.Policy.INTERACTIVE

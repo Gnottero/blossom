@@ -38,6 +38,7 @@
     "access.BlockPredicate_blossomAccessMixin",
     "access.Brain_blossomAccessMixin",
     "access.CommandSourceStack_blossomAccessMixin",
+    "access.CommandNode_blossomAccessMixin",
     "access.Entity_blossomAccessMixin",
     "access.FoodData_blossomAccessMixin",
     "access.ItemEntity_blossomAccessMixin",

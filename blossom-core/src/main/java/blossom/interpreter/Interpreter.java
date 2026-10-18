@@ -199,6 +199,30 @@ public final class Interpreter
         return host.prepare(host.main, source.body()).executeAndEvaluate(context, true, host.loadOverrides, null).getLeft();
     }
 
+    /**
+     * Like {@link #evalIn}, but compiled once to be run many times: the expression of
+     * {@code /blossom script scan} and {@code fill}, evaluated block after block. The preamble is
+     * read here, once; the returned expression keeps its tree after the first run.
+     */
+    public Expression compileIn(Context context, String code)
+    {
+        if (context.host != host)
+        {
+            throw new IllegalArgumentException("the context belongs to another host");
+        }
+        ModuleSource source = ModuleSource.parse(host.main == null ? "<code>" : host.main.name(), code);
+        ModuleSymbols symbols = host.symbolsOf(host.main);
+        source.imports().forEach((alias, declaration) -> symbols.declareAlias(alias, declaration.target().value()));
+        for (blossom.project.ModuleName imported : source.importedModules())
+        {
+            if (!blossom.language.StdLib.isBuiltinModule(imported.value()))
+            {
+                host.importModule(context, imported.value());
+            }
+        }
+        return host.prepare(host.main, source.body());
+    }
+
     public ScriptHost host()
     {
         return host;
