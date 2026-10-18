@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import com.mojang.renderpearl.api.pipeline.RenderPipeline;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 
 import net.minecraft.client.renderer.RenderPipelines;
 
@@ -24,7 +24,7 @@ import com.gnottero.blossom.client.BlossomRenderTypes;
 @Mixin(RenderPipelines.class)
 public abstract class RenderPipelines_blossomPipelinesMixin
 {
-    @Inject(method = "getStaticPipelines", at = @At("RETURN"), cancellable = true)
+    @Inject(method = "requiredPipelines", at = @At("RETURN"), cancellable = true)
     private static void blossom$addOwnPipelines(CallbackInfoReturnable<List<RenderPipeline>> cir)
     {
         List<RenderPipeline> pipelines = new ArrayList<>(cir.getReturnValue());

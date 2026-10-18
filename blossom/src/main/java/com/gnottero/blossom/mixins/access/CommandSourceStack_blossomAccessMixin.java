@@ -21,6 +21,10 @@ public class CommandSourceStack_blossomAccessMixin implements Access.Source
 {
     @Mutable
     @Shadow
+    private CommandSourceStack.NamesProvider namesProvider;
+
+    @Mutable
+    @Shadow
     private boolean silent;
 
     @Mutable
@@ -40,9 +44,11 @@ public class CommandSourceStack_blossomAccessMixin implements Access.Source
     private TaskChainer chatMessageChainer;
 
     @Override
-    public void blossom$setupPrivates(boolean silent, CommandResultCallback callback,
-            EntityAnchorArgument.Anchor anchor, CommandSigningContext signingContext, TaskChainer chainer)
+    public void blossom$setupPrivates(CommandSourceStack.NamesProvider names, boolean silent,
+            CommandResultCallback callback, EntityAnchorArgument.Anchor anchor, CommandSigningContext signingContext,
+            TaskChainer chainer)
     {
+        this.namesProvider = names;
         this.silent = silent;
         this.resultCallback = callback;
         this.anchor = anchor;

@@ -40,8 +40,6 @@ import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.pattern.BlockInWorld;
-import net.minecraft.world.level.levelgen.DensityFunction;
-import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.storage.LevelStorageSource;
 import net.minecraft.world.scores.Objective;
 import net.minecraft.world.scores.Scoreboard;
@@ -101,11 +99,6 @@ public final class Vanilla
     public static PotentialCalculator SpawnState_getPotentialCalculator(NaturalSpawner.SpawnState state)
     {
         return ((Access.SpawnState) state).blossom$potentialCalculator();
-    }
-
-    public static DensityFunction.Visitor RandomState_getVisitor(RandomState state)
-    {
-        return ((Access.RandomStateVisitor) (Object) state).blossom$visitor();
     }
 
     public static Biome.ClimateSettings Biome_getClimateSettings(Biome biome)

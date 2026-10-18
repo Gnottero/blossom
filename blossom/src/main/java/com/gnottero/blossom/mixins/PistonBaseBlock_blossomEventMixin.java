@@ -113,7 +113,7 @@ public abstract class PistonBaseBlock_blossomEventMixin extends DirectionalBlock
         }
         return !movingState.isAir()
                 && PistonBaseBlock.isPushable(movingState, level, twoPos, direction.getOpposite(), false, direction)
-                && (movingState.getPistonPushReaction() == PushReaction.NORMAL
+                && (movingState.getPistonPushReaction() == PushReaction.PUSH_PULL
                         || movingState.is(Blocks.PISTON) || movingState.is(Blocks.STICKY_PISTON));
     }
 

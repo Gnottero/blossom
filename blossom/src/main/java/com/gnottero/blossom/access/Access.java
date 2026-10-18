@@ -27,7 +27,6 @@ import net.minecraft.world.level.PotentialCalculator;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.levelgen.DensityFunction;
 import net.minecraft.world.level.storage.LevelStorageSource;
 
 import com.gnottero.blossom.event.EntityEvents;
@@ -65,12 +64,6 @@ public final class Access
     public interface Tickets
     {
         Long2ObjectOpenHashMap<List<Ticket>> blossom$ticketsByPosition();
-    }
-
-    /** {@link net.minecraft.world.level.levelgen.RandomState} */
-    public interface RandomStateVisitor
-    {
-        DensityFunction.Visitor blossom$visitor();
     }
 
     /** {@link Biome} */
@@ -170,8 +163,9 @@ public final class Access
     /** {@link net.minecraft.commands.CommandSourceStack} */
     public interface Source
     {
-        void blossom$setupPrivates(boolean silent, CommandResultCallback callback, EntityAnchorArgument.Anchor anchor,
-                CommandSigningContext signingContext, TaskChainer chainer);
+        void blossom$setupPrivates(net.minecraft.commands.CommandSourceStack.NamesProvider names, boolean silent,
+                CommandResultCallback callback, EntityAnchorArgument.Anchor anchor, CommandSigningContext signingContext,
+                TaskChainer chainer);
     }
 
     /** {@code BlockPredicateArgument$BlockPredicate} */

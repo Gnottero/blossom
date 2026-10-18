@@ -41,7 +41,9 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
+import net.minecraft.util.Prediction;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.crafting.AbstractCookingRecipe;
 import net.minecraft.world.item.crafting.CustomRecipe;
 import net.minecraft.world.item.crafting.PlacementInfo;
@@ -194,7 +196,12 @@ public class Inventories
             ScriptContext cc = (ScriptContext) c;
             Registry<Item> registry = cc.registry(Registries.ITEM);
             Item item = registry.getOptional(id).orElseThrow(() -> new ThrowStatement(itemStr, Throwables.UNKNOWN_ITEM));
-            ItemStack reminder = item.getCraftingRemainder().create();
+            ItemStackTemplate remainder = item.getCraftingRemainder();
+            if (remainder == null)
+            {
+                return Value.NULL;
+            }
+            ItemStack reminder = remainder.create();
             return reminder.isEmpty() ? Value.NULL : ValueConversions.of(reminder, cc.registryAccess());
         });
 
@@ -435,7 +442,7 @@ public class Inventories
             ItemEntity item;
             if (owner instanceof Player player)
             {
-                item = player.drop(droppedStack, false, true);
+                item = player.drop(droppedStack, false, Prediction.SERVER_ONLY);
                 if (item == null)
                 {
                     return Value.ZERO;

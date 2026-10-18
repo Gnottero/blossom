@@ -32,7 +32,6 @@ import com.gnottero.blossom.value.ValueConversions;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
@@ -59,20 +58,18 @@ import net.minecraft.util.ProblemReporter;
 import net.minecraft.util.random.WeightedList;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.level.ServerExplosion;
-import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.chunk.PalettedContainer;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
-import net.minecraft.world.level.levelgen.DensityFunction;
-import net.minecraft.world.level.levelgen.DensityFunctions;
+import net.minecraft.world.level.levelgen.densityfunction.DensityFunction;
+import net.minecraft.world.level.levelgen.Aquifer;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
+import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import net.minecraft.world.level.levelgen.NoiseRouter;
-import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureType;
 import net.minecraft.world.level.saveddata.WeatherData;
 import net.minecraft.world.level.storage.TagValueInput;
 import org.apache.commons.lang3.mutable.MutableBoolean;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -82,6 +79,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
@@ -93,7 +91,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundExplodePacket;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -120,7 +117,7 @@ import net.minecraft.world.level.biome.Climate;
 import net.minecraft.world.level.biome.MultiNoiseBiomeSource;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.sounds.BlockSoundSet;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -1108,7 +1105,7 @@ public class WorldAccess
             for (ServerPlayer serverPlayer : cc.level().players()) {
                 if (serverPlayer.distanceToSqr(pos) < 4096.0) {
                     Optional<Vec3> optional = Optional.ofNullable((Vec3)serverExplosion.getHitPlayers().get(serverPlayer));
-                    serverPlayer.connection.send(new ClientboundExplodePacket(pos, powah, i, optional, particleOptions3, SoundEvents.GENERIC_EXPLODE, DEFAULT_EXPLOSION_BLOCK_PARTICLES, true));
+                    serverPlayer.connection.send(new ClientboundExplodePacket(pos, powah, i, optional, Optional.of(particleOptions3), Optional.of(SoundEvents.GENERIC_EXPLODE), DEFAULT_EXPLOSION_BLOCK_PARTICLES));
                 }
             }
             return Value.TRUE;
@@ -1159,8 +1156,8 @@ public class WorldAccess
                     if (placementState.canSurvive(level, where))
                     {
                         level.setBlock(where, placementState, 2);
-                        SoundType blockSoundGroup = placementState.getSoundType();
-                        level.playSound(null, where, blockSoundGroup.getPlaceSound(), SoundSource.BLOCKS, (blockSoundGroup.getVolume() + 1.0F) / 2.0F, blockSoundGroup.getPitch() * 0.8F);
+                        BlockSoundSet sounds = placementState.getSounds(level);
+                        sounds.placeSound().ifPresent(sound -> level.playSound(null, where, sound.value(), SoundSource.BLOCKS, (sounds.volume() + 1.0F) / 2.0F, sounds.pitch() * 0.8F));
                         return Value.TRUE;
                     }
                 }
@@ -1174,7 +1171,7 @@ public class WorldAccess
 
         expression.addContextFunction("block_sound", -1, (c, t, lv) ->
                 stateStringQuery(c, "block_sound", lv, (s, p) ->
-                        Colors.soundName.get(s.getSoundType())));
+                        s.getSounds().map(key -> NBTSerializableValue.nameFromResource(key.identifier())).orElse(null)));
 
         expression.addContextFunction("map_colour", -1, (c, t, lv) ->
                 stateStringQuery(c, "map_colour", lv, (s, p) ->
@@ -1333,7 +1330,7 @@ public class WorldAccess
             {
                 int i = QuartPos.fromBlock(chunk.getMinY());
                 int j = i + QuartPos.fromBlock(chunk.getHeight()) - 1;
-                int k = Mth.clamp(biomeY, i, j);
+                int k = Math.clamp(biomeY, i, j);
                 int l = chunk.getSectionIndex(QuartPos.toBlock(k));
                 // accessing outside of the interface - might be dangerous in the future.
                 ((PalettedContainer<Holder<Biome>>) chunk.getSection(l).getBiomes()).set(biomeX & 3, k & 3, biomeZ & 3, biome);
@@ -1443,30 +1440,38 @@ public class WorldAccess
             }
             if (singleOutput)
             {
-                StructureStart start = FeatureGenerator.shouldStructureStartAt(world, pos, structure.get(0), needSize);
-                return start == null ? Value.NULL : !needSize ? Value.TRUE : ValueConversions.of(start, cc.registryAccess());
+                if (!needSize)
+                {
+                    return FeatureGenerator.canStructureStartAt(world, pos, structure.get(0)) ? Value.TRUE : Value.NULL;
+                }
+                StructureStart start = FeatureGenerator.structureStartAt(world, pos, structure.get(0));
+                return start == null ? Value.NULL : ValueConversions.of(start, cc.registryAccess());
             }
             Map<Value, Value> ret = new HashMap<>();
             for (Structure str : structure)
             {
-                StructureStart start;
+                Value found;
                 try
                 {
-                    start = FeatureGenerator.shouldStructureStartAt(world, pos, str, needSize);
+                    if (needSize)
+                    {
+                        StructureStart start = FeatureGenerator.structureStartAt(world, pos, str);
+                        found = start == null ? null : ValueConversions.of(start, cc.registryAccess());
+                    }
+                    else
+                    {
+                        found = FeatureGenerator.canStructureStartAt(world, pos, str) ? Value.NULL : null;
+                    }
                 }
                 catch (NullPointerException npe)
                 {
                     ScriptRuntime.LOG.error("Failed to detect structure: " + reg.getKey(str));
-                    start = null;
+                    found = null;
                 }
-
-                if (start == null)
+                if (found != null)
                 {
-                    continue;
+                    ret.put(NBTSerializableValue.nameFromRegistryId(reg.getKey(str)), found);
                 }
-
-                Value key = NBTSerializableValue.nameFromRegistryId(reg.getKey(str));
-                ret.put(key, (!needSize) ? Value.NULL : ValueConversions.of(start, cc.registryAccess()));
             }
             return MapValue.wrap(ret);
         });
@@ -1485,10 +1490,6 @@ public class WorldAccess
                 for (Map.Entry<Structure, StructureStart> entry : structures.entrySet())
                 {
                     StructureStart start = entry.getValue();
-                    if (start == StructureStart.INVALID_START)
-                    {
-                        continue;
-                    }
                     BoundingBox box = start.getBoundingBox();
                     structureList.put(
                             NBTSerializableValue.nameFromRegistryId(reg.getKey(entry.getKey())),
@@ -1637,81 +1638,53 @@ public class WorldAccess
             {
                 return ListValue.wrap(cc.registry(Registries.DENSITY_FUNCTION).keySet().stream().map(ValueConversions::of));
             }
-            NoiseRouter router = level.getChunkSource().randomState().router();
             return densityFunctionQueries.length == 1
-                    ? NumericValue.of(sampleNoise(router, level, densityFunctionQueries[0], pos))
-                    : ListValue.wrap(Arrays.stream(densityFunctionQueries).map(s -> NumericValue.of(sampleNoise(router, level, s, pos))));
+                    ? NumericValue.of(sampleNoise(level, densityFunctionQueries[0], pos))
+                    : ListValue.wrap(Arrays.stream(densityFunctionQueries).map(s -> NumericValue.of(sampleNoise(level, s, pos))));
         });
     }
 
-    public static double sampleNoise(NoiseRouter router, ServerLevel level, String what, BlockPos pos)
+    public static double sampleNoise(ServerLevel level, String what, BlockPos pos)
     {
-        DensityFunction densityFunction = switch (what)
+        DensityFunction function = densityFunction(level, what);
+        // a generator without noise (flat, debug) has nothing to sample: zero, as before
+        return function == null ? 0 : level.getChunkSource().randomState().sampleBlockValueUncached(function, pos.getX(), pos.getY(), pos.getZ());
+    }
+
+    /** the router of the generator of this very level, so the nether samples the nether */
+    @Nullable
+    private static DensityFunction densityFunction(ServerLevel level, String what)
+    {
+        if (!(level.getChunkSource().getGenerator() instanceof NoiseBasedChunkGenerator generator))
         {
-            case "barrier_noise" -> router.barrierNoise();
-            case "fluid_level_floodedness_noise" -> router.fluidLevelFloodednessNoise();
-            case "fluid_level_spread_noise" -> router.fluidLevelSpreadNoise();
-            case "lava_noise" -> router.lavaNoise();
+            return null;
+        }
+        NoiseGeneratorSettings settings = generator.generatorSettings().value();
+        NoiseRouter router = settings.noiseRouter();
+        Aquifer.Config aquifers = settings.aquifers().orElse(null);
+        DensityFunction routed = switch (what)
+        {
             case "temperature" -> router.temperature();
             case "vegetation" -> router.vegetation();
             case "continents" -> router.continents();
             case "erosion" -> router.erosion();
             case "depth" -> router.depth();
             case "ridges" -> router.ridges();
-            case "preliminary_surface_level" -> router.preliminarySurfaceLevel();
+            case "chunk_surface_level" -> router.chunkSurfaceLevel();
             case "final_density" -> router.finalDensity();
-            case "vein_toggle" -> router.veinToggle();
-            case "vein_ridged" -> router.veinRidged();
-            case "vein_gap" -> router.veinGap();
-            default -> stupidWorldgenNoiseCacheGetter.apply(Pair.of(level, what));
+            case "barrier_noise" -> aquifers == null ? null : aquifers.barrierNoise();
+            case "fluid_level_floodedness_noise" -> aquifers == null ? null : aquifers.fluidLevelFloodednessNoise();
+            case "fluid_level_spread_noise" -> aquifers == null ? null : aquifers.fluidLevelSpreadNoise();
+            case "lava_noise" -> aquifers == null ? null : aquifers.lavaNoise();
+            default -> level.registryAccess().lookupOrThrow(Registries.DENSITY_FUNCTION).getValue(InputValidator.identifierOf(what));
         };
-        return densityFunction.compute(new DensityFunction.SinglePointContext(pos.getX(), pos.getY(), pos.getZ()));
+        if (routed == null && !AQUIFER_NOISES.contains(what))
+        {
+            throw new InternalExpressionException("Density function '" + what + "' is not defined in the registries");
+        }
+        return routed;
     }
 
-    /** to be used with future seedable noise */
-    public static final Function<Pair<ServerLevel, String>, DensityFunction> stupidWorldgenNoiseCacheGetter = Util.memoize(pair -> {
-        ServerLevel level = pair.getKey();
-        String densityFunctionQuery = pair.getValue();
-        ChunkGenerator generator = level.getChunkSource().getGenerator();
-
-        if (generator instanceof final NoiseBasedChunkGenerator noiseBasedChunkGenerator)
-        {
-            Registry<DensityFunction> densityFunctionRegistry = level.registryAccess().lookupOrThrow(Registries.DENSITY_FUNCTION);
-            NoiseRouter router = noiseBasedChunkGenerator.generatorSettings().value().noiseRouter();
-            DensityFunction densityFunction = switch (densityFunctionQuery)
-                    {
-                        case "barrier_noise" -> router.barrierNoise();
-                        case "fluid_level_floodedness_noise" -> router.fluidLevelFloodednessNoise();
-                        case "fluid_level_spread_noise" -> router.fluidLevelSpreadNoise();
-                        case "lava_noise" -> router.lavaNoise();
-                        case "temperature" -> router.temperature();
-                        case "vegetation" -> router.vegetation();
-                        case "continents" -> router.continents();
-                        case "erosion" -> router.erosion();
-                        case "depth" -> router.depth();
-                        case "ridges" -> router.ridges();
-                        case "preliminary_surface_level" -> router.preliminarySurfaceLevel();
-                        case "final_density" -> router.finalDensity();
-                        case "vein_toggle" -> router.veinToggle();
-                        case "vein_ridged" -> router.veinRidged();
-                        case "vein_gap" -> router.veinGap();
-                        default -> {
-                            DensityFunction result = densityFunctionRegistry.getValue(InputValidator.identifierOf(densityFunctionQuery));
-                            if (result == null)
-                            {
-                                throw new InternalExpressionException("Density function '" + densityFunctionQuery + "' is not defined in the registies.");
-                            }
-                            yield result;
-                        }
-                    };
-
-            RandomState randomState = RandomState.create(
-                    level.registryAccess().lookupOrThrow(Registries.NOISE), level.getSeed(), noiseBasedChunkGenerator.generatorSettings().value()
-            );
-            DensityFunction.Visitor visitor = Vanilla.RandomState_getVisitor(randomState);
-
-            return densityFunction.mapAll(visitor);
-        }
-        return DensityFunctions.zero();
-    });
+    /** a level without aquifers simply has none of these: zero, not an error */
+    private static final Set<String> AQUIFER_NOISES = Set.of("barrier_noise", "fluid_level_floodedness_noise", "fluid_level_spread_noise", "lava_noise");
 }

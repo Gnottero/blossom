@@ -28,6 +28,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ColumnPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.TagKey;
+import net.minecraft.util.ARGB;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -60,6 +61,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.StreamSupport;
 
+import org.joml.Vector3fc;
 import org.jspecify.annotations.Nullable;
 
 public class ValueConversions
@@ -138,6 +140,12 @@ public class ValueConversions
     public static Value ofRGB(int value)
     {
         return new NumericValue(value * 256 + 255);
+    }
+
+    /** the same 0xRRGGBBAA as {@link #ofRGB(int)}, for the colours the game now keeps as vectors */
+    public static Value ofRGB(Vector3fc value)
+    {
+        return ofRGB(ARGB.colorFromVector3f(value) & 0xFFFFFF);
     }
 
     public static Level dimFromValue(Value dimensionValue, MinecraftServer server)
@@ -356,7 +364,7 @@ public class ValueConversions
 
     public static Value of(StructureStart structure, RegistryAccess regs)
     {
-        if (structure == null || structure == StructureStart.INVALID_START)
+        if (structure == null)
         {
             return Value.NULL;
         }

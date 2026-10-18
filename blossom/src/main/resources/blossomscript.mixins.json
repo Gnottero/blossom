@@ -47,7 +47,6 @@
     "access.Objective_blossomAccessMixin",
     "access.PoiRecord_blossomAccessMixin",
     "access.PortalProcessor_blossomAccessMixin",
-    "access.RandomState_blossomAccessMixin",
     "access.Scoreboard_blossomAccessMixin",
     "access.ServerPlayerGameMode_blossomAccessMixin",
     "access.SpawnState_blossomAccessMixin",

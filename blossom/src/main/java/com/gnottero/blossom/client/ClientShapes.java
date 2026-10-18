@@ -371,15 +371,15 @@ public final class ClientShapes
         pose.scale(style.size() * FONT_SCALE, -style.size() * FONT_SCALE, style.size() * FONT_SCALE);
         if (style.tilt() != 0.0F)
         {
-            pose.mulPose(Axis.ZP.rotationDegrees(style.tilt()));
+            pose.rotate(Axis.ZP.rotationDegrees(style.tilt()));
         }
         if (style.lean() != 0.0F)
         {
-            pose.mulPose(Axis.XP.rotationDegrees(style.lean()));
+            pose.rotate(Axis.XP.rotationDegrees(style.lean()));
         }
         if (style.turn() != 0.0F)
         {
-            pose.mulPose(Axis.YP.rotationDegrees(style.turn()));
+            pose.rotate(Axis.YP.rotationDegrees(style.turn()));
         }
         pose.translate(-10 * style.indent(), -10 * style.height() - 9, -10 * style.raise());
         pose.scale(-1, 1, 1);
@@ -399,7 +399,7 @@ public final class ClientShapes
         {
             // the game primitives do not allow culling to be turned off: the second face is drawn
             // by writing the same text again, flipped, which is what one wants to see from behind
-            pose.mulPose(Axis.YP.rotationDegrees(180));
+            pose.rotate(Axis.YP.rotationDegrees(180));
             collector.submitText(pose, x, 0.0F, text.getVisualOrderText(), false, Font.DisplayMode.NORMAL,
                     LightCoordsUtil.FULL_BRIGHT, color, background, 0);
         }
@@ -460,21 +460,21 @@ public final class ClientShapes
         face(pose, style.facing(), sprite.isItem() ? pos : pos.add(0.5, 0.5, 0.5), camera);
         if (style.tilt() != 0.0F)
         {
-            pose.mulPose(Axis.ZP.rotationDegrees(-style.tilt()));
+            pose.rotate(Axis.ZP.rotationDegrees(-style.tilt()));
         }
         if (style.lean() != 0.0F)
         {
-            pose.mulPose(Axis.XP.rotationDegrees(-style.lean()));
+            pose.rotate(Axis.XP.rotationDegrees(-style.lean()));
         }
         if (style.turn() != 0.0F)
         {
-            pose.mulPose(Axis.YP.rotationDegrees(style.turn()));
+            pose.rotate(Axis.YP.rotationDegrees(style.turn()));
         }
         pose.scale(style.scaleX(), style.scaleY(), style.scaleZ());
         if (sprite.isItem())
         {
             // the game draws items facing the other way
-            pose.mulPose(Axis.YP.rotationDegrees(180));
+            pose.rotate(Axis.YP.rotationDegrees(180));
         }
         else
         {
@@ -815,20 +815,20 @@ public final class ClientShapes
             case "north" ->
             {
             }
-            case "south" -> pose.mulPose(Axis.YP.rotationDegrees(180));
-            case "east" -> pose.mulPose(Axis.YP.rotationDegrees(270));
-            case "west" -> pose.mulPose(Axis.YP.rotationDegrees(90));
-            case "up" -> pose.mulPose(Axis.XP.rotationDegrees(90));
-            case "down" -> pose.mulPose(Axis.XP.rotationDegrees(-90));
-            case "camera" -> pose.mulPose(camera.orientation);
+            case "south" -> pose.rotate(Axis.YP.rotationDegrees(180));
+            case "east" -> pose.rotate(Axis.YP.rotationDegrees(270));
+            case "west" -> pose.rotate(Axis.YP.rotationDegrees(90));
+            case "up" -> pose.rotate(Axis.XP.rotationDegrees(90));
+            case "down" -> pose.rotate(Axis.XP.rotationDegrees(-90));
+            case "camera" -> pose.rotate(camera.orientation);
             // 'player': faces the viewer, but stays upright: the text does not tilt along with the
             // viewer's head, which is the difference from 'camera'
             default ->
             {
                 Vec3 toCamera = pos.subtract(camera.pos);
                 double flat = Math.sqrt(toCamera.x * toCamera.x + toCamera.z * toCamera.z);
-                pose.mulPose(Axis.YP.rotation((float) Math.atan2(toCamera.x, toCamera.z)));
-                pose.mulPose(Axis.XP.rotation((float) -Math.atan2(toCamera.y, flat)));
+                pose.rotate(Axis.YP.rotation((float) Math.atan2(toCamera.x, toCamera.z)));
+                pose.rotate(Axis.XP.rotation((float) -Math.atan2(toCamera.y, flat)));
             }
         }
     }

@@ -7,3 +7,6 @@ accessible class net/minecraft/world/level/NaturalSpawner$SpawnState
 
 # per disegnare un blocco fuori dal mondo: e' il risolutore che sa dare un modello a uno stato
 accessible field net/minecraft/client/renderer/blockentity/BlockEntityRenderDispatcher blockModelResolver Lnet/minecraft/client/renderer/block/BlockModelResolver;
+
+# il nome di chi lancia un comando, che run() deve conservare
+accessible field net/minecraft/commands/CommandSourceStack namesProvider Lnet/minecraft/commands/CommandSourceStack$NamesProvider;

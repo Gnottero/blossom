@@ -20,6 +20,7 @@ import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Input;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.SwingAnimation;
 import net.minecraft.world.item.crafting.RecipeManager;
 
 import com.gnottero.blossom.event.Event;
@@ -51,7 +52,7 @@ public class ServerGamePacketListenerImpl_blossomEventsMixin
             target = "Lnet/minecraft/server/level/ServerPlayer;setLastClientInput(Lnet/minecraft/world/entity/player/Input;)V"))
     private void blossom$onMountControls(ServerPlayer target, Input input)
     {
-        if (Event.PLAYER_RIDES.isListened()
+        if (Event.PLAYER_RIDES.isListened() && player.getVehicle() != null
                 && (input.jump() || input.shift() || input.forward() || input.backward() || input.left()
                         || input.right())
                 && Fire.mountControls(player,
@@ -78,7 +79,7 @@ public class ServerGamePacketListenerImpl_blossomEventsMixin
         target.setShiftKeyDown(sneaking);
     }
 
-    @Redirect(method = "handleMovePlayer", at = @At(value = "INVOKE",
+    @Redirect(method = "handlePlayerPositionChange", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/server/level/ServerPlayer;jumpFromGround()V"))
     private void blossom$onJump(ServerPlayer target)
     {
@@ -150,7 +151,7 @@ public class ServerGamePacketListenerImpl_blossomEventsMixin
             target = "Lnet/minecraft/server/level/ServerPlayerGameMode;useItemOn(Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/world/level/Level;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/InteractionHand;Lnet/minecraft/world/phys/BlockHitResult;)Lnet/minecraft/world/InteractionResult;"))
     private void blossom$onRightClickBlock(ServerboundUseItemOnPacket packet, CallbackInfo ci)
     {
-        if (Fire.blockHitWithItem(Event.PLAYER_RIGHT_CLICKS_BLOCK, player, packet.getHand(), packet.getHitResult()))
+        if (Fire.blockHitWithItem(Event.PLAYER_RIGHT_CLICKS_BLOCK, player, packet.hand(), packet.hitResult()))
         {
             ci.cancel();
         }
@@ -162,7 +163,7 @@ public class ServerGamePacketListenerImpl_blossomEventsMixin
     {
         if (Event.PLAYER_USES_ITEM.isListened())
         {
-            InteractionHand hand = packet.getHand();
+            InteractionHand hand = packet.hand();
             if (Fire.item(Event.PLAYER_USES_ITEM, player, hand, player.getItemInHand(hand).copy()))
             {
                 ci.cancel();
@@ -264,15 +265,16 @@ public class ServerGamePacketListenerImpl_blossomEventsMixin
         }
     }
 
-    @Redirect(method = "handleAnimate", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/server/level/ServerPlayer;swing(Lnet/minecraft/world/InteractionHand;)V"))
-    private void blossom$onSwing(ServerPlayer target, InteractionHand hand)
+    /** the client only reports the main hand swinging now: a punch, with the animation of the item */
+    @Redirect(method = "handlePunch", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/server/level/ServerPlayer;swing(Lnet/minecraft/world/InteractionHand;Lnet/minecraft/world/item/component/SwingAnimation;Z)Z"))
+    private boolean blossom$onSwing(ServerPlayer target, InteractionHand hand, SwingAnimation animation, boolean sendToSwingingEntity)
     {
-        if (!target.swinging && Fire.handAction(Event.PLAYER_SWINGS_HAND, player, hand))
+        if (!target.isSwinging() && Fire.handAction(Event.PLAYER_SWINGS_HAND, player, hand))
         {
-            return;
+            return false;
         }
-        target.swing(hand);
+        return target.swing(hand, animation, sendToSwingingEntity);
     }
 
     /**

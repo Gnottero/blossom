@@ -44,10 +44,9 @@ public abstract class ServerLevel_blossomEventsMixin extends Level
 
     protected ServerLevel_blossomEventsMixin(WritableLevelData levelData, ResourceKey<Level> dimension,
             RegistryAccess registryAccess, Holder<DimensionType> dimensionType, boolean isClientSide, boolean debug,
-            long biomeZoomSeed, int maxChainedNeighborUpdates)
+            int maxChainedNeighborUpdates)
     {
-        super(levelData, dimension, registryAccess, dimensionType, isClientSide, debug, biomeZoomSeed,
-                maxChainedNeighborUpdates);
+        super(levelData, dimension, registryAccess, dimensionType, isClientSide, debug, maxChainedNeighborUpdates);
     }
 
     /**

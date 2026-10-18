@@ -8,7 +8,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -117,14 +116,14 @@ public final class Structures
             Mirror mirror = mirrorOf(argument(lv, locator.offset + 1));
             boolean includeEntities = lv.size() <= locator.offset + 2 || lv.get(locator.offset + 2).getBoolean();
             float integrity = lv.size() > locator.offset + 3
-                    ? Mth.clamp(NumericValue.asNumber(lv.get(locator.offset + 3)).getFloat(), 0.0F, 1.0F)
+                    ? Math.clamp(NumericValue.asNumber(lv.get(locator.offset + 3)).getFloat(), 0.0F, 1.0F)
                     : 1.0F;
             long seed = lv.size() > locator.offset + 4 ? NumericValue.asNumber(lv.get(locator.offset + 4)).getLong() : 0L;
 
             ServerLevel level = cc.level();
             BlockPos pos = locator.block.getPos();
             Value[] result = {Value.NULL};
-            cc.server().executeBlocking(() -> level.getStructureManager().get(structure).ifPresent(template ->
+            cc.server().executeBlocking(() -> level.getStructureTemplateManager().get(structure).ifPresent(template ->
             {
                 StructurePlaceSettings settings = new StructurePlaceSettings()
                         .setRotation(rotation)
@@ -162,7 +161,7 @@ public final class Structures
             Mirror mirror = mirrorOf(argument(lv, toLocator.offset + 1));
 
             ServerLevel level = cc.level();
-            Optional<StructureTemplate> template = level.getStructureManager().get(structure);
+            Optional<StructureTemplate> template = level.getStructureTemplateManager().get(structure);
             if (template.isEmpty())
             {
                 return Value.NULL; // the template doesn't exist: different from "doesn't match"
@@ -201,7 +200,7 @@ public final class Structures
             }
             ScriptContext cc = (ScriptContext) c;
             Rotation rotation = rotationOf(argument(lv, 1));
-            return cc.level().getStructureManager().get(identifier(lv.get(0)))
+            return cc.level().getStructureTemplateManager().get(identifier(lv.get(0)))
                     .map(template -> template.getSize(rotation))
                     .map(size -> ValueConversions.of(new BlockPos(size.getX(), size.getY(), size.getZ())))
                     .orElse(Value.NULL);

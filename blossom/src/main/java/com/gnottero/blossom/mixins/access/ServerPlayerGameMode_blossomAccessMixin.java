@@ -7,7 +7,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerPlayerGameMode;
-import net.minecraft.util.Mth;
 
 import com.gnottero.blossom.access.Access;
 
@@ -49,7 +48,7 @@ public class ServerPlayerGameMode_blossomAccessMixin implements Access.GameMode
         {
             return; // no block under the cursor: there's nothing to draw the crack on
         }
-        lastSentState = Mth.clamp(progress, -1, 10);
+        lastSentState = Math.clamp(progress, -1, 10);
         // The id is the player's id with the sign flipped: this keeps the animation separate from
         // the one the game sends on its own, which would otherwise overwrite it the next tick
         level.destroyBlockProgress(-player.getId(), destroyPos, lastSentState);
