@@ -25,6 +25,7 @@ tests: if the language changes and the guide is not updated, the build notices.
 | [11. Recipes](11-ricette.md) | ready-made pieces of code, one per problem |
 | [12. Server configuration](12-configurazione.md) | `blossomscript.json`: registry, `io`, `http`, watchdog |
 | [13. Game content](13-contenuti.md) | recipes, loot tables, tags and advancements inside the pack |
+| [14. The tools of `/blossom script`](14-strumenti.md) | `scan`, `fill`, `invoke`, `explain`, `stop`: working on a live server |
 
 ## Where to start
 

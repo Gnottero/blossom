@@ -13,8 +13,8 @@ block.state([10, 65, 10]);                       // {'facing' -> 'north', ...}
 A position is written as a list `[x, y, z]` or as three loose arguments: the two forms are equivalent
 everywhere in the game layer.
 
-A block value printed is its name (`'minecraft:stone'`), so it can be compared, put in a map and
-saved to json without converting it.
+A block value printed is its name (`'stone'`; a block from a mod keeps its namespace,
+`'mymod:marble'`), so it can be compared, put in a map and saved to json without converting it.
 
 ## Reading
 

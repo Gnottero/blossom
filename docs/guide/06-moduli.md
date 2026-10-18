@@ -236,7 +236,8 @@ am", the other "what I need".
 - **MINOR** changes when something is added.
 
 An app runs if the MAJOR matches and its MINOR does not exceed the mod's. Not declaring it means the
-lowest MINOR of the MAJOR this mod provides (today `2.0`), that is, "I use nothing recent".
+lowest MINOR of the MAJOR this mod provides (today `2.0`), that is, "I use nothing recent". The
+current level is `2.1`: an app that uses `core.mc.command` or the three keys above declares it.
 
 ## How to split an app
 

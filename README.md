@@ -32,7 +32,7 @@ secondo senza scaricare il gioco.
 
 ## Installazione
 
-Serve Fabric Loader 0.19.3+ e Java 25. Costruisci il mod con:
+Serve Minecraft **26.4-snapshot-4**, Fabric Loader 0.19.5+ e Java 25. Costruisci il mod con:
 
 ```
 ./gradlew :blossom:build
@@ -80,6 +80,12 @@ In gioco:
 | `/blossom script reload <app>` | come `load`, sulle app già caricate |
 | `/blossom script unload <app>` | scarica un'app e i suoi handler di evento |
 | `/blossom script list` | cosa è caricato e cosa c'è su disco |
+| `/blossom script scan` · `fill` · `outline` | un'espressione su ogni blocco di un'area: conta, riempie, disegna il guscio |
+| `/blossom script in <app> invoke <fn> [argomenti]` | chiama una funzione dell'app da riga di comando; `invokepoint` e `invokearea` le passano una posizione o un'area |
+| `/blossom script in <app> globals` | le funzioni e le variabili del modulo principale dell'app |
+| `/blossom script event` · `event add` · `event remove` | gli handler di ogni evento, e attaccarne o staccarne uno a mano |
+| `/blossom script explain` | come il parser legge un'espressione, una funzione o un'app |
+| `/blossom script stop` · `resume` | ferma ogni script sul server, e lo fa ripartire |
 | `/blossom pack update <app>` | ri-risolve le dipendenze e riscrive `blossom.lock` |
 | `/blossom data generate <app>` | chiama la `generate()` dell'app e scrive il contenuto in `data/` |
 | `/blossom data list <app>` | cosa c'è nella `data/`, e cosa di quello è generato |
@@ -153,6 +159,12 @@ mio-progetto/
 
 `"autoload": true` fa caricare il pack da solo appena il mondo è aperto, senza
 `/blossom script load` — prima che venga generato `server_starts`, così può ascoltare anche quello.
+
+Tre chiavi prendono il posto di quello che un'app Scarpet diceva in `__config()`: `"strict": true`
+rende un errore leggere una variabile mai assegnata, `"event_priority"` decide quale app sente per
+prima un evento (e chi lo annulla chiude il giro), `"requires"` elenca le mod che servono, con la
+versione scritta come in `fabric.mod.json`. Il dettaglio è nel
+[capitolo 6 della guida](docs/guide/06-moduli.md).
 
 Il nome dichiarato in testa a ogni file deve combaciare con la sua posizione dentro `src/`: è un
 controllo che il caricatore fa prima di eseguire qualunque cosa.
@@ -282,7 +294,9 @@ carica lo stesso le app che ha già.
 Un'app gira se il MAJOR combacia e il suo MINOR non supera quello del mod. Le due direzioni
 falliscono per motivi diversi e il messaggio lo dice: MAJOR diverso vuol dire che l'app è scritta
 per un'altra API; MINOR più alto vuol dire che usa qualcosa che questa versione non ha ancora e
-serve aggiornare il mod. Non dichiararlo significa `1.0`, cioè "sono scritta per la prima API": un'app che non lo dice non carica su una 2.x, ed è voluto.
+serve aggiornare il mod. Non dichiararlo significa il MINOR più basso del MAJOR corrente, oggi
+`2.0`: "non uso niente di recente". Il livello di questa versione è **2.1**, che aggiunge
+`core.mc.command` e le chiavi `strict`, `event_priority` e `requires`.
 
 Una cartella così, copiata sotto `<mondo>/blossom/`, è un **pack**: si carica con
 `/blossom script load <nome-cartella>` come una qualunque app, anche a server acceso.
@@ -456,8 +470,8 @@ combacia col percorso). I dati non sono scritti a mano: si rigenerano dalle sorg
 
 ## Documentazione
 
-- [La guida](docs/guide/README.md) — undici capitoli: sintassi, moduli, errori, eventi,
-  concorrenza, prestazioni, ricette
+- [La guida](docs/guide/README.md) — quattordici capitoli: sintassi, moduli, errori, eventi,
+  concorrenza, prestazioni, ricette, contenuti di gioco, gli strumenti di `/blossom script`
 - [Panoramica dell'API](docs/api/Overview.md) — tutti i moduli
 - [`DECISIONI.md`](DECISIONI.md) — le scelte di design e il loro perché
 - [`INVENTARIO_FORK.md`](INVENTARIO_FORK.md) — cosa è stato portato dal fork di partenza e dove

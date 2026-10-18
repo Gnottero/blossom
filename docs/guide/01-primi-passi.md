@@ -88,10 +88,21 @@ app, with its functions and its state in scope:
 | `/blossom script reload <app>` | reloads an app that is already loaded |
 | `/blossom script unload <app>` | unloads an app together with its event handlers |
 | `/blossom script list` | what is loaded, and what is on disk |
+| `/blossom script scan` · `fill` · `outline` | an expression over every block of an area: count, fill, draw the shell |
+| `/blossom script in <app> invoke <fn> [arguments]` | calls a function of the app from the command line; `invokepoint` and `invokearea` pass it a position or an area |
+| `/blossom script in <app> globals` | the functions and bindings of the app's main module |
+| `/blossom script event` · `event add` · `event remove` | the handlers of every event, and attaching or detaching one by hand |
+| `/blossom script explain` | how the parser reads an expression, a function or an app |
+| `/blossom script stop` · `resume` | stops every script on the server, and lets them run again |
 | `/blossom pack update <app>` | re-resolves dependencies and rewrites `blossom.lock` |
+| `/blossom data generate <app>` | calls the app's `generate()` and writes the content into `data/` |
+| `/blossom data list <app>` | what is in `data/`, and which of it is generated |
+| `/blossom data export <app>` | makes it a zipped datapack that runs without Blossom too |
 | `/blossom profile run <code>` | measures where the time goes, function by function |
 | `/blossom profile in <app> <code>` | the same, inside a loaded app |
 | `/blossom profile start <app>` · `stop <app>` | measures a live app, event handlers included |
+
+The tools of `/blossom script` have [their own chapter](14-strumenti.md).
 
 Reloading an app **removes its handlers before re-running the file**, so two copies of the same
 listener are never attached to the same event. That is why registering handlers in the module body,
