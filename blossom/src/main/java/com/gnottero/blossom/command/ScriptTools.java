@@ -89,9 +89,10 @@ public final class ScriptTools
         }
     }
 
-    private static int volumeOf(BoundingBox area)
+    /** In a long: three spans of a few hundred thousand blocks overflow an int and look small. */
+    private static long volumeOf(BoundingBox area)
     {
-        return area.getXSpan() * area.getYSpan() * area.getZSpan();
+        return (long) area.getXSpan() * area.getYSpan() * area.getZSpan();
     }
 
     /** The game's own limit for /fill: a script over a volume is held to the same one. */

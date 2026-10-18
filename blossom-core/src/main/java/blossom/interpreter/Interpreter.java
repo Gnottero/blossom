@@ -132,6 +132,7 @@ public final class Interpreter
         {
             host.setWatchdog(project.manifest().watchdog());
         }
+        host.strict = project.manifest().strict();
         // first they all exist, with their aliases installed, then they run: that is what makes
         // cyclic imports possible, where no order lets every module already see everything it
         // imports registered

@@ -36,7 +36,10 @@ public record ProjectManifest(
         ApiLevel apiLevel,
         boolean autoload,
         Map<String, Dependency> dependencies,
-        ExecutionBudget.@Nullable Policy watchdog)
+        ExecutionBudget.@Nullable Policy watchdog,
+        boolean strict,
+        double eventPriority,
+        Map<String, String> requires)
 {
     public static final String FILE_NAME = "blossom.json";
 
@@ -66,7 +69,75 @@ public record ProjectManifest(
         ApiLevel apiLevel = parseApiLevel(root_, where);
 
         return new ProjectManifest(name, version, root.resolve(entrypoint).normalize(), apiLevel,
-                readAutoload(root_, where), readDependencies(root_, root, where), readWatchdog(root_, where));
+                readAutoload(root_, where), readDependencies(root_, root, where), readWatchdog(root_, where),
+                readBoolean(root_, "strict", where), readPriority(root_, where), readRequires(root_, where));
+    }
+
+    /**
+     * A field that is true or false, false when absent.
+     *
+     * <p>{@code "strict": true} turns a variable read before anything was assigned to it into an
+     * error, instead of {@code null}: the way to find the misspelled name a script keeps reading
+     * as nothing.
+     */
+    private static boolean readBoolean(JsonObject object, String key, SourcePosition where)
+    {
+        if (!object.has(key))
+        {
+            return false;
+        }
+        JsonElement declared = object.get(key);
+        if (!declared.isJsonPrimitive() || !declared.getAsJsonPrimitive().isBoolean())
+        {
+            throw new ParseError(where, "'" + key + "' must be true or false");
+        }
+        return declared.getAsBoolean();
+    }
+
+    /**
+     * {@code "event_priority"}: who hears an event first, the highest number first, and an app that
+     * cancels it stops it for those after. {@code 0} when absent.
+     */
+    private static double readPriority(JsonObject object, SourcePosition where)
+    {
+        if (!object.has("event_priority"))
+        {
+            return 0;
+        }
+        JsonElement declared = object.get("event_priority");
+        if (!declared.isJsonPrimitive() || !declared.getAsJsonPrimitive().isNumber())
+        {
+            throw new ParseError(where, "'event_priority' must be a number");
+        }
+        return declared.getAsDouble();
+    }
+
+    /**
+     * {@code "requires"}: the mods the pack needs, with the version it accepts, as Fabric writes them
+     * ({@code {"minecraft": ">=26.4", "carpet": "*"}}). The core only reads them: who runs the pack
+     * knows which mods are there.
+     */
+    private static Map<String, String> readRequires(JsonObject object, SourcePosition where)
+    {
+        if (!object.has("requires"))
+        {
+            return Map.of();
+        }
+        JsonElement declared = object.get("requires");
+        if (!declared.isJsonObject())
+        {
+            throw new ParseError(where, "'requires' must be an object, mod id to version: {\"minecraft\": \">=26.4\"}");
+        }
+        Map<String, String> requires = new java.util.LinkedHashMap<>();
+        for (Map.Entry<String, JsonElement> entry : declared.getAsJsonObject().entrySet())
+        {
+            if (!entry.getValue().isJsonPrimitive())
+            {
+                throw new ParseError(where, "'requires' wants a version for '" + entry.getKey() + "', like \">=1.0\" or \"*\"");
+            }
+            requires.put(entry.getKey(), entry.getValue().getAsString());
+        }
+        return java.util.Collections.unmodifiableMap(requires);
     }
 
     private static Version parseVersion(String text, SourcePosition where)

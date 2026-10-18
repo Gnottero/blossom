@@ -62,6 +62,11 @@ public final class Event
      * event arrives.
      */
     public static final Event APP_RELOADED = new Event("app_reloaded", 1, false);
+    /**
+     * {@code (app)} - an app is about to be unloaded with {@code /blossom script unload}, and its
+     * handlers still exist: what Scarpet's {@code __on_close} was, for an unload
+     */
+    public static final Event APP_UNLOADING = new Event("app_unloading", 1, false);
     /** {@code ()} - an overworld tick */
     public static final Event TICK = new Event("tick", 0, false);
     /** {@code ()} - a tick, with the nether's context */
@@ -352,9 +357,39 @@ public final class Event
         return BY_NAME.keySet();
     }
 
+    /** The {@code event_priority} of each app that declared one in its manifest: 0 for the others. */
+    private static final java.util.Map<String, Double> PRIORITY = new java.util.concurrent.ConcurrentHashMap<>();
+
+    public static void setPriority(String app, double priority)
+    {
+        if (priority == 0)
+        {
+            PRIORITY.remove(app);
+        }
+        else
+        {
+            PRIORITY.put(app, priority);
+        }
+    }
+
+    private static double priorityOf(String app)
+    {
+        return PRIORITY.getOrDefault(app, 0.0);
+    }
+
+    /**
+     * Adds a handler after those of equal or higher priority: the highest priority hears the event
+     * first, and among equals the order is the one they were registered in.
+     */
     public void add(Handler handler)
     {
-        handlers.add(handler);
+        double priority = priorityOf(handler.app());
+        int index = 0;
+        while (index < handlers.size() && priorityOf(handlers.get(index).app()) >= priority)
+        {
+            index++;
+        }
+        handlers.add(index, handler);
     }
 
     public void removeApp(String app)
@@ -446,6 +481,11 @@ public final class Event
                         .callInContext(context, Context.Type.NONE, call)
                         .evalValue(context);
                 cancelled |= cancellable && result != null && result.getBoolean();
+                if (cancelled)
+                {
+                    // the action will not happen: who comes after (a lower priority) does not hear it
+                    break;
+                }
             }
             catch (RuntimeException | StackOverflowError error)
             {

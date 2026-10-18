@@ -46,8 +46,8 @@ Hence the habit of ending a handler with an explicit `false` when it must **not*
 of the last expression of the body is the return value, and a `print` that gives back its message is
 a true value. A handler that ends in a `print` and no `false` cancels the action by accident.
 
-Every game event is cancellable except thirteen: the life of the server and of the apps
-(`server_starts`, `server_shuts_down`, `app_reloading`, `app_reloaded`), the three ticks, the two ends
+Every game event is cancellable except fourteen: the life of the server and of the apps
+(`server_starts`, `server_shuts_down`, `app_reloading`, `app_reloaded`, `app_unloading`), the three ticks, the two ends
 of a session (`player_connects`, `player_disconnects`), `player_dies` and the three chunk events. The "Cancellable" column
 of the catalogue is the authority, and `event.describe(name)` answers the same question from inside a
 script.
@@ -67,8 +67,11 @@ was merely untidy.
 
 Two more properties of cancellation:
 
-- **every handler is asked.** Cancelling does not stop the other handlers; the results are OR-ed
-  together. One app saying yes is enough.
+- **a cancel ends the round.** Handlers are asked in order of `event_priority` (declared in the
+  manifest, highest first, `0` by default; among equals, in the order they registered), and the
+  first one that cancels is the last one asked: the action will not happen, so the handlers after it
+  do not hear about something that did not take place. Give the app that decides a higher priority
+  than the ones that only observe.
 - **a handler that throws does not cancel.** It reports the error and returns nothing, so the action
   goes through. If an event matters for safety, catch inside it.
 - **a cancelled action is the game's action, not the event.** `player_breaks_block` cancelled means
@@ -159,6 +162,7 @@ Cancellable events are marked **yes**. A `block` argument is a block value carry
 | `server_shuts_down` | | |
 | `app_reloading` | `app` | |
 | `app_reloaded` | `app` | |
+| `app_unloading` | `app` | |
 | `tick` | | |
 | `tick_nether` | | |
 | `tick_ender` | | |
@@ -191,9 +195,8 @@ It fires for **every** app being reloaded, not only for yours (that is what make
 supervising app), so a handler that only cares about itself compares the name, as above.
 
 A **first** load fires nothing: there is no previous version to speak of. Only a `load` of an app
-that is already loaded is a reload. `/blossom script unload` does not fire it either; unloading is
-not reloading, and an app that wants to save on the way out does it in `server_shuts_down` or on its
-own schedule.
+that is already loaded is a reload. `/blossom script unload` does not fire it either: unloading is
+not reloading, and it has its own event, `app_unloading`.
 
 #### `app_reloaded(app)`
 The app has been reloaded and the body of its modules has already run.
@@ -214,6 +217,14 @@ Like `app_reloading`, it fires only for a real reload, and only when the load **
 whose code throws on load is removed instead, and `app_reloaded` never comes. So the pair is either
 `app_reloading` alone (the reload failed) or both in order (it worked), and a supervising app can
 tell those two apart.
+
+#### `app_unloading(app)`
+An app is about to be unloaded with `/blossom script unload`, and its handlers still exist: the
+moment to save what it wants to find again the next time it loads. It is the unload counterpart of
+`app_reloading`, and between the two of them and `server_shuts_down` every way an app can stop
+running is covered.
+
+Like the other two it fires for every app, so a handler compares the name.
 
 #### `tick()` · `tick_nether()` · `tick_ender()`
 One server tick, twenty times a second. The three differ only in the source handed to the handler:

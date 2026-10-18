@@ -270,6 +270,9 @@ public class ScriptRuntime
      */
     private Value loadPack(CommandSourceStack source, String appName, Path root, boolean refreshLock) throws IOException
     {
+        blossom.project.ProjectManifest manifest = blossom.project.ProjectManifest.read(root);
+        checkRequirements(appName, manifest.requires());
+        com.gnottero.blossom.event.Event.setPriority(appName, manifest.eventPriority());
         boolean reloading = fireReloading(appName);
         com.gnottero.blossom.event.EventBus.unregisterApp(appName);
         scheduler.unregisterApp(appName);
@@ -306,6 +309,45 @@ public class ScriptRuntime
             com.gnottero.blossom.event.EventBus.unregisterApp(appName);
             com.gnottero.blossom.command.AppCommands.uninstall(server, appName);
             throw e;
+        }
+    }
+
+    /**
+     * The mods the manifest asks for, checked against the ones Fabric loaded.
+     *
+     * <p>The versions are written as in a Fabric {@code fabric.mod.json}: {@code ">=26.4"},
+     * {@code "^1.2"}, {@code "*"}. A missing mod and a version out of range are a load error that
+     * says which.
+     */
+    private static void checkRequirements(String appName, Map<String, String> requires)
+    {
+        net.fabricmc.loader.api.FabricLoader loader = net.fabricmc.loader.api.FabricLoader.getInstance();
+        for (Map.Entry<String, String> requirement : requires.entrySet())
+        {
+            String mod = requirement.getKey();
+            java.util.Optional<net.fabricmc.loader.api.ModContainer> container = loader.getModContainer(mod);
+            if (container.isEmpty())
+            {
+                throw new blossom.exception.BlossomRuntimeError(blossom.exception.SourcePosition.UNKNOWN, "requires",
+                        "'" + appName + "' requires the mod '" + mod + "' " + requirement.getValue() + ", which is not installed.");
+            }
+            net.fabricmc.loader.api.Version version = container.get().getMetadata().getVersion();
+            boolean accepted;
+            try
+            {
+                accepted = net.fabricmc.loader.api.metadata.version.VersionPredicate.parse(requirement.getValue()).test(version);
+            }
+            catch (net.fabricmc.loader.api.VersionParsingException e)
+            {
+                throw new blossom.exception.BlossomRuntimeError(blossom.exception.SourcePosition.UNKNOWN, "requires",
+                        "'" + requirement.getValue() + "' is not a version range for '" + mod + "': " + e.getMessage());
+            }
+            if (!accepted)
+            {
+                throw new blossom.exception.BlossomRuntimeError(blossom.exception.SourcePosition.UNKNOWN, "requires",
+                        "'" + appName + "' requires " + mod + " " + requirement.getValue() + ", and this server has "
+                                + version.getFriendlyString() + ".");
+            }
         }
     }
 
@@ -456,9 +498,16 @@ public class ScriptRuntime
 
     public boolean unload(String name)
     {
+        if (apps.containsKey(name.toLowerCase(Locale.ROOT)))
+        {
+            // before tearing anything down: the app still hears it, and can save what it wants to keep
+            com.gnottero.blossom.event.Event.APP_UNLOADING.fireOnServer(server,
+                    () -> List.of(new blossom.value.StringValue(name.toLowerCase(Locale.ROOT))));
+        }
         com.gnottero.blossom.event.EventBus.unregisterApp(name.toLowerCase(Locale.ROOT));
         scheduler.unregisterApp(name.toLowerCase(Locale.ROOT));
         com.gnottero.blossom.command.AppCommands.uninstall(server, name.toLowerCase(Locale.ROOT));
+        com.gnottero.blossom.event.Event.setPriority(name.toLowerCase(Locale.ROOT), 0);
         return apps.remove(name.toLowerCase(Locale.ROOT)) != null;
     }
 
