@@ -1441,6 +1441,13 @@ public class Expression
                     {
                         outputQueue.add(stack.pop());
                     }
+                    else if (!outputQueue.isEmpty())
+                    {
+                        // brackets that only group: the last token out is the root of what they
+                        // hold, and it remembers it was bracketed - '(x = 5)' among the arguments of
+                        // a call is an assignment, not the name of a parameter
+                        outputQueue.getLast().grouped = true;
+                    }
                     break;
                 case MARKER:
                     if ("$".equals(token.surface))
@@ -1763,6 +1770,7 @@ public class Expression
             return false;
         }
         return (node.token.surface.equals("=") || node.token.surface.equals("assign"))
+                && !node.token.grouped
                 && node.args != null && node.args.size() == 2
                 && node.args.get(0).token.type == Token.TokenType.VARIABLE
                 && node.args.get(0).args.isEmpty();
@@ -1800,7 +1808,8 @@ public class Expression
             else if (seenNamed)
             {
                 throw new ExpressionException(context, this, arg.token,
-                        "An argument without a name comes after one with a name: the named ones go last.");
+                        "An argument without a name comes after one with a name: the named ones go last."
+                                + " To pass an assignment by position, put it in brackets: f((x = 5), 2).");
             }
         }
     }

@@ -137,11 +137,13 @@ public final class Vanilla
         return 17 * 17;
     }
 
-    /** A world's chunk-loading tickets. */
-    public static Long2ObjectOpenHashMap<List<Ticket>> ChunkTicketManager_getTicketsByPosition(
-            net.minecraft.server.level.DistanceManager manager)
+    /**
+     * A world's chunk-loading tickets, from where the game keeps them: the {@code TicketStorage} of
+     * its chunk source, which is what the mixin reads (the distance manager only looks at it).
+     */
+    public static Long2ObjectOpenHashMap<List<Ticket>> TicketStorage_getTicketsByPosition(ServerLevel level)
     {
-        return ((Access.Tickets) (Object) manager).blossom$ticketsByPosition();
+        return ((Access.Tickets) level.getChunkSource().ticketStorage).blossom$ticketsByPosition();
     }
 
     // --- scoreboard ---

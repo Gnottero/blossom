@@ -28,6 +28,11 @@ Starting does not block.
 A task has **no time limit**: the watchdog's timeout does not apply to it, precisely because it
 holds nothing still. The recursion depth limit does still apply.
 
+### `task.start_in(pool, function, ...arguments)`
+Like `task.start`, but the task belongs to a **pool**, any value used as a name (`'loaders'`), which
+`task.count(pool)` can count separately from the others. Tasks of the same pool still run side by
+side: a pool groups them, it does not queue them.
+
 ### `task.wait(t)`
 Blocks until the task has finished and returns its value. If the task threw, the exception surfaces
 here.
@@ -40,8 +45,8 @@ freezing the server.
 The value the task has produced so far, without waiting for it to finish. A task that failed has no
 value and answers `null`: the exception belongs to whoever waits with `task.wait`.
 
-### `task.count()`
-How many tasks are currently in flight.
+### `task.count()` · `task.count(pool)`
+How many tasks are currently in flight, all of them or those of one pool.
 
 ```
 t = task.start('count_ores', centre);

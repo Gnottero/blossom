@@ -37,6 +37,8 @@ public class Token implements Comparable<Token> {
     public int ordinal = 0;
     public int linepos;
     public int lineno;
+    /** whether it is the root of something written between grouping brackets, {@code (x = 5)} */
+    public boolean grouped = false;
 
     public Expression.@Nullable ExpressionNode node = null;
 
@@ -59,6 +61,7 @@ public class Token implements Comparable<Token> {
         created.linepos = linepos;
         created.lineno = lineno;
         created.node = node;
+        created.grouped = grouped;
         created.ordinal = ordinal + 1;
         return created;
     }

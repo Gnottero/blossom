@@ -114,6 +114,7 @@ public final class StdLib
         // discovered by whoever gets it wrong
         module("core.task", java.util.Map.ofEntries(
                 java.util.Map.entry("start", "task"),
+                java.util.Map.entry("start_in", "task_thread"),
                 java.util.Map.entry("wait", "task_join"),
                 java.util.Map.entry("next", "task_await"),
                 java.util.Map.entry("has_next", "task_ready"),

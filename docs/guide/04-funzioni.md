@@ -169,7 +169,11 @@ in any order:
 fn f(a, b, c) -> [a, b, c];
 f(1, c = 3, b = 2);         // [1, 2, 3]
 f(a = 1, 2);                // an error, reported at load time
+f((x = 1), 2);              // [1, 2, null]: in brackets it is an assignment, passed by position
 ```
+
+Inside the brackets of a call to a function, `name = value` is a named argument. To pass the value
+of an assignment instead, and assign it on the way, put it in brackets of its own.
 
 Names are resolved at the **function boundary**, so a name that does not exist tells you which the
 real ones are, and passing the same parameter twice is an error rather than a value that silently

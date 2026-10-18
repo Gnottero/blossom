@@ -70,4 +70,12 @@ class NamedArgumentsTest
     {
         assertEquals("[1, 7]", eval("f = fn(a, b = 7) -> [a, b]; f(1)"));
     }
+
+    @Test
+    void anAssignmentInBracketsIsPassedByPosition()
+    {
+        // without the brackets it would be a named argument followed by a positional one, which is
+        // an error: the brackets are the way to say "this is an assignment"
+        assertEquals("[[5, 2], 5]", Interpreter.standalone().eval("f(a, b) -> [a, b]; [f((x = 5), 2), x]").getString());
+    }
 }

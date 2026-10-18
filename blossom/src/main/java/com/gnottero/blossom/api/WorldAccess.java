@@ -46,7 +46,6 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.server.level.DistanceManager;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.Ticket;
@@ -652,8 +651,7 @@ public class WorldAccess
         expression.addContextFunction("chunk_tickets", -1, (c, t, lv) ->
         {
             ServerLevel world = ((ScriptContext) c).level();
-            DistanceManager foo = world.getChunkSource().chunkMap.getDistanceManager();
-            Long2ObjectOpenHashMap<List<Ticket>> levelTickets = Vanilla.ChunkTicketManager_getTicketsByPosition(foo);
+            Long2ObjectOpenHashMap<List<Ticket>> levelTickets = Vanilla.TicketStorage_getTicketsByPosition(world);
 
             List<Value> res = new ArrayList<>();
             if (lv.isEmpty())

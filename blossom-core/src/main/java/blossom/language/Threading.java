@@ -30,6 +30,21 @@ public class Threading
             return thread;
         });
 
+        // start_in(pool, function, arguments...): like start, in a named group of tasks that
+        // task.count(pool) can count by itself
+        expression.addFunctionWithDelegation("task_thread", -1, false, false, (c, t, expr, tok, lv) ->
+        {
+            if (lv.size() < 2)
+            {
+                throw new ArityError(SourcePosition.UNKNOWN, "'task.start_in' wants the pool and the function to call: task.start_in('loaders', fn() -> ...).");
+            }
+            Value pool = lv.get(0);
+            FunctionArgument functionArgument = FunctionArgument.findIn(c, expression.module, lv, 1, false, true);
+            ThreadValue thread = new ThreadValue(pool, functionArgument.function, expr, tok, c, functionArgument.checkedArgs());
+            Thread.yield();
+            return thread;
+        });
+
         expression.addContextFunction("task_count", -1, (c, t, lv) ->
                 (!lv.isEmpty()) ? new NumericValue(c.host.taskCount(lv.get(0))) : new NumericValue(c.host.taskCount()));
 
