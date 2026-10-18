@@ -123,8 +123,15 @@ public final class ShapeDispatcher
      * will, so the closest match is picked. This is the honest limit of this approach, and the
      * reason the client exists.
      */
-    private static void drawWithParticles(Shape shape, ServerLevel level, List<ServerPlayer> audience)
+    private static void drawWithParticles(Shape shape, ServerLevel level, List<ServerPlayer> everyone)
     {
+        // a particle is shown in the dimension of whoever receives it: only those who are where
+        // the shape is now, and the others see it when they get there, at the next redraw
+        List<ServerPlayer> audience = everyone.stream().filter(player -> player.level() == level).toList();
+        if (audience.isEmpty())
+        {
+            return;
+        }
         // if the shape follows an entity, the point is recomputed on every redraw: that's half
         // the point of 'follow', and the entity has moved in the meantime
         if (!shape.hasLines() && !shape.hasFill())

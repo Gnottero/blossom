@@ -193,6 +193,22 @@ public final class ClientShapes
     }
 
     /**
+     * Whether some shape has to show through the blocks: the game only runs its always-on-top pass
+     * when it has something to draw there itself, and this is how it learns that we do.
+     */
+    public boolean hasSeethrough()
+    {
+        for (Shape shape : shapes)
+        {
+            if (shape.seethrough())
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Adds the shapes among the frame's primitives.
      *
      * <p>Line coordinates stay in world space: it is the primitive that knows where the camera is
@@ -202,13 +218,19 @@ public final class ClientShapes
      * camera position no matter what, since its pose depends on what it is facing: there it uses
      * the one from the frame's render state, the same one everything else sees.
      */
-    public void submit(DrawableGizmoPrimitives primitives, SubmitNodeStorage collector,
-            CameraRenderState camera, float partialTick)
+    public void submit(DrawableGizmoPrimitives primitives, DrawableGizmoPrimitives onTop,
+            SubmitNodeStorage collector, CameraRenderState camera, float partialTick)
     {
         Minecraft client = Minecraft.getInstance();
         boolean debugVisible = client.debugEntries.isCurrentlyEnabled(DebugScreenEntries.ENTITY_HITBOXES);
+        String here = client.level == null ? "" : client.level.dimension().identifier().toString();
         for (Shape shape : shapes)
         {
+            if (!shape.dimension().isEmpty() && !shape.dimension().equals(here))
+            {
+                // drawn in another dimension: kept, and shown again when the player goes back
+                continue;
+            }
             if (shape.debug() && !debugVisible)
             {
                 // a 'debug' shape is only visible when hitboxes are shown: it is meant to stay on
@@ -226,6 +248,8 @@ public final class ClientShapes
                 submitSprite(sprite, followPos, collector, camera, partialTick, client);
                 continue;
             }
+            // a seethrough shape goes among the primitives the game draws over everything else
+            DrawableGizmoPrimitives target = shape.seethrough() ? onTop : primitives;
             if (shape.hasLines())
             {
                 // zero alpha in the color means "no wireframe": a solid, smooth shape
@@ -233,7 +257,7 @@ public final class ClientShapes
                 float width = shape.lineWidth();
                 for (Shape.Segment segment : shape.segments())
                 {
-                    primitives.addLine(shape.anchored(segment.from(), followPos),
+                    target.addLine(shape.anchored(segment.from(), followPos),
                             shape.anchored(segment.to(), followPos), color, width);
                 }
             }
@@ -242,6 +266,13 @@ public final class ClientShapes
                 continue;
             }
             List<Vec3[]> faces = anchoredFaces(shape, followPos);
+            if (shape.seethrough())
+            {
+                // over everything there is nothing to cover or to blend in the right order: the
+                // primitives of the game are enough, opaque or not
+                submitFillAsPrimitives(faces, argb(shape.fillColor()), onTop);
+                continue;
+            }
             if (shape.hasOpaqueFill())
             {
                 // the game's primitives don't know how to draw an opaque covering face: see
@@ -252,6 +283,21 @@ public final class ClientShapes
             // nor one that blends with what's behind it in the right proportion: see
             // AfterCloudsSubmits
             submitTranslucentFill(faces, argb(shape.fillColor()), collector, camera);
+        }
+    }
+
+    private static void submitFillAsPrimitives(List<Vec3[]> faces, int color, DrawableGizmoPrimitives primitives)
+    {
+        for (Vec3[] face : faces)
+        {
+            if (face.length == 4)
+            {
+                primitives.addQuad(face[0], face[1], face[2], face[3], color);
+            }
+            else if (face.length > 2)
+            {
+                primitives.addTriangleFan(face, color);
+            }
         }
     }
 
@@ -393,14 +439,15 @@ public final class ClientShapes
         };
         int color = argb(label.color());
         int background = label.hasFill() ? argb(label.fillColor()) : 0;
-        collector.submitText(pose, x, 0.0F, text.getVisualOrderText(), false, Font.DisplayMode.NORMAL,
+        Font.DisplayMode mode = label.seethrough() ? Font.DisplayMode.SEE_THROUGH : Font.DisplayMode.NORMAL;
+        collector.submitText(pose, x, 0.0F, text.getVisualOrderText(), false, mode,
                 LightCoordsUtil.FULL_BRIGHT, color, background, 0);
         if (style.doublesided())
         {
             // the game primitives do not allow culling to be turned off: the second face is drawn
             // by writing the same text again, flipped, which is what one wants to see from behind
             pose.rotate(Axis.YP.rotationDegrees(180));
-            collector.submitText(pose, x, 0.0F, text.getVisualOrderText(), false, Font.DisplayMode.NORMAL,
+            collector.submitText(pose, x, 0.0F, text.getVisualOrderText(), false, mode,
                     LightCoordsUtil.FULL_BRIGHT, color, background, 0);
         }
     }

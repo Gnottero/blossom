@@ -93,7 +93,11 @@ there, in the game's own raw form.
 **Players only**
 `gamemode`, `gamemode_id`, `player_type`, `permission_level`, `may_fly`, `may_build`, `insta_build`,
 `fly_speed`, `walk_speed`, `selected_slot`, `hunger`, `saturation`, `exhaustion`, `xp`, `xp_level`,
-`xp_progress`, `score`, `ping`, `language`, `client_brand`.
+`xp_progress`, `score`, `ping`, `language`, `client_brand`, `input`.
+
+`input` is the set of movement keys the client last reported as held down: a map with `forward`,
+`backward`, `left`, `right`, `jump`, `sneak` and `sprint`, each `true` or `false`. It is updated also
+while the player is not riding anything.
 
 **Tags and teams**
 `tags`, `has_tag`, `entity_tags`, `has_entity_tag`, `scoreboard_tags`, `has_scoreboard_tag`, `team`.

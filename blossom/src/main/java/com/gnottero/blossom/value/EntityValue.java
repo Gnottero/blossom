@@ -71,6 +71,7 @@ import net.minecraft.world.entity.ai.memory.MemorySlot;
 import net.minecraft.world.entity.animal.golem.IronGolem;
 import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Input;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.projectile.hurtingprojectile.WitherSkull;
@@ -93,6 +94,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -578,6 +580,24 @@ public class EntityValue extends Value implements Nbt.Serializable
         put("xp_progress", (e, a) -> e instanceof Player player ? new NumericValue(player.experienceProgress) : Value.NULL);
         put("score", (e, a) -> e instanceof Player player ? new NumericValue(player.getScore()) : Value.NULL);
         put("jumping", (e, a) -> e instanceof LivingEntity le ? Vanilla.LivingEntity_isJumping(le) ? Value.TRUE : Value.FALSE : Value.NULL);
+        // the keys the client last said are held down: a map and not seven booleans in a row,
+        // which nobody remembers in what order they come
+        put("input", (e, a) -> {
+            if (!(e instanceof ServerPlayer sp))
+            {
+                return Value.NULL;
+            }
+            Input input = sp.getLastClientInput();
+            Map<Value, Value> keys = new LinkedHashMap<>();
+            keys.put(StringValue.of("forward"), BooleanValue.of(input.forward()));
+            keys.put(StringValue.of("backward"), BooleanValue.of(input.backward()));
+            keys.put(StringValue.of("left"), BooleanValue.of(input.left()));
+            keys.put(StringValue.of("right"), BooleanValue.of(input.right()));
+            keys.put(StringValue.of("jump"), BooleanValue.of(input.jump()));
+            keys.put(StringValue.of("sneak"), BooleanValue.of(input.shift()));
+            keys.put(StringValue.of("sprint"), BooleanValue.of(input.sprint()));
+            return MapValue.wrap(keys);
+        });
         put("gamemode", (e, a) -> e instanceof ServerPlayer sp ? new StringValue(sp.gameMode.getGameModeForPlayer().getName()) : Value.NULL);
         put("path", (e, a) -> {
             if (e instanceof Mob mob)

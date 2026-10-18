@@ -92,7 +92,13 @@ public final class Particles
         double distance = from.distanceToSqr(to);
         if (distance == 0)
         {
-            return 0;
+            // a line with no length is a point: one particle, not none
+            for (ServerPlayer player : players)
+            {
+                player.level().sendParticles(player, particle, true, true, from.x, from.y, from.z, 1,
+                        0.0, 0.0, 0.0, 0.0);
+            }
+            return players.size();
         }
         int pcount = 0;
         if (distance < 100)

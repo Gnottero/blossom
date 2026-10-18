@@ -6,6 +6,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
 import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
@@ -52,12 +53,27 @@ public abstract class LevelRenderer_blossomShapesMixin
             return; // the common case: no allocation, no work
         }
         DrawableGizmoPrimitives primitives = new DrawableGizmoPrimitives();
+        DrawableGizmoPrimitives onTop = new DrawableGizmoPrimitives();
         // the partial tick is the game's, not the real one: a followed entity moves with ticks,
         // and using the other one would make it drift forward while the game is paused
-        BlossomClient.shapes().submit(primitives, submitNodeStorage, cameraState, levelRenderState.worldPartialTicks);
+        BlossomClient.shapes().submit(primitives, onTop, submitNodeStorage, cameraState, levelRenderState.worldPartialTicks);
         if (!primitives.isEmpty())
         {
             primitives.submit(submitNodeStorage, cameraState, false);
+        }
+        if (!onTop.isEmpty())
+        {
+            onTop.submit(submitNodeStorage, cameraState, true);
+        }
+    }
+
+    /** The game prepares its always-on-top pass only for its own gizmos: ours count too. */
+    @Inject(method = "frameHasAlwaysOnTopGizmos", at = @At("RETURN"), cancellable = true)
+    private void blossom$seethroughShapes(CallbackInfoReturnable<Boolean> cir)
+    {
+        if (!cir.getReturnValueZ() && BlossomClient.shapes().hasSeethrough())
+        {
+            cir.setReturnValue(true);
         }
     }
 }

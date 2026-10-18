@@ -28,7 +28,7 @@ public abstract class Shape
 {
     /** The types that can be written in {@code draw_shape}. */
     public static final List<String> TYPES =
-            List.of("line", "box", "sphere", "cylinder", "label", "block", "item");
+            List.of("line", "box", "sphere", "cylinder", "polygon", "label", "block", "item");
 
     /**
      * What applies to every shape, regardless of its geometry.
@@ -40,14 +40,13 @@ public abstract class Shape
      * @param follow       the id of the entity the shape is anchored to, {@code -1} if none
      * @param snap         which axes follow the entity, and which are rounded to the block
      * @param debug        whether the shape is only visible with debug hitboxes enabled
+     * @param seethrough   whether lines, fill and text show through the blocks in front of them
+     * @param dimension    the dimension the shape lives in, as {@code minecraft:overworld}: a client
+     *                     elsewhere keeps it but does not draw it
      */
     public record Common(int color, int fillColor, float lineWidth, long expiresAtTick,
-            int follow, String snap, boolean debug)
+            int follow, String snap, boolean debug, boolean seethrough, String dimension)
     {
-        public static Common of(int color, int fillColor, float lineWidth, long expiresAtTick)
-        {
-            return new Common(color, fillColor, lineWidth, expiresAtTick, -1, "xyz", false);
-        }
     }
 
     private final String type;
@@ -133,6 +132,16 @@ public abstract class Shape
         return common.debug();
     }
 
+    public boolean seethrough()
+    {
+        return common.seethrough();
+    }
+
+    public String dimension()
+    {
+        return common.dimension();
+    }
+
     public boolean isAliveAt(long tick)
     {
         return tick < common.expiresAtTick();
@@ -216,6 +225,8 @@ public abstract class Shape
         tag.putInt("follow", common.follow());
         tag.putString("snap", common.snap());
         tag.putBoolean("debug", common.debug());
+        tag.putBoolean("seethrough", common.seethrough());
+        tag.putString("dim", common.dimension());
         writeGeometry(tag);
         return tag;
     }
@@ -243,7 +254,10 @@ public abstract class Shape
                 nowTick + tag.getLongOr("duration", 0L),
                 tag.getIntOr("follow", -1),
                 tag.getStringOr("snap", "xyz"),
-                tag.getBooleanOr("debug", false));
+                tag.getBooleanOr("debug", false),
+                tag.getBooleanOr("seethrough", false),
+                // an older server sends no dimension: drawn wherever the client is, as before
+                tag.getStringOr("dim", ""));
         return switch (type)
         {
             case "line" -> new Line(vec(tag, "from"), vec(tag, "to"), common);
@@ -253,6 +267,8 @@ public abstract class Shape
             case "cylinder" -> new Cylinder(vec(tag, "center"), tag.getDoubleOr("radius", 1.0),
                     tag.getDoubleOr("height", 0.0), tag.getStringOr("axis", "y"),
                     tag.getIntOr("level", 0), common);
+            case "polygon" -> new Polygon(vecs(tag, "points"), tag.getStringOr("mode", "polygon"),
+                    tag.getBooleanOr("inner", false), fixed(tag), common);
             case "label" -> new Label(vec(tag, "pos"), tag.getStringOr("text", ""),
                     tag.get("component"),
                     new Label.Text(
@@ -294,6 +310,28 @@ public abstract class Shape
         }
         ListTag values = list.get();
         return new Vec3(values.getDoubleOr(0, 0), values.getDoubleOr(1, 0), values.getDoubleOr(2, 0));
+    }
+
+    private static List<Vec3> vecs(CompoundTag tag, String key)
+    {
+        ListTag list = tag.getList(key).orElseGet(ListTag::new);
+        List<Vec3> points = new ArrayList<>(list.size() / 3);
+        for (int i = 0; i + 2 < list.size(); i += 3)
+        {
+            points.add(new Vec3(list.getDoubleOr(i, 0), list.getDoubleOr(i + 1, 0), list.getDoubleOr(i + 2, 0)));
+        }
+        return points;
+    }
+
+    private static boolean[] fixed(CompoundTag tag)
+    {
+        byte[] bytes = tag.getByteArray("fixed").orElseGet(() -> new byte[0]);
+        boolean[] fixed = new boolean[bytes.length];
+        for (int i = 0; i < bytes.length; i++)
+        {
+            fixed[i] = bytes[i] != 0;
+        }
+        return fixed;
     }
 
     protected static void putVec(CompoundTag tag, String key, Vec3 vec)
@@ -565,6 +603,176 @@ public abstract class Shape
             putVec(tag, "center", center);
             tag.putDouble("radius", radius);
             tag.putInt("level", level);
+        }
+    }
+
+    /**
+     * Faces through arbitrary points.
+     *
+     * <p>{@code mode} says how the points are joined: {@code 'polygon'} is one face fanned from the
+     * first point, {@code 'strip'} a strip of triangles where each one shares two points with the
+     * previous, {@code 'triangles'} unrelated triangles, three points each. The faces are always
+     * visible from both sides, like every fill in Blossom.
+     *
+     * <p>With a {@code follow}, the points marked fixed stay where they are written: the way to
+     * stretch a face between a point in the world and an entity.
+     */
+    public static final class Polygon extends Shape
+    {
+        public static final java.util.Set<String> MODES = java.util.Set.of("polygon", "strip", "triangles");
+
+        private final List<Vec3> points;
+        private final String mode;
+        private final boolean inner;
+        /** the points that do not follow the entity, by identity: they are the very objects returned below */
+        private final java.util.Set<Vec3> fixed = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+        private final boolean[] fixedFlags;
+
+        public Polygon(List<Vec3> points, String mode, boolean inner, boolean[] fixedFlags, Common common)
+        {
+            super("polygon", common);
+            this.points = List.copyOf(points);
+            this.mode = mode;
+            this.inner = inner;
+            this.fixedFlags = fixedFlags;
+            for (int i = 0; i < fixedFlags.length && i < this.points.size(); i++)
+            {
+                if (fixedFlags[i])
+                {
+                    fixed.add(this.points.get(i));
+                }
+            }
+        }
+
+        @Override
+        public Vec3 anchored(Vec3 point, @org.jspecify.annotations.Nullable Vec3 followPos)
+        {
+            return fixed.contains(point) ? point : super.anchored(point, followPos);
+        }
+
+        /** the triangles, as three indexes each, or the single fanned face of 'polygon' */
+        private List<int[]> triangles()
+        {
+            int n = points.size();
+            List<int[]> triangles = new ArrayList<>();
+            switch (mode)
+            {
+                case "strip" ->
+                {
+                    for (int i = 0; i + 2 < n; i++)
+                    {
+                        triangles.add(new int[]{i, i + 1, i + 2});
+                    }
+                }
+                case "triangles" ->
+                {
+                    for (int i = 0; i + 2 < n; i += 3)
+                    {
+                        triangles.add(new int[]{i, i + 1, i + 2});
+                    }
+                }
+                default ->
+                {
+                    for (int i = 1; i + 1 < n; i++)
+                    {
+                        triangles.add(new int[]{0, i, i + 1});
+                    }
+                }
+            }
+            return triangles;
+        }
+
+        @Override
+        public List<Segment> segments()
+        {
+            int n = points.size();
+            List<Segment> edges = new ArrayList<>();
+            if (n < 2)
+            {
+                return edges;
+            }
+            if (mode.equals("triangles"))
+            {
+                // unrelated triangles have no inside edges: all three sides of each are the outline
+                for (int[] t : triangles())
+                {
+                    edges.add(new Segment(points.get(t[0]), points.get(t[1])));
+                    edges.add(new Segment(points.get(t[1]), points.get(t[2])));
+                    edges.add(new Segment(points.get(t[2]), points.get(t[0])));
+                }
+                return edges;
+            }
+            if (mode.equals("strip"))
+            {
+                // the border of a strip: the two long sides, made of the jumps of two, and the two ends
+                edges.add(new Segment(points.get(0), points.get(1)));
+                for (int i = 0; i + 2 < n; i++)
+                {
+                    edges.add(new Segment(points.get(i), points.get(i + 2)));
+                }
+                edges.add(new Segment(points.get(n - 2), points.get(n - 1)));
+                if (inner)
+                {
+                    for (int i = 1; i + 2 < n; i++)
+                    {
+                        edges.add(new Segment(points.get(i), points.get(i + 1)));
+                    }
+                }
+                return edges;
+            }
+            for (int i = 0; i < n; i++)
+            {
+                edges.add(new Segment(points.get(i), points.get((i + 1) % n)));
+            }
+            if (inner)
+            {
+                for (int i = 2; i < n - 1; i++)
+                {
+                    edges.add(new Segment(points.get(0), points.get(i)));
+                }
+            }
+            return edges;
+        }
+
+        @Override
+        public List<Vec3[]> faces()
+        {
+            if (points.size() < 3)
+            {
+                return List.of();
+            }
+            if (mode.equals("polygon"))
+            {
+                // one face: the renderer already fans a polygon with more than four points
+                return List.<Vec3[]>of(points.toArray(Vec3[]::new));
+            }
+            List<Vec3[]> faces = new ArrayList<>();
+            for (int[] t : triangles())
+            {
+                faces.add(new Vec3[]{points.get(t[0]), points.get(t[1]), points.get(t[2])});
+            }
+            return faces;
+        }
+
+        @Override
+        protected void writeGeometry(CompoundTag tag)
+        {
+            ListTag list = new ListTag();
+            for (Vec3 point : points)
+            {
+                list.add(net.minecraft.nbt.DoubleTag.valueOf(point.x));
+                list.add(net.minecraft.nbt.DoubleTag.valueOf(point.y));
+                list.add(net.minecraft.nbt.DoubleTag.valueOf(point.z));
+            }
+            tag.put("points", list);
+            tag.putString("mode", mode);
+            tag.putBoolean("inner", inner);
+            byte[] bytes = new byte[fixedFlags.length];
+            for (int i = 0; i < fixedFlags.length; i++)
+            {
+                bytes[i] = (byte) (fixedFlags[i] ? 1 : 0);
+            }
+            tag.putByteArray("fixed", bytes);
         }
     }
 

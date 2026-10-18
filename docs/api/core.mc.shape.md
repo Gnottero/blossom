@@ -47,11 +47,22 @@ texture at the right point.
 | `follow` | an entity (or its id): the coordinates become relative to it | none |
 | `snap` | which axes follow the entity, with `d` to round to the block | `'xyz'` |
 | `debug` | the shape shows only with debug hitboxes turned on | `false` |
+| `seethrough` | lines, fill and label text show through the blocks in front of them | `false` |
+| `dim` | the dimension the shape is drawn in: a name (`'the_nether'`), an entity or a block | the one the script runs in |
 
 The colour names are `white`, `black`, `red`, `green`, `blue`, `yellow`, `cyan`, `magenta`, `orange`,
 `grey`. They are not just a convenience: a colour hand-written in hexadecimal is the thing people get
 wrong most often, and it almost always ends with the alpha channel at zero — that is, the shape is
 invisible, and it looks like the function did not work.
+
+`seethrough` is for what has to be found rather than looked at: an ore behind a wall, the path a
+mob would take underground. It affects the geometric shapes and the text of labels; blocks and items
+are models of the game and keep being hidden by what is in front of them. Whoever has no client sees
+the usual particles, which no packet can make visible through blocks.
+
+`dim` decides both who sees the shape by default (the players in that dimension) and where it is:
+a client in another dimension keeps the shape and draws it when its player gets there, and the
+particles follow the same rule.
 
 `snap` takes a combination of the axes: `'xz'` follows the entity on the plane but leaves the height
 written in the script, `'dxdydz'` follows it rounding to the block. It only applies with `follow`.
@@ -64,6 +75,7 @@ And the geometry, by type:
 | `box` | `from`, `to` |
 | `sphere` | `center`, `radius`, `level` |
 | `cylinder` | `center`, `radius`, `height`, `axis` (`'x'`/`'y'`/`'z'`, default `'y'`), `level` |
+| `polygon` | `points`, `mode` (`'polygon'`/`'strip'`/`'triangles'`, default `'polygon'`), `inner`, `relative` |
 | `label` | `pos`, `text` (or `value`), `size`, `align`, `indent`, `height`, `raise`, `tilt`, `lean`, `turn`, `facing`, `doublesided` |
 | `block` | `pos`, `block`, `facing`, `tilt`, `lean`, `turn`, `scale`, `blocklight`, `skylight` |
 | `item` | `pos`, `item`, `variant`, `facing`, `tilt`, `lean`, `turn`, `scale`, `blocklight`, `skylight` |
@@ -119,16 +131,30 @@ least which block it is and where it is.
 The attributes live in a map instead of being spread across the arguments, and **a name that shape
 does not have is an error**, with the right name suggested, instead of a silent default.
 
-There are seven types because they are the things needed to show what a script is computing: a path,
-a volume, a radius, a column, a number, a block, an item. Arbitrary polygonal faces are deliberately
-not among them: that is for making graphics, not for understanding what your own code is doing.
+### Faces through any point
+
+`polygon` draws faces through the `points` it is given. `mode` says how they are joined:
+`'polygon'` is a single face fanned from the first point, `'strip'` a strip of triangles where each
+one shares two points with the previous, `'triangles'` separate triangles, three points each (so
+their number must be a multiple of three).
+
+```
+shape.draw('polygon', 100, {'points' -> [[0, 64, 0], [4, 64, 0], [4, 68, 0], [0, 68, 0]],
+    'fill' -> 0x2255ff80, 'inner' -> true});
+```
+
+The wireframe is the border of the figure; `inner` adds the edges inside it, the ones between the
+triangles. The faces are visible from both sides, like every fill. `relative` matters only with
+`follow`: one boolean for all the points or one per point, `false` keeps that point where it is
+written instead of moving it with the entity — the way to stretch a face between a fixed point and
+someone walking around. Without a client the outline is drawn with particles, as for any other shape.
 
 ### `shape.types()`
 The list of the shape type names this server knows, in the order the table above lists them. Useful
 for a script that validates its own configuration before drawing.
 
 ```
-shape.types();      // ['line', 'box', 'sphere', 'cylinder', 'label', 'block', 'item']
+shape.types();      // ['line', 'box', 'sphere', 'cylinder', 'polygon', 'label', 'block', 'item']
 ```
 
 ### `shape.clear()`

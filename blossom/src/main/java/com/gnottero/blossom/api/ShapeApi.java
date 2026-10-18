@@ -60,7 +60,7 @@ public final class ShapeApi
 
     /** Attributes valid for any shape. */
     private static final Set<String> COMMON_ATTRIBUTES =
-            Set.of("color", "fill", "line", "player", "follow", "snap", "debug");
+            Set.of("color", "fill", "line", "player", "follow", "snap", "debug", "seethrough", "dim");
 
     /** Attributes valid for a single shape type, in addition to {@link #COMMON_ATTRIBUTES}. */
     private static final Map<String, Set<String>> ATTRIBUTES_BY_TYPE = Map.of(
@@ -68,6 +68,7 @@ public final class ShapeApi
             "box", Set.of("from", "to"),
             "sphere", Set.of("center", "radius", "level"),
             "cylinder", Set.of("center", "radius", "height", "axis", "level"),
+            "polygon", Set.of("points", "mode", "inner", "relative"),
             "label", Set.of("pos", "text", "value", "size", "align", "indent", "height", "raise",
                     "tilt", "lean", "turn", "facing", "doublesided"),
             "block", Set.of("pos", "block", "facing", "tilt", "lean", "turn", "scale",
@@ -119,11 +120,11 @@ public final class ShapeApi
                     ? map.getMap()
                     : Map.of();
 
-            ServerLevel level = cc.level();
-            long expires = BlossomMod.shapes().tick() + Math.max(1L, duration);
             checkAttributes(type, attributes);
-            Shape shape = build(cc, type, attributes, expires);
-            List<ServerPlayer> audience = audienceOf(cc, attributes);
+            ServerLevel level = levelOf(cc, attributes);
+            long expires = BlossomMod.shapes().tick() + Math.max(1L, duration);
+            Shape shape = build(cc, type, attributes, expires, level);
+            List<ServerPlayer> audience = audienceOf(cc, attributes, level);
             if (shape instanceof final Shape.Label label)
             {
                 // Text can't be approximated with particles: it's sent once in chat to those
@@ -179,7 +180,8 @@ public final class ShapeApi
         }
     }
 
-    private static Shape build(ScriptContext cc, String type, Map<Value, Value> attributes, long expires)
+    private static Shape build(ScriptContext cc, String type, Map<Value, Value> attributes, long expires,
+            ServerLevel level)
     {
         Shape.Common common = new Shape.Common(
                 color(attributes, "color", 0xFFFFFFFF),
@@ -188,7 +190,9 @@ public final class ShapeApi
                 expires,
                 follow(attributes),
                 choice(attributes, "snap", SNAP_VALUES, "xyz"),
-                bool(attributes, "debug"));
+                bool(attributes, "debug"),
+                bool(attributes, "seethrough"),
+                level.dimension().identifier().toString());
         return switch (type)
         {
             case "line" -> new Shape.Line(vec(attributes, "from"), vec(attributes, "to"), common);
@@ -198,6 +202,7 @@ public final class ShapeApi
             case "cylinder" -> new Shape.Cylinder(vec(attributes, "center"), positive(attributes, "radius"),
                     number(attributes, "height", 0.0), choice(attributes, "axis", Set.of("x", "y", "z"), "y"),
                     (int) number(attributes, "level", 0), common);
+            case "polygon" -> polygon(attributes, common);
             case "label" -> new Shape.Label(vec(attributes, "pos"), text(attributes).getString(),
                     component(cc, attributes), style(attributes), common);
             case "block" -> block(cc, attributes, common);
@@ -207,6 +212,54 @@ public final class ShapeApi
                     "Unknown shape type: '" + type + "'. The types are " + Shape.TYPES + ".",
                     Suggestions.closestTo(type, Shape.TYPES));
         };
+    }
+
+    /**
+     * Faces through arbitrary points.
+     *
+     * <p>{@code relative} says which points follow the entity of {@code follow}: one boolean for all
+     * of them, or one per point. Left out, they all follow, which is what {@code follow} means for
+     * every other shape.
+     */
+    private static Shape polygon(Map<Value, Value> attributes, Shape.Common common)
+    {
+        Value declared = attributes.get(StringValue.of("points"));
+        if (!(declared instanceof final ListValue list) || list.getItems().size() < 2)
+        {
+            throw new TypeMismatchError(SourcePosition.UNKNOWN,
+                    "A 'polygon' wants its 'points', at least two: 'points' -> [[0, 64, 0], [4, 64, 0], [0, 68, 0]].");
+        }
+        List<Vec3> points = new ArrayList<>();
+        for (Value point : list.getItems())
+        {
+            points.add(vec(Map.of(StringValue.of("points"), point), "points"));
+        }
+        String mode = choice(attributes, "mode", Shape.Polygon.MODES, "polygon");
+        if (mode.equals("triangles") && points.size() % 3 != 0)
+        {
+            throw new TypeMismatchError(SourcePosition.UNKNOWN,
+                    "With 'mode' -> 'triangles' the points come three by three, and there are " + points.size() + ".");
+        }
+        boolean[] fixed = new boolean[points.size()];
+        Value relative = attributes.get(StringValue.of("relative"));
+        if (relative instanceof final ListValue flags)
+        {
+            List<Value> items = flags.getItems();
+            if (items.size() != points.size())
+            {
+                throw new TypeMismatchError(SourcePosition.UNKNOWN,
+                        "'relative' has " + items.size() + " values for " + points.size() + " points: one per point, or a single one for all.");
+            }
+            for (int i = 0; i < items.size(); i++)
+            {
+                fixed[i] = !items.get(i).getBoolean();
+            }
+        }
+        else if (relative != null && !relative.isNull() && !relative.getBoolean())
+        {
+            java.util.Arrays.fill(fixed, true);
+        }
+        return new Shape.Polygon(points, mode, bool(attributes, "inner"), fixed, common);
     }
 
     /**
@@ -366,17 +419,33 @@ public final class ShapeApi
     }
 
     /**
+     * The dimension the shape is drawn in: {@code dim}, or the one the script is running in.
+     *
+     * <p>It takes what the rest of the API takes for a dimension: a name, an entity or a block.
+     */
+    private static ServerLevel levelOf(ScriptContext cc, Map<Value, Value> attributes)
+    {
+        Value declared = attributes.get(StringValue.of("dim"));
+        if (declared == null || declared.isNull())
+        {
+            return cc.level();
+        }
+        return (ServerLevel) com.gnottero.blossom.value.ValueConversions.dimFromValue(declared, cc.server());
+    }
+
+    /**
      * Who sees the shape.
      *
-     * <p>Without {@code player}, everyone in the dimension the script is running in. That's the
-     * useful default: whoever is drawing is almost always looking at what happens there.
+     * <p>Without {@code player}, everyone in the dimension of the shape. That's the useful
+     * default: whoever is drawing is almost always looking at what happens there. A player named
+     * explicitly but standing in another dimension gets it anyway, and sees it once they get there.
      */
-    private static List<ServerPlayer> audienceOf(ScriptContext cc, Map<Value, Value> attributes)
+    private static List<ServerPlayer> audienceOf(ScriptContext cc, Map<Value, Value> attributes, ServerLevel level)
     {
         Value declared = attributes.get(StringValue.of("player"));
         if (declared == null || declared.isNull())
         {
-            return List.copyOf(cc.level().players());
+            return List.copyOf(level.players());
         }
         List<Value> names = declared instanceof final ListValue list ? list.getItems() : List.of(declared);
         List<ServerPlayer> players = new ArrayList<>();
