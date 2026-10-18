@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -81,9 +82,10 @@ public class SystemInfo
         put("game_view_distance", c -> new NumericValue(c.server().getPlayerList().getViewDistance()));
         put("game_mod_name", c -> StringValue.of(c.server().getServerModName()));
         put("game_version", c -> StringValue.of(c.server().getServerVersion()));
-        put("game_target", c -> StringValue.of(String.format("1.%d.%d",
-                Vanilla.MinecraftServer_getReleaseTarget(c.server())[0],
-                Vanilla.MinecraftServer_getReleaseTarget(c.server())[1])));
+        put("game_target", c -> {
+            int[] target = Vanilla.MinecraftServer_getReleaseTarget(c.server());
+            return StringValue.of(String.format(Locale.ROOT, "%d.%d.%d", target[0], target[1], target[2]));
+        });
         put("game_protocol", c -> NumericValue.of(SharedConstants.getProtocolVersion()));
         put("game_major_target", c -> NumericValue.of(Vanilla.MinecraftServer_getReleaseTarget(c.server())[0]));
         put("game_minor_target", c -> NumericValue.of(Vanilla.MinecraftServer_getReleaseTarget(c.server())[1]));

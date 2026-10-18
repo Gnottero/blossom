@@ -197,54 +197,62 @@ public class ControlFlow
                 Value val = null; // This is always assigned at some point, just the compiler doesn't know
 
                 LazyValue defaultVal = c.implicitValue;
-                c.implicitValue = (ct, tt) -> ret.data;
                 LazyValue trace = c.getVariable("_trace");
-                c.setVariable("_trace", (ct, tt) -> MapValue.wrap(Map.of(
-                        StringValue.of("stack"), ListValue.wrap(ret.stack.stream().map(f -> ListValue.of(
-                                // a function defined on the fly (script run, test) has no module:
-                                // the stack should stay readable regardless, not blow up
-                                StringValue.of(f.getModule() == null ? "" : f.getModule().name()),
-                                StringValue.of(f.getString()),
-                                NumericValue.of(f.getToken().lineno + 1),
-                                NumericValue.of(f.getToken().linepos + 1)
-                        ))),
-
-                        StringValue.of("locals"), MapValue.wrap(locals(ret.context)),
-                        StringValue.of("token"), ListValue.of(
-                                StringValue.of(ret.token.surface),
-                                NumericValue.of(ret.token.lineno + 1),
-                                NumericValue.of(ret.token.linepos + 1)
-                        )
-                )));
-
-                if (lv.size() == 2)
+                // the handler and the filters can throw too: the scope comes back anyway, or an
+                // enclosing catch would find the inner value in its '_' and the inner '_trace'
+                try
                 {
-                    if (ret.thrownExceptionType.isUserException())
+                    c.implicitValue = (ct, tt) -> ret.data;
+                    c.setVariable("_trace", (ct, tt) -> MapValue.wrap(Map.of(
+                            StringValue.of("stack"), ListValue.wrap(ret.stack.stream().map(f -> ListValue.of(
+                                    // a function defined on the fly (script run, test) has no module:
+                                    // the stack should stay readable regardless, not blow up
+                                    StringValue.of(f.getModule() == null ? "" : f.getModule().name()),
+                                    StringValue.of(f.getString()),
+                                    NumericValue.of(f.getToken().lineno + 1),
+                                    NumericValue.of(f.getToken().linepos + 1)
+                            ))),
+
+                            StringValue.of("locals"), MapValue.wrap(locals(ret.context)),
+                            StringValue.of("token"), ListValue.of(
+                                    StringValue.of(ret.token.surface),
+                                    NumericValue.of(ret.token.lineno + 1),
+                                    NumericValue.of(ret.token.linepos + 1)
+                            )
+                    )));
+
+                    if (lv.size() == 2)
                     {
-                        val = catchBranch(c, lv.get(1)).evalValue(c, t);
-                    }
-                }
-                else
-                {
-                    int pointer = 1;
-                    while (pointer < lv.size() - 1)
-                    {
-                        if (ret.thrownExceptionType.isRelevantFor(lv.get(pointer).evalValue(c).getString()))
+                        if (ret.thrownExceptionType.isUserException())
                         {
-                            val = catchBranch(c, lv.get(pointer + 1)).evalValue(c, t);
-                            break;
+                            val = catchBranch(c, lv.get(1)).evalValue(c, t);
                         }
-                        pointer += 2;
+                    }
+                    else
+                    {
+                        int pointer = 1;
+                        while (pointer < lv.size() - 1)
+                        {
+                            if (ret.thrownExceptionType.isRelevantFor(lv.get(pointer).evalValue(c).getString()))
+                            {
+                                val = catchBranch(c, lv.get(pointer + 1)).evalValue(c, t);
+                                break;
+                            }
+                            pointer += 2;
+                        }
                     }
                 }
-                c.implicitValue = defaultVal;
-                if (trace != null)
+                finally
                 {
-                    c.setVariable("_trace", trace);
-                }
-                else
-                {
-                    c.delVariable("_trace");
+                    c.implicitValue = defaultVal;
+                    if (trace != null)
+                    {
+                        c.setVariable("_trace", trace);
+                    }
+                    else
+                    {
+                        c.delVariable("_trace");
+                    }
                 }
                 if (val == null)  // not handled
                 {

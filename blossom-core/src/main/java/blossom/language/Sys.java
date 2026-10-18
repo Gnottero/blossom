@@ -66,6 +66,33 @@ public class Sys
                 + value.getTypeString() + (value.isNull() ? "" : " (" + value.getString() + ")") + ".");
     }
 
+    private static final java.util.TimeZone UTC = java.util.TimeZone.getTimeZone("UTC");
+
+    /**
+     * The integer for {@code %d}, {@code %o} and {@code %x}: read as a long and not through a
+     * double, which past 2^53 drops the low digits, and rounded down like every other place where
+     * the language turns a number into an integer.
+     */
+    private static long longFor(Value value, String specifier)
+    {
+        if (value instanceof final blossom.value.NumericValue nv)
+        {
+            return nv.getLong();
+        }
+        if (value instanceof blossom.value.StringValue)
+        {
+            try
+            {
+                return Long.parseLong(value.getString().trim());
+            }
+            catch (NumberFormatException ignored)
+            {
+                // not an integer written out: maybe a decimal one, read like any other number
+            }
+        }
+        return new blossom.value.NumericValue(numberFor(value, specifier).doubleValue()).getLong();
+    }
+
     public static void apply(Expression expression)
     {
         expression.addUnaryFunction("hash_code", v -> new NumericValue(v.hashCode()));
@@ -150,7 +177,7 @@ public class Sys
                     // of the format specifier is either fixed text or contains
                     // an invalid format string.
                     // we skip it and let the String.format fail
-                    char fmt = m.group(6).toLowerCase().charAt(0);
+                    char fmt = m.group(6).toLowerCase(Locale.ROOT).charAt(0);
                     if (fmt == 's')
                     {
                         if (argIndex >= lv.size())
@@ -166,7 +193,7 @@ public class Sys
                         {
                             throw new ArityError(SourcePosition.UNKNOWN,"Not enough arguments for " + m.group(0));
                         }
-                        args.add(numberFor(lv.get(argIndex), m.group(0)).longValue());
+                        args.add(longFor(lv.get(argIndex), m.group(0)));
                         argIndex++;
                     }
                     else if (fmt == 'a' || fmt == 'e' || fmt == 'f' || fmt == 'g')
@@ -428,7 +455,8 @@ public class Sys
             Value value = lv.get(0);
             if (argsize == 1 && !(value instanceof ListValue))
             {
-                Calendar cal = new GregorianCalendar(Locale.ROOT);
+                // in UTC, not in the zone of the machine: the same timestamp is the same date on every server
+                Calendar cal = new GregorianCalendar(UTC, Locale.ROOT);
                 cal.setTimeInMillis(NumericValue.asNumber(value, "timestamp").getLong());
                 int weekday = cal.get(Calendar.DAY_OF_WEEK) - 1;
                 if (weekday == 0)
@@ -452,7 +480,10 @@ public class Sys
                 lv = list.getItems();
                 argsize = lv.size();
             }
-            Calendar cal = new GregorianCalendar(0, Calendar.JANUARY, 1, 0, 0, 0);
+            Calendar cal = new GregorianCalendar(UTC, Locale.ROOT);
+            // clear() and not a constructor with the date: that one takes the milliseconds from the clock
+            cal.clear();
+            cal.set(0, Calendar.JANUARY, 1, 0, 0, 0);
 
             if (argsize == 3)
             {
@@ -561,7 +592,7 @@ public class Sys
         if (str.isEmpty()) {
             return str;
         }
-        str = str.toLowerCase();
+        str = str.toLowerCase(Locale.ROOT);
         char[] buffer = str.toCharArray();
         boolean capitalizeNext = true;
         for (int i = 0; i < buffer.length; i++) {

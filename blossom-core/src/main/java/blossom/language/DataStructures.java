@@ -168,15 +168,21 @@ public class DataStructures
             LazyValue sortKey = Loops.keyOf(c, lv.get(1));
             // entering scope
             LazyValue defaultVal = c.implicitValue;
-            toSort.sort((v1, v2) -> {
-                c.implicitValue = (cc, tt) -> v1;
-                Value ev1 = sortKey.evalValue(c);
-                c.implicitValue = (cc, tt) -> v2;
-                Value ev2 = sortKey.evalValue(c);
-                return ev1.compareTo(ev2);
-            });
-            // reverting scope
-            c.implicitValue = defaultVal;
+            try
+            {
+                toSort.sort((v1, v2) -> {
+                    c.implicitValue = (cc, tt) -> v1;
+                    Value ev1 = sortKey.evalValue(c);
+                    c.implicitValue = (cc, tt) -> v2;
+                    Value ev2 = sortKey.evalValue(c);
+                    return ev1.compareTo(ev2);
+                });
+            }
+            finally
+            {
+                // reverting scope, also when the key throws
+                c.implicitValue = defaultVal;
+            }
             Value ret = ListValue.wrap(toSort);
             return (cc, tt) -> ret;
         });

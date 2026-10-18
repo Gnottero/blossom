@@ -21,7 +21,6 @@ import java.util.stream.StreamSupport;
 import org.jspecify.annotations.Nullable;
 
 
-import static java.lang.Math.abs;
 
 public class ListValue extends AbstractListValue implements ContainerValueInterface, Guardable
 {
@@ -388,10 +387,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
         {
             return (int) idx;
         }
-        long range = abs(idx) / len;
-        idx += (range + 2) * len;
-        idx = idx % len;
-        return (int) idx;
+        return (int) Math.floorMod(idx, len);
     }
 
     public static class ListConstructorValue extends ListValue
@@ -428,6 +424,10 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     {
         List<Value> snapshot = getItems();
         int size = snapshot.size();
+        if (size == 0)
+        {
+            return ListValue.of();
+        }
         int from = normalizeIndex(fromDesc, size);
         if (toDesc == null)
         {

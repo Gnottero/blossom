@@ -283,21 +283,19 @@ public final class Vanilla
         return net.minecraft.server.permissions.LevelBasedPermissionSet.GAMEMASTER;
     }
 
+    private static final java.util.regex.Pattern RELEASE = java.util.regex.Pattern.compile("(\\d+)\\.(\\d+)(?:\\.(\\d+))?");
+
     /** The Minecraft version it runs on, as a triple of numbers. */
     public static int[] MinecraftServer_getReleaseTarget(MinecraftServer server)
     {
-        String version = net.minecraft.SharedConstants.getCurrentVersion().name();
-        String[] parts = version.split("[.-]");
+        // "26.4", "26.4.1", "26.4 Snapshot 4", "26.4-rc-1": the numbers at the start, the rest is a label
+        java.util.regex.Matcher m = RELEASE.matcher(net.minecraft.SharedConstants.getCurrentVersion().name());
         int[] target = new int[3];
-        for (int i = 0; i < 3 && i < parts.length; i++)
+        if (m.lookingAt())
         {
-            try
+            for (int i = 0; i < 3; i++)
             {
-                target[i] = Integer.parseInt(parts[i]);
-            }
-            catch (NumberFormatException ignored)
-            {
-                target[i] = 0;
+                target[i] = m.group(i + 1) == null ? 0 : Integer.parseInt(m.group(i + 1));
             }
         }
         return target;

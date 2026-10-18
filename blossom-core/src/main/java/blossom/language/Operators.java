@@ -63,6 +63,12 @@ public class Operators
      * stops only on a negative number, which is not a shorter shift but the opposite direction
      * written badly.
      */
+    private static long asLong(Value v)
+    {
+        NumericValue number = NumericValue.asNumber(v);
+        return number.isInteger() ? number.getLong() : (long) number.getDouble();
+    }
+
     private static long shiftAmount(String function, long amount)
     {
         if (amount < 0)
@@ -352,11 +358,9 @@ public class Operators
                         ? (num < 0 ? -1L : 0L) : num >> amount);
         expression.addMathematicalBinaryIntFunction("bitwise_roll_left", (num, amount) -> Long.rotateLeft(num, (int)amount));
         expression.addMathematicalBinaryIntFunction("bitwise_roll_right", (num, amount) -> Long.rotateRight(num, (int)amount));
-        expression.addMathematicalUnaryIntFunction("bitwise_not", d -> {
-            long num = (long) d;
-            return ~num;
-        });
-        expression.addMathematicalUnaryIntFunction("bitwise_popcount", d -> (long) Long.bitCount((long)d));
+        // read as a long, not through a double: past 2^53 a double drops the low bits
+        expression.addUnaryFunction("bitwise_not", v -> new NumericValue(~asLong(v)));
+        expression.addUnaryFunction("bitwise_popcount", v -> new NumericValue(Long.bitCount(asLong(v))));
         expression.addMathematicalUnaryIntFunction("double_to_long_bits", Double::doubleToLongBits);
         expression.addUnaryFunction("long_to_double_bits", v ->
                 new NumericValue(Double.longBitsToDouble(NumericValue.asNumber(v).getLong())));
@@ -384,16 +388,37 @@ public class Operators
             {
                 return Value.TRUE;
             }
-            // need to order them so same obejects will be next to each other.
+            // ordered by hash, so equal values sit next to each other
             lv.sort(Comparator.comparingInt(Value::hashCode));
-            Value prev = lv.get(0);
-            for (Value next : lv.subList(1, size))
+            Value previous = lv.get(0);
+            int previousHash = previous.hashCode();
+            int collisionStart = 0;
+            for (int i = 1; i < size; i++)
             {
-                if (prev.equals(next))
+                Value next = lv.get(i);
+                // the neighbour is checked anyway: values equal for the language can hash differently
+                if (previous.equals(next))
                 {
                     return Value.FALSE;
                 }
-                prev = next;
+                int hash = next.hashCode();
+                if (hash == previousHash)
+                {
+                    // different values with the same hash: the duplicate may be further back in the group
+                    for (int j = collisionStart; j < i - 1; j++)
+                    {
+                        if (lv.get(j).equals(next))
+                        {
+                            return Value.FALSE;
+                        }
+                    }
+                }
+                else
+                {
+                    collisionStart = i;
+                    previousHash = hash;
+                }
+                previous = next;
             }
             return Value.TRUE;
         });

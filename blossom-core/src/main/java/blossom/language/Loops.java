@@ -142,9 +142,53 @@ public class Loops
                 Value lastOne = Value.NULL;
                 //scoping
                 LazyValue defaultVal = c.implicitValue;
+                try
+                {
+                    c.implicitValue = (cc, tt) -> new NumericValue(0);
+                    final blossom.interpreter.ExecutionBudget budget = c.budget;
+                    while (condition.evalValue(c, Context.BOOLEAN).getBoolean())
+                    {
+                        budget.tick();
+                        try
+                        {
+                            lastOne = expr.evalValue(c, t);
+                        }
+                        catch (BreakStatement | ContinueStatement stmt)
+                        {
+                            if (stmt.retval != null)
+                            {
+                                lastOne = stmt.retval;
+                            }
+                            if (stmt instanceof BreakStatement)
+                            {
+                                break;
+                            }
+                        }
+                        i++;
+                        long seriously = i;
+                        c.implicitValue = (cc, tt) -> new NumericValue(seriously);
+                    }
+                }
+                finally
+                {
+                    c.implicitValue = defaultVal;
+                }
+                Value lastValueNoKidding = lastOne;
+                return (cc, tt) -> lastValueNoKidding;
+            }
+            long limit = NumericValue.asNumber(lv.get(1).evalValue(c)).getLong();
+            LazyValue condition = lv.get(0);
+            LazyValue expr = loopBody(c, lv.get(2));
+            long i = 0;
+            Value lastOne = Value.NULL;
+            //scoping
+            LazyValue defaultVal = c.implicitValue;
+            try
+            {
                 c.implicitValue = (cc, tt) -> new NumericValue(0);
+                // the watchdog is read once, outside the loop: see the comment in 'loop'
                 final blossom.interpreter.ExecutionBudget budget = c.budget;
-                while (condition.evalValue(c, Context.BOOLEAN).getBoolean())
+                while (i < limit && condition.evalValue(c, Context.BOOLEAN).getBoolean())
                 {
                     budget.tick();
                     try
@@ -166,45 +210,11 @@ public class Loops
                     long seriously = i;
                     c.implicitValue = (cc, tt) -> new NumericValue(seriously);
                 }
-                //revering scope
-                c.implicitValue = defaultVal;
-                Value lastValueNoKidding = lastOne;
-                return (cc, tt) -> lastValueNoKidding;
             }
-            long limit = NumericValue.asNumber(lv.get(1).evalValue(c)).getLong();
-            LazyValue condition = lv.get(0);
-            LazyValue expr = loopBody(c, lv.get(2));
-            long i = 0;
-            Value lastOne = Value.NULL;
-            //scoping
-            LazyValue defaultVal = c.implicitValue;
-            c.implicitValue = (cc, tt) -> new NumericValue(0);
-            // the watchdog is read once, outside the loop: see the comment in 'loop'
-            final blossom.interpreter.ExecutionBudget budget = c.budget;
-            while (i < limit && condition.evalValue(c, Context.BOOLEAN).getBoolean())
+            finally
             {
-                budget.tick();
-                try
-                {
-                    lastOne = expr.evalValue(c, t);
-                }
-                catch (BreakStatement | ContinueStatement stmt)
-                {
-                    if (stmt.retval != null)
-                    {
-                        lastOne = stmt.retval;
-                    }
-                    if (stmt instanceof BreakStatement)
-                    {
-                        break;
-                    }
-                }
-                i++;
-                long seriously = i;
-                c.implicitValue = (cc, tt) -> new NumericValue(seriously);
+                c.implicitValue = defaultVal;
             }
-            //revering scope
-            c.implicitValue = defaultVal;
             Value lastValueNoKidding = lastOne;
             return (cc, tt) -> lastValueNoKidding;
         });
@@ -221,29 +231,34 @@ public class Loops
             // the watchdog is read once and kept in a local: inside the language's tightest loop
             // even just re-reading the field shows up in the benchmark
             final blossom.interpreter.ExecutionBudget budget = c.budget;
-            for (long i = 0; i < limit; i++)
+            try
             {
-                budget.tick();
-                long whyYouAsk = i;
-                c.implicitValue = (cc, tt) -> new NumericValue(whyYouAsk);
-                try
+                for (long i = 0; i < limit; i++)
                 {
-                    lastOne = expr.evalValue(c, t);
-                }
-                catch (BreakStatement | ContinueStatement stmt)
-                {
-                    if (stmt.retval != null)
+                    budget.tick();
+                    long whyYouAsk = i;
+                    c.implicitValue = (cc, tt) -> new NumericValue(whyYouAsk);
+                    try
                     {
-                        lastOne = stmt.retval;
+                        lastOne = expr.evalValue(c, t);
                     }
-                    if (stmt instanceof BreakStatement)
+                    catch (BreakStatement | ContinueStatement stmt)
                     {
-                        break;
+                        if (stmt.retval != null)
+                        {
+                            lastOne = stmt.retval;
+                        }
+                        if (stmt instanceof BreakStatement)
+                        {
+                            break;
+                        }
                     }
                 }
             }
-            //revering scope
-            c.implicitValue = defaultVal;
+            finally
+            {
+                c.implicitValue = defaultVal;
+            }
             Value trulyLastOne = lastOne;
             return (cc, tt) -> trulyLastOne;
         });
@@ -269,37 +284,42 @@ public class Loops
             // the watchdog is read once, outside the loop: see the comment in 'loop'
             final blossom.interpreter.ExecutionBudget budget = c.budget;
             List<Value> result = new ArrayList<>();
-            for (int i = 0; iterator.hasNext(); i++)
+            try
             {
-                budget.tick();
-                Value next = iterator.next();
-                if(next == Value.EOL) {
-                    continue;
-                }
-                int doYouReally = i;
-                c.implicitValue = (cc, tt) -> next;
-                c.implicitIndex = (cc, tt) -> new NumericValue(doYouReally);
-                try
+                for (int i = 0; iterator.hasNext(); i++)
                 {
-                    result.add(expr.evalValue(c, t));
-                }
-                catch (BreakStatement | ContinueStatement stmt)
-                {
-                    if (stmt.retval != null)
-                    {
-                        result.add(stmt.retval);
+                    budget.tick();
+                    Value next = iterator.next();
+                    if(next == Value.EOL) {
+                        continue;
                     }
-                    if (stmt instanceof BreakStatement)
+                    int doYouReally = i;
+                    c.implicitValue = (cc, tt) -> next;
+                    c.implicitIndex = (cc, tt) -> new NumericValue(doYouReally);
+                    try
                     {
-                        break;
+                        result.add(expr.evalValue(c, t));
+                    }
+                    catch (BreakStatement | ContinueStatement stmt)
+                    {
+                        if (stmt.retval != null)
+                        {
+                            result.add(stmt.retval);
+                        }
+                        if (stmt instanceof BreakStatement)
+                        {
+                            break;
+                        }
                     }
                 }
             }
-            ((AbstractListValue) rval).fatality();
+            finally
+            {
+                alv.fatality();
+                c.implicitValue = defaultVal;
+                c.implicitIndex = iterVal;
+            }
             Value ret = ListValue.wrap(result);
-            //revering scope
-            c.implicitValue = defaultVal;
-            c.implicitIndex = iterVal;
             return (cc, tt) -> ret;
         });
 
@@ -325,40 +345,45 @@ public class Loops
             // the watchdog is read once, outside the loop: see the comment in 'loop'
             final blossom.interpreter.ExecutionBudget budget = c.budget;
             List<Value> result = new ArrayList<>();
-            for (int i = 0; iterator.hasNext(); i++)
+            try
             {
-                budget.tick();
-                Value next = iterator.next();
-                if(next == Value.EOL) {
-                    continue;
-                }
-                int seriously = i;
-                c.implicitValue = (cc, tt) -> next;
-                c.implicitIndex = (cc, tt) -> new NumericValue(seriously);
-                try
+                for (int i = 0; iterator.hasNext(); i++)
                 {
-                    if (expr.evalValue(c, Context.BOOLEAN).getBoolean())
-                    {
-                        result.add(next);
+                    budget.tick();
+                    Value next = iterator.next();
+                    if(next == Value.EOL) {
+                        continue;
                     }
-                }
-                catch (BreakStatement | ContinueStatement stmt)
-                {
-                    if (stmt.retval != null && stmt.retval.getBoolean())
+                    int seriously = i;
+                    c.implicitValue = (cc, tt) -> next;
+                    c.implicitIndex = (cc, tt) -> new NumericValue(seriously);
+                    try
                     {
-                        result.add(next);
+                        if (expr.evalValue(c, Context.BOOLEAN).getBoolean())
+                        {
+                            result.add(next);
+                        }
                     }
-                    if (stmt instanceof BreakStatement)
+                    catch (BreakStatement | ContinueStatement stmt)
                     {
-                        break;
+                        if (stmt.retval != null && stmt.retval.getBoolean())
+                        {
+                            result.add(next);
+                        }
+                        if (stmt instanceof BreakStatement)
+                        {
+                            break;
+                        }
                     }
                 }
             }
-            ((AbstractListValue) rval).fatality();
+            finally
+            {
+                alv.fatality();
+                c.implicitValue = defaultVal;
+                c.implicitIndex = iterVal;
+            }
             Value ret = ListValue.wrap(result);
-            //revering scope
-            c.implicitValue = defaultVal;
-            c.implicitIndex = iterVal;
             return (cc, tt) -> ret;
         });
 
@@ -384,39 +409,44 @@ public class Loops
             // the watchdog is read once, outside the loop: see the comment in 'loop'
             final blossom.interpreter.ExecutionBudget budget = c.budget;
             Value result = Value.NULL;
-            for (int i = 0; iterator.hasNext(); i++)
+            try
             {
-                budget.tick();
-                Value next = iterator.next();
-                if(next == Value.EOL) {
-                    continue;
-                }
-                int seriously = i;
-                c.implicitValue = (cc, tt) -> next;
-                c.implicitIndex = (cc, tt) -> new NumericValue(seriously);
-                try
+                for (int i = 0; iterator.hasNext(); i++)
                 {
-                    if (expr.evalValue(c, Context.BOOLEAN).getBoolean())
+                    budget.tick();
+                    Value next = iterator.next();
+                    if(next == Value.EOL) {
+                        continue;
+                    }
+                    int seriously = i;
+                    c.implicitValue = (cc, tt) -> next;
+                    c.implicitIndex = (cc, tt) -> new NumericValue(seriously);
+                    try
                     {
-                        result = next;
+                        if (expr.evalValue(c, Context.BOOLEAN).getBoolean())
+                        {
+                            result = next;
+                            break;
+                        }
+                    }
+                    catch (BreakStatement stmt)
+                    {
+                        result = stmt.retval == null ? next : stmt.retval;
                         break;
                     }
-                }
-                catch (BreakStatement stmt)
-                {
-                    result = stmt.retval == null ? next : stmt.retval;
-                    break;
-                }
-                catch (ContinueStatement ignored)
-                {
-                    throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "loop", "'continue' inside 'first' function has no sense");
+                    catch (ContinueStatement ignored)
+                    {
+                        throw new BlossomRuntimeError(SourcePosition.UNKNOWN, "loop", "'continue' inside 'first' function has no sense");
+                    }
                 }
             }
-            //revering scope
-            ((AbstractListValue) rval).fatality();
+            finally
+            {
+                alv.fatality();
+                c.implicitValue = defaultVal;
+                c.implicitIndex = iterVal;
+            }
             Value whyWontYouTrustMeJava = result;
-            c.implicitValue = defaultVal;
-            c.implicitIndex = iterVal;
             return (cc, tt) -> whyWontYouTrustMeJava;
         });
 
@@ -442,26 +472,31 @@ public class Loops
             // the watchdog is read once, outside the loop: see the comment in 'loop'
             final blossom.interpreter.ExecutionBudget budget = c.budget;
             LazyValue result = LazyValue.TRUE;
-            for (int i = 0; iterator.hasNext(); i++)
+            try
             {
-                budget.tick();
-                Value next = iterator.next();
-                if(next == Value.EOL) {
-                    continue;
-                }
-                int seriously = i;
-                c.implicitValue = (cc, tt) -> next;
-                c.implicitIndex = (cc, tt) -> new NumericValue(seriously);
-                if (!expr.evalValue(c, Context.BOOLEAN).getBoolean())
+                for (int i = 0; iterator.hasNext(); i++)
                 {
-                    result = LazyValue.FALSE;
-                    break;
+                    budget.tick();
+                    Value next = iterator.next();
+                    if(next == Value.EOL) {
+                        continue;
+                    }
+                    int seriously = i;
+                    c.implicitValue = (cc, tt) -> next;
+                    c.implicitIndex = (cc, tt) -> new NumericValue(seriously);
+                    if (!expr.evalValue(c, Context.BOOLEAN).getBoolean())
+                    {
+                        result = LazyValue.FALSE;
+                        break;
+                    }
                 }
             }
-            //revering scope
-            ((AbstractListValue) rval).fatality();
-            c.implicitValue = defaultVal;
-            c.implicitIndex = iterVal;
+            finally
+            {
+                alv.fatality();
+                c.implicitValue = defaultVal;
+                c.implicitIndex = iterVal;
+            }
             return result;
         });
 
@@ -517,41 +552,51 @@ public class Loops
             // the watchdog is read once, outside the loop: see the comment in 'loop'
             final blossom.interpreter.ExecutionBudget budget = c.budget;
             int successCount = 0;
-            for (int i = 0; iterator.hasNext(); i++)
+            try
             {
-                budget.tick();
-                Value next = iterator.next();
-                if(next == Value.EOL) {
-                    continue;
-                }
-                int seriously = i;
-                c.implicitValue = (cc, tt) -> next;
-                c.implicitIndex = (cc, tt) -> new NumericValue(seriously);
-                Value result = Value.FALSE;
-                try
+                for (int i = 0; iterator.hasNext(); i++)
                 {
-                    result = expr.evalValue(c, t);
-                }
-                catch (BreakStatement | ContinueStatement stmt)
-                {
-                    if (stmt.retval != null)
-                    {
-                        result = stmt.retval;
+                    budget.tick();
+                    Value next = iterator.next();
+                    if(next == Value.EOL) {
+                        continue;
                     }
-                    if (stmt instanceof BreakStatement)
+                    int seriously = i;
+                    c.implicitValue = (cc, tt) -> next;
+                    c.implicitIndex = (cc, tt) -> new NumericValue(seriously);
+                    Value result = Value.FALSE;
+                    try
                     {
-                        break;
+                        result = expr.evalValue(c, t);
                     }
-                }
-                if (t != Context.VOID && result.getBoolean())
-                {
-                    successCount++;
+                    catch (BreakStatement | ContinueStatement stmt)
+                    {
+                        if (stmt.retval != null)
+                        {
+                            result = stmt.retval;
+                        }
+                        if (stmt instanceof BreakStatement)
+                        {
+                            // the iteration that breaks with a true value is a success like the others
+                            if (t != Context.VOID && result.getBoolean())
+                            {
+                                successCount++;
+                            }
+                            break;
+                        }
+                    }
+                    if (t != Context.VOID && result.getBoolean())
+                    {
+                        successCount++;
+                    }
                 }
             }
-            //revering scope
-            ((AbstractListValue) rval).fatality();
-            c.implicitValue = defaultVal;
-            c.implicitIndex = iterVal;
+            finally
+            {
+                alv.fatality();
+                c.implicitValue = defaultVal;
+                c.implicitIndex = iterVal;
+            }
             long promiseWontChange = successCount;
             return (cc, tt) -> new NumericValue(promiseWontChange);
         });
@@ -590,39 +635,44 @@ public class Loops
 
             // the watchdog is read once, outside the loop: see the comment in 'loop'
             final blossom.interpreter.ExecutionBudget budget = c.budget;
-            for (int i = 0; iterator.hasNext(); i++)
+            try
             {
-                budget.tick();
-                Value next = iterator.next();
-                if(next == Value.EOL) {
-                    continue;
-                }
-                Value promiseWontChangeYou = acc;
-                int seriously = i;
-                c.implicitAccumulator = (cc, tt) -> promiseWontChangeYou;
-                c.implicitValue = (cc, tt) -> next;
-                c.implicitIndex = (cc, tt) -> new NumericValue(seriously);
-                try
+                for (int i = 0; iterator.hasNext(); i++)
                 {
-                    acc = expr.evalValue(c, t);
-                }
-                catch (BreakStatement | ContinueStatement stmt)
-                {
-                    if (stmt.retval != null)
-                    {
-                        acc = stmt.retval;
+                    budget.tick();
+                    Value next = iterator.next();
+                    if(next == Value.EOL) {
+                        continue;
                     }
-                    if (stmt instanceof BreakStatement)
+                    Value promiseWontChangeYou = acc;
+                    int seriously = i;
+                    c.implicitAccumulator = (cc, tt) -> promiseWontChangeYou;
+                    c.implicitValue = (cc, tt) -> next;
+                    c.implicitIndex = (cc, tt) -> new NumericValue(seriously);
+                    try
                     {
-                        break;
+                        acc = expr.evalValue(c, t);
+                    }
+                    catch (BreakStatement | ContinueStatement stmt)
+                    {
+                        if (stmt.retval != null)
+                        {
+                            acc = stmt.retval;
+                        }
+                        if (stmt instanceof BreakStatement)
+                        {
+                            break;
+                        }
                     }
                 }
             }
-            //reverting scope
-            ((AbstractListValue) rval).fatality();
-            c.implicitAccumulator = accumulatorVal;
-            c.implicitValue = defaultVal;
-            c.implicitIndex = iterVal;
+            finally
+            {
+                alv.fatality();
+                c.implicitAccumulator = accumulatorVal;
+                c.implicitValue = defaultVal;
+                c.implicitIndex = iterVal;
+            }
 
             Value hopeItsEnoughPromise = acc;
             return (cc, tt) -> hopeItsEnoughPromise;

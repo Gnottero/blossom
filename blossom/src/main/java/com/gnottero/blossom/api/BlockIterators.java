@@ -64,7 +64,8 @@ public class BlockIterators
                 );
             }
             Vec3i upperRange = range;
-            if (lv.size() > rangeLocator.offset + 1) // +1 cause we still need the expression
+            // the expression is no longer in lv: anything after the range is the upper range
+            if (lv.size() > rangeLocator.offset)
             {
                 rangeLocator = Vector3Argument.findIn(lv, rangeLocator.offset);
                 if (rangeLocator.fromBlock)
@@ -105,47 +106,53 @@ public class BlockIterators
             LazyValue zVal = c.getVariable("_z");
             LazyValue defaultVal = c.implicitValue;
             int sCount = 0;
-            outer:
-            for (int y = cy - yrange; y <= cy + yprange; y++)
+            try
             {
-                int yFinal = y;
-                c.setVariable("_y", (ct, tt) -> new NumericValue(yFinal));
-                for (int x = cx - xrange; x <= cx + xprange; x++)
+                outer:
+                for (int y = cy - yrange; y <= cy + yprange; y++)
                 {
-                    int xFinal = x;
-                    c.setVariable("_x", (ct, tt) -> new NumericValue(xFinal));
-                    for (int z = cz - zrange; z <= cz + zprange; z++)
+                    int yFinal = y;
+                    c.setVariable("_y", (ct, tt) -> new NumericValue(yFinal));
+                    for (int x = cx - xrange; x <= cx + xprange; x++)
                     {
-                        int zFinal = z;
+                        int xFinal = x;
+                        c.setVariable("_x", (ct, tt) -> new NumericValue(xFinal));
+                        for (int z = cz - zrange; z <= cz + zprange; z++)
+                        {
+                            int zFinal = z;
 
-                        c.setVariable("_z", (ct, tt) -> new NumericValue(zFinal));
-                        Value blockValue = BlockValue.fromCoords(((ScriptContext) c), xFinal, yFinal, zFinal);
-                        c.implicitValue = (ct, tt) -> blockValue;
-                        Value result;
-                        try
-                        {
-                            result = expr.evalValue(c, t);
-                        }
-                        catch (ContinueStatement notIgnored)
-                        {
-                            result = notIgnored.retval;
-                        }
-                        catch (BreakStatement notIgnored)
-                        {
-                            break outer;
-                        }
-                        if (t != Context.VOID && result.getBoolean())
-                        {
-                            sCount += 1;
+                            c.setVariable("_z", (ct, tt) -> new NumericValue(zFinal));
+                            Value blockValue = BlockValue.fromCoords(((ScriptContext) c), xFinal, yFinal, zFinal);
+                            c.implicitValue = (ct, tt) -> blockValue;
+                            Value result;
+                            try
+                            {
+                                result = expr.evalValue(c, t);
+                            }
+                            catch (ContinueStatement notIgnored)
+                            {
+                                result = notIgnored.retval;
+                            }
+                            catch (BreakStatement notIgnored)
+                            {
+                                break outer;
+                            }
+                            if (t != Context.VOID && result.getBoolean())
+                            {
+                                sCount += 1;
+                            }
                         }
                     }
                 }
             }
-            //restoring outer scope
-            c.setVariable("_x", xVal);
-            c.setVariable("_y", yVal);
-            c.setVariable("_z", zVal);
-            c.implicitValue = defaultVal;
+            finally
+            {
+                // restoring outer scope, also when the expression throws
+                c.setVariable("_x", xVal);
+                c.setVariable("_y", yVal);
+                c.setVariable("_z", zVal);
+                c.implicitValue = defaultVal;
+            }
             int finalSCount = sCount;
             return (ct, tt) -> new NumericValue(finalSCount);
         });
@@ -185,46 +192,52 @@ public class BlockIterators
             LazyValue zVal = c.getVariable("_z");
             LazyValue defaultVal = c.implicitValue;
             int sCount = 0;
-            outer:
-            for (int y = miny; y <= maxy; y++)
+            try
             {
-                int yFinal = y;
-                c.setVariable("_y", (ct, tt) -> new NumericValue(yFinal));
-                for (int x = minx; x <= maxx; x++)
+                outer:
+                for (int y = miny; y <= maxy; y++)
                 {
-                    int xFinal = x;
-                    c.setVariable("_x", (ct, tt) -> new NumericValue(xFinal));
-                    for (int z = minz; z <= maxz; z++)
+                    int yFinal = y;
+                    c.setVariable("_y", (ct, tt) -> new NumericValue(yFinal));
+                    for (int x = minx; x <= maxx; x++)
                     {
-                        int zFinal = z;
-                        c.setVariable("_z", (ct, tt) -> new NumericValue(zFinal));
-                        Value blockValue = BlockValue.fromCoords(((ScriptContext) c), xFinal, yFinal, zFinal);
-                        c.implicitValue = (ct, tt) -> blockValue;
-                        Value result;
-                        try
+                        int xFinal = x;
+                        c.setVariable("_x", (ct, tt) -> new NumericValue(xFinal));
+                        for (int z = minz; z <= maxz; z++)
                         {
-                            result = expr.evalValue(c, t);
-                        }
-                        catch (ContinueStatement notIgnored)
-                        {
-                            result = notIgnored.retval;
-                        }
-                        catch (BreakStatement notIgnored)
-                        {
-                            break outer;
-                        }
-                        if (t != Context.VOID && result.getBoolean())
-                        {
-                            sCount += 1;
+                            int zFinal = z;
+                            c.setVariable("_z", (ct, tt) -> new NumericValue(zFinal));
+                            Value blockValue = BlockValue.fromCoords(((ScriptContext) c), xFinal, yFinal, zFinal);
+                            c.implicitValue = (ct, tt) -> blockValue;
+                            Value result;
+                            try
+                            {
+                                result = expr.evalValue(c, t);
+                            }
+                            catch (ContinueStatement notIgnored)
+                            {
+                                result = notIgnored.retval;
+                            }
+                            catch (BreakStatement notIgnored)
+                            {
+                                break outer;
+                            }
+                            if (t != Context.VOID && result.getBoolean())
+                            {
+                                sCount += 1;
+                            }
                         }
                     }
                 }
             }
-            //restoring outer scope
-            c.setVariable("_x", xVal);
-            c.setVariable("_y", yVal);
-            c.setVariable("_z", zVal);
-            c.implicitValue = defaultVal;
+            finally
+            {
+                // restoring outer scope, also when the expression throws
+                c.setVariable("_x", xVal);
+                c.setVariable("_y", yVal);
+                c.setVariable("_z", zVal);
+                c.implicitValue = defaultVal;
+            }
             int finalSCount = sCount;
             return (ct, tt) -> new NumericValue(finalSCount);
         });
@@ -267,8 +280,8 @@ public class BlockIterators
                 if (diffLocator.fromBlock)
                 {
                     sminx = Mth.floor(abs(diffLocator.vec.x - cx));
-                    sminy = Mth.floor(abs(diffLocator.vec.y - cx));
-                    sminz = Mth.floor(abs(diffLocator.vec.z - cx));
+                    sminy = Mth.floor(abs(diffLocator.vec.y - cy));
+                    sminz = Mth.floor(abs(diffLocator.vec.z - cz));
                 }
                 else
                 {
@@ -282,8 +295,8 @@ public class BlockIterators
                     if (posDiff.fromBlock)
                     {
                         smaxx = Mth.floor(abs(posDiff.vec.x - cx));
-                        smaxy = Mth.floor(abs(posDiff.vec.y - cx));
-                        smaxz = Mth.floor(abs(posDiff.vec.z - cx));
+                        smaxy = Mth.floor(abs(posDiff.vec.y - cy));
+                        smaxz = Mth.floor(abs(posDiff.vec.z - cz));
                     }
                     else
                     {

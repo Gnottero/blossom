@@ -36,7 +36,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
-import net.minecraft.core.QuartPos;
+import net.minecraft.core.SectionPos;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.particles.ExplosionParticleInfo;
@@ -56,7 +56,6 @@ import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.util.random.WeightedList;
-import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.level.ServerExplosion;
 import net.minecraft.world.level.chunk.PalettedContainer;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
@@ -97,7 +96,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.village.poi.PoiManager;
 import net.minecraft.world.entity.ai.village.poi.PoiRecord;
 import net.minecraft.world.entity.ai.village.poi.PoiType;
-import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -151,9 +149,6 @@ public class WorldAccess
             "teleport", TicketType.ENDER_PEARL,
             "unknown", TicketType.UNKNOWN
     );
-    /** dummy entity for dummy requirements in the loot tables (see snowball) */
-    private static FallingBlockEntity DUMMY_ENTITY = null;
-
     private static Value booleanStateTest(
             Context c,
             String name,
@@ -955,11 +950,8 @@ public class WorldAccess
                     {
                         tool.enchant(world.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.FORTUNE), (int) how);
                     }
-                    if (DUMMY_ENTITY == null)
-                    {
-                        DUMMY_ENTITY = new FallingBlockEntity(EntityTypes.FALLING_BLOCK, null);
-                    }
-                    Block.dropResources(state, world, where, be, DUMMY_ENTITY, tool);
+                    // no breaker: an entity built without a level crashed the loot tables that read it
+                    Block.dropResources(state, world, where, be, null, tool);
                 }
             }
             if (!playerBreak) // no tool info - block brokwn
@@ -1323,17 +1315,13 @@ public class WorldAccess
             ServerLevel world = cc.level();
             BlockPos pos = locator.block.getPos();
             ChunkAccess chunk = world.getChunk(pos); // getting level chunk instead of protochunk with biomes
-            int biomeX = QuartPos.fromBlock(pos.getX());
-            int biomeY = QuartPos.fromBlock(pos.getY());
-            int biomeZ = QuartPos.fromBlock(pos.getZ());
+            // since 26.4 the biome is stored per block, no longer in cells of 4x4x4
             try
             {
-                int i = QuartPos.fromBlock(chunk.getMinY());
-                int j = i + QuartPos.fromBlock(chunk.getHeight()) - 1;
-                int k = Math.clamp(biomeY, i, j);
-                int l = chunk.getSectionIndex(QuartPos.toBlock(k));
+                int y = Math.clamp(pos.getY(), chunk.getMinY(), chunk.getMaxY());
                 // accessing outside of the interface - might be dangerous in the future.
-                ((PalettedContainer<Holder<Biome>>) chunk.getSection(l).getBiomes()).set(biomeX & 3, k & 3, biomeZ & 3, biome);
+                ((PalettedContainer<Holder<Biome>>) chunk.getSection(chunk.getSectionIndex(y)).getBiomes()).set(
+                        SectionPos.sectionRelative(pos.getX()), SectionPos.sectionRelative(y), SectionPos.sectionRelative(pos.getZ()), biome);
             }
             catch (Throwable var8)
             {
@@ -1341,7 +1329,8 @@ public class WorldAccess
             }
             if (doImmediateUpdate)
             {
-                WorldTools.forceChunkUpdate(pos, world);
+                // the game has its own packet for biomes: no need to resend the whole chunk
+                world.getChunkSource().chunkMap.resendBiomesForChunks(List.of(chunk));
             }
             chunk.markUnsaved();
             return Value.TRUE;
