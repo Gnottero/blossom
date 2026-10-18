@@ -231,8 +231,8 @@ public class FunctionValue extends Value implements Callables.ILazyFunction
         catch (final blossom.exception.BlossomError typed)
         {
             // A typed error propagates with its own frame: wrapping it in an ExpressionException
-            // here would erase category, position, and suggestion, i.e. everything §4 of the
-            // plan exists for
+            // here would erase category, position, and suggestion, i.e. everything a typed
+            // error exists for
             throw typed.pushFrame(fullName(), blossom.exception.BlossomError.positionOf(expression, token));
         }
         catch (InternalExpressionException exc)
@@ -425,7 +425,7 @@ public class FunctionValue extends Value implements Callables.ILazyFunction
         {
             String arg = args.get(i);
             // No copy: the variable name no longer lives on the value, so binding an argument to
-            // a parameter can no longer rename it out from under the caller. See D-093
+            // a parameter can no longer rename it out from under the caller
             Value val = arguments.get(i);
             if (argumentTypes != null)
             {

@@ -1,0 +1,32 @@
+module tower.construction;
+
+import "core.mc.block" as block;
+import "core.list" as list;
+import "core.math" as math;
+
+// The tower's material lives here and not in main: whoever changes how the construction looks
+// doesn't need to go read the event logic.
+let material = 'stone_bricks';
+let top_material = 'sea_lantern';
+
+// Private: it's a detail of how things get built, not something other modules should be able to use.
+fn column(x, y, z, height, block_name) -> (
+    list.map(list.range(height), block.set([x, y + _, z], block_name));
+    height
+);
+
+pub fn build(base, height) -> (
+    x = base:0;
+    y = base:1;
+    z = base:2;
+    column(x, y, z, height, material);
+    block.set([x, y + height, z], top_material);
+    height + 1
+);
+
+pub fn dismantle(base, height) -> (
+    column(base:0, base:1, base:2, height + 1, 'air');
+    true
+);
+
+pub fn suggested_height(light) -> math.max(4, 16 - light);

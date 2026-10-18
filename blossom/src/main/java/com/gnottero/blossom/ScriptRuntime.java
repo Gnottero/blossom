@@ -50,7 +50,7 @@ public class ScriptRuntime
 
     /**
      * The execution limits applied to apps that declare none of their own
-     * (PIANO_LINGUAGGIO.md §9). This is the watchdog: without it, a script looping inside an event
+     *. This is the watchdog: without it, a script looping inside an event
      * stops the tick and the server with it.
      */
     public volatile blossom.interpreter.ExecutionBudget.Policy defaultWatchdog =
@@ -173,7 +173,7 @@ public class ScriptRuntime
 
     /**
      * Loads (or reloads) app {@code name} from file {@code <world>/blossom/<name>.bs}, running its
-     * il codice a livello di modulo.
+     * module-level code.
      */
     public Value load(CommandSourceStack source, String name) throws IOException
     {
@@ -412,7 +412,7 @@ public class ScriptRuntime
         return evaluate(interpreter, source, code);
     }
 
-    // --- profiling (PIANO_LINGUAGGIO.md §9) ---
+    // --- profiling ---
 
     /**
      * Runs {@code code} measuring where the time goes, function by function.

@@ -1,5 +1,5 @@
 {
-  "name": "contapassi",
+  "name": "step-counter",
   "version": "1.0.0",
   "entrypoint": "src/main.bs",
   "api_level": "2.0"

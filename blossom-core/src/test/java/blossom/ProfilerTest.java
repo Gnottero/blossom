@@ -14,7 +14,7 @@ import blossom.interpreter.Interpreter;
 import blossom.interpreter.Profiler;
 
 /**
- * The per function profiler (PIANO_LINGUAGGIO.md §9): what sits behind {@code /blossom profile}.
+ * The per function profiler: what sits behind {@code /blossom profile}.
  *
  * <p>The tests check what the profiler <em>attributes</em>, not how many milliseconds it measures:
  * absolute times depend on the machine and a test checking them is a test that fails at random. The
@@ -52,9 +52,9 @@ class ProfilerTest
 
         Profiler.Entry wrapper = entryFor(profiler, "wrapper").orElseThrow();
         Profiler.Entry work = entryFor(profiler, "work").orElseThrow();
-        assertTrue(wrapper.selfNanos() <= wrapper.totalNanos(), "il tempo proprio non puo' superare il totale");
+        assertTrue(wrapper.selfNanos() <= wrapper.totalNanos(), "self time cannot exceed the total");
         assertTrue(work.selfNanos() > wrapper.selfNanos(),
-                "il lavoro va attribuito a chi lo fa, non a chi lo racchiude: "
+                "work is charged to whoever does it, not to whoever wraps it: "
                         + work.selfNanos() + " vs " + wrapper.selfNanos());
     }
 

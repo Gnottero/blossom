@@ -4,7 +4,7 @@ import blossom.interpreter.Interpreter;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-/** C.4: the match construct. */
+/** The match construct. */
 class MatchTest
 {
     private static String eval(String code)
@@ -13,62 +13,62 @@ class MatchTest
     }
 
     @Test
-    void unaFormaLetteraleCombaciaPerUguaglianza()
+    void aLiteralPatternMatchesByEquality()
     {
-        assertEquals("uno", eval("match(1, 1 -> 'uno', 2 -> 'due', else -> 'altro')"));
-        assertEquals("due", eval("match(2, 1 -> 'uno', 2 -> 'due', else -> 'altro')"));
+        assertEquals("one", eval("match(1, 1 -> 'one', 2 -> 'two', else -> 'other')"));
+        assertEquals("two", eval("match(2, 1 -> 'one', 2 -> 'two', else -> 'other')"));
     }
 
     @Test
-    void elseEIlRamoFinale()
+    void elseIsTheFinalArm()
     {
-        assertEquals("altro", eval("match(9, 1 -> 'uno', else -> 'altro')"));
+        assertEquals("other", eval("match(9, 1 -> 'one', else -> 'other')"));
     }
 
     @Test
-    void senzaNessunBraccioCheCombaciaEnull()
+    void withNoMatchingArmItIsNull()
     {
-        assertEquals("null", eval("match(9, 1 -> 'uno')"));
+        assertEquals("null", eval("match(9, 1 -> 'one')"));
     }
 
     @Test
-    void unNomeCatturaIlSoggetto()
+    void aNameCapturesTheSubject()
     {
         assertEquals("18", eval("match(9, 0 -> 'zero', d -> d * 2)"));
     }
 
     @Test
-    void unNomeTipatoCombaciaSoloSuQuelTipo()
+    void aTypedNameMatchesOnlyThatType()
     {
-        assertEquals("numero 5", eval("match(5, s: str -> 'testo ' + s, n: num -> 'numero ' + n)"));
-        assertEquals("testo ciao", eval("match('ciao', s: str -> 'testo ' + s, n: num -> 'numero ' + n)"));
+        assertEquals("number 5", eval("match(5, s: str -> 'text ' + s, n: num -> 'number ' + n)"));
+        assertEquals("text hello", eval("match('hello', s: str -> 'text ' + s, n: num -> 'number ' + n)"));
     }
 
     @Test
-    void leStringheCombacianoComeIValori()
+    void stringsMatchLikeValues()
     {
-        assertEquals("saluto", eval("match('ciao', 'ciao' -> 'saluto', else -> 'boh')"));
+        assertEquals("greeting", eval("match('hello', 'hello' -> 'greeting', else -> 'what')"));
     }
 
     @Test
-    void ilSoggettoSiValutaUnaVoltaSola()
+    void theSubjectIsEvaluatedOnce()
     {
         // a list is passed by reference, so the function really sees it
         assertEquals("2", eval("import 'core.list' as list; "
-                + "let visite = []; fn conta() -> (list.put(visite, null, 1); 5); "
-                + "match(conta(), 5 -> conta(), else -> 0); list.size(visite)"));
+                + "let visits = []; fn count() -> (list.put(visits, null, 1); 5); "
+                + "match(count(), 5 -> count(), else -> 0); list.size(visits)"));
     }
 
     @Test
-    void iCorpiNonPresiNonSiValutano()
+    void armsNotTakenAreNotEvaluated()
     {
         assertEquals("0", eval("n = 0; match(1, 1 -> 0, 2 -> (n += 1), else -> (n += 1)); n"));
     }
 
     @Test
-    void unMatchStaDentroUnEspressione()
+    void aMatchFitsInsideAnExpression()
     {
-        assertEquals("[uno, due]", eval("import 'core.list' as list; "
-                + "list.map([1, 2], fn(x) -> match(x, 1 -> 'uno', 2 -> 'due', else -> '?'))"));
+        assertEquals("[one, two]", eval("import 'core.list' as list; "
+                + "list.map([1, 2], fn(x) -> match(x, 1 -> 'one', 2 -> 'two', else -> '?'))"));
     }
 }

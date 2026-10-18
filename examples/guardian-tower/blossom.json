@@ -1,5 +1,5 @@
 {
-  "name": "torre-guardiana",
+  "name": "guardian-tower",
   "version": "0.1.0",
   "entrypoint": "src/main.bs",
   "api_level": "2.0"

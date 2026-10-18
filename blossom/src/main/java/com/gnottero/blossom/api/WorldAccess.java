@@ -983,8 +983,8 @@ public class WorldAccess
             {
                 return Value.FALSE;
             }
-            // rottura artificiale: passa per il gioco, quindi drop e statistiche restano quelli
-            // veri, ma non è un'azione del giocatore e nessun evento deve partire
+            // an artificial break: it goes through the game, so drops and statistics stay the real
+            // ones, but it is not an action of the player and no event must fire
             if (!Event.suppressing(() -> player.gameMode.destroyBlock(where)))
             {
                 return Value.FALSE;

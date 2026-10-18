@@ -300,5 +300,5 @@ fn classify(x) -> (
 );
 ```
 
-Recursion depth has a ceiling (256 by default, see [chapter 9](09-concorrenza.md)): crossing it is
+Recursion depth has a ceiling (256 by default, see [chapter 9](09-concurrency.md)): crossing it is
 an `ExecutionBudgetError`, not a JVM stack overflow that takes the server down with it.

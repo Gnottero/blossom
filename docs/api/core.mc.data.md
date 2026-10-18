@@ -34,4 +34,4 @@ The generation also writes `pack.mcmeta`, and keeps `data/.blossom-generated`: t
 generators produced. Regenerating rewrites and cleans up **only those**, so a json written by hand in
 the same folder is never touched.
 
-See [13. Game content](../guide/13-contenuti.md).
+See [13. Game content](../guide/13-game-content.md).

@@ -686,7 +686,7 @@ public class Expression
         if (exc instanceof final BlossomError typed)
         {
             // A typed error already knows where it is and what to suggest: wrapping it in an
-            // ExpressionException would lose the category and suggestion, which are the whole point of §4
+            // ExpressionException would lose the category and suggestion, which are the whole point of a typed error
             return typed.pushFrame(e.module == null ? "<code>" : e.module.name(),
                     new SourcePosition(e.getModuleName(), token.lineno + 1, token.linepos + 1));
         }
@@ -1193,7 +1193,7 @@ public class Expression
      * <p>In the two contexts where an identifier is not a read (on the left side of an assignment,
      * and inside a signature) it doesn't produce the value but a {@link VariableReferenceValue}:
      * that's the l-value of variables, and it takes the place of the name every value used to
-     * carry around (D-093). Inside a signature the value isn't even looked up, because there the
+     * carry around. Inside a signature the value isn't even looked up, because there the
      * name belongs to a parameter that doesn't exist yet.
      */
     private static VariableRead read(String name, LazyValue value)

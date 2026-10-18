@@ -46,7 +46,7 @@ class VersionTest
         // a release comes after its pre-release, which is the point of having pre-releases
         assertTrue(Version.parse("1.0.0").compareTo(Version.parse("1.0.0-rc1")) > 0);
         assertTrue(Version.parse("1.0.0-alpha").compareTo(Version.parse("1.0.0-beta")) < 0);
-        assertTrue(Version.parse("1.0.0-2").compareTo(Version.parse("1.0.0-alpha")) < 0, "numerici prima degli alfanumerici");
+        assertTrue(Version.parse("1.0.0-2").compareTo(Version.parse("1.0.0-alpha")) < 0, "numeric before alphanumeric");
         assertTrue(Version.parse("1.0.0-rc").compareTo(Version.parse("1.0.0-rc.1")) < 0, "meno identificatori precede");
     }
 
@@ -123,7 +123,7 @@ class VersionTest
         ApiLevel runtime = new ApiLevel(1, 3);
         assertTrue(new ApiLevel(1, 0).isSupportedBy(runtime));
         assertTrue(new ApiLevel(1, 3).isSupportedBy(runtime));
-        assertFalse(new ApiLevel(1, 4).isSupportedBy(runtime), "l'app usa qualcosa che non c'e' ancora");
+        assertFalse(new ApiLevel(1, 4).isSupportedBy(runtime), "the app uses something that is not there yet");
         assertFalse(new ApiLevel(2, 0).isSupportedBy(runtime), "e' un'altra API");
         assertFalse(new ApiLevel(0, 9).isSupportedBy(runtime));
     }

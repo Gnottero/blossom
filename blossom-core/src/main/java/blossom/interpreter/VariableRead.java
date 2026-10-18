@@ -7,7 +7,7 @@ package blossom.interpreter;
  * never changes. Whatever assigns, {@code =}, {@code +=}, {@code <>}, {@code let}, asks here instead
  * of evaluating the left side and reading it off what comes out. That way an assignment does not
  * read the old value to find out what the variable is called, and no value has to carry the name of
- * where it ended up. See DECISIONI.md D-093.
+ * where it ended up.
  */
 public interface VariableRead extends LazyValue
 {

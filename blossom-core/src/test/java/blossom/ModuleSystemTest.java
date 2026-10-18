@@ -132,7 +132,7 @@ class ModuleSystemTest
 
         ImportError error = assertThrows(ImportError.class, () -> Interpreter.forProject(root));
         assertTrue(error.getMessage().contains("secret"), error.getMessage());
-        assertTrue(error.getMessage().contains("pub"), "l'errore deve dire come si esporta: " + error.getMessage());
+        assertTrue(error.getMessage().contains("pub"), "the error must say how to export: " + error.getMessage());
     }
 
     @Test
@@ -357,11 +357,11 @@ class ModuleSystemTest
 
                 import "shared_utils/text" as text;
 
-                pub let value = text.shout('ciao');
+                pub let value = text.shout('hello');
                 """);
 
         Interpreter interpreter = Interpreter.forProject(root);
-        assertEquals("ciao!", interpreter.eval("value").getString());
+        assertEquals("hello!", interpreter.eval("value").getString());
     }
 
     // --- autoload: who starts on their own when the world opens ---

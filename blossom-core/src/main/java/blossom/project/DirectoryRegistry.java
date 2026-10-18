@@ -15,7 +15,7 @@ import java.util.stream.Stream;
  * ├── vector/
  * │   ├── 1.0.0/   (blossom.json, src/)
  * │   └── 1.4.0/
- * └── torre/2.1.0/
+ * └── tower/2.1.0/
  * </pre>
  *
  * <p>This is not a fallback for tests: it's the right shape for anyone keeping their own libraries

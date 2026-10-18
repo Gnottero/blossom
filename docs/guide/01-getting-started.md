@@ -102,7 +102,7 @@ app, with its functions and its state in scope:
 | `/blossom profile in <app> <code>` | the same, inside a loaded app |
 | `/blossom profile start <app>` · `stop <app>` | measures a live app, event handlers included |
 
-The tools of `/blossom script` have [their own chapter](14-strumenti.md).
+The tools of `/blossom script` have [their own chapter](14-script-tools.md).
 
 Reloading an app **removes its handlers before re-running the file**, so two copies of the same
 listener are never attached to the same event. That is why registering handlers in the module body,
@@ -131,7 +131,7 @@ As soon as the file grows, it becomes a directory with a manifest:
 ```
 
 It loads with the same command: `/blossom script load my-app`. How to split modules, what they
-export and how to depend on another project is [chapter 6](06-moduli.md).
+export and how to depend on another project is [chapter 6](06-modules.md).
 
 ## Where the data goes
 
@@ -141,11 +141,11 @@ export and how to depend on another project is [chapter 6](06-moduli.md).
 | per-app data (the `data` root of [`core.io`](../api/core.io.md)) | `<world>/blossom/data/` |
 | data shared between apps (the `shared` root) | `<world>/blossom/shared/` |
 | dependencies downloaded from a registry | `<world>/blossom/.cache/` |
-| the server configuration ([chapter 12](12-configurazione.md)) | `config/blossomscript.json` |
+| the server configuration ([chapter 12](12-configuration.md)) | `config/blossomscript.json` |
 
 Everything a script can open lives under the world directory: the roots of
 [`core.io`](../api/core.io.md) are declared in there and cannot escape it, and the rest of the
 server's disk is unreachable from any configuration.
 
 One app does not see another app's data by accident. To pass something along there are the
-`shared_*` files and application events ([chapter 8](08-eventi.md)).
+`shared_*` files and application events ([chapter 8](08-events.md)).

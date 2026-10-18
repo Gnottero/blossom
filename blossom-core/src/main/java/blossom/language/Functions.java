@@ -28,8 +28,7 @@ public class Functions
     public static void apply(Expression expression) // public just to get the javadoc right
     {
         // the old import(name, symbols...) no longer exists: import is now a preamble
-        // declaration, resolved at load time, and symbols are reached through an alias (see
-        // DECISIONI.md)
+        // declaration, resolved at load time, and symbols are reached through an alias
 
         // needs to be lazy because of custom context of execution of arguments as a signature
         expression.addCustomFunction("call", new Callables.AbstractLazyFunction(-1, "call")

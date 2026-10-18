@@ -31,9 +31,7 @@ bin/
 run/
 logs/
 
-# il pacchetto costruito dell'estensione
+# the packaged extension
 vscode-blossom/*.vsix
 vscode-blossom/node_modules/
 
-# note dell'assistente
-CLAUDE.md

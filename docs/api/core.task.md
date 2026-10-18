@@ -14,7 +14,7 @@ The server has one thread that runs the world twenty times a second. Everything 
 an event happens on that thread, and while it happens the world stands still. A task exists to move
 work off it. It is **concurrency, not parallelism**: starting five tasks does not make a computation
 five times faster, and the coordination has a cost of its own. See
-[9. Concurrency](../guide/09-concorrenza.md) for the patterns.
+[9. Concurrency](../guide/09-concurrency.md) for the patterns.
 
 ---
 

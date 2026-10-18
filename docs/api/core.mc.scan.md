@@ -20,7 +20,7 @@ arguments, interchangeably.
 **These loops are the expensive part of most scripts.** The work is the product of the three
 dimensions, so a radius of 32 is 274,625 blocks and a radius of 16 is 35,937 — an eighth of it.
 Narrow the volume before walking it, and for anything large use a task
-([9. Concurrency](../guide/09-concorrenza.md)).
+([9. Concurrency](../guide/09-concurrency.md)).
 
 ---
 

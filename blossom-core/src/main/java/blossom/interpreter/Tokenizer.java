@@ -309,7 +309,7 @@ public class Tokenizer
         }
         if (surface.equals("mut"))
         {
-            return; // 'mut' da solo non e' un operatore: esiste solo attaccato a 'let'
+            return; // 'mut' alone is not an operator: it only exists attached to 'let'
         }
         token.disguiseAs(surface, null);
         token.surface = surface + "u";

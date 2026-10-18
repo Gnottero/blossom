@@ -3,7 +3,7 @@ package blossom.exception;
 /**
  * The script has exceeded its execution budget: too much time, or too much recursion.
  *
- * <p>This is the watchdog's error (PIANO_LINGUAGGIO.md §9). It deliberately lives outside the
+ * <p>This is the watchdog's error. It deliberately lives outside the
  * catchable {@code try}/{@code catch} hierarchy: if a script could intercept it, an infinite loop
  * inside a {@code try} would keep running and the watchdog would be useless. The only way out is
  * for execution to end.

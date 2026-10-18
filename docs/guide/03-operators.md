@@ -72,7 +72,7 @@ Hence the idiom for a fallback value:
 name = configuration:'name' || 'unnamed';
 ```
 
-`!` negates according to the truthiness rules of [chapter 2](02-valori.md): `!0`, `!''`, `!null` and
+`!` negates according to the truthiness rules of [chapter 2](02-values.md): `!0`, `!''`, `!null` and
 `![]` are all `true`.
 
 ## Access: `:`
@@ -86,7 +86,7 @@ m:'new' = 1;            // creates the key
 ```
 
 `:` is syntax, not a function: it needs no import. Inside a function signature the same character
-means something else: the type of a parameter (`fn f(a: num)`), see [chapter 4](04-funzioni.md).
+means something else: the type of a parameter (`fn f(a: num)`), see [chapter 4](04-functions.md).
 
 A negative index needs parentheses: `l:(-1)`, because `l:-1` does not parse. Alternatively,
 `list.get(l, -1)`.
@@ -202,7 +202,7 @@ call('f', ...[1, 2]);       // 3
 [0, ...[1, 2]];             // [0, 1, 2]
 ```
 
-As the last parameter of a signature, it collects the rest (see [chapter 4](04-funzioni.md)):
+As the last parameter of a signature, it collects the rest (see [chapter 4](04-functions.md)):
 
 ```
 fn how_many(first, ...rest) -> [first, rest];

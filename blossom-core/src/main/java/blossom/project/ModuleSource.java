@@ -16,8 +16,7 @@ import blossom.exception.SourcePosition;
  *
  * <p>{@code module ...;} and {@code import ... as ...;} are declarations, not expressions: they must
  * be read before compiling anything, because the resolver needs to know which modules are needed
- * before the body's tree is even built (see PIANO_LINGUAGGIO.md §3.2 and §4: import errors are
- * loading errors, not runtime surprises).
+ * before the body's tree is even built: import errors are loading errors, not runtime surprises.
  *
  * <p>The returned body has the same length as the original source (the preamble is replaced with
  * spaces, keeping the line breaks), so line and column numbers in any error from the body stay the

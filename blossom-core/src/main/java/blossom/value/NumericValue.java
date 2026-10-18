@@ -55,9 +55,9 @@ public class NumericValue extends Value
      *
      * <p>There used to be a cache of shared instances for small integers here, removed because
      * values then carried a mutable field with the name of the variable they were bound to, and
-     * shared instances would have let multiple threads overwrite it (see DECISIONI.md D-071). That
-     * field is gone now, the name lives on the node that reads the variable instead, see {@link
-     * VariableReferenceValue} and D-093, so the obstacle is gone and the cache can be reconsidered
+     * shared instances would have let multiple threads overwrite it. That field is gone now, the
+     * name lives on the node that reads the variable instead (see {@link VariableReferenceValue}),
+     * so the obstacle is gone and the cache can be reconsidered
      * on its own merits, no longer as a correctness issue.
      */
     public static NumericValue of(long value)

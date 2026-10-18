@@ -13,7 +13,7 @@ import blossom.interpreter.Interpreter;
 /**
  * Tests for the extracted core: they run on the JVM alone, with no Minecraft and no downloads.
  *
- * <p>They cover what Phase 1 must guarantee before touching syntax: parsing, arithmetic, functions,
+ * <p>They cover the basics everything else stands on: parsing, arithmetic, functions,
  * closures, lists and maps, errors.
  */
 class InterpreterTest
@@ -199,21 +199,21 @@ class InterpreterTest
     void reportsSyntaxErrors()
     {
         ParseError e = assertThrows(ParseError.class, () -> eval("1 +"));
-        assertTrue(e.getMessage().length() > 0, "un errore di sintassi deve avere un messaggio");
+        assertTrue(e.getMessage().length() > 0, "a syntax error must have a message");
     }
 
     @Test
     void reportsUnknownFunctions()
     {
         BlossomError e = assertThrows(BlossomError.class, () -> eval("no_such_function(1)"));
-        assertTrue(e.getMessage().contains("no_such_function"), "il messaggio deve nominare il simbolo: " + e.getMessage());
+        assertTrue(e.getMessage().contains("no_such_function"), "the message must name the symbol: " + e.getMessage());
     }
 
     @Test
     void reportsWrongArity()
     {
         BlossomError e = assertThrows(BlossomError.class, () -> eval("f(a, b) -> a + b; f(1)"));
-        assertTrue(e.getMessage().toLowerCase().contains("arguments"), "il messaggio deve parlare di argomenti: " + e.getMessage());
+        assertTrue(e.getMessage().toLowerCase().contains("arguments"), "the message must talk about arguments: " + e.getMessage());
     }
 
     @Test

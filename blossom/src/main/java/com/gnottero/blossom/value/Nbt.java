@@ -27,7 +27,7 @@ import blossom.value.Value;
  * Conversion from a Blossom value to NBT.
  *
  * <p>This lives here rather than in the core values on purpose: NBT is a Minecraft format, and the
- * core must stay unaware of it (PIANO_LINGUAGGIO.md §1). Game-layer values that know how to
+ * core must stay unaware of it. Game-layer values that know how to
  * serialize themselves implement {@link Serializable}; everything else goes through {@link #toTag}.
  */
 public final class Nbt

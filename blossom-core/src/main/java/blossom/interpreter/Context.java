@@ -37,7 +37,7 @@ public class Context
     private ThreadValue threadContext = null;
 
     /**
-     * This execution's watchdog (PIANO_LINGUAGGIO.md §9).
+     * This execution's watchdog.
      *
      * <p>Public and non-final because it's the field read most often of all (once per loop
      * iteration), and because a child frame must be able to inherit it without going through a

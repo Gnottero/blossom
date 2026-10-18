@@ -13,7 +13,7 @@ import java.util.Locale;
  */
 public record ModuleName(String value)
 {
-    /** the extension of Blossom sources, as per PIANO_LINGUAGGIO.md §7 */
+    /** the extension of Blossom sources */
     public static final String EXTENSION = ".bs";
     /** the extension of libraries: a module with no entrypoint of its own */
     public static final String LIBRARY_EXTENSION = ".bsl";

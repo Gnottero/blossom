@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-/** C.3: named arguments and default values. */
+/** Named arguments and default values. */
 class NamedArgumentsTest
 {
     private static String eval(String code)
@@ -14,59 +14,59 @@ class NamedArgumentsTest
     }
 
     @Test
-    void unParametroPuoAvereUnValoreDiRiserva()
+    void aParameterCanHaveADefaultValue()
     {
         assertEquals("[1, true]", eval("fn f(a, b = true) -> [a, b]; f(1)"));
     }
 
     @Test
-    void ilValoreDiRiservaSiPuoSovrascrivere()
+    void theDefaultValueCanBeOverridden()
     {
         assertEquals("[1, 9]", eval("fn f(a, b = 9) -> [a, b]; f(1, 2); f(1)"));
     }
 
     @Test
-    void unArgomentoSiPuoPassarePerNome()
+    void anArgumentCanBePassedByName()
     {
         assertEquals("[1, 5]", eval("fn f(a, b = 9) -> [a, b]; f(1, b = 5)"));
     }
 
     @Test
-    void gliArgomentiConNomePossonoAndareInOrdineDiverso()
+    void namedArgumentsCanComeInAnyOrder()
     {
         assertEquals("[1, 2, 3]", eval("fn f(a, b, c) -> [a, b, c]; f(1, c = 3, b = 2)"));
     }
 
     @Test
-    void ilValoreDiRiservaSiRivalutaAdOgniChiamata()
+    void theDefaultValueIsReevaluatedOnEveryCall()
     {
         // if it were evaluated once, the two lists would be the same one
         assertEquals("[9]", eval("fn f(l = []) -> (l += 9; l); f(); f()"));
     }
 
     @Test
-    void unNomeCheNonEsisteEUnErroreChiaro()
+    void aNameThatDoesNotExistIsAClearError()
     {
         Exception e = assertThrows(Exception.class, () -> eval("fn f(a) -> a; f(nope = 1)"));
         assertEquals(true, e.getMessage().contains("no parameter named"));
     }
 
     @Test
-    void unArgomentoSenzaNomeDopoUnoConNomeEUnErrore()
+    void aPositionalArgumentAfterANamedOneIsAnError()
     {
         Exception e = assertThrows(Exception.class, () -> eval("fn f(a, b) -> a; f(a = 1, 2)"));
         assertEquals(true, e.getMessage().contains("named ones go last"), e.getMessage());
     }
 
     @Test
-    void loStessoParametroDueVolteEUnErrore()
+    void theSameParameterTwiceIsAnError()
     {
         Exception e = assertThrows(Exception.class, () -> eval("fn f(a) -> a; f(1, a = 2)"));
         assertEquals(true, e.getMessage().contains("given twice"));
     }
 
     @Test
-    void funzionaAncheSuUnaLambda()
+    void worksOnALambdaToo()
     {
         assertEquals("[1, 7]", eval("f = fn(a, b = 7) -> [a, b]; f(1)"));
     }

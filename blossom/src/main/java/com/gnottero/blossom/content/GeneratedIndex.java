@@ -23,9 +23,9 @@ public final class GeneratedIndex
     public static final String FILE_NAME = ".blossom-generated";
 
     private static final String HEADER =
-            "# I file qui sotto li scrive '/blossom data generate'.\n"
-            + "# Alla rigenerazione vengono riscritti, e quelli che non servono piu' tolti.\n"
-            + "# Quello che non e' elencato qui non viene toccato: e' il posto dove scrivere a mano.\n";
+            "# The files below are written by '/blossom data generate'.\n"
+            + "# Regenerating rewrites them, and removes the ones no longer needed.\n"
+            + "# Whatever is not listed here is never touched: that is the place for hand-written files.\n";
 
     private GeneratedIndex()
     {

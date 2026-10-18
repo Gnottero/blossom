@@ -8,12 +8,12 @@ import blossom.interpreter.Interpreter;
 import blossom.value.Value;
 
 /**
- * Baseline micro-benchmark for the core, required by PIANO_LINGUAGGIO.md §9.
+ * Baseline micro-benchmark for the core.
  *
  * <p>Measures the two things a tree-walking interpreter pays most for inside a tick loop: the
  * per-iteration cost of an arithmetic loop and the cost of a call to a user-defined function.
  * Deliberately avoids JMH, an extra dependency and a separate module to measure two numbers that
- * only serve as a comparison between the Phase 1 baseline and the Phase 8 result.
+ * only serve to compare one version of the interpreter with the next.
  * It does what JMH would do by hand instead: warmup, repetitions, and reports the median.
  */
 public final class CoreBenchmark
@@ -21,7 +21,7 @@ public final class CoreBenchmark
     private static final int WARMUP_RUNS = 5;
     private static final int MEASURED_RUNS = 15;
 
-    /** Preamble for cases that use the library: since Phase 5 the built-ins are no longer global. */
+    /** Preamble for cases that use the library: the built-ins are not global. */
     private static final String IMPORTS = "import \"core.list\" as list;\n";
 
     /**
@@ -46,32 +46,32 @@ public final class CoreBenchmark
     public static void main(String[] args)
     {
         List<Case> cases = List.of(
-                new Case("loop aritmetico", "sum = 0; loop(1000000, sum += _ * 2 - 1); sum", 1_000_000),
-                new Case("chiamate a funzione", "f(x) -> x * 2 - 1; sum = 0; loop(200000, sum += f(_)); sum", 200_000),
+                new Case("arithmetic loop", "sum = 0; loop(1000000, sum += _ * 2 - 1); sum", 1_000_000),
+                new Case("function calls", "f(x) -> x * 2 - 1; sum = 0; loop(200000, sum += f(_)); sum", 200_000),
                 // a call with more arguments: the frame cost shows up here, where passing one
                 // extra parameter is the only thing that changes compared to the case above
-                new Case("chiamate a quattro argomenti", "g(a, b, c, d) -> a * b - c + d; sum = 0; loop(200000, sum += g(_, 2, 1, _)); sum", 200_000),
-                new Case("accesso a lista", IMPORTS + "l = list.map(list.range(1000), _); sum = 0; loop(200000, sum += l:(_ % 1000)); sum", 200_000),
-                new Case("costruzione di mappe", "loop(50000, m = {'a' -> _, 'b' -> _ * 2}; m:'b'); 0", 50_000),
+                new Case("four-argument calls", "g(a, b, c, d) -> a * b - c + d; sum = 0; loop(200000, sum += g(_, 2, 1, _)); sum", 200_000),
+                new Case("list access", IMPORTS + "l = list.map(list.range(1000), _); sum = 0; loop(200000, sum += l:(_ % 1000)); sum", 200_000),
+                new Case("map construction", "loop(50000, m = {'a' -> _, 'b' -> _ * 2}; m:'b'); 0", 50_000),
                 new Case("parsing", null, 1),
                 // the same two cases with the watchdog on: this is the configuration that runs
                 // in-game, and the difference from the corresponding case above is its cost
-                new Case("loop, watchdog acceso", "sum = 0; loop(1000000, sum += _ * 2 - 1); sum", 1_000_000,
+                new Case("loop, watchdog on", "sum = 0; loop(1000000, sum += _ * 2 - 1); sum", 1_000_000,
                         new blossom.interpreter.ExecutionBudget.Policy(600_000, 256)),
-                new Case("chiamate, watchdog acceso", "f(x) -> x * 2 - 1; sum = 0; loop(200000, sum += f(_)); sum", 200_000,
+                new Case("calls, watchdog on", "f(x) -> x * 2 - 1; sum = 0; loop(200000, sum += f(_)); sum", 200_000,
                         new blossom.interpreter.ExecutionBudget.Policy(600_000, 256)),
                 // the same two cases without the compilation step (constant folding and tree
                 // compaction): the difference is what that step already gains, and is the
                 // comparison term for deciding whether a more aggressive level is needed
-                new Case("loop, senza compilazione", "sum = 0; loop(1000000, sum += _ * 2 - 1); sum", 1_000_000,
+                new Case("loop, no compilation", "sum = 0; loop(1000000, sum += _ * 2 - 1); sum", 1_000_000,
                         blossom.interpreter.ExecutionBudget.Policy.UNLIMITED,
                         blossom.interpreter.Expression.LoadOverride.CANONICAL),
-                new Case("chiamate, senza compilazione", "f(x) -> x * 2 - 1; sum = 0; loop(200000, sum += f(_)); sum", 200_000,
+                new Case("calls, no compilation", "f(x) -> x * 2 - 1; sum = 0; loop(200000, sum += f(_)); sum", 200_000,
                         blossom.interpreter.ExecutionBudget.Policy.UNLIMITED,
                         blossom.interpreter.Expression.LoadOverride.CANONICAL)
         );
 
-        System.out.printf(Locale.ROOT, "%-26s %12s %10s %14s%n", "caso", "mediana ms", "minimo ms", "ns/operazione");
+        System.out.printf(Locale.ROOT, "%-26s %12s %10s %14s%n", "case", "median ms", "min ms", "ns/op");
         System.out.println("-".repeat(66));
         for (Case testCase : cases)
         {

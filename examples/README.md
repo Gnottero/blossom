@@ -1,16 +1,16 @@
-# Esempi
+# Examples
 
-Tre progetti completi, in ordine di difficoltà. Si installano copiandoli sotto `<mondo>/blossom/` e
-si caricano con `/blossom script load <nome>`.
+Three complete projects, in order of difficulty. Install one by copying it under
+`<world>/blossom/` and load it with `/blossom script load <name>`.
 
-| Progetto | File | Cosa mostra |
+| Project | Files | What it shows |
 | --- | --- | --- |
-| [`contapassi`](contapassi) | 1 | eventi di giocatore, HUD sopra la hotbar, stato salvato su disco, funzioni pubbliche per la console |
-| [`torre-guardiana`](torre-guardiana) | 3 | più moduli, simboli privati, un evento annullabile, `try`/`catch` |
-| [`vena-viva`](vena-viva) | 4 | task fuori dal tick, `task_dock`, sezione critica, evento fra app, logica separata dal mondo |
+| [`step-counter`](step-counter) | 1 | player events, a HUD above the hotbar, state saved to disk, public functions for the console |
+| [`guardian-tower`](guardian-tower) | 3 | several modules, private symbols, a cancellable event, `try`/`catch` |
+| [`living-vein`](living-vein) | 4 | a task outside the tick, `task.dock`, a critical section, an event between apps, logic kept apart from the world |
 
-La guida che spiega i concetti sta in [`docs/guide/`](../docs/guide/README.md); il
-riferimento delle funzioni in [`docs/api/`](../docs/api/Overview.md).
+The guide that explains the concepts is in [`docs/guide/`](../docs/guide/README.md); the function
+reference is in [`docs/api/`](../docs/api/Overview.md).
 
-Il modulo di logica pura di `vena-viva` (`src/geologia.bs`) viene eseguito dalla suite di test del
-core, in `GuideSnippetsTest`: è codice verificato, non pseudocodice.
+The pure-logic module of `living-vein` (`src/geology.bs`) is run by the core's test suite, in
+`GuideSnippetsTest`: it is verified code, not pseudocode.

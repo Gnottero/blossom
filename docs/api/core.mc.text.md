@@ -73,4 +73,4 @@ Three consequences, stated:
 - **the position is not up for choice.** Above the hotbar, full stop.
 
 Something without those limits would need code on the client, that is, a function that stops existing
-for whoever plays vanilla. See `DECISIONI.md` D-073.
+for whoever plays vanilla.

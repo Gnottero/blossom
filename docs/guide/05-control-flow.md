@@ -137,6 +137,6 @@ list.map(entity.player('all'), fn(p) -> score(p));
   hand
 - a volume of blocks → `scan.scan` or `scan.volume` from
   [`core.mc.scan`](../api/core.mc.scan.md), which are three nested loops written properly
-- a long job that must not stall the tick → a `task` ([chapter 9](09-concorrenza.md))
+- a long job that must not stall the tick → a `task` ([chapter 9](09-concurrency.md))
 - a counter with an unusual step → `c_for`
 - "until X happens", with a ceiling → `while`

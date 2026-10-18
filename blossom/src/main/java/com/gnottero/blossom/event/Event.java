@@ -409,9 +409,9 @@ public final class Event
     }
 
     /**
-     * Eventi silenziati: {@code harvest} rompe il blocco passando per la strada del gioco, così
-     * drop e statistiche restano quelli veri, ma non è un'azione del giocatore e nessun evento
-     * deve partire. Solo thread del server, con ripristino garantito.
+     * Silenced events: {@code harvest} breaks the block the way the game does, so drops and
+     * statistics stay the real ones, but it is not an action of the player and no event must
+     * fire. Server thread only, with guaranteed restore.
      */
     private static boolean suppressed = false;
 

@@ -1,7 +1,7 @@
 module main;
 
-import "torre/costruzione" as costruzione;
-import "torre/registro" as registro;
+import "tower/construction" as construction;
+import "tower/registry" as registry;
 import "core.mc.block" as block;
 import "core.mc.system" as system;
 import "core.mc.entity" as entity;
@@ -12,13 +12,13 @@ import "core.list" as list;
 // Builds a lit tower where a bell is rung, and keeps count of the ones
 // built. Shows: multiple modules, private symbols, a cancellable event, and a try/catch.
 
-fn su_campana(pos, direzione, chi) -> (
-    luce = block.light(pos);
-    altezza = costruzione.altezza_consigliata(luce);
+fn on_bell(pos, direction, who) -> (
+    light = block.light(pos);
+    height = construction.suggested_height(light);
     try(
-        costruzione.costruisci([pos:0, pos:1 + 1, pos:2], altezza);
-        registro.aggiungi(pos, altezza);
-        for(entity.player('all'), text.send(_, 'torre numero ' + registro.quante() + ' a ' + pos)),
+        construction.build([pos:0, pos:1 + 1, pos:2], height);
+        registry.add(pos, height);
+        for(entity.player('all'), text.send(_, 'tower number ' + registry.count() + ' at ' + pos)),
 
         // 'exception' and not the short form: without a filter, try only catches what throw() raises,
         // and a nonexistent block or a position outside the loaded world wouldn't pass through it.
@@ -29,19 +29,19 @@ fn su_campana(pos, direzione, chi) -> (
         // The thrown value is in '_', and must be copied right away: inside the 'for' that name is
         // already taken by the current element.
         (
-            motivo = _;
-            for(entity.player('all'), text.send(_, 'non sono riuscito a costruire: ' + motivo))
+            reason = _;
+            for(entity.player('all'), text.send(_, 'could not build the tower: ' + reason))
         )
     );
     false   // false = the bell sound proceeds normally
 );
 
-pub fn quante_torri() -> registro.quante();
+pub fn tower_count() -> registry.count();
 
-pub fn demolisci_tutte() -> (
-    list.map(registro.tutte(), costruzione.smonta(_:0, _:1));
-    registro.svuota()
+pub fn demolish_all() -> (
+    list.map(registry.all(), construction.dismantle(_:0, _:1));
+    registry.clear()
 );
 
-event.on('bell_rings', su_campana);
-print('torre-guardiana pronta in ' + system.info('source_dimension'));
+event.on('bell_rings', on_bell);
+print('guardian-tower ready in ' + system.info('source_dimension'));

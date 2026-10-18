@@ -44,7 +44,7 @@ class GuideSnippetsTest
         }
         if (candidate == null)
         {
-            throw new IllegalStateException("cartella 'examples' non trovata risalendo da " + Path.of("").toAbsolutePath());
+            throw new IllegalStateException("'examples' directory not found walking up from " + Path.of("").toAbsolutePath());
         }
         return candidate;
     }
@@ -57,7 +57,7 @@ class GuideSnippetsTest
     // --- chapter 2: values ---
 
     @Test
-    void iTipiSiChiamanoComeScrittoNellaTabella()
+    void typesAreNamedAsInTheTable()
     {
         assertEquals("number", eval("system.type(1)"));
         assertEquals("string", eval("system.type('a')"));
@@ -69,7 +69,7 @@ class GuideSnippetsTest
     }
 
     @Test
-    void aritmetica()
+    void arithmetic()
     {
         assertEquals("3.5", eval("7 / 2"));
         assertEquals("2", eval("6 / 3"));
@@ -80,7 +80,7 @@ class GuideSnippetsTest
     }
 
     @Test
-    void stringhe()
+    void strings()
     {
         assertEquals("a'b", eval("'a\\'b'"));
         assertEquals("ababab", eval("'ab' * 3"));
@@ -90,7 +90,7 @@ class GuideSnippetsTest
     }
 
     @Test
-    void liste()
+    void lists()
     {
         assertEquals("10", eval("l = [10, 20, 30]; l:0"));
         assertEquals("20", eval("l = [10, 20, 30]; l:4"));            // indices wrap around
@@ -101,7 +101,7 @@ class GuideSnippetsTest
     }
 
     @Test
-    void scrivereInUnaLista()
+    void writingIntoAList()
     {
         assertEquals("[9, 2, 3]", eval("l = [1, 2, 3]; list.put(l, 0, 9); l"));
         assertEquals("[1, 5, 2, 3]", eval("l = [1, 2, 3]; list.put(l, 1, 5, 'insert'); l"));
@@ -112,14 +112,14 @@ class GuideSnippetsTest
     }
 
     @Test
-    void listePigre()
+    void lazyLists()
     {
         assertEquals("0,3,6,9", eval("list.join(',', list.range(0, 10, 3))"));
         assertEquals("[0, 1, 4]", eval("list.map(list.range(3), _ * _)"));
     }
 
     @Test
-    void mappe()
+    void maps()
     {
         assertEquals("1", eval("m = {'a' -> 1, 'b' -> 2}; m:'a'"));
         assertEquals("null", eval("m = {'a' -> 1}; m:'zz'"));
@@ -129,7 +129,7 @@ class GuideSnippetsTest
     }
 
     @Test
-    void verita()
+    void truthiness()
     {
         assertEquals("true", eval("if('0', 'true', 'false')"));
         assertEquals("false", eval("if([], 'true', 'false')"));
@@ -140,7 +140,7 @@ class GuideSnippetsTest
     }
 
     @Test
-    void uguaglianza()
+    void equality()
     {
         assertEquals("true", eval("[1, 2] == [1, 2]"));
         assertEquals("true", eval("{'a' -> 1} == {'a' -> 1}"));
@@ -149,15 +149,15 @@ class GuideSnippetsTest
     }
 
     @Test
-    void unaVariabileMaiAssegnataValeNull()
+    void aNeverAssignedVariableIsNull()
     {
-        assertEquals("1", eval("mai_vista + 1"));
+        assertEquals("1", eval("never_seen + 1"));
     }
 
     // --- chapter 3: operators ---
 
     @Test
-    void sommaSecondoGliOperandi()
+    void additionDependsOnTheOperands()
     {
         assertEquals("[11, 22]", eval("[1, 2] + [10, 20]"));
         assertEquals("[2, 3]", eval("[1, 2] + 1"));
@@ -165,7 +165,7 @@ class GuideSnippetsTest
     }
 
     @Test
-    void logicaPigraCheRestituisceUnValore()
+    void lazyLogicReturnsAValue()
     {
         assertEquals("0", eval("0 && 5"));
         assertEquals("5", eval("3 && 5"));
@@ -175,7 +175,7 @@ class GuideSnippetsTest
     }
 
     @Test
-    void ricerca()
+    void search()
     {
         assertEquals("o w", eval("'hello world' ~ 'o w'"));
         assertEquals("[1, 2]", eval("'v1.2' ~ '([0-9])\\\\.([0-9])'"));
@@ -185,7 +185,7 @@ class GuideSnippetsTest
     }
 
     @Test
-    void appartenenzaSiChiedeConTildeNonConHas()
+    void membershipIsAskedWithTildeNotHas()
     {
         assertEquals("true", eval("l = ['a', 'b']; (l ~ 'a') != null"));
         assertEquals("false", eval("l = ['a', 'b']; (l ~ 'z') != null"));
@@ -197,7 +197,7 @@ class GuideSnippetsTest
     }
 
     @Test
-    void assegnamentoEScambio()
+    void assignmentAndSwap()
     {
         assertEquals("[1, 2, 3]", eval("l = [1, 2]; l += 3; l"));
         assertEquals("ab", eval("s = 'a'; s += 'b'; s"));
@@ -206,7 +206,7 @@ class GuideSnippetsTest
     }
 
     @Test
-    void spacchettare()
+    void unpacking()
     {
         assertEquals("3", eval("f(a, b) -> a + b; call('f', ...[1, 2])"));
         assertEquals("[0, 1, 2]", eval("l = [1, 2]; [0, ...l]"));
@@ -217,43 +217,43 @@ class GuideSnippetsTest
     // --- chapter 4: functions ---
 
     @Test
-    void bindingDiModuloEVariabiliDelCorpo()
+    void moduleBindingsAndBodyVariables()
     {
-        assertEquals("2", eval("let mut contatore = 0; fn bump() -> contatore += 1; bump(); bump(); contatore"));
+        assertEquals("2", eval("let mut counter = 0; fn bump() -> counter += 1; bump(); bump(); counter"));
         // without 'let' it's not a module binding: the function writes to something else
-        assertEquals("0", eval("contatore = 0; fn bump() -> contatore += 1; bump(); contatore"));
+        assertEquals("0", eval("counter = 0; fn bump() -> counter += 1; bump(); counter"));
     }
 
     @Test
-    void unLetImmutabileNonSiRiassegna()
+    void anImmutableLetCannotBeReassigned()
     {
-        TypeMismatchError error = assertThrows(TypeMismatchError.class, () -> eval("let soglia = 10; soglia = 11"));
+        TypeMismatchError error = assertThrows(TypeMismatchError.class, () -> eval("let threshold = 10; threshold = 11"));
         assertTrue(error.getMessage().contains("immutable"), error.getMessage());
         assertTrue(error.getMessage().contains("let mut"), error.getMessage());
     }
 
     @Test
-    void outerLeggeIlFrameChiamante()
+    void outerReadsTheCallingFrame()
     {
-        assertEquals("7", eval("base = 7; fn leggi(outer(base)) -> base; leggi()"));
+        assertEquals("7", eval("base = 7; fn read(outer(base)) -> base; read()"));
     }
 
     @Test
-    void scalariPerValoreListePerRiferimento()
+    void scalarsByValueListsByReference()
     {
-        assertEquals("1", eval("fn incrementa(v) -> (v += 1; null); n = 1; incrementa(n); n"));
-        assertEquals("[1, 9]", eval("fn accoda(l) -> list.put(l, null, 9); lista = [1]; accoda(lista); lista"));
+        assertEquals("1", eval("fn increment(v) -> (v += 1; null); n = 1; increment(n); n"));
+        assertEquals("[1, 9]", eval("fn append_to(l) -> list.put(l, null, 9); items = [1]; append_to(items); items"));
     }
 
     @Test
-    void arietaSbagliata()
+    void wrongArity()
     {
         ArityError error = assertThrows(ArityError.class, () -> eval("fn f(a, b) -> a + b; f(1)"));
         assertTrue(error.getMessage().contains("2 arguments"), error.getMessage());
     }
 
     @Test
-    void tipiSuiParametri()
+    void typesOnParameters()
     {
         assertEquals("x1", eval("fn f(a: num, b: str) -> b + a; f(1, 'x')"));
         TypeMismatchError error = assertThrows(TypeMismatchError.class, () -> eval("fn f(a: num) -> a; f('x')"));
@@ -262,14 +262,14 @@ class GuideSnippetsTest
     }
 
     @Test
-    void leFunzioniSonoValori()
+    void functionsAreValues()
     {
-        assertEquals("18", eval("fn triplica(x) -> x * 3; fn due_volte(f, x) -> call(f, call(f, x)); due_volte(triplica, 2)"));
-        assertEquals("18", eval("fn triplica(x) -> x * 3; fn due_volte(f, x) -> call(f, call(f, x)); due_volte('triplica', 2)"));
+        assertEquals("18", eval("fn triple(x) -> x * 3; fn twice(f, x) -> call(f, call(f, x)); twice(triple, 2)"));
+        assertEquals("18", eval("fn triple(x) -> x * 3; fn twice(f, x) -> call(f, call(f, x)); twice('triple', 2)"));
     }
 
     @Test
-    void ricorsioneEUscitaAnticipata()
+    void recursionAndEarlyReturn()
     {
         assertEquals("55", eval("fn fib(n) -> if(n < 2, n, fib(n - 1) + fib(n - 2)); fib(10)"));
         assertEquals("negative", eval("""
@@ -285,33 +285,33 @@ class GuideSnippetsTest
     // --- chapter 5: control flow ---
 
     @Test
-    void ifACatena()
+    void chainedIf()
     {
         assertEquals("hurt", eval("health = 10; if(health < 5, 'critical', health < 15, 'hurt', 'healthy')"));
         assertEquals("null", eval("system.type(if(false, 'a'))"));
     }
 
     @Test
-    void cicli()
+    void loops()
     {
-        assertEquals("10", eval("somma = 0; loop(5, somma += _); somma"));
-        assertEquals("6", eval("somma = 0; for([1, 2, 3], somma += _); somma"));
+        assertEquals("10", eval("total = 0; loop(5, total += _); total"));
+        assertEquals("6", eval("total = 0; for([1, 2, 3], total += _); total"));
         assertEquals("2", eval("for([1, 2, 3], _ > 1)"));      // 'for' counts the truthy ones
         assertEquals("3", eval("i = 0; while(i < 3, 1000, i += 1); i"));
         assertEquals("5", eval("i = 0; while(true, 5, i += 1); i"));   // the cap stops the loop
-        assertEquals("20", eval("somma = 0; c_for(i = 0, i < 10, i += 2, somma += i); somma"));
+        assertEquals("20", eval("total = 0; c_for(i = 0, i < 10, i += 2, total += i); total"));
     }
 
     @Test
-    void breakEContinue()
+    void breakAndContinue()
     {
         assertEquals("3", eval("loop(10, if(_ == 3, break(_)); 0)"));
-        assertEquals("4", eval("somma = 0; for([1, 2, 3], if(_ == 2, continue()); somma += _); somma"));
+        assertEquals("4", eval("total = 0; for([1, 2, 3], if(_ == 2, continue()); total += _); total"));
         assertEquals("3", eval("s = 0; loop(3, loop(3, if(_ == 1, break()); s += 1)); s"));
     }
 
     @Test
-    void trasformazioni()
+    void transformations()
     {
         assertEquals("[2, 4, 6]", eval("list.map([1, 2, 3], _ * 2)"));
         assertEquals("[0, 1]", eval("list.map([10, 20], _i)"));
@@ -327,7 +327,7 @@ class GuideSnippetsTest
     // --- chapter 7: errors ---
 
     @Test
-    void tryCatturaLeEccezioniLanciate()
+    void tryCatchesThrownExceptions()
     {
         assertEquals("caught: boom", eval("try(throw('boom'), 'caught: ' + _)"));
         assertEquals("v", eval("try(throw('value_exception', 'v'), 'value_exception', _)"));
@@ -338,21 +338,21 @@ class GuideSnippetsTest
     }
 
     @Test
-    void laFormaCortaDiTryPrendeSoloLeEccezioniUtente()
+    void theShortFormOfTryOnlyCatchesUserExceptions()
     {
         assertEquals("null", eval("system.type(try(throw('boom')))"));
         assertThrows(Throwable.class, () -> eval("bad = '{'; try(json.decode(bad))"));
     }
 
     @Test
-    void tryNonCatturaGliErroriDelLinguaggio()
+    void tryDoesNotCatchLanguageErrors()
     {
         assertThrows(ArityError.class, () -> eval("fn f(a, b) -> a + b; fn g() -> f(1); try(g(), 'exception', 'caught')"));
         assertThrows(TypeMismatchError.class, () -> eval("s = 'x'; try(math.sqrt(s), 'exception', 'caught')"));
     }
 
     @Test
-    void ilValoreLanciatoPuoEssereQualunqueCosa()
+    void theThrownValueCanBeAnything()
     {
         assertEquals("short by 40", eval("""
                 fn withdraw(balance, amount) -> (
@@ -364,54 +364,54 @@ class GuideSnippetsTest
     }
 
     @Test
-    void traceDiceDoveEraSuccesso()
+    void traceSaysWhereItHappened()
     {
-        String chiavi = eval("try(throw('x'), list.sort(map.keys(_trace)))");
-        assertEquals("[locals, stack, token]", chiavi);
+        String keys = eval("try(throw('x'), list.sort(map.keys(_trace)))");
+        assertEquals("[locals, stack, token]", keys);
         assertEquals("1", eval("fn boom() -> throw('x'); try(boom(), list.size(_trace:'stack'))"));
         assertEquals("7", eval("fn boom(v) -> throw('x'); try(boom(7), (_trace:'locals'):'v')"));
     }
 
-    // --- the examples: the pure-logic module of vena-viva actually runs ---
+    // --- the examples: the pure-logic module of living-vein actually runs ---
 
     @Test
-    void ilModuloGeologiaDellEsempioVenaVivaFunziona(@TempDir Path tmp) throws IOException
+    void theGeologyModuleOfTheLivingVeinExampleWorks(@TempDir Path tmp) throws IOException
     {
         Path src = tmp.resolve("src");
         Files.createDirectories(src);
         Files.writeString(tmp.resolve("blossom.json"), """
-                {"name": "vena-viva-test", "version": "1.0.0", "entrypoint": "src/main.bs", "api_level": "2.0"}
+                {"name": "living-vein-test", "version": "1.0.0", "entrypoint": "src/main.bs", "api_level": "2.0"}
                 """);
-        Files.copy(repoRoot().resolve("examples/vena-viva/src/geologia.bs"), src.resolve("geologia.bs"));
+        Files.copy(repoRoot().resolve("examples/living-vein/src/geology.bs"), src.resolve("geology.bs"));
         Files.writeString(src.resolve("main.bs"), """
                 module main;
 
-                import "geologia" as geologia;
+                import "geology" as geology;
 
-                let LETTURE = [
+                let READINGS = [
                     [[0, 0, 0], 'minecraft:diamond_ore'],
                     [[1, 0, 0], 'minecraft:stone'],
                     [[2, 0, 0], 'minecraft:diamond_ore'],
                     [[2, 3, 4], 'minecraft:diamond_ore']
                 ];
 
-                pub let nome = geologia.nome_corto('minecraft:diamond_ore');
-                pub let minerale = geologia.e_minerale('minecraft:diamond_ore');
-                pub let pietra = geologia.e_minerale('minecraft:stone');
-                pub let quanti = geologia.conta(LETTURE, 'diamond_ore');
-                pub let dove = geologia.posizioni(LETTURE, 'diamond_ore');
-                pub let angoli = geologia.riquadro(dove);
-                pub let vuoto = geologia.riquadro([]);
-                pub let parola = geologia.giudizio(0);
+                pub let name = geology.short_name('minecraft:diamond_ore');
+                pub let ore = geology.is_ore('minecraft:diamond_ore');
+                pub let stone = geology.is_ore('minecraft:stone');
+                pub let how_many = geology.count(READINGS, 'diamond_ore');
+                pub let where = geology.positions(READINGS, 'diamond_ore');
+                pub let corners = geology.bounds(where);
+                pub let empty = geology.bounds([]);
+                pub let word = geology.verdict(0);
                 """);
 
         Interpreter interpreter = Interpreter.forProject(tmp);
-        assertEquals("diamond_ore", interpreter.eval("nome").getString());
-        assertEquals("true", interpreter.eval("minerale").getString());
-        assertEquals("false", interpreter.eval("pietra").getString());
-        assertEquals("3", interpreter.eval("quanti").getString());
-        assertEquals("[[0, 0, 0], [2, 3, 4]]", interpreter.eval("angoli").getString());
-        assertEquals("null", interpreter.eval("vuoto").getString());
-        assertEquals("esaurita", interpreter.eval("parola").getString());
+        assertEquals("diamond_ore", interpreter.eval("name").getString());
+        assertEquals("true", interpreter.eval("ore").getString());
+        assertEquals("false", interpreter.eval("stone").getString());
+        assertEquals("3", interpreter.eval("how_many").getString());
+        assertEquals("[[0, 0, 0], [2, 3, 4]]", interpreter.eval("corners").getString());
+        assertEquals("null", interpreter.eval("empty").getString());
+        assertEquals("depleted", interpreter.eval("word").getString());
     }
 }

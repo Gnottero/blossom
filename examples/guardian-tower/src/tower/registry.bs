@@ -1,0 +1,21 @@
+module tower.registry;
+
+import "core.list" as list;
+
+// The registry's state is private and mutable: outside this module you can only go through the
+// public functions, so no other module can leave it in an inconsistent state.
+let mut towers = [];
+
+pub fn add(base, height) -> (
+    list.put(towers, null, [base, height]);
+    list.size(towers)
+);
+
+pub fn all() -> towers;
+
+pub fn count() -> list.size(towers);
+
+pub fn clear() -> (
+    towers = [];
+    0
+);

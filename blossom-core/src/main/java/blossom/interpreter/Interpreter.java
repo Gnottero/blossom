@@ -146,7 +146,7 @@ public final class Interpreter
             {
                 continue; // l'entrypoint gira per ultimo, e per intero
             }
-            context.beginExecution(); // ogni modulo ha il suo budget: il corpo di uno non paga per l'altro
+            context.beginExecution(); // every module has its own budget: the body of one does not pay for another
             host.importModule(context, unit.name().value());
         }
         interpreter.evalIn(context, entry.code());

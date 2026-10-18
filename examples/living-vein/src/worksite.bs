@@ -1,4 +1,4 @@
-module cantiere;
+module worksite;
 
 import "core.list" as list;
 import "core.mc.block" as block;
@@ -9,34 +9,34 @@ import "core.mc.text" as text;
 // Everything that touches the world lives here: reading blocks, showing particles, talking to
 // players. The rest of the app calls these functions and doesn't know how they work inside.
 
-pub let RAGGIO = 6;
+pub let RADIUS = 6;
 
 // Reads a cube around the center and returns a list of [position, block].
-// Called from inside a task, it must be wrapped in task_dock by the caller: we don't do that here,
+// Called from inside a task, it must be wrapped in task.dock by the caller: we don't do that here,
 // because a function that decides on its own how to be scheduled is a function that can't be
 // reused from the main thread.
-pub fn leggi_intorno(centro: list, raggio: num) -> list.map(
-    scan.rect(centro, raggio),
+pub fn read_around(center: list, radius: num) -> list.map(
+    scan.rect(center, radius),
     [_, block.block(_) + '']
 );
 
 // The box around the vein, to show what the script looked at.
-pub fn mostra_riquadro(angoli, colore: str) -> if(
-    angoli == null, 0,
-    effect.particle_box(colore, angoli:0, angoli:1, 1)
+pub fn show_bounds(corners, particle: str) -> if(
+    corners == null, 0,
+    effect.particle_box(particle, corners:0, corners:1, 1)
 );
 
-pub fn suona_esaurita(pos: list) -> effect.sound('block.amethyst_block.break', pos, 1, 0.6);
+pub fn play_depleted(pos: list) -> effect.sound('block.amethyst_block.break', pos, 1, 0.6);
 
-pub fn avvisa(giocatore, tipo: str, rimasti: num, parola: str) -> text.hud(
-    giocatore,
+pub fn notify(player, type: str, left: num, word: str) -> text.hud(
+    player,
     text.format(
-        'g vena di ', 'w ' + tipo,
-        'g   rimasti ', colore_di(rimasti) + ' ' + rimasti,
-        'g   (' + parola + ')'
+        'g vein of ', 'w ' + type,
+        'g   left ', color_of(left) + ' ' + left,
+        'g   (' + word + ')'
     ),
     100         // ticks: the line goes away on its own after five seconds
 );
 
 // private: the color scale is a presentation choice, not information
-fn colore_di(rimasti) -> if(rimasti == 0, 'r', rimasti <= 2, 'y', 'l');
+fn color_of(left) -> if(left == 0, 'r', left <= 2, 'y', 'l');

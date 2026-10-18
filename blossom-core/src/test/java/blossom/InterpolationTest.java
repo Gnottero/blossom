@@ -4,7 +4,7 @@ import blossom.interpreter.Interpreter;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-/** C.2 - double-quoted strings interpolate. */
+/** Double-quoted strings interpolate. */
 class InterpolationTest
 {
     private static String eval(String code)
@@ -13,49 +13,49 @@ class InterpolationTest
     }
 
     @Test
-    void unaStringaSenzaSegnapostiRestaSeStessa()
+    void aStringWithoutPlaceholdersStaysTheSame()
     {
-        assertEquals("ciao", eval("\"ciao\""));
+        assertEquals("hello", eval("\"hello\""));
     }
 
     @Test
-    void unSegnapostoInserisceUnaVariabile()
+    void aPlaceholderInsertsAVariable()
     {
         assertEquals("n=3", eval("a = 3; \"n=${a}\""));
     }
 
     @Test
-    void unSegnapostoAccettaUnEspressione()
+    void aPlaceholderTakesAnExpression()
     {
         assertEquals("n=7", eval("a = 3; \"n=${a + 4}\""));
     }
 
     @Test
-    void piuSegnapostiEPezziAlternati()
+    void placeholdersAndTextAlternate()
     {
-        assertEquals("1 e 2 fa 3", eval("a = 1; b = 2; \"${a} e ${b} fa ${a + b}\""));
+        assertEquals("1 and 2 make 3", eval("a = 1; b = 2; \"${a} and ${b} make ${a + b}\""));
     }
 
     @Test
-    void unSegnapostoAllInizioEAllaFine()
+    void placeholdersAtTheStartAndTheEnd()
     {
         assertEquals("12", eval("a = 1; b = 2; \"${a}${b}\""));
     }
 
     @Test
-    void unaChiamataDentroUnSegnaposto()
+    void aCallInsideAPlaceholder()
     {
-        assertEquals("doppio 6", eval("fn doppio(x) -> x * 2; \"doppio ${doppio(3)}\""));
+        assertEquals("double 6", eval("fn double(x) -> x * 2; \"double ${double(3)}\""));
     }
 
     @Test
-    void unApiceSingoloDentroUnSegnapostoNonChiudeNiente()
+    void aSingleQuoteInsideAPlaceholderClosesNothing()
     {
         assertEquals("v=1", eval("m = {'}' -> 1}; \"v=${m:'}'}\""));
     }
 
     @Test
-    void lApiceSingoloResteLetterale()
+    void singleQuotesStayLiteral()
     {
         assertEquals("n=${a}", eval("a = 3; 'n=${a}'"));
     }

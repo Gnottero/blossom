@@ -17,7 +17,7 @@ import blossom.value.Value;
  * table. Registration happens once, while the module is loading; at runtime there is nothing left
  * to decide.
  *
- * <p>Why prefixes and not naming conventions: this follows principle §1.1 of the plan. Whether a
+ * <p>Why prefixes and not naming conventions: nothing implicit. Whether a
  * symbol is module-private or exported is a declared property, not something deduced from how its
  * name begins.
  */

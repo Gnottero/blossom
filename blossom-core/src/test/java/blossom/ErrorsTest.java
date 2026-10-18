@@ -24,7 +24,7 @@ import blossom.exception.UndefinedSymbolError;
 import blossom.interpreter.Interpreter;
 
 /**
- * One test per error category listed in PIANO_LINGUAGGIO.md §4, plus the message format.
+ * One test per error category, plus the message format.
  *
  * <p>They verify two distinct things: that the category is the right one (since that's what
  * targeted {@code catch} blocks rely on) and that the message tells a human enough.
@@ -40,7 +40,7 @@ class ErrorsTest
     void parseError()
     {
         ParseError error = assertThrows(ParseError.class, () -> Interpreter.standalone().eval("1 +"));
-        assertTrue(error.position().isKnown(), "un errore di sintassi conosce sempre la sua posizione");
+        assertTrue(error.position().isKnown(), "a syntax error always knows its position");
     }
 
     @Test
@@ -55,7 +55,7 @@ class ErrorsTest
     void typeMismatchError()
     {
         TypeMismatchError error = assertThrows(TypeMismatchError.class,
-                () -> Interpreter.standalone().eval("import \"core.math\" as math; math.sqrt('non un numero')"));
+                () -> Interpreter.standalone().eval("import \"core.math\" as math; math.sqrt('not a number')"));
         assertTrue(error.getMessage().toLowerCase().contains("numeric"), error.getMessage());
     }
 
@@ -121,7 +121,7 @@ class ErrorsTest
     void anErrorRaisedWhileRunningKnowsWhereItHappened()
     {
         BlossomError error = errorFrom("f(a, b) -> a + b; f(1)");
-        assertTrue(error.frames().size() >= 1, "l'errore deve avere almeno un frame: " + error.format());
+        assertTrue(error.frames().size() >= 1, "the error must have at least one frame: " + error.format());
         assertTrue(error.frames().getFirst().position().isKnown(), error.format());
     }
 

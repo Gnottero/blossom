@@ -87,7 +87,7 @@ class RegistryTest
         Path registryRoot = tmp.resolve("registry");
         writeProject(registryRoot.resolve("vector/1.0.0"), "vector", "1.0.0", "", "pub fn value() -> 100;\n");
         writeProject(registryRoot.resolve("vector/1.4.0"), "vector", "1.4.0", "", "pub fn value() -> 140;\n");
-        Files.createDirectories(registryRoot.resolve("vector/appunti")); // non è una versione: va ignorata
+        Files.createDirectories(registryRoot.resolve("vector/notes")); // not a version: must be ignored
 
         DirectoryRegistry registry = new DirectoryRegistry(registryRoot);
         assertEquals(List.of(Version.parse("1.0.0"), Version.parse("1.4.0")),
@@ -270,7 +270,7 @@ class RegistryTest
                     URI.create("http://127.0.0.1:" + server.getAddress().getPort() + "/"), tmp.resolve("cache"));
             IOException error = assertThrows(IOException.class, () -> registry.fetch("vector", Version.parse("1.0.0")));
             assertTrue(error.getMessage().contains("fingerprint"), error.getMessage());
-            assertFalse(Files.exists(tmp.resolve("cache/vector/1.0.0")), "niente deve finire in cache");
+            assertFalse(Files.exists(tmp.resolve("cache/vector/1.0.0")), "nothing must end up in the cache");
         }
         finally
         {
@@ -295,7 +295,7 @@ class RegistryTest
             HttpRegistry registry = new HttpRegistry(
                     URI.create("http://127.0.0.1:" + server.getAddress().getPort() + "/"), tmp.resolve("cache"));
             assertTrue(registry.availableVersions("vector").isEmpty(),
-                    "senza impronta la riga e' inutilizzabile: meglio non vederla");
+                    "without a hash the entry is unusable: better not to see it");
         }
         finally
         {

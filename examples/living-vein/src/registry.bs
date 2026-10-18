@@ -1,0 +1,56 @@
+module registry;
+
+import "core.list" as list;
+import "core.map" as map;
+import "core.io" as io;
+import "core.task" as task;
+
+// The app's state, and the disk. No other module writes in here directly: you go through these
+// functions, which are the only place where saving can be forgotten.
+
+let mut veins = [];             // [{'type' -> str, 'pos' -> [x,y,z], 'left' -> n, 'who' -> str}]
+let mut totals = {};            // type -> how many blocks of that type have been broken
+
+// Writes also arrive from a task, i.e. from another thread: a read-modify-write sequence
+// isn't atomic, and needs to go inside a critical section.
+let LOCK = 'registry';
+
+// The 'data' root exists on every server; the subfolder named after the app keeps its data
+// separate from the others.
+let FILE = 'living-vein/registry.json';
+
+pub fn load() -> (
+    saved = if(io.exists('data', FILE), io.read_json('data', FILE), {});
+    veins = saved:'veins' || [];
+    totals = saved:'totals' || {};
+    list.size(veins)
+);
+
+pub fn save() -> (
+    io.write_json('data', FILE, {'veins' -> veins, 'totals' -> totals});
+    false
+);
+
+pub fn record(type: str, pos: list, left: num, who: str) -> task.synchronize(LOCK, (
+    list.put(veins, null, {'type' -> type, 'pos' -> pos, 'left' -> left, 'who' -> who});
+    totals:type = (totals:type || 0) + 1;
+    list.size(veins)
+));
+
+pub fn count() -> list.size(veins);
+
+pub fn all() -> veins;
+
+pub fn total(type: str) -> totals:type || 0;
+
+pub fn summary() -> list.map(
+    list.sort(map.pairs(totals), -(_:1)),
+    _:0 + ': ' + _:1
+);
+
+pub fn clear() -> task.synchronize(LOCK, (
+    veins = [];
+    totals = {};
+    save();
+    'registry cleared'
+));

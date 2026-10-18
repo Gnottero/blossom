@@ -23,7 +23,7 @@ import blossom.exception.Suggestions;
  * Reads a project from disk: manifest, dependencies, entrypoint, and every module reachable from the
  * imports.
  *
- * <p>It does all of it before a single line runs, which is the point of §4 of the plan: a missing
+ * <p>It does all of it before a single line runs, and that is the point: a missing
  * module, a declared name that does not match its path, a wrong API level and a dependency on an
  * incompatible version are load errors, not accidents surfacing three weeks later because that
  * branch was rarely taken.
@@ -123,7 +123,7 @@ public final class ProjectLoader
     {
         if (blossom.language.StdLib.isBuiltinModule(name.value()))
         {
-            return; // i moduli core.* non stanno su disco: sono il linguaggio
+            return; // core.* modules are not on disk: they are the language
         }
         ModuleResolver.Resolution resolution = scope.resolve(name);
         ModuleName globalName = new ModuleName(prefix + resolution.prefix() + resolution.localName().value());
@@ -134,7 +134,7 @@ public final class ProjectLoader
         if (!onPath.add(globalName))
         {
             // cycle: someone higher up the chain is already loading this module, and they will
-            // insert it when done. It is not an error, see DECISIONI.md D-052, but one of the two
+            // insert it when done. It is not an error, but one of the two
             // has to run first, and the order is the one the recursion unwinds in: the innermost of
             // the cycle first
             return;
@@ -164,7 +164,7 @@ public final class ProjectLoader
     {
         if (blossom.language.StdLib.isBuiltinModule(name.value()))
         {
-            return name.value(); // i core.* hanno lo stesso nome ovunque: non appartengono a un progetto
+            return name.value(); // core.* have the same name everywhere: they belong to no project
         }
         ModuleResolver.Resolution resolution = scope.resolve(name);
         return prefix + resolution.prefix() + resolution.localName().value();

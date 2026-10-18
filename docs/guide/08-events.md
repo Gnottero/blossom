@@ -173,7 +173,7 @@ and without load order mattering.
 ## What not to put in a handler
 
 - **long work**: the tick is waiting. The budget is 2 seconds and exceeding it is an error. If you
-  genuinely need it, use a `task` ([chapter 9](09-concorrenza.md)).
+  genuinely need it, use a `task` ([chapter 9](09-concurrency.md)).
 - **a `print` for every frequent event**: `player_rides` and `tick` fire constantly.
 - **unhandled errors in a cancellable event**: if the handler blows up it returns nothing, and the
-  action is not cancelled. See the end of [chapter 7](07-errori.md).
+  action is not cancelled. See the end of [chapter 7](07-errors.md).

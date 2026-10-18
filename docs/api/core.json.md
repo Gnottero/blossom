@@ -47,7 +47,7 @@ fn read_configuration(text) -> try(
 ```
 
 Note that `try(json.decode(text))` without the filter catches nothing: the short form of `try`
-catches user exceptions only. See [7. Errors](../guide/07-errori.md).
+catches user exceptions only. See [7. Errors](../guide/07-errors.md).
 
 One consequence of constant folding: when the argument is a literal, as in `json.decode('{')`, the
 call can be evaluated while the module is being compiled, and the error then arrives at load time

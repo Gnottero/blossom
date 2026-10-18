@@ -12,7 +12,7 @@ import org.jspecify.annotations.Nullable;
  *
  * <pre>
  * "utils":  { "path": "../utils" }                    // a directory, usually next to the project
- * "torre":  { "pack": "torre", "version": "^1.2" }    // another pack already installed in the same world
+ * "tower":  { "pack": "tower", "version": "^1.2" }    // another pack already installed in the same world
  * "vector": { "version": "^2.0" }                     // from the registry configured on the server
  * </pre>
  *

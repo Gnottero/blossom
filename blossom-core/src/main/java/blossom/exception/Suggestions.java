@@ -7,7 +7,7 @@ import org.jspecify.annotations.Nullable;
 /**
  * The "did you mean" of errors.
  *
- * <p>The plan (§4) is explicit on two points: the distance is computed with a fuzzy match, and the
+ * <p>Two rules hold here: the distance is computed with a fuzzy match, and the
  * candidates are only the symbols actually visible at that point, not the whole namespace, which
  * would produce random suggestions and waste the reader's time.
  */

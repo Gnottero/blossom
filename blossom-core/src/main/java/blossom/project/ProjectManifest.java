@@ -19,7 +19,7 @@ import blossom.exception.SourcePosition;
 import blossom.interpreter.ExecutionBudget;
 
 /**
- * The {@code blossom.json} manifest of a project (PIANO_LINGUAGGIO.md §7).
+ * The {@code blossom.json} manifest of a project.
  *
  * <p>It is the only place name, version, entrypoint, dependencies and execution limits live: none of
  * that information is inferred from a file name or an implicit convention.
@@ -193,7 +193,7 @@ public record ProjectManifest(
     }
 
     /**
-     * La sezione {@code "dependencies"}: tre forme, mutuamente esclusive (vedi {@link Dependency}).
+     * The {@code "dependencies"} section: three forms, mutually exclusive (see {@link Dependency}).
      */
     private static Map<String, Dependency> readDependencies(JsonObject object, Path root, SourcePosition where)
     {
@@ -271,7 +271,7 @@ public record ProjectManifest(
     }
 
     /**
-     * The {@code "watchdog"} section: the execution limits of the app (PIANO_LINGUAGGIO.md §9).
+     * The {@code "watchdog"} section: the execution limits of the app.
      *
      * <pre>
      * "watchdog": { "timeout_ms": 2000, "max_depth": 256 }   // explicit limits
@@ -293,7 +293,7 @@ public record ProjectManifest(
         {
             if (declared.getAsBoolean())
             {
-                return null; // 'true' = quelli di default, cioè come non averlo scritto
+                return null; // 'true' = the defaults, that is, as if it were not written
             }
             return ExecutionBudget.Policy.UNLIMITED;
         }

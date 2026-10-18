@@ -18,7 +18,7 @@ import blossom.interpreter.ExecutionBudget;
 import blossom.interpreter.Interpreter;
 
 /**
- * The watchdog (PIANO_LINGUAGGIO.md §9): a script that never finishes must not be able to hold up
+ * The watchdog: a script that never finishes must not be able to hold up
  * server.
  *
  * <p>Every test has a JUnit timeout wider than the script one: if the watchdog does not fire, the
@@ -94,7 +94,7 @@ class WatchdogTest
     @Timeout(30)
     void tryCannotSwallowTheWatchdog()
     {
-        // se lo script potesse catturarlo, un ciclo infinito dentro un try continuerebbe a girare
+        // if the script could catch it, an infinite loop inside a try would keep running
         assertThrows(ExecutionBudgetError.class,
                 () -> withPolicy(TIGHT).eval("try(while(true, 100000000, null), null)"));
     }

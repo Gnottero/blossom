@@ -229,7 +229,7 @@ class RegressionsTest
     @Test
     void aCallWrittenAfterAValueIsACall()
     {
-        // le parentesi dopo ')' erano un raggruppamento: la seconda chiamata spariva in silenzio
+        // brackets after ')' used to be a grouping: the second call silently disappeared
         assertEquals("5", eval("f = fn() -> fn() -> 5; f()()"));
         assertEquals("42", eval("(fn(x) -> x * 2)(21)"));
         assertEquals("7", eval("(fn() -> 7)()"));

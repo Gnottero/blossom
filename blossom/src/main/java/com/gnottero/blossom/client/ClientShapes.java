@@ -496,7 +496,7 @@ public final class ClientShapes
         Model model = models.computeIfAbsent(sprite, shape -> resolve((Shape.Sprite) shape, client));
         if (model.state() == null && model.stack() == null)
         {
-            return; // un blocco o un item che questo client non conosce: non c'e' niente da disegnare
+            return; // a block or an item this client does not know: there is nothing to draw
         }
         Shape.Sprite.Pose style = sprite.pose();
         Vec3 pos = sprite.anchored(sprite.pos(), followPos);
@@ -607,7 +607,7 @@ public final class ClientShapes
     }
 
     /**
-     * Un mondo di un blocco solo: il nostro all'origine, aria dappertutto.
+     * A world of a single block: ours at the origin, air everywhere else.
      *
      * <p>Needed by {@link FluidRenderer}, which asks a world for neighbours and light. There are no
      * neighbours here by choice, since the fluid has to keep all of its faces the way an isolated

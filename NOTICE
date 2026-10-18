@@ -1,7 +1,7 @@
 Blossom
 
-Il core dell'interprete di questo progetto deriva da Scarpet, il linguaggio di scripting di
-fabric-carpet (https://github.com/gnembon/fabric-carpet), distribuito sotto licenza MIT.
+The interpreter core of this project derives from Scarpet, the scripting language of
+fabric-carpet (https://github.com/gnembon/fabric-carpet), distributed under the MIT license.
 
 Copyright (c) 2019 gnembon
 
@@ -20,5 +20,5 @@ NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FO
 OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-Le modifiche, il ridisegno del linguaggio e il layer core.mc.* sono opera di Gnottero e sono
-distribuiti sotto la stessa licenza.
+The modifications, the redesign of the language and the core.mc.* layer are the work of Gnottero
+and are distributed under the same license.

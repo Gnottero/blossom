@@ -5,7 +5,7 @@ import org.jspecify.annotations.Nullable;
 /**
  * Where, exactly: file, line, column.
  *
- * <p>The plan (§4) requires every error to be able to report this. A small immutable value, since
+ * <p>Every error must be able to report this. A small immutable value, since
  * many of them get constructed during parsing.
  */
 public record SourcePosition(String file, int line, int column)

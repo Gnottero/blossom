@@ -1,4 +1,4 @@
-module geologia;
+module geology;
 
 import "core.list" as list;
 import "core.string" as string;
@@ -6,11 +6,11 @@ import "core.string" as string;
 // The part that thinks. Doesn't touch the world, doesn't print anything, doesn't listen to events:
 // it takes a list of readings [position, block] and answers questions. It's the module you test with
 //
-//     /blossom script in vena-viva geologia.conta([[[0, 0, 0], 'diamond_ore']], 'diamond_ore')
+//     /blossom script in living-vein geology.count([[[0, 0, 0], 'diamond_ore']], 'diamond_ore')
 //
 // without having to break a real block.
 
-pub let MINERALI = [
+pub let ORES = [
     'coal_ore', 'deepslate_coal_ore',
     'iron_ore', 'deepslate_iron_ore',
     'copper_ore', 'deepslate_copper_ore',
@@ -22,47 +22,47 @@ pub let MINERALI = [
     'nether_gold_ore', 'nether_quartz_ore', 'ancient_debris'
 ];
 
-// 'minecraft:diamond_ore' and 'diamond_ore' are the same block written two ways: a block value
-// prints with the namespace, whoever writes a script uses the short form
-pub fn nome_corto(blocco) -> (
-    pezzi = string.split(':', blocco + '');
-    pezzi:(list.size(pezzi) - 1)
+// 'minecraft:diamond_ore' and 'diamond_ore' are the same block written two ways: an id can arrive
+// with its namespace, whoever writes a script uses the short form
+pub fn short_name(block) -> (
+    pieces = string.split(':', block + '');
+    pieces:(list.size(pieces) - 1)
 );
 
 // '~' on a list returns the index, or null if it's not there: comparing with null is mandatory,
 // because index 0 is a falsy value. 'list.has' is unrelated: that one asks whether the index exists.
-pub fn e_minerale(blocco) -> (MINERALI ~ nome_corto(blocco)) != null;
+pub fn is_ore(block) -> (ORES ~ short_name(block)) != null;
 
 // How many readings are of the given type. 'for' returns how many times the body evaluated true,
 // so counting doesn't need an accumulator.
-pub fn conta(letture: list, tipo: str) -> for(letture, nome_corto(_:1) == tipo);
+pub fn count(readings: list, type: str) -> for(readings, short_name(_:1) == type);
 
 // The positions of the readings of that type.
-pub fn posizioni(letture: list, tipo: str) -> list.map(
-    list.filter(letture, nome_corto(_:1) == tipo),
+pub fn positions(readings: list, type: str) -> list.map(
+    list.filter(readings, short_name(_:1) == type),
     _:0
 );
 
 // The corners of the box that contains all the given positions, or null if the list is empty.
 // Used to draw the box around the vein.
-pub fn riquadro(punti: list) -> (
-    if(list.size(punti) == 0, return(null));
+pub fn bounds(points: list) -> (
+    if(list.size(points) == 0, return(null));
     [
-        [estremo(punti, 0, false), estremo(punti, 1, false), estremo(punti, 2, false)],
-        [estremo(punti, 0, true),  estremo(punti, 1, true),  estremo(punti, 2, true)]
+        [extreme(points, 0, false), extreme(points, 1, false), extreme(points, 2, false)],
+        [extreme(points, 0, true),  extreme(points, 1, true),  extreme(points, 2, true)]
     ]
 );
 
-// private: it's a detail of 'riquadro', and no other module should depend on it
-fn estremo(punti, asse, massimo) -> (
-    ordinati = list.sort(list.map(punti, _:asse));
-    if(massimo, ordinati:(list.size(ordinati) - 1), ordinati:0)
+// private: it's a detail of 'bounds', and no other module should depend on it
+fn extreme(points, axis, highest) -> (
+    sorted = list.sort(list.map(points, _:axis));
+    if(highest, sorted:(list.size(sorted) - 1), sorted:0)
 );
 
 // The verdict on the vein in one word: it's what the rest of the app shows to the player.
-pub fn giudizio(rimasti: num) -> if(
-    rimasti == 0, 'esaurita',
-    rimasti <= 2, 'agli sgoccioli',
-    rimasti <= 8, 'buona',
-    'ricca'
+pub fn verdict(left: num) -> if(
+    left == 0, 'depleted',
+    left <= 2, 'nearly gone',
+    left <= 8, 'good',
+    'rich'
 );

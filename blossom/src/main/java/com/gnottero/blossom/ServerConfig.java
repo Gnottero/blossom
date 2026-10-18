@@ -45,7 +45,7 @@ import blossom.project.PackRegistry;
  * that leave the process, towards the disk and towards the network, and that is a decision to be
  * taken rather than suffered.
  *
- * @see #read full key documentation in {@code docs/guide/12-configurazione.md}
+ * @see #read full key documentation in {@code docs/guide/12-configuration.md}
  */
 public record ServerConfig(Path scriptRoot, @Nullable PackRegistry registry, IoRoots ioRoots, HttpAccess httpAccess,
                            ExecutionBudget.Policy watchdog)

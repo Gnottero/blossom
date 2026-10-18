@@ -1,0 +1,99 @@
+module main;
+
+import "geology" as geology;
+import "worksite" as worksite;
+import "registry" as registry;
+
+import "core.list" as list;
+import "core.mc.entity" as entity;
+import "core.mc.event" as event;
+import "core.task" as task;
+
+// living-vein - when someone breaks an ore, the app checks how much is left around it, tells
+// the player, records it, and notifies other apps when the vein is depleted.
+//
+// The real work (reading a 13x13x13 block area) runs in a task: inside the handler it would
+// stall the tick, and an event's budget is two seconds.
+
+// --- the handler: thin by design -----------------------------------------------------
+
+fn on_break(player, block) -> (
+    // the block still arrives intact: the event is cancellable, so it fires before the break
+    if(!geology.is_ore(block), return(false));
+
+    pos = entity.query(player, 'pos');
+    type = geology.short_name(block);
+    name = entity.query(player, 'name');
+
+    // no task.wait here: the handler finishes immediately, the task continues on its own
+    task.start('inspect', pos, type, player, name);
+    false                       // false = the break proceeds normally
+);
+
+// --- the work, outside the tick ----------------------------------------------------------------
+
+pub fn inspect(center: list, type: str, player, name: str) -> try(
+    (
+        // 1. read the world: a single stop on the game thread, not one per block
+        readings = task.dock(worksite.read_around(center, worksite.RADIUS));
+
+        // 2. think: here we're on our own thread, and we can take our time
+        left = geology.count(readings, type) - 1;           // minus the one that's about to disappear
+        points = geology.positions(readings, type);
+        corners = geology.bounds(points);
+        word = geology.verdict(left);
+
+        registry.record(type, center, left, name);
+
+        // 3. write: again a single stop
+        task.dock((
+            worksite.notify(player, type, left, word);
+            worksite.show_bounds(corners, if(left == 0, 'flame', 'happy_villager'));
+            if(left == 0, (
+                worksite.play_depleted(center);
+                // the other apps listening for 'vein_depleted' find out; if none are listening,
+                // nothing happens
+                event.emit('vein_depleted', player, type, center, name)
+            ))
+        ))
+    ),
+
+    // a task that blows up doesn't take the app down, but without this the reason only ends up in the log
+    'exception', (
+        reason = _;             // '_' changes meaning inside a for: copy it right away
+        print('living-vein: inspection failed at ' + center + ': ' + reason);
+        null
+    )
+);
+
+// --- interface for admins ------------------------------------------------------------------
+
+// /blossom script in living-vein summary()
+pub fn summary() -> [
+    registry.count() + ' veins recorded',
+    registry.summary()
+];
+
+// /blossom script in living-vein latest(5)
+pub fn latest(how_many: num) -> (
+    everything = registry.all();
+    from = list.size(everything) - how_many;
+    list.map(
+        list.slice(everything, if(from < 0, 0, from)),
+        _:'who' + ' - ' + _:'type' + ' at ' + _:'pos' + ' (' + _:'left' + ' left)'
+    )
+);
+
+// /blossom script in living-vein reset()
+pub fn reset() -> registry.clear();
+
+// --- startup ---------------------------------------------------------------------------------------
+
+// a handler is a function of this module, even when the work happens elsewhere: this way the
+// signature that the event checks at load time is written here, where it's read
+fn on_shutdown() -> registry.save();
+
+event.on('player_breaks_block', on_break);
+event.on('server_shuts_down', on_shutdown);
+
+print('living-vein ready, ' + registry.load() + ' veins on file');

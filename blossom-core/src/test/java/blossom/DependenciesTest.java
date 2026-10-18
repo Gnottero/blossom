@@ -100,24 +100,24 @@ class DependenciesTest
     @Test
     void aPackDependencyIsFoundByNameAmongTheInstalledOnes(@TempDir Path tmp) throws IOException
     {
-        Path installed = tmp.resolve("mondo");
-        writeProject(installed.resolve("torre"), "torre", "1.0.0", "",
+        Path installed = tmp.resolve("world");
+        writeProject(installed.resolve("tower"), "tower", "1.0.0", "",
                 "main.bs", "module main;\n",
-                "guardia.bs", "module guardia;\n\npub fn allarme() -> 'suona';\n");
+                "guard.bs", "module guard;\n\npub fn alarm() -> 'rings';\n");
         writeProject(tmp.resolve("app"), "app", "0.1.0",
-                ", \"dependencies\": {\"torre\": {\"pack\": \"torre\", \"version\": \"^1.0.0\"}}",
-                "main.bs", "module main;\n\nimport \"torre/guardia\" as g;\n");
+                ", \"dependencies\": {\"tower\": {\"pack\": \"tower\", \"version\": \"^1.0.0\"}}",
+                "main.bs", "module main;\n\nimport \"tower/guard\" as g;\n");
 
         Interpreter interpreter = Interpreter.forProject(tmp.resolve("app"), java.util.function.UnaryOperator.identity(),
                 blossom.interpreter.Context::new, new Installed(installed, null));
-        assertEquals("suona", interpreter.eval("import \"torre/guardia\" as g; g.allarme()").getString());
+        assertEquals("rings", interpreter.eval("import \"tower/guard\" as g; g.alarm()").getString());
     }
 
     @Test
     void aMissingPackSaysWhatIsInstalled(@TempDir Path tmp) throws IOException
     {
-        Path installed = tmp.resolve("mondo");
-        writeProject(installed.resolve("torre"), "torre", "1.0.0", "", "main.bs", "module main;\n");
+        Path installed = tmp.resolve("world");
+        writeProject(installed.resolve("tower"), "tower", "1.0.0", "", "main.bs", "module main;\n");
         writeProject(tmp.resolve("app"), "app", "0.1.0",
                 ", \"dependencies\": {\"torree\": {\"pack\": \"torree\"}}",
                 "main.bs", "module main;\n");
@@ -125,7 +125,7 @@ class DependenciesTest
         ImportError error = assertThrows(ImportError.class,
                 () -> Interpreter.forProject(tmp.resolve("app"), java.util.function.UnaryOperator.identity(),
                         blossom.interpreter.Context::new, new Installed(installed, null)));
-        assertEquals("torre", error.suggestion());
+        assertEquals("tower", error.suggestion());
     }
 
     @Test
@@ -150,13 +150,13 @@ class DependenciesTest
         writeProject(tmp.resolve("medio"), "medio", "1.0.0",
                 ", \"dependencies\": {\"b\": {\"path\": \"../basso\"}}",
                 "main.bs", "module main;\n",
-                "sopra.bs", "module sopra;\n\nimport \"b/core\" as base;\n\npub fn doppio() -> base.base() * 2;\n");
+                "upper.bs", "module upper;\n\nimport \"b/core\" as base;\n\npub fn double() -> base.base() * 2;\n");
         writeProject(tmp.resolve("app"), "app", "0.1.0",
                 ", \"dependencies\": {\"m\": {\"path\": \"../medio\"}}",
-                "main.bs", "module main;\n\nimport \"m/sopra\" as sopra;\n");
+                "main.bs", "module main;\n\nimport \"m/upper\" as upper;\n");
 
         Interpreter interpreter = Interpreter.forProject(tmp.resolve("app"));
-        assertEquals("14", interpreter.eval("import \"m/sopra\" as sopra; sopra.doppio()").getString());
+        assertEquals("14", interpreter.eval("import \"m/upper\" as upper; upper.double()").getString());
     }
 
     @Test
@@ -188,7 +188,7 @@ class DependenciesTest
     {
         ApiLevel tooNew = new ApiLevel(ApiLevel.CURRENT.major(), ApiLevel.CURRENT.minor() + 1);
         writeProject(tmp.resolve("app"), "app", "0.1.0", ", \"api_level\": \"" + tooNew + "\"",
-                "main.bs", "module main;\n\nquesto non e' nemmeno codice valido\n");
+                "main.bs", "module main;\n\nthis is not even valid code\n");
 
         CompatibilityError error = assertThrows(CompatibilityError.class, () -> Interpreter.forProject(tmp.resolve("app")));
         assertTrue(error.getMessage().contains("api_level"), error.getMessage());
@@ -225,7 +225,7 @@ class DependenciesTest
             @Override
             public String describe()
             {
-                return "il registry di prova";
+                return "the test registry";
             }
         };
 
@@ -234,7 +234,7 @@ class DependenciesTest
                 "main.bs", "module main;\n\nimport \"vector/v\" as v;\n");
 
         Interpreter interpreter = Interpreter.forProject(tmp.resolve("app"), java.util.function.UnaryOperator.identity(),
-                blossom.interpreter.Context::new, new Installed(tmp.resolve("vuoto"), registry));
+                blossom.interpreter.Context::new, new Installed(tmp.resolve("empty"), registry));
         assertEquals("140", interpreter.eval("import \"vector/v\" as v; v.value()").getString());
     }
 }

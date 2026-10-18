@@ -17,7 +17,7 @@ import blossom.project.ProjectManifest;
  * What surrounds a pack, seen from the world: the other packs installed under
  * {@code <world>/blossom/}, and the registry when the server has one configured.
  *
- * <p>It is the answer to the "dependencies between packs" roadmap entry. A pack used to be able to
+ * <p>It is what makes dependencies between installed packs possible. A pack used to be able to
  * depend only on a relative path, which works for two projects living in the same developer
  * directory and not for two packs installed by an administrator, which sit next to each other but
  * know nothing about each other. With {@code {"pack": "name"}} the dependency is declared by name,

@@ -6,7 +6,7 @@ import java.util.List;
 import org.jspecify.annotations.Nullable;
 
 /**
- * The root of Blossom's typed errors (PIANO_LINGUAGGIO.md §4).
+ * The root of Blossom's typed errors.
  *
  * <p>An error carries four things: its category (the java type itself, so it is distinguishable
  * even from a targeted {@code catch} written in Blossom), the position in the source, a call
@@ -59,7 +59,7 @@ public abstract class BlossomError extends InternalExpressionException
 
     /**
      * The category name shown to the user: by default the simple class name, which is exactly
-     * what the plan lists ({@code ParseError}, {@code ImportError}, ...).
+     * what the documentation lists ({@code ParseError}, {@code ImportError}, ...).
      */
     public String kind()
     {
@@ -89,7 +89,7 @@ public abstract class BlossomError extends InternalExpressionException
     }
 
     /**
-     * The complete message, in the format from the plan:
+     * The complete message, in this format:
      *
      * <pre>
      * UndefinedSymbolError

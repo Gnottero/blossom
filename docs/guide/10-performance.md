@@ -6,8 +6,7 @@ a fifth of the server's budget.
 
 ## Orders of magnitude
 
-Measured on an AMD Ryzen 5 5600H, OpenJDK 25 (the full numbers and the method are in
-[`BENCHMARK.md`](../../BENCHMARK.md)):
+Measured on an AMD Ryzen 5 5600H, OpenJDK 25, with `./gradlew :blossom-core:benchmark`:
 
 | Operation | Cost |
 | --- | --- |
@@ -84,7 +83,7 @@ let mut t = 0;
 fn on_tick() -> (t += 1; if(t % 20 == 0, check()));
 ```
 
-**One `task.dock` per unit of work**, not one per read ([chapter 9](09-concorrenza.md)).
+**One `task.dock` per unit of work**, not one per read ([chapter 9](09-concurrency.md)).
 
 **Lazy lists stay lazy.** `list.range(1000000)` does not allocate a million values; you walk over it
 with `map`/`filter` and never pay the memory. Materialising it with `list.slice(...)` pays for all

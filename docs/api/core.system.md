@@ -68,7 +68,7 @@ fn identical(a, b) -> system.type(a) == system.type(b) && a == b;
 
 ### `system.bool(value)`
 The truth value of a value, as a `bool`, following the rules in
-[2. Values](../guide/02-valori.md), with one addition: the strings `'false'` and `'null'` are
+[2. Values](../guide/02-values.md), with one addition: the strings `'false'` and `'null'` are
 false, whereas any other non-empty string is true. That exception exists so that a flag read from a
 file or a command argument means what it says.
 
@@ -132,7 +132,7 @@ stack, and optimising it changes nothing.
 type on the command line, while the problem is usually a handler firing a hundred times a second.
 
 Orders of magnitude for the language itself are in
-[10. Performance](../guide/10-prestazioni.md) and in [`BENCHMARK.md`](../../BENCHMARK.md).
+[10. Performance](../guide/10-performance.md).
 
 ---
 

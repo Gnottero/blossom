@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-/** C.1: functions written without a name. */
+/** Functions written without a name. */
 class LambdaTest
 {
     private static String eval(String code)
@@ -14,84 +14,84 @@ class LambdaTest
     }
 
     @Test
-    void unaLambdaSiChiamaSubito()
+    void aLambdaIsCalledRightAway()
     {
         assertEquals("5", eval("f = fn(a, b) -> a + b; f(2, 3)"));
     }
 
     @Test
-    void unaLambdaCatturaIlFrameInCuiNasce()
+    void aLambdaCapturesTheFrameItIsBornIn()
     {
         assertEquals("13", eval("base = 10; f = fn(x) -> x + base; f(3)"));
     }
 
     @Test
-    void unaLambdaPassaComeArgomento()
+    void aLambdaIsPassedAsAnArgument()
     {
         assertEquals("[2, 4, 6]", eval("import 'core.list' as list; list.map([1,2,3], fn(x) -> x * 2)"));
     }
 
     @Test
-    void unaLambdaNonEntraNellaTabellaDeiSimboli()
+    void aLambdaDoesNotEnterTheSymbolTable()
     {
         // two lambdas with the same shape do not shadow each other
         assertEquals("9", eval("a = fn(x) -> x * 2; b = fn(x) -> x * 3; a(3) + b(1)"));
     }
 
     @Test
-    void unaLambdaAccettaITipiSuiParametri()
+    void aLambdaAcceptsParameterTypes()
     {
         assertEquals("6", eval("f = fn(x: num) -> x * 2; f(3)"));
     }
 
     @Test
-    void unaLambdaFiltra()
+    void aLambdaFilters()
     {
         assertEquals("[2, 4]", eval("import 'core.list' as list; list.filter([1,2,3,4], fn(x) -> x % 2 == 0)"));
     }
 
     @Test
-    void unaLambdaRiduceConLAccumulatorePrimo()
+    void aLambdaReducesWithTheAccumulatorFirst()
     {
         assertEquals("10", eval("import 'core.list' as list; list.reduce([1,2,3,4], fn(a, x) -> a + x, 0)"));
     }
 
     @Test
-    void unaLambdaVedeIndiceComeSecondoArgomento()
+    void aLambdaSeesTheIndexAsSecondArgument()
     {
         assertEquals("[0, 1, 2]", eval("import 'core.list' as list; list.map(['a','b','c'], fn(x, i) -> i)"));
     }
 
     @Test
-    void laFormaCortaConTrattinoBassoResta()
+    void theShortFormWithUnderscoreStays()
     {
         assertEquals("[2, 4, 6]", eval("import 'core.list' as list; list.map([1,2,3], _ * 2)"));
     }
 
     @Test
-    void unCatchPuoDareUnNomeAllErrore()
+    void aCatchCanNameTheError()
     {
-        assertEquals("preso: rotto",
-                eval("try(throw('rotto'), fn(e) -> 'preso: ' + e)"));
+        assertEquals("caught: broken",
+                eval("try(throw('broken'), fn(e) -> 'caught: ' + e)"));
     }
 
     @Test
-    void unCatchConNomeSopravviveAUnCicloDentro()
+    void aNamedCatchSurvivesALoopInside()
     {
         // with '_' the exception value disappears inside the for: with a name it does not
-        assertEquals("[rotto, rotto]",
-                eval("import 'core.list' as list; try(throw('rotto'), fn(e) -> list.map([1,2], e))"));
+        assertEquals("[broken, broken]",
+                eval("import 'core.list' as list; try(throw('broken'), fn(e) -> list.map([1,2], e))"));
     }
 
     @Test
-    void unCatchConDueParametriRiceveLoStackNelSecondo()
+    void aCatchWithTwoParametersGetsTheStackInTheSecond()
     {
         assertEquals("true",
-                eval("try(throw('rotto'), fn(e, tr) -> tr:'token' != null)"));
+                eval("try(throw('broken'), fn(e, tr) -> tr:'token' != null)"));
     }
 
     @Test
-    void fnSenzaFrecciaEUnErroreChiaro()
+    void fnWithoutArrowIsAClearError()
     {
         Exception e = assertThrows(Exception.class, () -> eval("fn(a, b)"));
         assertEquals(true, e.getMessage().contains("only makes sense before"));

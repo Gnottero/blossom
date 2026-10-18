@@ -4,7 +4,7 @@ import blossom.interpreter.Interpreter;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-/** C.0 - calling a function that arrives as the value of a variable. */
+/** Calling a function that arrives as the value of a variable. */
 class CallValueTest
 {
     private static String eval(String code)
@@ -13,26 +13,26 @@ class CallValueTest
     }
 
     @Test
-    void unaFunzioneDichiarataSiChiamaComePrima()
+    void aDeclaredFunctionIsCalledAsBefore()
     {
-        assertEquals("6", eval("fn triplica(x) -> x * 3; triplica(2)"));
+        assertEquals("6", eval("fn triple(x) -> x * 3; triple(2)"));
     }
 
     @Test
-    void unaVariabileCheContieneUnaFunzioneSiChiamaDirettamente()
+    void aVariableHoldingAFunctionIsCalledDirectly()
     {
-        assertEquals("6", eval("fn triplica(x) -> x * 3; g = triplica; g(2)"));
+        assertEquals("6", eval("fn triple(x) -> x * 3; g = triple; g(2)"));
     }
 
     @Test
-    void ilParametroDiUnaFunzioneSiChiamaDirettamente()
+    void aFunctionParameterIsCalledDirectly()
     {
-        assertEquals("18", eval("fn triplica(x) -> x * 3; fn due_volte(f, x) -> f(f(x)); due_volte(triplica, 2)"));
+        assertEquals("18", eval("fn triple(x) -> x * 3; fn twice(f, x) -> f(f(x)); twice(triple, 2)"));
     }
 
     @Test
-    void laFunzioneDichiarataVinceSullaVariabile()
+    void theDeclaredFunctionWinsOverTheVariable()
     {
-        assertEquals("6", eval("fn f(x) -> x * 3; f = 'niente'; f(2)"));
+        assertEquals("6", eval("fn f(x) -> x * 3; f = 'nothing'; f(2)"));
     }
 }

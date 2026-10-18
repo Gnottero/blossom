@@ -23,7 +23,7 @@ public class ParseError extends BlossomError
      *
      * <p>The snippet is the same thing the old {@code ExpressionException} already knew how to
      * produce (it's the most useful part of the message), but here it arrives inside a typed error
-     * with a position, as required by §4 of the plan.
+     * with a position, as every error must be.
      */
     public static ParseError at(Expression expression, Token token, String message)
     {

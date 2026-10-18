@@ -45,7 +45,7 @@ public abstract class ScriptHost
 
 
     /**
-     * The execution limits of this app (PIANO_LINGUAGGIO.md §9): the manifest declares them, and
+     * The execution limits of this app: the manifest declares them, and
      * every context that starts an execution reads them.
      *
      * <p>The core default is "no limit" on purpose: outside a server there is no tick to protect,
@@ -65,7 +65,7 @@ public abstract class ScriptHost
     }
 
     /**
-     * The app profiler (PIANO_LINGUAGGIO.md §9), off unless someone is measuring.
+     * The app profiler, off unless someone is measuring.
      *
      * <p>It lives on the host and not on the context because what is worth measuring, the event
      * handlers, runs in contexts created by the game, which nobody can pass in from outside.

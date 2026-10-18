@@ -15,7 +15,7 @@ A list is written `[1, 2, 3]` and read with the `:` operator (`l:0`), which is s
 import. Everything else goes through this module.
 
 Two properties of lists themselves, described in full in
-[2. Values](../guide/02-valori.md):
+[2. Values](../guide/02-values.md):
 
 - **indices wrap around** on reading, so `[10, 20, 30]:4` is `20` and never an error, while removing
   an index that does not exist is an `IndexOutOfBoundsError`;
@@ -54,7 +54,7 @@ All of these take an **expression** as their last argument, in which `_` is the 
 `_i` its index and `_a` the accumulator of `reduce`. They also accept a **function**, and then those
 implicit names are replaced by the function's parameters. The choice is made by the grammar, costs
 nothing at run time, and is described in
-[5. Control flow](../guide/05-controllo.md).
+[5. Control flow](../guide/05-control-flow.md).
 
 Passing `null` in place of the list is not an error: `map` and `filter` give back an empty list,
 `find` gives `null`, `all` gives `true`.

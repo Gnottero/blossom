@@ -1,142 +1,144 @@
 # Blossom
 
-Un linguaggio di scripting per Minecraft, e il mod Fabric che lo esegue. È costruito attorno a tre
-cose: **moduli veri**, **errori leggibili** e una **API di gioco curata** invece di una superficie
-enorme e piatta.
+A scripting language for Minecraft, and the Fabric mod that runs it. It is built around three
+things: **real modules**, **readable errors** and a **curated game API** instead of a huge, flat
+surface.
 
-Un pack contiene **il comportamento e il contenuto**: il codice che reagisce a quello che succede, e
-le ricette, i tag, le loot table e gli advancement che finora volevano un datapack a parte.
+A pack carries **behaviour and content**: the code that reacts to what happens in the world, and
+the recipes, tags, loot tables and advancements that used to need a separate datapack.
 
-Fa una cosa sola, eseguire codice che manipola il mondo: niente rules, niente ottimizzazioni del
-server, niente strumenti di amministrazione.
+It does one thing, running code that manipulates the world: no rules, no server optimisations, no
+administration tools.
 
-L'interprete discende dal codice di Scarpet (fabric-carpet, MIT), da cui è stato estratto e
-ridisegnato; l'attribuzione completa è in [`NOTICE`](NOTICE).
+The interpreter descends from the code of Scarpet (fabric-carpet, MIT), from which it was extracted
+and redesigned; the full attribution is in [`NOTICE`](NOTICE).
 
-È **server-side**: si installa sul server e chi gioca vanilla non perde nessuna funzione. Lo stesso
-jar messo anche su un client aggiunge una cosa sola — il disegno delle forme di
-[`core.mc.shape`](docs/api/core.mc.shape.md), che senza client si vedono come particelle.
+It is **server-side**: install it on the server and players on vanilla lose nothing. The same jar
+placed on a client too adds a single thing — the native drawing of the shapes of
+[`core.mc.shape`](docs/api/core.mc.shape.md), which without the client show up as particles.
 
-## Com'è fatto
+## How it is laid out
 
 ```
-blossom-core/     l'interprete: java puro, zero import net.minecraft.*, testabile senza il gioco
-blossom/          il mod Fabric: comandi, eventi, e i moduli core.mc.*
-docs/     la documentazione della libreria
-examples/         progetti d'esempio completi
+blossom-core/     the interpreter: pure Java, zero net.minecraft.* imports, testable without the game
+blossom/          the Fabric mod: commands, events, and the core.mc.* modules
+docs/             the documentation of the language and the library
+examples/         complete example projects
+vscode-blossom/   the VS Code extension
 ```
 
-Il core non sa che esiste Minecraft. Il mod gli passa la propria API attraverso un unico aggancio
-(`Interpreter.Builder.withApi`), e questo è il motivo per cui i test del linguaggio girano in un
-secondo senza scaricare il gioco.
+The core does not know Minecraft exists. The mod hands it its own API through a single hook
+(`Interpreter.Builder.withApi`), and that is why the language tests run in a second without
+downloading the game.
 
-## Installazione
+## Installation
 
-Serve Minecraft **26.4-snapshot-4**, Fabric Loader 0.19.5+ e Java 25. Costruisci il mod con:
+You need Minecraft **26.4-snapshot-4**, Fabric Loader 0.19.5+ and Java 25. Build the mod with:
 
 ```
 ./gradlew :blossom:build
 ```
 
-Il jar finisce in `blossom/build/libs/`. Copialo nella cartella `mods/` del server o del client.
+The jar ends up in `blossom/build/libs/`. Copy it into the `mods/` folder of the server or the
+client.
 
-Per provarlo senza installare niente: `./gradlew :blossom:runServer` avvia un server di sviluppo
-(la prima volta va accettato l'EULA di Mojang scrivendo `eula=true` in `blossom/run/eula.txt`).
+To try it without installing anything: `./gradlew :blossom:runServer` starts a development server
+(the first time, accept Mojang's EULA by writing `eula=true` in `blossom/run/eula.txt`).
 
-## Il primo script
+## The first script
 
-Gli script di un mondo stanno in `<mondo>/blossom/`. Un file, un'app:
+The scripts of a world live in `<world>/blossom/`. One file, one app:
 
 ```
-// <mondo>/blossom/saluta.bs
-module saluta;
+// <world>/blossom/greeter.bs
+module greeter;
 
 import "core.mc.text" as text;
 import "core.mc.entity" as entity;
 import "core.mc.event" as event;
 
-fn benvenuto(giocatore) -> (
-    text.send(giocatore, 'benvenuto su questo server');
+fn welcome(player) -> (
+    text.send(player, 'welcome to this server');
     false
 );
 
-event.on('player_connects', benvenuto);
-print('saluta pronta');
+event.on('player_connects', welcome);
+print('greeter ready');
 ```
 
-In gioco:
+In game:
 
 ```
-/blossom script load saluta
-/blossom script in saluta entity.player('all')
+/blossom script load greeter
+/blossom script in greeter entity.player('all')
 /blossom script run 2 + 3 * 4
 ```
 
-| Comando | Cosa fa |
+| Command | What it does |
 | --- | --- |
-| `/blossom script run <codice>` | valuta codice al volo, in un interprete pulito |
-| `/blossom script in <app> <codice>` | valuta codice dentro un'app caricata, che ne vede funzioni e stato |
-| `/blossom script load <app>` | carica (o ricarica) `<mondo>/blossom/<app>.bs`, o il pack `<mondo>/blossom/<app>/` |
-| `/blossom script reload <app>` | come `load`, sulle app già caricate |
-| `/blossom script unload <app>` | scarica un'app e i suoi handler di evento |
-| `/blossom script list` | cosa è caricato e cosa c'è su disco |
-| `/blossom script scan` · `fill` · `outline` | un'espressione su ogni blocco di un'area: conta, riempie, disegna il guscio |
-| `/blossom script in <app> invoke <fn> [argomenti]` | chiama una funzione dell'app da riga di comando; `invokepoint` e `invokearea` le passano una posizione o un'area |
-| `/blossom script in <app> globals` | le funzioni e le variabili del modulo principale dell'app |
-| `/blossom script event` · `event add` · `event remove` | gli handler di ogni evento, e attaccarne o staccarne uno a mano |
-| `/blossom script explain` | come il parser legge un'espressione, una funzione o un'app |
-| `/blossom script stop` · `resume` | ferma ogni script sul server, e lo fa ripartire |
-| `/blossom pack update <app>` | ri-risolve le dipendenze e riscrive `blossom.lock` |
-| `/blossom data generate <app>` | chiama la `generate()` dell'app e scrive il contenuto in `data/` |
-| `/blossom data list <app>` | cosa c'è nella `data/`, e cosa di quello è generato |
-| `/blossom data export <app>` | ne fa un datapack zippato, che gira anche senza Blossom |
-| `/blossom profile run <codice>` | misura dove va il tempo, funzione per funzione |
-| `/blossom profile in <app> <codice>` | come sopra, dentro un'app caricata |
-| `/blossom profile start <app>` / `stop <app>` | misura un'app viva, handler di evento compresi |
+| `/blossom script run <code>` | evaluates code on the fly, in a clean interpreter |
+| `/blossom script in <app> <code>` | evaluates code inside a loaded app, which sees its functions and state |
+| `/blossom script load <app>` | loads (or reloads) `<world>/blossom/<app>.bs`, or the pack `<world>/blossom/<app>/` |
+| `/blossom script reload <app>` | like `load`, for apps already loaded |
+| `/blossom script unload <app>` | unloads an app and its event handlers |
+| `/blossom script list` | what is loaded, and what is on disk |
+| `/blossom script scan` · `fill` · `outline` | an expression over every block of an area: count, fill, draw the shell |
+| `/blossom script in <app> invoke <fn> [arguments]` | calls a function of the app from the command line; `invokepoint` and `invokearea` pass it a position or an area |
+| `/blossom script in <app> globals` | the functions and bindings of the app's main module |
+| `/blossom script event` · `event add` · `event remove` | the handlers of every event, and attaching or detaching one by hand |
+| `/blossom script explain` | how the parser reads an expression, a function or an app |
+| `/blossom script stop` · `resume` | stops every script on the server, and lets them run again |
+| `/blossom pack update <app>` | re-resolves the dependencies and rewrites `blossom.lock` |
+| `/blossom data generate <app>` | calls the app's `generate()` and writes the content into `data/` |
+| `/blossom data list <app>` | what is in `data/`, and which of it is generated |
+| `/blossom data export <app>` | makes it a zipped datapack, which runs without Blossom too |
+| `/blossom profile run <code>` | measures where the time goes, function by function |
+| `/blossom profile in <app> <code>` | the same, inside a loaded app |
+| `/blossom profile start <app>` / `stop <app>` | measures a live app, event handlers included |
 
-## Il contenuto di gioco
+## Game content
 
-Un pack può portare anche **contenuto**: ricette, loot table, tag, advancement — quello che finora
-voleva un datapack a parte. Sta in una cartella `data/` accanto a `src/`, con l'albero e i json di un
-datapack vero, e viene dato al gioco da dentro il pack: chi installa copia una cosa sola.
+A pack can carry **content** too: recipes, loot tables, tags, advancements — what used to need a
+separate datapack. It lives in a `data/` folder next to `src/`, with the tree and the json of a real
+datapack, and it is handed to the game from inside the pack: whoever installs it copies one thing.
 
 ```
-mio-pack/
+my-pack/
 ├── blossom.json
 ├── src/main.bs
 └── data/
     ├── pack.mcmeta
-    └── mio/recipe/spada.json
+    └── mine/recipe/sword.json
 ```
 
-I json si scrivono a mano, oppure li **genera** il codice — che è il motivo per cui conviene avere un
-linguaggio invece di quaranta file quasi identici:
+The json is written by hand, or **generated** by the code — which is the reason to have a language
+instead of forty nearly identical files:
 
 ```
-pub fn generate() -> list.map(map.keys(METALLI), fn(m) -> data.write("mio:recipe/spada_${m}", {
+pub fn generate() -> list.map(map.keys(METALS), fn(m) -> data.write("mine:recipe/sword_${m}", {
     'type' -> 'minecraft:crafting_shaped',
     'pattern' -> [' # ', ' # ', ' / '],
     'key' -> {'#' -> "minecraft:${m}_ingot", '/' -> 'minecraft:stick'},
-    'result' -> {'id' -> "minecraft:${METALLI:m}_sword"}
+    'result' -> {'id' -> "minecraft:${METALS:m}_sword"}
 }));
 ```
 
 ```
-/blossom data generate mio-pack
+/blossom data generate my-pack
 5 resources written in data/. Run /reload to apply them; a new registry entry or worldgen needs a restart.
 ```
 
-Quello che ne esce sono json veri, che restano su disco e si guardano con `git diff`. Un file scritto
-a mano nella stessa cartella non viene mai toccato: l'elenco di cosa è generato sta in
-`data/.blossom-generated`. Il dettaglio è in
-[13. Il contenuto di gioco](docs/guide/13-contenuti.md).
+What comes out is real json, which stays on disk and can be looked at with `git diff`. A file
+written by hand in the same folder is never touched: the list of what is generated is kept in
+`data/.blossom-generated`. The details are in
+[13. Game content](docs/guide/13-game-content.md).
 
-## Un progetto multi-file
+## A multi-file project
 
-Un progetto è una cartella con un manifesto e una cartella `src/`:
+A project is a folder with a manifest and a `src/` folder:
 
 ```
-mio-progetto/
+my-project/
 ├── blossom.json
 └── src/
     ├── main.bs              ← module main
@@ -146,7 +148,7 @@ mio-progetto/
 
 ```json
 {
-  "name": "mio-progetto",
+  "name": "my-project",
   "version": "0.1.0",
   "entrypoint": "src/main.bs",
   "api_level": "2.0",
@@ -157,57 +159,55 @@ mio-progetto/
 }
 ```
 
-`"autoload": true` fa caricare il pack da solo appena il mondo è aperto, senza
-`/blossom script load` — prima che venga generato `server_starts`, così può ascoltare anche quello.
+`"autoload": true` loads the pack on its own as soon as the world is open, without
+`/blossom script load` — before `server_starts` fires, so it can listen to that too.
 
-Tre chiavi prendono il posto di quello che un'app Scarpet diceva in `__config()`: `"strict": true`
-rende un errore leggere una variabile mai assegnata, `"event_priority"` decide quale app sente per
-prima un evento (e chi lo annulla chiude il giro), `"requires"` elenca le mod che servono, con la
-versione scritta come in `fabric.mod.json`. Il dettaglio è nel
-[capitolo 6 della guida](docs/guide/06-moduli.md).
+Three keys take the place of what a Scarpet app said in `__config()`: `"strict": true` makes reading
+a never-assigned variable an error, `"event_priority"` decides which app hears an event first (and a
+cancel ends the round), `"requires"` lists the mods the pack needs, with the version written as in
+`fabric.mod.json`. The details are in [chapter 6 of the guide](docs/guide/06-modules.md).
 
-Il nome dichiarato in testa a ogni file deve combaciare con la sua posizione dentro `src/`: è un
-controllo che il caricatore fa prima di eseguire qualunque cosa.
+The name declared at the top of each file must match its position inside `src/`: the loader checks
+it before running anything.
 
-### Dipendenze
+### Dependencies
 
-Un progetto può dipendere da un altro in tre modi, che si escludono a vicenda:
+A project can depend on another in three ways, which exclude each other:
 
 ```json
 "dependencies": {
   "utils":  { "path": "../utils", "version": "^1.2.0" },
-  "torre":  { "pack": "torre", "version": "^1.0.0" },
+  "tower":  { "pack": "tower", "version": "^1.0.0" },
   "vector": { "version": "^2.0.0" }
 }
 ```
 
-- **`path`** — una cartella, di solito accanto al progetto. È il modo di lavorare su due progetti
-  insieme.
-- **`pack`** — un altro pack già installato nello stesso mondo, sotto `<mondo>/blossom/`. È il modo
-  di dipendere da qualcosa che un amministratore ha installato: chi scrive il manifesto non deve
-  inventarsi percorsi che sulla sua macchina non esistono.
-- **solo `version`** — dal registry, se il server ne ha uno configurato. Spento per default.
+- **`path`** — a folder, usually next to the project. It is the way to work on two projects together.
+- **`pack`** — another pack already installed in the same world, under `<world>/blossom/`. It is the
+  way to depend on something an administrator installed: whoever writes the manifest does not have to
+  invent paths that do not exist on their machine.
+- **`version` alone** — from the registry, if the server has one configured. Off by default.
 
-Il `version` è un vincolo [semver](https://semver.org) e **viene verificato davvero**: `^1.2.0`
-accetta dalla 1.2.0 alla 2.0.0 esclusa, `~1.2.0` solo le patch, `>=1.2, <2` combina, `*` accetta
-tutto. Sotto la 1.0.0 ogni incremento può rompere, quindi `^0.2.3` si ferma alla 0.3.0. Un
-pre-release (`1.0.0-rc1`) non viene mai preso da un vincolo che non lo nomina.
+The `version` is a [semver](https://semver.org) constraint and **it really is checked**: `^1.2.0`
+accepts from 1.2.0 up to 2.0.0 excluded, `~1.2.0` only patches, `>=1.2, <2` combines, `*` accepts
+everything. Below 1.0.0 every increment may break, so `^0.2.3` stops at 0.3.0. A pre-release
+(`1.0.0-rc1`) is never picked by a constraint that does not name it.
 
-Se la versione trovata non soddisfa il vincolo, l'app non si carica:
+If the version found does not satisfy the constraint, the app does not load:
 
 ```
 CompatibilityError
-  in /mondo/blossom/app/blossom.json:1:1
+  in /world/blossom/app/blossom.json:1:1
 
   Dependency 'utils' (path ../utils) is at version 2.0.0, which does not satisfy the constraint
   ^1.2.0 declared in the manifest.
 ```
 
-Gli import possono essere **ciclici**: due moduli che si chiamano a vicenda sono un caso normale
-appena un progetto cresce. I moduli vengono registrati tutti prima che il primo corpo giri, quindi
-finché le chiamate stanno dentro funzioni non c'è nessun problema di ordine. Quello che non si può
-fare è *leggere*, mentre un modulo si carica, un binding di un modulo dello stesso ciclo che non ha
-ancora girato — lì uno dei due deve per forza venire prima, e l'errore lo dice:
+Imports can be **circular**: two modules calling each other are a normal case as soon as a project
+grows. All the modules are registered before the first body runs, so as long as the calls sit inside
+functions there is no ordering problem. What cannot be done is *reading*, while a module loads, a
+binding of a module of the same cycle that has not run yet — there one of the two has to come first,
+and the error says so:
 
 ```
 ImportError
@@ -217,54 +217,54 @@ ImportError
   a function, which is evaluated when you call it and not while the module loads.
 ```
 
-Le dipendenze sono **transitive** e ognuna ha il proprio spazio dei nomi: dentro `utils`,
-`import "math/vec"` significa quello che dice il manifesto di `utils`, non il tuo. Due progetti
-possono chiamare `math` due librerie diverse senza sapere niente l'uno dell'altro.
+Dependencies are **transitive** and each has its own namespace: inside `utils`, `import "math/vec"`
+means what the manifest of `utils` says, not yours. Two projects can call two different libraries
+`math` without knowing anything about each other.
 
-### Il lock
+### The lock
 
-Un vincolo come `^1.0.0` è una domanda, e la risposta cambia nel tempo. Perché la stessa app caricata
-su due server prenda la stessa versione, la scelta viene scritta in `blossom.lock` accanto al
-manifesto:
+A constraint like `^1.0.0` is a question, and the answer changes over time. So that the same app
+loaded on two servers picks the same version, the choice is written to `blossom.lock` next to the
+manifest:
 
 ```json
 {
   "format": 1,
   "dependencies": {
     "vector": { "source": "registry", "version": "1.4.0", "sha256": "9f86d0..." },
-    "torre":  { "source": "pack", "version": "1.0.0" }
+    "tower":  { "source": "pack", "version": "1.0.0" }
   }
 }
 ```
 
-Da lì in poi quella versione viene riusata finché non chiedi tu di cambiarla:
+From then on that version is reused until you ask to change it:
 
 ```
 /blossom pack update <app>
 ```
 
-Il lock cambia idea da solo in un caso solo: quando la versione bloccata non soddisfa più il vincolo
-del manifesto, cioè quando sei stato tu a riscriverlo.
+The lock changes its mind on its own in one case only: when the locked version no longer satisfies
+the constraint of the manifest, that is, when you rewrote it.
 
-Le dipendenze **a percorso non vengono bloccate**: è la cartella accanto, che stai modificando
-adesso, e bloccarla vorrebbe dire far fallire il progetto ad ogni salvataggio. L'impronta `sha256`
-c'è solo per quelle prese dal registry, che sono le uniche il cui contenuto arriva da fuori: se
-cambia senza che la versione cambi, l'app non si carica.
+**Path dependencies are not locked**: they are the folder next door, which you are editing right
+now, and locking it would make the project fail on every save. The `sha256` hash is there only for
+those taken from the registry, which are the only ones whose content comes from outside: if it
+changes without the version changing, the app does not load.
 
-### Il registry
+### The registry
 
-Spento per default. Si accende in `config/blossomscript.json`:
+Off by default. It is turned on in `config/blossomscript.json`:
 
 ```json
 { "registry": { "directory": "/srv/blossom-packs" } }
-{ "registry": { "url": "https://esempio.org/blossom/" } }
+{ "registry": { "url": "https://example.org/blossom/" } }
 ```
 
-**A cartella** — `<radice>/<nome>/<versione>/`, e dentro un progetto normale. Nessun server da
-mantenere, il contenuto si ispeziona con `ls`. È la forma giusta per le librerie interne di un
-server o di un gruppo.
+**Directory-backed** — `<root>/<name>/<version>/`, with an ordinary project inside. No server to
+maintain, the content can be inspected with `ls`. It is the right shape for the internal libraries of
+a server or a group.
 
-**Su http** — un `index.json` statico e degli zip:
+**Over http** — a static `index.json` and some zip files:
 
 ```json
 {
@@ -274,137 +274,135 @@ server o di un gruppo.
 }
 ```
 
-Il `sha256` è obbligatorio: un archivio che arriva dalla rete e viene scompattato senza controllo è
-codice arbitrario che gira su un server, e chiunque stia in mezzo alla connessione può sostituirlo.
-Una riga senza impronta viene ignorata. Ogni versione si scarica una volta e resta in
-`<mondo>/blossom/.cache/`, così un riavvio non rifà venti download e un server senza connessione
-carica lo stesso le app che ha già.
+The `sha256` is mandatory: an archive that arrives from the network and is unpacked without a check
+is arbitrary code running on a server, and anyone in the middle of the connection can replace it. An
+entry without a hash is ignored. Each version is downloaded once and stays in
+`<world>/blossom/.cache/`, so a restart does not redo twenty downloads and a server without a
+connection still loads the apps it already has.
 
 ### `api_level`
 
-`api_level` è `MAJOR.MINOR` e descrive **l'API di Blossom**, non l'app — la versione dell'app è
-`version`, ed è semver. Sono due numerazioni diverse apposta: una dice "che cosa sono io", l'altra
-"di che cosa ho bisogno".
+`api_level` is `MAJOR.MINOR` and describes **the Blossom API**, not the app — the app's version is
+`version`, and that is semver. They are two separate numbering schemes on purpose: one says "what I
+am", the other "what I need".
 
-- **MAJOR** cambia quando qualcosa che funzionava smette di funzionare: un simbolo tolto o
-  rinominato, una firma o un significato che cambia, una regola di grammatica che invalida codice
-  già scritto, un evento che smette di scattare.
-- **MINOR** cambia quando si aggiunge: un modulo, una funzione, un parametro opzionale, un evento.
+- **MAJOR** changes when something that worked stops working: a symbol removed or renamed, a
+  signature or a meaning that changes, a grammar rule that invalidates code already written, an event
+  that stops firing.
+- **MINOR** changes when something is added: a module, a function, an optional parameter, an event.
 
-Un'app gira se il MAJOR combacia e il suo MINOR non supera quello del mod. Le due direzioni
-falliscono per motivi diversi e il messaggio lo dice: MAJOR diverso vuol dire che l'app è scritta
-per un'altra API; MINOR più alto vuol dire che usa qualcosa che questa versione non ha ancora e
-serve aggiornare il mod. Non dichiararlo significa il MINOR più basso del MAJOR corrente, oggi
-`2.0`: "non uso niente di recente". Il livello di questa versione è **2.1**, che aggiunge
-`core.mc.command` e le chiavi `strict`, `event_priority` e `requires`.
+An app runs if the MAJOR matches and its MINOR does not exceed the mod's. The two directions fail for
+different reasons and the message says which: a different MAJOR means the app is written for another
+API; a higher MINOR means it uses something this version does not have yet, and the mod needs
+updating. Not declaring it means the lowest MINOR of the current MAJOR, today `2.0`: "I use nothing
+recent". The level of this version is **2.1**, which adds `core.mc.command` and the keys `strict`,
+`event_priority` and `requires`.
 
-Una cartella così, copiata sotto `<mondo>/blossom/`, è un **pack**: si carica con
-`/blossom script load <nome-cartella>` come una qualunque app, anche a server acceso.
+A folder like this, copied under `<world>/blossom/`, is a **pack**: it loads with
+`/blossom script load <folder-name>` like any other app, even with the server running.
 
-In [`examples/`](examples) ci sono tre progetti completi: [`contapassi`](examples/contapassi) (un
-file solo: eventi, HUD, stato su disco), [`torre-guardiana`](examples/torre-guardiana) (più moduli,
-simboli privati, un evento annullabile, un `try`) e [`vena-viva`](examples/vena-viva) (quattro
-moduli, un task, una sezione critica, un evento fra app).
+In [`examples/`](examples) there are three complete projects: [`step-counter`](examples/step-counter)
+(a single file: events, HUD, state on disk), [`guardian-tower`](examples/guardian-tower) (several
+modules, private symbols, a cancellable event, a `try`) and [`living-vein`](examples/living-vein)
+(four modules, a task, a critical section, an event between apps).
 
-### Limiti di esecuzione
+### Execution limits
 
-Un'app che cicla all'infinito dentro un evento non rallenta se stessa: ferma il tick, e con lui il
-mondo. Per questo ogni esecuzione ha un budget, e superarlo è un errore:
+An app that loops forever inside an event does not slow down itself: it stops the tick, and the
+world with it. That is why every execution has a budget, and going over it is an error:
 
 ```
 ExecutionBudgetError[time]
-  in torre.sorveglia  (src/torre.bs:12:5)
+  in tower.watch  (src/tower.bs:12:5)
 
   Execution stopped after 2000 ms: the script is running too long and the server is waiting for
   it. If it really needs all that time, move it to a task.start() or raise 'timeout_ms' in the manifest.
 ```
 
-I limiti di default sono tre, perché le tre situazioni sono diverse:
+There are three default limits, because the three situations are different:
 
-| Quando | Tempo | Profondità di chiamata |
+| When | Time | Call depth |
 | --- | --- | --- |
-| dentro un evento di gioco | 2 s | 256 |
-| codice lanciato da `/blossom script run` o `load` | 15 s | 256 |
-| dentro un `task.start()` | nessun limite | 256 |
+| inside a game event | 2 s | 256 |
+| code started by `/blossom script run` or `load` | 15 s | 256 |
+| inside a `task.start()` | no limit | 256 |
 
-Un `task.start()` non ha scadenza apposta: gira su un thread suo, non tiene fermo il tick, ed è la cosa da
-usare quando un lavoro è davvero lungo.
+A `task.start()` has no deadline on purpose: it runs on its own thread, it does not hold up the
+tick, and it is the thing to use when a job really is long.
 
-Un'app può dichiarare i propri limiti nel manifesto, e allora valgono in tutti e tre i casi:
+An app can declare its own limits in the manifest, and then they apply in all three cases:
 
 ```json
 "watchdog": { "timeout_ms": 5000, "max_depth": 512 }
 ```
 
-`"watchdog": false` li toglie del tutto — è una scelta legittima per un'app di cui ti fidi, ma da
-quel momento un suo ciclo infinito richiede il riavvio del server.
+`"watchdog": false` removes them entirely — a legitimate choice for an app you trust, but from then
+on an infinite loop in it requires restarting the server.
 
-L'errore del watchdog **non è catturabile** con `try`: se lo fosse, un ciclo infinito dentro un
-`try` continuerebbe a girare.
+The watchdog's error **cannot be caught** with `try`: if it could, an infinite loop inside a `try`
+would keep running.
 
-## Configurazione del server
+## Server configuration
 
-Un file solo, facoltativo: `config/blossomscript.json`. Quattro sezioni, ognuna spenta finché non la
-scrivi.
+A single, optional file: `config/blossomscript.json`. Four sections, each one off until you write it.
 
 ```json
 {
   "registry": { "directory": "/srv/blossom-packs" },
-  "io": { "roots": { "condiviso": "condiviso" }, "writable": ["condiviso"] },
-  "http": { "hosts": ["api.esempio.org"] },
+  "io": { "roots": { "exchange": "exchange" }, "writable": ["exchange"] },
+  "http": { "hosts": ["api.example.org"] },
   "watchdog": { "timeout_ms": 2000, "max_depth": 256 }
 }
 ```
 
-- **`registry`** — da dove arrivano le dipendenze che non stanno già su disco.
-- **`io`** — le cartelle che [`core.io`](docs/api/core.io.md) può aprire, **in più** a `data` e
-  `shared`, che ci sono sempre ed è dove le app tengono i propri dati. I percorsi sono relativi alla
-  **cartella del mondo** e non possono uscirne: il resto del disco del server non è raggiungibile da
-  nessuna configurazione.
-- **`http`** — gli host che [`core.http`](docs/api/core.http.md) può contattare, uno per nome. Senza
-  questa sezione gli script non hanno rete.
-- **`watchdog`** — i limiti di esecuzione per le app che non ne dichiarano di propri.
+- **`registry`** — where the dependencies that are not already on disk come from.
+- **`io`** — the folders [`core.io`](docs/api/core.io.md) can open, **in addition** to `data` and
+  `shared`, which always exist and are where apps keep their own data. The paths are relative to the
+  **world folder** and cannot leave it: the rest of the server's disk is out of reach of any
+  configuration.
+- **`http`** — the hosts [`core.http`](docs/api/core.http.md) may contact, one by name. Without this
+  section scripts have no network.
+- **`watchdog`** — the execution limits for the apps that do not declare their own.
 
-Tutte le chiavi, con tipo e default, sono in
-[12. Configurazione del server](docs/guide/12-configurazione.md).
+Every key, with its type and default, is in
+[12. Server configuration](docs/guide/12-configuration.md).
 
-## Il linguaggio in due minuti
+## The language in two minutes
 
 ```
-module esempio;
+module example;
 
-import "core.list" as list;                 // l'alias e' obbligatorio
+import "core.list" as list;                 // the alias is mandatory
 import "core.math" as math;
 
-let mut contatore = 0;                      // stato del modulo, riassegnabile
-let soglia = 10;                            // stato del modulo, immutabile
+let mut counter = 0;                        // module state, reassignable
+let threshold = 10;                         // module state, immutable
 
-fn privata(x) -> x * 2;                     // senza 'pub' non esce dal modulo
+fn private_double(x) -> x * 2;              // without 'pub' it does not leave the module
 
-pub fn conta() -> (
-    contatore += 1;
-    if(contatore > soglia, 'troppi', contatore)
+pub fn count() -> (
+    counter += 1;
+    if(counter > threshold, 'too many', counter)
 );
 
-pub fn raddoppia_tutti(l) -> list.map(l, privata(_));
+pub fn double_all(l) -> list.map(l, private_double(_));
 ```
 
-### Tipi sui parametri
+### Types on parameters
 
-I parametri possono dichiarare un tipo. È facoltativo, uno alla volta:
+Parameters can declare a type. It is optional, one at a time:
 
 ```
-fn distanza(a: list, b: list) -> ...
-fn ripeti(quante: num, cosa) -> ...          // 'cosa' resta senza vincolo
-fn applica(f: func, x: any) -> call(f, x);   // 'any' documenta senza vincolare
+fn distance(a: list, b: list) -> ...
+fn repeat(times: num, what) -> ...           // 'what' stays unconstrained
+fn apply(f: func, x: any) -> call(f, x);     // 'any' documents without constraining
 ```
 
-I tipi sono `num`, `str`, `bool`, `list`, `map`, `func`, `null`, `any`, più quelli del gioco:
-`entity`, `block`, `text`, `nbt`, `screen`. (Si chiama `func` e non `fn` perché `fn` è già la parola
-chiave con cui una funzione si dichiara.)
+The types are `num`, `str`, `bool`, `list`, `map`, `func`, `null`, `any`, plus the game's:
+`entity`, `block`, `text`, `nbt`, `screen`. (It is called `func` and not `fn` because `fn` is
+already the keyword a function is declared with.)
 
-Un tipo scritto male è un errore **quando definisci la funzione**, non la prima volta che qualcuno la
-chiama:
+A misspelled type is an error **when you define the function**, not the first time someone calls it:
 
 ```
 ParseError
@@ -412,33 +410,33 @@ ParseError
   Did you mean: num?
 ```
 
-Un argomento del tipo sbagliato è un errore **sul confine della funzione**, che è il punto: dice
-quale parametro e cosa gli è arrivato, invece di saltare fuori tre righe dentro il corpo su
-un'operazione che non c'entra.
+An argument of the wrong type is an error **at the boundary of the function**, which is the point:
+it says which parameter and what it received, instead of turning up three lines into the body on an
+unrelated operation.
 
 ```
 TypeMismatchError
-  in distanza  (src/geo.bs:4:1)
+  in distance  (src/geo.bs:4:1)
 
-  Parameter 'a' of distanza wants a list, but got a string (due).
+  Parameter 'a' of distance wants a list, but got a string (two).
 ```
 
-Fuori da una firma `:` resta quello che era, cioè l'accesso a un elemento: `lista:0`, `mappa:'chiave'`.
+Outside a signature `:` stays what it was, that is, access to an element: `items:0`, `table:'key'`.
 
-In sintesi:
+In short:
 
-- **un file è un modulo**, con il suo spazio dei nomi: niente `global_` condivisi per convenzione
-- **gli import hanno sempre un alias**, quindi due librerie non possono litigare sui nomi
-- **`pub` decide cosa esce**; accedere a un simbolo privato è un errore a caricamento, non a runtime
-- **`fn` e `let`** al posto delle convenzioni sui prefissi dei nomi
-- **tipi opzionali sui parametri**, che spostano l'errore sul confine della funzione
-- **niente spazio globale implicito**: `sqrt(4)` senza import è un errore che ti dice cosa importare
-- **gli errori hanno una categoria, una posizione e uno stack** che attraversa i moduli
+- **a file is a module**, with its own namespace: no `global_` shared by convention
+- **imports always have an alias**, so two libraries can never fight over names
+- **`pub` decides what leaves**; accessing a private symbol is a load error, not a runtime one
+- **`fn` and `let`** instead of conventions on name prefixes
+- **optional types on parameters**, which move the error to the boundary of the function
+- **no implicit global space**: `sqrt(4)` without an import is an error that tells you what to import
+- **errors have a category, a position and a stack** that crosses modules
 
-Il resto è sintassi da linguaggio a espressioni: `for`/`while`/`map`/`filter`/`reduce`, liste,
-mappe, operatori.
+The rest is the syntax of an expression language: `for`/`while`/`map`/`filter`/`reduce`, lists,
+maps, operators.
 
-## Errori
+## Errors
 
 ```
 UndefinedSymbolError
@@ -449,34 +447,33 @@ UndefinedSymbolError
   Did you mean: 'add'?
 ```
 
-Le categorie sono due famiglie, e la differenza conta quando si scrive un `try`:
+The categories form two families, and the difference matters when writing a `try`:
 
-- **errori del linguaggio** — `ParseError`, `ImportError`, `UndefinedSymbolError`,
-  `TypeMismatchError`, `ArityError`, `IndexOutOfBoundsError`, `NullReferenceError`, `RuntimeError`:
-  sono codice sbagliato, e `try` **non** li cattura apposta. Molti arrivano già a caricamento.
-- **eccezioni lanciate** — `throw()` e le operazioni che possono fallire per colpa del mondo
-  (`value_exception`, `unknown_item`, `io_exception`, `json_error`, ...): quelle si catturano, per
-  tipo, con la gerarchia dei filtri.
+- **language errors** — `ParseError`, `ImportError`, `UndefinedSymbolError`, `TypeMismatchError`,
+  `ArityError`, `IndexOutOfBoundsError`, `NullReferenceError`, `RuntimeError`: they are wrong code,
+  and `try` deliberately does **not** catch them. Many arrive already at load time.
+- **thrown exceptions** — `throw()` and the operations that can fail because of the world
+  (`value_exception`, `unknown_item`, `io_exception`, `json_error`, ...): those are caught, by type,
+  with the hierarchy of filters.
 
-Il dettaglio, con la tabella dei filtri, è in [`docs/guide/07-errori.md`](docs/guide/07-errori.md).
+The details, with the table of filters, are in [`docs/guide/07-errors.md`](docs/guide/07-errors.md).
 
-## L'estensione per VS Code
+## The VS Code extension
 
-In [`vscode-blossom/`](vscode-blossom) c'è il supporto editor: evidenziazione, completamento sui
-moduli e sui simboli veri dell'API, hover con le firme, e gli errori che si possono dire senza
-eseguire niente (import senza alias, simboli inesistenti, eventi sbagliati, nome di modulo che non
-combacia col percorso). I dati non sono scritti a mano: si rigenerano dalle sorgenti del mod con
-`node vscode-blossom/tools/generate-api.js`.
+[`vscode-blossom/`](vscode-blossom) has the editor support: highlighting, completion on the modules
+and on the real symbols of the API, hovers with signatures, and the errors that can be told without
+running anything (imports without an alias, symbols that do not exist, wrong events, a module name
+that does not match its path). The data is not written by hand: it is regenerated from the sources
+of the mod with `node vscode-blossom/tools/generate-api.js`.
 
-## Documentazione
+## Documentation
 
-- [La guida](docs/guide/README.md) — quattordici capitoli: sintassi, moduli, errori, eventi,
-  concorrenza, prestazioni, ricette, contenuti di gioco, gli strumenti di `/blossom script`
-- [Panoramica dell'API](docs/api/Overview.md) — tutti i moduli
-- [`DECISIONI.md`](DECISIONI.md) — le scelte di design e il loro perché
-- [`INVENTARIO_FORK.md`](INVENTARIO_FORK.md) — cosa è stato portato dal fork di partenza e dove
+- [The guide](docs/guide/README.md) — fourteen chapters: syntax, modules, errors, events,
+  concurrency, performance, recipes, game content, the tools of `/blossom script`
+- [API overview](docs/api/Overview.md) — every module
+- [`CHANGELOG.md`](CHANGELOG.md) — what changed, version by version
 
-## Licenza
+## License
 
-MIT, come fabric-carpet da cui il core deriva. Il copyright originale è mantenuto in
+MIT, like fabric-carpet from which the core derives. The original copyright is kept in
 [`NOTICE`](NOTICE).

@@ -64,7 +64,7 @@ Two conventions about failure, which hold throughout:
   property nothing has.
 - **an invalid name is an error**, not `null`: a misspelled block, item, biome or particle throws a
   catchable `unknown_*` exception, and a misspelled *property* or *event* name is a load-time error
-  with a suggestion. See [7. Errors](../guide/07-errori.md).
+  with a suggestion. See [7. Errors](../guide/07-errors.md).
 
 ## The prelude
 

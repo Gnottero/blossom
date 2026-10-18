@@ -16,7 +16,7 @@ import org.jspecify.annotations.Nullable;
  * l-value information stuck onto the r-value, which forced every value entering a variable to be
  * copied so the caller wouldn't see it get renamed out from under it. The name belongs to the node
  * that reads the variable instead, fixed from parsing and never changing, so that node is the one
- * that reports it, and only when needed. See DECISIONI.md D-093.
+ * that reports it, and only when needed.
  */
 public final class VariableReferenceValue extends FrameworkValue
 {

@@ -4,7 +4,7 @@ import blossom.interpreter.Interpreter;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-/** C.5: the |> operator. */
+/** The |> operator. */
 class PipeTest
 {
     private static String eval(String code)
@@ -13,17 +13,17 @@ class PipeTest
     }
 
     @Test
-    void ilSoggettoDiventaIlPrimoArgomento()
+    void theSubjectBecomesTheFirstArgument()
     {
         assertEquals("[2, 4, 6]",
                 eval("import 'core.list' as list; [1,2,3] |> list.map(fn(x) -> x * 2)"));
     }
 
     @Test
-    void treTrasformazioniInFila()
+    void threeTransformationsInARow()
     {
         // note: today 'join' is join(separator, list), so the subject is not the first argument and
-        // does not chain. It is exactly the case rule R2 of the renaming fixes; here the chain is
+        // does not chain. Here the chain is
         // measured with the functions that already take the subject first
         assertEquals("[4, 8]",
                 eval("import 'core.list' as list; "
@@ -31,32 +31,32 @@ class PipeTest
     }
 
     @Test
-    void funzionaConUnaFunzioneUtente()
+    void worksWithAUserFunction()
     {
-        assertEquals("6", eval("fn doppio(x) -> x * 2; 3 |> doppio()"));
+        assertEquals("6", eval("fn double(x) -> x * 2; 3 |> double()"));
     }
 
     @Test
-    void funzionaConArgomentiInPiu()
+    void worksWithExtraArguments()
     {
-        assertEquals("9", eval("fn somma(a, b) -> a + b; 4 |> somma(5)"));
+        assertEquals("9", eval("fn sum(a, b) -> a + b; 4 |> sum(5)"));
     }
 
     @Test
-    void unValoreFunzioneADestraSiChiamaLoStesso()
+    void aFunctionValueOnTheRightIsCalledAnyway()
     {
         assertEquals("6", eval("f = fn(x) -> x * 2; 3 |> f"));
     }
 
     @Test
-    void legaPiuDellAssegnamento()
+    void bindsTighterThanAssignment()
     {
-        assertEquals("6", eval("fn doppio(x) -> x * 2; y = 3 |> doppio(); y"));
+        assertEquals("6", eval("fn double(x) -> x * 2; y = 3 |> double(); y"));
     }
 
     @Test
-    void legaMenoDellaDisgiunzione()
+    void bindsLooserThanDisjunction()
     {
-        assertEquals("2", eval("fn doppio(x) -> x * 2; (0 || 1) |> doppio()"));
+        assertEquals("2", eval("fn double(x) -> x * 2; (0 || 1) |> double()"));
     }
 }

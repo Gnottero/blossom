@@ -9,7 +9,7 @@ import java.util.Set;
 import org.jspecify.annotations.Nullable;
 
 /**
- * The standard library organised in packages (PIANO_LINGUAGGIO.md §5).
+ * The standard library organised in packages.
  *
  * <p>Built-in functions stay registered once, in a flat map: it is their *visibility* that goes
  * through modules. The author writes `math.sqrt(...)` and knows where it comes from, but the call
@@ -132,8 +132,8 @@ public final class StdLib
         module("core.http", Http.MODULE);
 
         // 'system_variable_get'/'system_variable_set' are gone: they were a global namespace shared
-        // by every app of the same server, that is exactly what §1.1 of the plan removes from the
-        // language. Passing data to another app is done with inter app events; keeping data is done
+        // by every app of the same server, that is exactly the kind of
+        // implicit state the language does without. Passing data to another app is done with inter app events; keeping data is done
         // with core.io
         module("core.system", java.util.Map.ofEntries(
                 java.util.Map.entry("time", "time"),

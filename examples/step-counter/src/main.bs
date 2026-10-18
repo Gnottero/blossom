@@ -1,0 +1,107 @@
+module main;
+
+import "core.mc.event" as event;
+import "core.mc.entity" as entity;
+import "core.mc.text" as text;
+import "core.io" as io;
+import "core.list" as list;
+import "core.map" as map;
+
+// step-counter - a single-file app.
+//
+// Keeps count of what each player does, shows it above the hotbar, and saves it to disk.
+// Shows: module state with 'let mut', event handlers, HUD, persistence, and a public
+// function that the admin calls from the console.
+
+// --- state ---------------------------------------------------------------------------------
+
+// 'let mut' and not a bare assignment: this is how the functions below see it
+let mut counts = {};            // player name -> {'jumps' -> n, 'broken' -> n, 'deaths' -> n}
+let mut ticks_passed = 0;
+
+let SAVE_EVERY = 6000;          // ticks, i.e. five minutes
+let STATS = ['jumps', 'broken', 'deaths'];
+
+// --- reading and writing state -------------------------------------------------------
+
+fn card(player) -> (
+    name = entity.query(player, 'name');
+    // a key that doesn't exist is null, so a new player gets a fresh card
+    if(!map.has(counts, name), counts:name = {'jumps' -> 0, 'broken' -> 0, 'deaths' -> 0});
+    counts:name
+);
+
+fn add(player, stat) -> (
+    c = card(player);
+    c:stat = c:stat + 1;
+    show(player, c);
+    false                       // the events below must not be cancelled
+);
+
+fn show(player, c) -> text.hud(
+    player,
+    text.format('g jumps ', 'w ' + c:'jumps', 'g   broken ', 'w ' + c:'broken', 'g   deaths ', 'w ' + c:'deaths')
+);
+
+// --- persistence ---------------------------------------------------------------------------
+
+// The data lives under the 'data' root, which exists on every server: a subfolder with the app's
+// name, so two apps don't step on each other. The check with 'exists' matters: reading a file
+// that doesn't exist is an 'io_exception', not a null.
+let FILE = 'step-counter/counts.json';
+
+fn load() -> counts = if(io.exists('data', FILE), io.read_json('data', FILE), {});
+
+fn save() -> (
+    io.write_json('data', FILE, counts);
+    false
+);
+
+// --- handlers -------------------------------------------------------------------------------
+
+fn on_jump(player) -> add(player, 'jumps');
+fn on_break(player, block) -> add(player, 'broken');
+fn on_death(player) -> add(player, 'deaths');
+
+fn on_join(player) -> (
+    show(player, card(player));
+    false
+);
+
+// Saving only on shutdown isn't enough: a server that crashes doesn't call any handler.
+fn on_tick() -> (
+    ticks_passed += 1;
+    if(ticks_passed % SAVE_EVERY == 0, save());
+    false
+);
+
+// --- interface for admins ---------------------------------------------------------
+
+// /blossom script in step-counter leaderboard('broken')
+pub fn leaderboard(stat: str) -> (
+    // '~' returns the index, or null if it's not there: compare it with null and don't use it as a
+    // condition, because the index of the first element is 0, which is falsy
+    if((STATS ~ stat) == null, throw('unknown stat: ' + stat + ', try ' + list.join('/', STATS)));
+    rows = list.sort(map.pairs(counts), -((_:1):stat));
+    list.map(rows, _:0 + ': ' + (_:1):stat)
+);
+
+// /blossom script in step-counter reset()
+pub fn reset() -> (
+    counts = {};
+    save();
+    'reset done'
+);
+
+// --- startup ------------------------------------------------------------------------------------
+
+load();
+
+event.on('player_jumps', on_jump);
+event.on('player_breaks_block', on_break);
+event.on('player_dies', on_death);
+event.on('player_connects', on_join);
+event.on('tick', on_tick);
+event.on('server_shuts_down', save);
+
+print('step-counter ready, ' + map.size(counts) + ' cards on file');

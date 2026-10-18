@@ -11,7 +11,7 @@ import blossom.interpreter.Interpreter;
 import blossom.language.StdLib;
 
 /**
- * The packaged standard library (PIANO_LINGUAGGIO.md §5): every function lives in a module, and the
+ * The packaged standard library: every function lives in a module, and the
  * only thing available without an import is the prelude.
  */
 class StdLibTest
@@ -25,7 +25,7 @@ class StdLibTest
     void everyModuleIsReachableThroughItsAlias()
     {
         assertEquals("4", eval("import \"core.math\" as math; math.sqrt(16)"));
-        assertEquals("CIAO", eval("import \"core.string\" as string; string.upper('ciao')"));
+        assertEquals("HELLO", eval("import \"core.string\" as string; string.upper('hello')"));
         assertEquals("[2, 4, 6]", eval("import \"core.list\" as list; list.map([1, 2, 3], _ * 2)"));
         assertEquals("[a, b]", eval("import \"core.map\" as map; map.keys({'a' -> 1, 'b' -> 2})"));
         assertEquals("[1, 2]", eval("import \"core.json\" as json; json.decode('[1, 2]')"));
@@ -57,7 +57,7 @@ class StdLibTest
     void aModuleDoesNotExportWhatIsNotItsOwn()
     {
         UndefinedSymbolError error = assertThrows(UndefinedSymbolError.class,
-                () -> eval("import \"core.math\" as math; math.upper('ciao')"));
+                () -> eval("import \"core.math\" as math; math.upper('hello')"));
         assertTrue(error.getMessage().contains("core.math"), error.getMessage());
     }
 
@@ -130,6 +130,6 @@ class StdLibTest
                 shouted.add(symbol + " -> " + modules);
             }
         });
-        assertEquals(java.util.List.of(), shouted, "simboli esportati da piu' di un modulo");
+        assertEquals(java.util.List.of(), shouted, "symbols exported by more than one module");
     }
 }

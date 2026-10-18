@@ -39,9 +39,9 @@ class HttpTest
     void startServer() throws IOException
     {
         server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
-        server.createContext("/hello", exchange -> respond(exchange, 200, "ciao"));
+        server.createContext("/hello", exchange -> respond(exchange, 200, "hello"));
         server.createContext("/json", exchange -> respond(exchange, 200, "{\"a\": 1}"));
-        server.createContext("/missing", exchange -> respond(exchange, 404, "non c'e'"));
+        server.createContext("/missing", exchange -> respond(exchange, 404, "not here"));
         server.createContext("/echo", exchange ->
         {
             String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
@@ -102,7 +102,7 @@ class HttpTest
     {
         Interpreter interpreter = localhost();
         assertEquals("200", interpreter.eval(IMPORT + "http.get('" + base + "/hello'):'status'").getString());
-        assertEquals("ciao", interpreter.eval(IMPORT + "http.get('" + base + "/hello'):'body'").getString());
+        assertEquals("hello", interpreter.eval(IMPORT + "http.get('" + base + "/hello'):'body'").getString());
         assertEquals("true", interpreter.eval(IMPORT + "import \"core.map\" as map; "
                 + "map.has(http.get('" + base + "/hello'):'headers', 'content-length')").getString());
     }
@@ -177,8 +177,8 @@ class HttpTest
     void aBodyOverTheLimitIsRefused()
     {
         Interpreter interpreter = withAccess(new HttpAccess(List.of("127.0.0.1"), Set.of("http"), 5_000, 64, false));
-        assertEquals("troppo grande", interpreter.eval(
-                IMPORT + "try(http.get('" + base + "/big'), 'http_exception', 'troppo grande')").getString());
+        assertEquals("too large", interpreter.eval(
+                IMPORT + "try(http.get('" + base + "/big'), 'http_exception', 'too large')").getString());
     }
 
     @Test
@@ -197,8 +197,8 @@ class HttpTest
         Interpreter interpreter = localhost();
         assertEquals("a+b%2Fc", interpreter.eval(IMPORT + "http.encode_url('a b/c')").getString());
         assertEquals("a b/c", interpreter.eval(IMPORT + "http.decode_url('a+b%2Fc')").getString());
-        assertEquals("q=due+parole&t=1", interpreter.eval(
-                IMPORT + "http.encode_query({'q' -> 'due parole', 't' -> 1})").getString());
+        assertEquals("q=two+words&t=1", interpreter.eval(
+                IMPORT + "http.encode_query({'q' -> 'two words', 't' -> 1})").getString());
     }
 
     @Test

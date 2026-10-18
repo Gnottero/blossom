@@ -4,7 +4,7 @@ import blossom.exception.ExecutionBudgetError;
 import blossom.exception.SourcePosition;
 
 /**
- * The watchdog: how long an execution may run before it gets stopped (PIANO_LINGUAGGIO.md §9).
+ * The watchdog: how long an execution may run before it gets stopped.
  *
  * <p>Code runs inside the server's tick loop: a script that loops forever inside an event doesn't
  * just slow the app down, it stops the world.

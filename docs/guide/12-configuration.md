@@ -69,7 +69,7 @@ Off by default. Two mutually exclusive forms; if both are present, `directory` w
 
 A `registry` that names neither `directory` nor `url` is ignored with a warning in the log. For the
 shape of the index, and for why `sha256` is mandatory, see
-[6. Modules and projects](06-moduli.md).
+[6. Modules and projects](06-modules.md).
 
 The download cache lives in `.cache/` inside the script directory, so it follows `root`.
 
@@ -133,7 +133,7 @@ The functions are in [`core.http`](../api/core.http.md).
 ## `watchdog`: the execution limits
 
 These apply to apps that do not declare limits of their own in their `blossom.json` (see
-[9. Concurrency](09-concorrenza.md)).
+[9. Concurrency](09-concurrency.md)).
 
 | Key | Type | Default | What it does |
 | --- | --- | --- | --- |

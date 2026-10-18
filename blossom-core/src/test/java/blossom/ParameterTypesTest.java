@@ -28,17 +28,17 @@ class ParameterTypesTest
     {
         assertEquals("6", eval("f(a: num, b: num) -> a * b; f(2, 3)"));
         assertEquals("3", eval("import \"core.list\" as list; f(l: list) -> list.size(l); f([1, 2, 3])"));
-        assertEquals("ciao", eval("f(s: str) -> s; f('ciao')"));
+        assertEquals("hello", eval("f(s: str) -> s; f('hello')"));
     }
 
     @Test
     void aWrongTypeIsRefusedOnTheBoundaryOfTheFunction()
     {
-        TypeMismatchError error = assertThrows(TypeMismatchError.class, () -> eval("f(a: num) -> a; f('due')"));
+        TypeMismatchError error = assertThrows(TypeMismatchError.class, () -> eval("f(a: num) -> a; f('two')"));
         assertTrue(error.getMessage().contains("'a'"), error.getMessage());
         assertTrue(error.getMessage().contains("number"), error.getMessage());
         assertTrue(error.getMessage().contains("string"), error.getMessage());
-        assertTrue(error.position().isKnown(), "l'errore deve dire dove: " + error.format());
+        assertTrue(error.position().isKnown(), "the error must say where: " + error.format());
     }
 
     @Test
@@ -53,7 +53,7 @@ class ParameterTypesTest
     void anyAcceptsEverythingAndDocumentsTheIntent()
     {
         assertEquals("1", eval("f(a: any) -> a; f(1)"));
-        assertEquals("ciao", eval("f(a: any) -> a; f('ciao')"));
+        assertEquals("hello", eval("f(a: any) -> a; f('hello')"));
     }
 
     @Test

@@ -8,7 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Where the time goes, per function and per module (PIANO_LINGUAGGIO.md §9).
+ * Where the time goes, per function and per module.
  *
  * <p>{@code profile_expr} measures a single expression and answers "how long does this piece take";
  * this answers "who eats the tick", which is the real question once an app has twenty handlers.
